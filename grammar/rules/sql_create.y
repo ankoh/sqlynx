@@ -320,6 +320,7 @@ sql_table_constraint_elem:
             &[
                 attr(Key::SQL_TABLE_CONSTRAINT_TYPE, enum_node(@$, TableConstraint::CHECK)),
                 attr(Key::SQL_TABLE_CONSTRAINT_ARGUMENT, ctx.expression($3)),
+                attr(Key::SQL_TABLE_CONSTRAINT_ATTRIBUTES, ctx.array(@5, $5)),
             ],
         )
     }

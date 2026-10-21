@@ -278,7 +278,7 @@ opt_vis_layer_spec_field:
   | LAYER EQUALS_GREATER LSB vis_layer_list RSB {
       attr(
           Key::VIS_SPEC_LAYER,
-          ctx.object(@$, NodeType::OBJECT_EXT_VARARG_ARRAY, &[attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.array(@4, $4))]),
+          ctx.object(@$, NodeType::OBJECT_EXT_VARARG_ARRAY, &[attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.array_ex(@4, $4, false, false))]),
       )
   }
   | RESOLVE EQUALS_GREATER LRB vis_resolve_list RRB { attr(Key::VIS_SPEC_RESOLVE, ctx.object_ex(@$, NodeType::OBJECT_VIS_SPEC, $4, false, false)) }
@@ -477,7 +477,7 @@ vis_channel_key:
 
 vis_encoding_value:
     vararg_array_brackets {
-        ctx.object(@$, NodeType::OBJECT_EXT_VARARG_ARRAY, &[attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.array(@1, $1))])
+        ctx.object(@$, NodeType::OBJECT_EXT_VARARG_ARRAY, &[attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.array_ex(@1, $1, false, false))])
     }
   | sql_func_expr             { $1 }
   | sql_columnref             { $1 }
@@ -666,7 +666,7 @@ vis_legend_key:
 
 vis_value:
     LRB vis_spec_list RRB { ctx.object_ex(@$, NodeType::OBJECT_VIS_SPEC, $2, false, false) }
-  | vararg_array_brackets { ctx.object(@$, NodeType::OBJECT_EXT_VARARG_ARRAY, &[attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.array(@1, $1))]) }
+  | vararg_array_brackets { ctx.object(@$, NodeType::OBJECT_EXT_VARARG_ARRAY, &[attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.array_ex(@1, $1, false, false))]) }
   | sql_func_expr             { $1 }
   | sql_columnref             { $1 }
   | sql_a_expr_const          { ctx.expression($1) }

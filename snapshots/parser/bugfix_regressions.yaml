@@ -334,7 +334,7 @@ parser-snapshots:
       statements:
         - type: CREATE_TABLE
           ast-begin: 0
-          ast-size: 49
+          ast-size: 53
           description:
             text: "create tab..mediate\n);"
             description-begin: 0
@@ -443,6 +443,12 @@ parser-snapshots:
                                         text: "a"
                               - type: LITERAL_INTEGER
                                 text: "0"
+                      - key: SQL_TABLE_CONSTRAINT_ATTRIBUTES
+                        type: ARRAY
+                        text: "not valid"
+                        children:
+                          - type: ENUM_SQL_CONSTRAINT_ATTRIBUTE
+                            value: NOT_VALID
                   - type: OBJECT_SQL_TABLE_CONSTRAINT
                     text: "check (b >..no inherit"
                     children:
@@ -471,6 +477,12 @@ parser-snapshots:
                                         text: "b"
                               - type: LITERAL_INTEGER
                                 text: "0"
+                      - key: SQL_TABLE_CONSTRAINT_ATTRIBUTES
+                        type: ARRAY
+                        text: "no inherit"
+                        children:
+                          - type: ENUM_SQL_CONSTRAINT_ATTRIBUTE
+                            value: NO_INHERIT
                   - type: OBJECT_SQL_TABLE_CONSTRAINT
                     text: "primary ke.. immediate"
                     children:
@@ -1839,6 +1851,494 @@ parser-snapshots:
                               - key: SQL_DEFINITION_ARG_VALUE
                                 type: LITERAL_INTEGER
                                 text: "70"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: cast_interval_bare
+    input: |-
+      select cast(a as interval)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select cas.. interval)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cas.. interval)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "cast(a as interval)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "cast(a as interval)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "cast(a as interval)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CAST
+                          - key: SQL_FUNCTION_CAST_ARGS
+                            type: OBJECT_SQL_FUNCTION_CAST_ARGS
+                            text: "(a as interval)"
+                            children:
+                              - key: SQL_FUNCTION_CAST_VALUE
+                                type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - key: SQL_FUNCTION_CAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "interval"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: OBJECT_SQL_INTERVAL_TYPE
+                                    text: "interval"
+                                    children: []
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: column_interval_bare
+    input: |-
+      create table t (b interval);
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 8
+          description:
+            text: "create tab..interval);"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab.. interval)"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "t"
+                children:
+                  - type: NAME
+                    text: "t"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(b interval)"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "b interval"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "b"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "interval"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: OBJECT_SQL_INTERVAL_TYPE
+                            text: "interval"
+                            children: []
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: current_time_precision
+    input: |-
+      select current_time(3)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 7
+          description:
+            text: "select cur..nt_time(3)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cur..nt_time(3)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "current_time(3)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "current_time(3)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "current_time(3)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CURRENT_TIME
+                          - key: SQL_FUNCTION_ARGUMENTS
+                            type: ARRAY
+                            text: "(3)"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "3"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: check_constraint_attributes
+    input: |-
+      create table t (a int, check (a > 0) not valid, check (a < 9) no inherit);
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 30
+          description:
+            text: "create tab.. inherit);"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab..o inherit)"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "t"
+                children:
+                  - type: NAME
+                    text: "t"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(a int, ch..o inherit)"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "a int"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "a"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "int"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: ENUM_SQL_NUMERIC_TYPE
+                            value: INT4
+                  - type: OBJECT_SQL_TABLE_CONSTRAINT
+                    text: "check (a >.. not valid"
+                    children:
+                      - key: SQL_TABLE_CONSTRAINT_TYPE
+                        type: ENUM_SQL_TABLE_CONSTRAINT
+                        value: CHECK
+                      - key: SQL_TABLE_CONSTRAINT_ARGUMENT
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a > 0"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: GREATER_THAN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a > 0"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "0"
+                      - key: SQL_TABLE_CONSTRAINT_ATTRIBUTES
+                        type: ARRAY
+                        text: "not valid"
+                        children:
+                          - type: ENUM_SQL_CONSTRAINT_ATTRIBUTE
+                            value: NOT_VALID
+                  - type: OBJECT_SQL_TABLE_CONSTRAINT
+                    text: "check (a <..no inherit"
+                    children:
+                      - key: SQL_TABLE_CONSTRAINT_TYPE
+                        type: ENUM_SQL_TABLE_CONSTRAINT
+                        value: CHECK
+                      - key: SQL_TABLE_CONSTRAINT_ARGUMENT
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a < 9"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: LESS_THAN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a < 9"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "9"
+                      - key: SQL_TABLE_CONSTRAINT_ATTRIBUTES
+                        type: ARRAY
+                        text: "no inherit"
+                        children:
+                          - type: ENUM_SQL_CONSTRAINT_ATTRIBUTE
+                            value: NO_INHERIT
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: vis_empty_vararg_arrays
+    input: |-
+      select * from t visualize using vegalite (encoding => (detail => []))
+    expected:
+      statements:
+        - type: VIS_VISUALISE
+          ast-begin: 0
+          ast-size: 14
+          description:
+            text: "select * f..il => []))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_VIS_VISUALISE
+            text: "select * f..il => []))"
+            children:
+              - key: VIS_VISUALISE_SELECT
+                type: OBJECT_SQL_SELECT
+                text: "select * from t"
+                children:
+                  - key: SQL_SELECT_TARGETS
+                    type: ARRAY
+                    text: "*"
+                    children:
+                      - type: OBJECT_SQL_RESULT_TARGET
+                        text: "*"
+                        children:
+                          - key: SQL_RESULT_TARGET_STAR
+                            type: BOOL
+                            value: 1
+                  - key: SQL_SELECT_FROM
+                    type: ARRAY
+                    text: "from t"
+                    children:
+                      - type: OBJECT_SQL_TABLEREF
+                        text: "t"
+                        children:
+                          - key: SQL_TABLEREF_NAME
+                            type: ARRAY
+                            text: "t"
+                            children:
+                              - type: NAME
+                                text: "t"
+              - key: VIS_VISUALISE_USING
+                type: NAME
+                text: "vegalite"
+              - key: VIS_VISUALISE_SPEC
+                type: OBJECT_VIS_SPEC
+                text: "encoding =..ail => [])"
+                children:
+                  - key: VIS_SPEC_ENCODING
+                    type: OBJECT_VIS_ENCODING
+                    text: "encoding =..ail => [])"
+                    children:
+                      - key: VIS_ENCODING_DETAIL
+                        type: OBJECT_EXT_VARARG_ARRAY
+                        text: "[]"
+                        children:
+                          - key: EXT_VARARG_ARRAY_VALUES
+                            type: ARRAY
+                            text: "[]"
+                            children: []
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: slice_without_bounds
+    input: |-
+      select a[:] from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select a[:] from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a[:] from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a[:]"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a[:]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a[:]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[:]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[:]"
+                                children: []
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: slice_with_bounds
+    input: |-
+      select a[1:2], b[:3], c[4:] from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 25
+          description:
+            text: "select a[1..4:] from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a[1..4:] from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a[1:2], b[..:3], c[4:]"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a[1:2]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a[1:2]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[1:2]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[1:2]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_LOWER_BOUND
+                                    type: LITERAL_INTEGER
+                                    text: "1"
+                                  - key: SQL_INDIRECTION_INDEX_UPPER_BOUND
+                                    type: LITERAL_INTEGER
+                                    text: "2"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "b[:3]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "b[:3]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "b[:3]"
+                            children:
+                              - type: NAME
+                                text: "b"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[:3]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_UPPER_BOUND
+                                    type: LITERAL_INTEGER
+                                    text: "3"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "c[4:]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "c[4:]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "c[4:]"
+                            children:
+                              - type: NAME
+                                text: "c"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[4:]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_LOWER_BOUND
+                                    type: LITERAL_INTEGER
+                                    text: "4"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
       scanner-errors: []
       parser-errors: []
       line-breaks: []

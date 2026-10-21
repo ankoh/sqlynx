@@ -1150,7 +1150,8 @@ sql_simple_typename:
   | sql_const_interval sql_opt_interval {
       let mut yy_2 = $2;
       if yy_2 == null() {
-          yy_2 = ctx.object(@$, NodeType::OBJECT_SQL_INTERVAL_TYPE, NO_NODES);
+          // Keep the empty object, a bare INTERVAL type has no attributes
+          yy_2 = ctx.object_ex(@$, NodeType::OBJECT_SQL_INTERVAL_TYPE, NO_NODES, false, false);
       }
       yy_2
   }
@@ -1970,7 +1971,7 @@ sql_func_expr_common_subexpr:
   | CURRENT_TIME LRB ICONST RRB {
       ctx.list(
           &[
-              attr(Key::SQL_FUNCTION_NAME, enum_node(loc(&[@1, @2]), KnownFunction::CURRENT_DATE)),
+              attr(Key::SQL_FUNCTION_NAME, enum_node(loc(&[@1, @2]), KnownFunction::CURRENT_TIME)),
               attr(
                   Key::SQL_FUNCTION_ARGUMENTS,
                   ctx.array(loc(&[@2, @3, @4]), &[const_node(@3, AConstType::INTEGER)]),

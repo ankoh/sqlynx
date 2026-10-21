@@ -37,7 +37,7 @@ vararg_key:
 
 vararg_value:
     varargs                   { ctx.array(@$, $1) }
-  | vararg_array_brackets { ctx.object(@$, NodeType::OBJECT_EXT_VARARG_ARRAY, &[attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.array(@1, $1))]) }
+  | vararg_array_brackets { ctx.object(@$, NodeType::OBJECT_EXT_VARARG_ARRAY, &[attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.array_ex(@1, $1, false, false))]) }
   | sql_func_expr             { $1 }
   | sql_columnref             { $1 }
   | sql_a_expr_const          { ctx.expression($1) }

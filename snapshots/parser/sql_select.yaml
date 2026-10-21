@@ -7963,7 +7963,7 @@ parser-snapshots:
                         children:
                           - key: SQL_FUNCTION_NAME
                             type: ENUM_SQL_KNOWN_FUNCTION
-                            value: CURRENT_DATE
+                            value: CURRENT_TIME
                           - key: SQL_FUNCTION_ARGUMENTS
                             type: ARRAY
                             text: "(42)"
@@ -14196,7 +14196,7 @@ parser-snapshots:
       statements:
         - type: SELECT
           ast-begin: 0
-          ast-size: 66
+          ast-size: 67
           description:
             text: "select a[1..a[:k] = :p"
             description-begin: 0
@@ -14332,6 +14332,9 @@ parser-snapshots:
                             children:
                               - type: NAME
                                 text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[:]"
+                                children: []
                   - type: OBJECT_SQL_RESULT_TARGET
                     text: "a[:\"x\"]"
                     children:
