@@ -1,12 +1,12 @@
 //! The SQL scanner.
 //!
 //! A port of the flex scanner `grammar/scanner.l` that reproduces its output exactly, including its
-//! quirks (docs/rust-port/quirks.md). Instead of a generated DFA, the scanner emulates the flex
-//! matching discipline by hand: in every start condition, each rule computes its longest match at
-//! the current position, the longest match wins, and ties go to the rule that comes first in
-//! `scanner.l`. Line breaks are recorded for every match before its action runs, so text that an
-//! action puts back with `yyless` is counted again when it is scanned a second time, exactly like
-//! the C++ `YY_USER_ACTION`.
+//! quirks (docs/rust-port/quirks.md). The rules of every flex start condition are a logos lexer,
+//! which matches like flex: the longest match wins, and ties go to the rule that comes first in
+//! `scanner.l` (through logos priorities). The lexer of the current start condition matches one
+//! token at a time, so that actions can switch the start condition and put text back with
+//! `yyless`. Line breaks are recorded for every match before its action runs, so text that is put
+//! back is counted again when it is scanned a second time, exactly like the C++ `YY_USER_ACTION`.
 //!
 //! [`scan`] then applies the lookahead filter of the C++ `Scanner::Scan`, which turns `NOT`, `NULLS`,
 //! `WITH`, `.` and `VISUALIZE` into their `*_LA` variants depending on the following tokens.
@@ -15,6 +15,7 @@ use crate::keywords::{Keyword, KeywordCategory};
 use crate::names::{NameId, NameRegistry};
 use crate::span::TextSpan;
 use crate::{symbol_kind::*, SymbolKind};
+use logos::Logos;
 use std::collections::VecDeque;
 
 /// The semantic value of a scanned symbol
@@ -155,37 +156,192 @@ enum State {
     Xq,
 }
 
-/// `{space}`
-fn is_space(c: u8) -> bool {
-    matches!(c, b' ' | b'\t' | b'\n' | b'\r' | b'\x0c')
+// The rules of every start condition form a logos lexer. Logos takes the longest match like flex,
+// and resolves a tie by priority where flex takes the rule that comes first in scanner.l. The
+// default priority of a pattern is 2 for every byte or class it has to match, which already ranks
+// `{comment}`, `{xcstart}` and the two-character operators above `{operator}`. The explicit
+// priorities rank the remaining ties in the order of scanner.l.
+//
+// Like flex, the lexers match bytes, not characters (`utf8 = false` and byte-string patterns), so
+// `\x80-\xFF` are identifier bytes.
+
+/// The rules of INITIAL
+#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq)]
+#[logos(utf8 = false)]
+#[logos(subpattern space = br"[ \t\n\r\f]")]
+#[logos(subpattern op_chars = br"[~!@#^&|+\-*/%<>=]")]
+#[logos(subpattern integer = br"[0-9]+")]
+#[logos(subpattern decimal = br"[0-9]*\.[0-9]+|[0-9]+\.[0-9]*")]
+enum Initial {
+    /// `{space}+`
+    #[regex(br"(?&space)+")]
+    Space,
+    /// `{comment}`
+    #[regex(br"--[^\n\r]*", allow_greedy = true)]
+    Comment,
+    /// The Hyper obfuscation markers, case-sensitive unlike the rest of scanner.l
+    #[regex(br"/\*String\([0-9A-F]{4}\)\*/", |_| S_SCONST)]
+    #[regex(br"/\*Integer\([0-9A-F]{4}\)\*/", |_| S_ICONST)]
+    #[regex(br"/\*Float\([0-9A-F]{4}\)\*/", |_| S_FCONST)]
+    #[regex(br"/\*HexString\([0-9A-F]{4}\)\*/", |_| S_XCONST)]
+    #[regex(br"/\*BitString\([0-9A-F]{4}\)\*/", |_| S_BCONST)]
+    ObfuscatedLiteral(SymbolKind),
+    /// `{xcstart}`: matches as much as `{operator}` would, the action puts the operator back
+    #[regex(br"/\*(?&op_chars)*")]
+    CommentStart,
+    /// `{xbstart}`, `{xhstart}`, `{xqstart}`, `{xdstart}`, `{xbtstart}`
+    #[regex(b"[bB]'", |_| State::Xb)]
+    #[regex(b"[xX]'", |_| State::Xh)]
+    #[token("'", |_| State::Xq)]
+    #[token("\"", |_| State::Xd)]
+    #[token("`", |_| State::Xbt)]
+    Begin(State),
+    /// The operators and punctuation with a token of their own
+    #[token("::", |_| S_TYPECAST)]
+    #[token("..", |_| S_DOT_DOT)]
+    #[token(".", |_| S_DOT)]
+    #[token(":=", |_| S_COLON_EQUALS)]
+    #[token("=>", |_| S_EQUALS_GREATER)]
+    #[token("<=", |_| S_LESS_EQUALS)]
+    #[token(">=", |_| S_GREATER_EQUALS)]
+    #[token("<>", |_| S_NOT_EQUALS)]
+    #[token("!=", |_| S_NOT_EQUALS)]
+    #[token(",", |_| S_COMMA)]
+    #[token("(", |_| S_LRB)]
+    #[token(")", |_| S_RRB)]
+    #[token("[", |_| S_LSB)]
+    #[token("]", |_| S_RSB)]
+    #[token("{", |_| S_LCB)]
+    #[token("}", |_| S_RCB)]
+    #[token(";", |_| S_SEMICOLON)]
+    #[token(":", |_| S_COLON)]
+    #[token("+", |_| S_PLUS)]
+    #[token("-", |_| S_MINUS)]
+    #[token("/", |_| S_DIVIDE)]
+    #[token("*", |_| S_STAR)]
+    #[token("%", |_| S_MODULO)]
+    #[token("^", |_| S_CIRCUMFLEX)]
+    #[token("&", |_| S_AMPERSAND)]
+    #[token("|", |_| S_PIPE)]
+    #[token("!", |_| S_EXCLAMATION_MARK)]
+    #[token("<", |_| S_LESS_THAN)]
+    #[token(">", |_| S_GREATER_THAN)]
+    #[token("=", |_| S_EQUALS)]
+    #[token("$", |_| S_DOLLAR)]
+    Token(SymbolKind),
+    /// `{raw_dot_trailing}`
+    #[regex(br"\.(?&space)")]
+    DotTrailing,
+    /// `{raw_question_mark}`, the action checks the trailing context
+    #[token("?")]
+    QuestionMark,
+    /// `{operator}`, below the single-character tokens
+    #[regex(br"(?&op_chars)+", priority = 1)]
+    Operator,
+    /// `{integer}`
+    #[regex(br"(?&integer)")]
+    Integer,
+    /// `{decimal}`, `{real}`
+    #[regex(br"(?&decimal)")]
+    #[regex(br"((?&integer)|(?&decimal))[Ee][-+]?[0-9]+")]
+    Float,
+    /// `{decimalfail}`
+    #[regex(br"(?&integer)\.\.")]
+    DecimalFail,
+    /// `{realfail1}`
+    #[regex(br"((?&integer)|(?&decimal))[Ee]")]
+    RealFail1,
+    /// `{realfail2}`
+    #[regex(br"((?&integer)|(?&decimal))[Ee][-+]")]
+    RealFail2,
+    /// `{identifier}`
+    #[regex(br"[A-Za-z\x80-\xFF_][A-Za-z\x80-\xFF_0-9$]*")]
+    Identifier,
+    /// `{other}`, below everything else
+    #[regex(br"[^\n]", priority = 0)]
+    Other,
 }
 
-/// `{horiz_space}`
-fn is_horiz_space(c: u8) -> bool {
-    matches!(c, b' ' | b'\t' | b'\x0c')
+/// The rules of xc
+#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq)]
+#[logos(utf8 = false)]
+enum Xc {
+    /// `{xcstart}`
+    #[regex(br"/\*[~!@#^&|+\-*/%<>=]*")]
+    CommentStart,
+    /// `{xcstop}`
+    #[regex(br"\*+/")]
+    CommentStop,
+    /// `{xcinside}`, `{op_chars}`, `\*+`
+    #[regex(br"[^*/]+")]
+    #[regex(br"\*+")]
+    #[token("/")]
+    Inside,
 }
 
-/// `{newline}`
-fn is_newline(c: u8) -> bool {
-    matches!(c, b'\n' | b'\r')
+/// The rules of xb and xh
+#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq)]
+#[logos(utf8 = false)]
+#[logos(subpattern whitespace = br"[ \t\n\r\f]|--[^\n\r]*")]
+enum XbXh {
+    /// `{quotestop}`
+    #[regex(br"'(?&whitespace)*", allow_greedy = true)]
+    QuoteStop,
+    /// `{quotefail}`, below `{quotestop}`
+    #[regex(br"'(?&whitespace)*-", allow_greedy = true, priority = 1)]
+    QuoteFail,
+    /// `{xbinside}`, `{xhinside}`, `{quotecontinue}`
+    #[regex(br"[^']+")]
+    #[regex(br"'([ \t\f]|--[^\n\r]*)*[\n\r]([ \t\n\r\f]|--[^\n\r]*[\n\r])*'", allow_greedy = true)]
+    Inside,
 }
 
-/// `{op_chars}`
-fn is_op_char(c: u8) -> bool {
-    matches!(
-        c,
-        b'~' | b'!' | b'@' | b'#' | b'^' | b'&' | b'|' | b'+' | b'-' | b'*' | b'/' | b'%' | b'<' | b'>' | b'='
-    )
+/// The rules of xq
+#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq)]
+#[logos(utf8 = false)]
+#[logos(subpattern whitespace = br"[ \t\n\r\f]|--[^\n\r]*")]
+enum Xq {
+    /// `{quotestop}`
+    #[regex(br"'(?&whitespace)*", allow_greedy = true)]
+    QuoteStop,
+    /// `{quotefail}`, below `{quotestop}`
+    #[regex(br"'(?&whitespace)*-", allow_greedy = true, priority = 1)]
+    QuoteFail,
+    /// `{xqdouble}`, `{xqinside}`
+    #[token("''")]
+    #[regex(br"[^']+")]
+    Inside,
 }
 
-/// `{ident_start}`
-fn is_ident_start(c: u8) -> bool {
-    c.is_ascii_alphabetic() || c == b'_' || c >= 0x80
+/// The rules of xd
+#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq)]
+#[logos(utf8 = false)]
+enum Xd {
+    /// `{xddouble}`, `{xdinside}`
+    #[token("\"\"")]
+    #[regex(br#"[^"]+"#)]
+    Inside,
+    /// `{xdstop}`
+    #[token("\"")]
+    Stop,
+}
+
+/// The rules of xbt
+#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq)]
+#[logos(utf8 = false)]
+enum Xbt {
+    /// `{xbtdouble}`, `{xbtinside}`
+    #[token("``")]
+    #[regex(br"[^`]+")]
+    Inside,
+    /// `{xbtstop}`
+    #[token("`")]
+    Stop,
 }
 
 /// `{ident_cont}`
 fn is_ident_cont(c: u8) -> bool {
-    is_ident_start(c) || c.is_ascii_digit() || c == b'$'
+    c.is_ascii_alphanumeric() || c == b'_' || c == b'$' || c >= 0x80
 }
 
 /// The single-character tokens of `matchSpecialCharacter`
@@ -229,50 +385,6 @@ fn two_char_operator(a: u8, b: u8) -> Option<SymbolKind> {
     })
 }
 
-/// The Hyper obfuscation markers: `/*<Type>(<4 uppercase hex digits>)*/`, matched case-sensitively.
-const OBFUSCATION_MARKERS: [(&[u8], SymbolKind); 5] = [
-    (b"String", S_SCONST),
-    (b"Integer", S_ICONST),
-    (b"Float", S_FCONST),
-    (b"HexString", S_XCONST),
-    (b"BitString", S_BCONST),
-];
-
-/// What a matched rule does
-#[derive(Clone, Copy, Debug)]
-enum Rule {
-    /// Matched text without an action
-    Skip,
-    /// `{comment}`
-    Comment,
-    /// A Hyper obfuscation marker
-    ObfuscatedLiteral(SymbolKind),
-    /// `{xcstart}` (in INITIAL or nested in xc)
-    CommentStart,
-    /// `{xcstop}`
-    CommentStop,
-    /// `{xbstart}`, `{xhstart}`, `{xqstart}`, `{xdstart}`, `{xbtstart}`
-    Begin(State),
-    /// `{quotestop}` in xb, xh, xq
-    QuoteStop,
-    /// `{quotefail}` in xb, xh, xq
-    QuoteFail,
-    /// `{xdstop}`, `{xbtstop}`
-    IdentifierStop,
-    /// A token spanning the whole match
-    Token(SymbolKind),
-    /// `{raw_dot_trailing}`: the token excludes the space
-    DotTrailing,
-    /// `{operator}`
-    Operator,
-    /// `{integer}`
-    Integer,
-    /// A float rule that puts back `putback` characters
-    Float { putback: usize },
-    /// `{identifier}`
-    Identifier,
-}
-
 struct Lexer<'a> {
     text: &'a [u8],
     pos: usize,
@@ -295,18 +407,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn at(&self, i: usize) -> Option<u8> {
-        self.text.get(i).copied()
-    }
-
-    fn is(&self, i: usize, c: u8) -> bool {
-        self.at(i) == Some(c)
-    }
-
-    fn run(&self, from: usize, pred: impl Fn(u8) -> bool) -> usize {
-        self.text[from.min(self.text.len())..].iter().take_while(|&&c| pred(c)).count()
-    }
-
     fn span(begin: usize, length: usize) -> TextSpan {
         TextSpan::new(begin as u32, length as u32)
     }
@@ -314,6 +414,30 @@ impl<'a> Lexer<'a> {
     /// The location of the end-of-buffer match, which the EOF rules see
     fn eof_location(&self) -> TextSpan {
         Self::span(self.text.len(), 1)
+    }
+
+    /// Match the rules of a start condition at the current position and consume the match.
+    ///
+    /// Line breaks are recorded for the whole match before the action runs (`YY_USER_ACTION`), so
+    /// text that the action puts back with `yyless` is counted again when it is scanned once more.
+    fn next_match<T>(&mut self, out: &mut ScannedScript) -> (T, TextSpan)
+    where
+        T: Logos<'a, Source = [u8], Extras = ()>,
+    {
+        let start = self.pos;
+        let mut lexer = T::lexer(&self.text[start..]);
+        // Every byte starts a match in every start condition.
+        let Some(Ok(token)) = lexer.next() else {
+            unreachable!("no rule matches at {start}")
+        };
+        let length = lexer.span().end;
+        for (i, &c) in self.text[start..start + length].iter().enumerate() {
+            if c == b'\n' {
+                out.line_breaks.push(Self::span(start + i, 1));
+            }
+        }
+        self.pos = start + length;
+        (token, Self::span(start, length))
     }
 
     /// Scan the next raw token (before the lookahead filter)
@@ -337,25 +461,49 @@ impl<'a> Lexer<'a> {
                 self.state = State::Initial;
                 continue;
             }
-            let start = self.pos;
-            let (rule, length) = match self.state {
-                State::Initial => self.match_initial(start),
-                State::Xc => self.match_comment(start),
-                State::Xb | State::Xh => self.match_bit_or_hex_string(start),
-                State::Xq => self.match_quoted_string(start),
-                State::Xd => self.match_quoted_identifier(start, b'"'),
-                State::Xbt => self.match_quoted_identifier(start, b'`'),
-            };
-            debug_assert!(length > 0);
-            // YY_USER_ACTION
-            for (i, &c) in self.text[start..start + length].iter().enumerate() {
-                if c == b'\n' {
-                    out.line_breaks.push(Self::span(start + i, 1));
+            let symbol = match self.state {
+                State::Initial => {
+                    let (token, loc) = self.next_match::<Initial>(out);
+                    self.initial(out, token, loc)
                 }
-            }
-            self.pos = start + length;
-            let loc = Self::span(start, length);
-            if let Some(symbol) = self.action(out, rule, loc) {
+                State::Xc => match self.next_match::<Xc>(out) {
+                    (Xc::CommentStart, mut loc) => {
+                        self.yyless(&mut loc, 2);
+                        self.ext_depth += 1;
+                        None
+                    }
+                    (Xc::CommentStop, loc) => {
+                        self.ext_depth -= 1;
+                        if self.ext_depth == 0 {
+                            out.comments.push(self.ext_begin.cover(loc));
+                            self.state = State::Initial;
+                        }
+                        None
+                    }
+                    (Xc::Inside, _) => None,
+                },
+                State::Xb | State::Xh => match self.next_match::<XbXh>(out) {
+                    (XbXh::QuoteStop, loc) => Some(self.quote_stop(loc)),
+                    (XbXh::QuoteFail, loc) => Some(self.quote_fail(loc)),
+                    (XbXh::Inside, _) => None,
+                },
+                State::Xq => match self.next_match::<Xq>(out) {
+                    (Xq::QuoteStop, loc) => Some(self.quote_stop(loc)),
+                    (Xq::QuoteFail, loc) => Some(self.quote_fail(loc)),
+                    (Xq::Inside, _) => None,
+                },
+                State::Xd => match self.next_match::<Xd>(out) {
+                    (Xd::Stop, loc) => Some(self.identifier_stop(out, loc, b'"', "zero-length delimited identifier")),
+                    (Xd::Inside, _) => None,
+                },
+                State::Xbt => match self.next_match::<Xbt>(out) {
+                    (Xbt::Stop, loc) => {
+                        Some(self.identifier_stop(out, loc, b'`', "zero-length backtick-quoted identifier"))
+                    }
+                    (Xbt::Inside, _) => None,
+                },
+            };
+            if let Some(symbol) = symbol {
                 return symbol;
             }
         }
@@ -367,80 +515,81 @@ impl<'a> Lexer<'a> {
         loc.length = n as u32;
     }
 
-    /// Run the action of a rule. Returns a symbol if the action returns one.
-    fn action(&mut self, out: &mut ScannedScript, rule: Rule, mut loc: TextSpan) -> Option<Symbol> {
-        match rule {
-            Rule::Skip => None,
-            Rule::Comment => {
+    /// Run the action of an INITIAL rule. Returns a symbol if the action returns one.
+    fn initial(&mut self, out: &mut ScannedScript, token: Initial, mut loc: TextSpan) -> Option<Symbol> {
+        match token {
+            Initial::Space => None,
+            Initial::Comment => {
                 out.comments.push(loc);
                 None
             }
-            Rule::ObfuscatedLiteral(kind) => {
+            Initial::ObfuscatedLiteral(kind) => {
                 out.obfuscated_literals.push(obfuscated_literal(self.text, loc));
                 Some(Symbol::new(kind, loc))
             }
-            Rule::CommentStart => {
+            Initial::CommentStart => {
                 self.yyless(&mut loc, 2);
-                if self.state == State::Initial {
-                    self.ext_begin = loc;
-                    self.state = State::Xc;
-                }
+                self.ext_begin = loc;
                 self.ext_depth += 1;
+                self.state = State::Xc;
                 None
             }
-            Rule::CommentStop => {
-                self.ext_depth -= 1;
-                if self.ext_depth == 0 {
-                    out.comments.push(self.ext_begin.cover(loc));
-                    self.state = State::Initial;
-                }
-                None
-            }
-            Rule::Begin(state) => {
+            Initial::Begin(state) => {
                 self.ext_begin = loc;
                 self.state = state;
                 None
             }
-            Rule::QuoteStop => {
-                let kind = self.literal_kind();
-                self.state = State::Initial;
-                Some(self.read_literal(kind, self.ext_begin.cover(loc)))
-            }
-            Rule::QuoteFail => {
-                let kind = self.literal_kind();
-                let literal_end = TextSpan::new(loc.offset, 1);
-                self.yyless(&mut loc, 1);
-                self.state = State::Initial;
-                Some(self.read_literal(kind, self.ext_begin.cover(literal_end)))
-            }
-            Rule::IdentifierStop => {
-                let (quote, message) = match self.state {
-                    State::Xd => (b'"', "zero-length delimited identifier"),
-                    _ => (b'`', "zero-length backtick-quoted identifier"),
-                };
-                let loc = self.ext_begin.cover(loc);
-                if loc.length == 2 {
-                    out.errors.push(ScannerError {
-                        location: loc,
-                        message: message.to_string(),
-                    });
-                }
-                self.state = State::Initial;
-                Some(self.read_quoted_identifier(out, loc, quote))
-            }
-            Rule::Token(kind) => Some(Symbol::new(kind, loc)),
-            Rule::DotTrailing => Some(Symbol::new(S_DOT_TRAILING, TextSpan::new(loc.offset, 1))),
-            Rule::Operator => Some(self.operator(out, loc)),
+            Initial::Token(kind) => Some(Symbol::new(kind, loc)),
+            Initial::DotTrailing => Some(Symbol::new(S_DOT_TRAILING, TextSpan::new(loc.offset, 1))),
+            // ?name, ?1 and ?"name" are named parameters, a standalone ? is a positional parameter
+            Initial::QuestionMark => match self.text.get(self.pos) {
+                Some(&c) if is_ident_cont(c) || c == b'"' => Some(Symbol::new(S_QUESTION_MARK, loc)),
+                _ => Some(Symbol::new(S_PARAM, loc)),
+            },
+            Initial::Operator => Some(self.operator(out, loc)),
             // ReadInteger returns FCONST only if from_chars reports invalid_argument, which a digit
             // sequence never does (overflowing integers stay ICONST).
-            Rule::Integer => Some(Symbol::new(S_ICONST, loc)),
-            Rule::Float { putback } => {
+            Initial::Integer => Some(Symbol::new(S_ICONST, loc)),
+            Initial::Float => Some(Symbol::new(S_FCONST, loc)),
+            Initial::DecimalFail | Initial::RealFail1 | Initial::RealFail2 => {
+                // Put back the dots, or the exponent marker and its sign
+                let putback = if token == Initial::RealFail1 { 1 } else { 2 };
                 let keep = loc.length as usize - putback;
                 self.yyless(&mut loc, keep);
                 Some(Symbol::new(S_FCONST, loc))
             }
-            Rule::Identifier => Some(self.read_identifier(out, loc)),
+            Initial::Identifier => Some(self.read_identifier(out, loc)),
+            Initial::Other => Some(Symbol::new(S_RAW_CHAR, loc)),
         }
+    }
+
+    /// The `{quotestop}` action of xb, xh and xq
+    fn quote_stop(&mut self, loc: TextSpan) -> Symbol {
+        let kind = self.literal_kind();
+        self.state = State::Initial;
+        self.read_literal(kind, self.ext_begin.cover(loc))
+    }
+
+    /// The `{quotefail}` action of xb, xh and xq
+    fn quote_fail(&mut self, mut loc: TextSpan) -> Symbol {
+        let kind = self.literal_kind();
+        let literal_end = TextSpan::new(loc.offset, 1);
+        self.yyless(&mut loc, 1);
+        self.state = State::Initial;
+        self.read_literal(kind, self.ext_begin.cover(literal_end))
+    }
+
+    /// The `{xdstop}` and `{xbtstop}` actions
+    fn identifier_stop(&mut self, out: &mut ScannedScript, loc: TextSpan, quote: u8, message: &str) -> Symbol {
+        let loc = self.ext_begin.cover(loc);
+        if loc.length == 2 {
+            out.errors.push(ScannerError {
+                location: loc,
+                message: message.to_string(),
+            });
+        }
+        self.state = State::Initial;
+        self.read_quoted_identifier(out, loc, quote)
     }
 
     /// The token kind of the literal that the current start condition scans
@@ -553,286 +702,6 @@ impl<'a> Lexer<'a> {
         }
         Symbol::new(S_Op, loc)
     }
-
-    // -----------------------------------------------------------------------------------------
-    // Rule matching
-    // -----------------------------------------------------------------------------------------
-
-    /// Match the rules of INITIAL. Returns the winning rule and its match length.
-    fn match_initial(&self, p: usize) -> (Rule, usize) {
-        let c = self.text[p];
-        let next = self.at(p + 1);
-        match c {
-            _ if is_space(c) => (Rule::Skip, self.run(p, is_space)),
-            b'-' if next == Some(b'-') => (Rule::Comment, 2 + self.run(p + 2, |c| !is_newline(c))),
-            b'/' => {
-                if let Some(m) = self.match_obfuscation_marker(p) {
-                    return m;
-                }
-                if next == Some(b'*') {
-                    // {xcstart} matches as much as {operator} and comes first
-                    return (Rule::CommentStart, 2 + self.run(p + 2, is_op_char));
-                }
-                self.match_operator(p)
-            }
-            _ if is_op_char(c) => self.match_operator(p),
-            b':' => match next {
-                Some(b':') => (Rule::Token(S_TYPECAST), 2),
-                Some(b'=') => (Rule::Token(S_COLON_EQUALS), 2),
-                _ => (Rule::Token(S_COLON), 1),
-            },
-            b'.' => match next {
-                Some(b'.') => (Rule::Token(S_DOT_DOT), 2),
-                Some(d) if d.is_ascii_digit() => self.match_number(p),
-                Some(s) if is_space(s) => (Rule::DotTrailing, 2),
-                _ => (Rule::Token(S_DOT), 1),
-            },
-            _ if c.is_ascii_digit() => self.match_number(p),
-            b'?' => match next {
-                Some(n) if is_ident_cont(n) || n == b'"' => (Rule::Token(S_QUESTION_MARK), 1),
-                _ => (Rule::Token(S_PARAM), 1),
-            },
-            b'$' => (Rule::Token(S_DOLLAR), 1),
-            b'\'' => (Rule::Begin(State::Xq), 1),
-            b'"' => (Rule::Begin(State::Xd), 1),
-            b'`' => (Rule::Begin(State::Xbt), 1),
-            b'b' | b'B' if next == Some(b'\'') => (Rule::Begin(State::Xb), 2),
-            b'x' | b'X' if next == Some(b'\'') => (Rule::Begin(State::Xh), 2),
-            _ if is_ident_start(c) => (Rule::Identifier, 1 + self.run(p + 1, is_ident_cont)),
-            _ => match special_character(c) {
-                Some(kind) => (Rule::Token(kind), 1),
-                None => (Rule::Token(S_RAW_CHAR), 1),
-            },
-        }
-    }
-
-    fn match_obfuscation_marker(&self, p: usize) -> Option<(Rule, usize)> {
-        let rest = &self.text[p..];
-        let body = rest.strip_prefix(b"/*")?;
-        for (name, kind) in OBFUSCATION_MARKERS {
-            let Some(args) = body.strip_prefix(name) else { continue };
-            let ok = args.len() >= 8
-                && args[0] == b'('
-                && args[1..5].iter().all(|c| c.is_ascii_digit() || (b'A'..=b'F').contains(c))
-                && &args[5..8] == b")*/";
-            if ok {
-                return Some((Rule::ObfuscatedLiteral(kind), 2 + name.len() + 8));
-            }
-        }
-        None
-    }
-
-    /// `{operator}` against the single- and two-character operator rules that come before it
-    fn match_operator(&self, p: usize) -> (Rule, usize) {
-        let length = self.run(p, is_op_char);
-        let c = self.text[p];
-        if length == 1 {
-            return match special_character(c) {
-                Some(kind) => (Rule::Token(kind), 1),
-                None => (Rule::Operator, 1),
-            };
-        }
-        if length == 2 {
-            if let Some(kind) = two_char_operator(c, self.text[p + 1]) {
-                return (Rule::Token(kind), 2);
-            }
-        }
-        (Rule::Operator, length)
-    }
-
-    /// `{integer}`, `{decimal}`, `{decimalfail}`, `{real}`, `{realfail1}`, `{realfail2}`
-    fn match_number(&self, p: usize) -> (Rule, usize) {
-        let digits = self.run(p, |c| c.is_ascii_digit());
-        let mut end = p + digits;
-        let mut rule = Rule::Integer;
-        if self.is(end, b'.') {
-            if digits > 0 && self.is(end + 1, b'.') {
-                return (Rule::Float { putback: 2 }, digits + 2);
-            }
-            end += 1 + self.run(end + 1, |c| c.is_ascii_digit());
-            rule = Rule::Float { putback: 0 };
-        }
-        if matches!(self.at(end), Some(b'e' | b'E')) {
-            let mut exponent = end + 1;
-            let signed = matches!(self.at(exponent), Some(b'+' | b'-'));
-            if signed {
-                exponent += 1;
-            }
-            let exponent_digits = self.run(exponent, |c| c.is_ascii_digit());
-            if exponent_digits > 0 {
-                return (Rule::Float { putback: 0 }, exponent + exponent_digits - p);
-            }
-            let putback = if signed { 2 } else { 1 };
-            return (Rule::Float { putback }, exponent - p);
-        }
-        (rule, end - p)
-    }
-
-    /// The rules of xc
-    fn match_comment(&self, p: usize) -> (Rule, usize) {
-        match self.text[p] {
-            b'/' if self.is(p + 1, b'*') => (Rule::CommentStart, 2 + self.run(p + 2, is_op_char)),
-            b'/' => (Rule::Skip, 1),
-            b'*' => {
-                let stars = self.run(p, |c| c == b'*');
-                if self.is(p + stars, b'/') {
-                    (Rule::CommentStop, stars + 1)
-                } else {
-                    (Rule::Skip, stars)
-                }
-            }
-            _ => (Rule::Skip, self.run(p, |c| c != b'*' && c != b'/')),
-        }
-    }
-
-    /// The rules of xb and xh
-    fn match_bit_or_hex_string(&self, p: usize) -> (Rule, usize) {
-        if self.text[p] != b'\'' {
-            return (Rule::Skip, self.run(p, |c| c != b'\''));
-        }
-        let stop = self.quote_stop(p);
-        let fail = self.quote_fail(p);
-        let cont = self.quote_continue(p);
-        // The longest match wins. {quotecontinue} never ties with {quotestop} or {quotefail}:
-        // their last characters differ.
-        let mut best = (Rule::QuoteStop, stop);
-        if let Some(fail) = fail.filter(|&f| f > best.1) {
-            best = (Rule::QuoteFail, fail);
-        }
-        if let Some(cont) = cont.filter(|&c| c > best.1) {
-            best = (Rule::Skip, cont);
-        }
-        best
-    }
-
-    /// The rules of xq
-    fn match_quoted_string(&self, p: usize) -> (Rule, usize) {
-        if self.text[p] != b'\'' {
-            return (Rule::Skip, self.run(p, |c| c != b'\''));
-        }
-        let mut best = (Rule::QuoteStop, self.quote_stop(p));
-        if let Some(fail) = self.quote_fail(p).filter(|&f| f > best.1) {
-            best = (Rule::QuoteFail, fail);
-        }
-        if self.is(p + 1, b'\'') && 2 > best.1 {
-            best = (Rule::Skip, 2);
-        }
-        best
-    }
-
-    /// The rules of xd and xbt
-    fn match_quoted_identifier(&self, p: usize, quote: u8) -> (Rule, usize) {
-        if self.text[p] != quote {
-            return (Rule::Skip, self.run(p, |c| c != quote));
-        }
-        if self.is(p + 1, quote) {
-            (Rule::Skip, 2)
-        } else {
-            (Rule::IdentifierStop, 1)
-        }
-    }
-
-    /// The end of a `--` comment that starts at `p`: the next newline or the end of the text
-    fn comment_end(&self, p: usize) -> usize {
-        p + 2 + self.run(p + 2, |c| !is_newline(c))
-    }
-
-    /// The positions reachable from `from` through `{whitespace}*`, as a bitmap starting at `from` that ends at the
-    /// last reachable position
-    fn whitespace_reach(&self, from: usize) -> Vec<bool> {
-        let mut reach = vec![true];
-        let mut comment_covered = 0;
-        let mut i = from;
-        while i - from < reach.len() {
-            if reach[i - from] {
-                match self.at(i) {
-                    Some(c) if is_space(c) => mark(&mut reach, i + 1 - from),
-                    Some(b'-') if self.is(i + 1, b'-') => {
-                        let end = self.comment_end(i);
-                        for j in (i + 2).max(comment_covered)..=end {
-                            mark(&mut reach, j - from);
-                        }
-                        comment_covered = comment_covered.max(end + 1);
-                    }
-                    _ => {}
-                }
-            }
-            i += 1;
-        }
-        reach
-    }
-
-    /// The length of `{quotestop}` = `{quote}{whitespace}*` at `p`
-    fn quote_stop(&self, p: usize) -> usize {
-        let reach = self.whitespace_reach(p + 1);
-        1 + reach.iter().rposition(|&r| r).unwrap()
-    }
-
-    /// The length of `{quotefail}` = `{quote}{whitespace}*"-"` at `p`
-    fn quote_fail(&self, p: usize) -> Option<usize> {
-        let reach = self.whitespace_reach(p + 1);
-        (0..reach.len())
-            .rev()
-            .find(|&i| reach[i] && self.is(p + 1 + i, b'-'))
-            .map(|i| 1 + i + 1)
-    }
-
-    /// The length of `{quotecontinue}` = `{quote}{whitespace_with_newline}{quote}` at `p`, where
-    /// `{whitespace_with_newline}` = `{horiz_whitespace}*{newline}{special_whitespace}*`
-    fn quote_continue(&self, p: usize) -> Option<usize> {
-        let from = p + 1;
-        // {horiz_whitespace}* = ({horiz_space}|{comment})*
-        let mut horiz = vec![true];
-        let mut i = from;
-        while i - from < horiz.len() {
-            if horiz[i - from] {
-                match self.at(i) {
-                    Some(c) if is_horiz_space(c) => mark(&mut horiz, i + 1 - from),
-                    Some(b'-') if self.is(i + 1, b'-') => {
-                        for j in i + 2..=self.comment_end(i) {
-                            mark(&mut horiz, j - from);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            i += 1;
-        }
-        // {newline}
-        let mut special = Vec::new();
-        for offset in (0..horiz.len()).filter(|&offset| horiz[offset]) {
-            if self.at(from + offset).is_some_and(is_newline) {
-                mark(&mut special, offset + 1);
-            }
-        }
-        // {special_whitespace}* = ({space}+|{comment}{newline})*
-        let mut i = from;
-        while i - from < special.len() {
-            if special[i - from] {
-                match self.at(i) {
-                    Some(c) if is_space(c) => mark(&mut special, i + 1 - from),
-                    Some(b'-') if self.is(i + 1, b'-') => {
-                        let end = self.comment_end(i);
-                        if end < self.text.len() {
-                            mark(&mut special, end + 1 - from);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            i += 1;
-        }
-        // {quote}
-        (0..special.len()).rev().find(|&offset| special[offset] && self.is(from + offset, b'\'')).map(|offset| offset + 2)
-    }
-}
-
-/// Mark a position of a reachability bitmap, growing the bitmap up to it
-fn mark(reach: &mut Vec<bool>, position: usize) {
-    if position >= reach.len() {
-        reach.resize(position + 1, false);
-    }
-    reach[position] = true;
 }
 
 /// The C++ `AddObfuscatedLiteral`: derive an executable literal from the hash of a marker.

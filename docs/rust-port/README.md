@@ -14,7 +14,7 @@ build and the emsdk toolchain are gone.
   - Code completion drives the raw LR tables (state snapshots, LAC expected sets, suffix probes) and
     the grammar resolves its conflicts with a Postgres-style precedence ladder. LALRPOP supports
     neither.
-- **Scanner: hand-written**, bug-compatible with `grammar/scanner.l`.
+- **Scanner: logos**, bug-compatible with `grammar/scanner.l`.
 - **JS boundary: wasm-bindgen with a new API.** FlatBuffers stays the payload format, so the generated
   TypeScript readers keep working.
 - **Parse tree: unchanged by default.** Intentional changes follow [ast-changes.md](ast-changes.md) and

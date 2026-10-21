@@ -52,6 +52,7 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = [
         "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:logos",
         "@core_crates//:serde_json",
     ],
 )

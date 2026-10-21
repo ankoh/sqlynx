@@ -25,6 +25,8 @@ arrow-ipc = { version = "=60.0.0", default-features = false }
 arrow-schema = { version = "=60.0.0", default-features = false }
 flatbuffers = "=25.12.19"
 libtest-mimic = "=0.8.1"
+# Lexer generator of the SQL scanner (dashql_grammar::scanner)
+logos = "=0.16.1"
 # CommonMark parser for the Markdown renderer spec (dashql_core::visualize::markdown)
 pulldown-cmark = { version = "=0.13.4", default-features = false }
 ropey = "=1.6.1"
