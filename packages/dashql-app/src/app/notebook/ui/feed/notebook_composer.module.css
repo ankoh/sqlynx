@@ -29,6 +29,7 @@
 
 .composer_editor :global(.cm-placeholder) {
     color: var(--base_color_neutral_5);
+    font-size: var(--font_size_body);
 }
 
 .composer_action_bar {
