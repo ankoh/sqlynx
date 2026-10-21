@@ -31,9 +31,18 @@ import { ScriptEditor } from '../script_editor.js';
 import { ScriptStatisticsBar } from '../script_statistics_bar.js';
 import { formatScriptEditor, formattingDialectForConnector, isScriptFormattable } from '../script_format.js';
 import { FeedEntryFooter } from './feed_entry_footer.js';
+import { DashQLGenerationPlaceholder, DashQLGenerationPlaceholderEffect } from '../../scripts/editor/dashql_generation_placeholder.js';
 import { ScriptActionMenu } from '../script_action_menu.js';
 
 const DragHandleIcon: Icon = SymbolIcon('drag_handle_16');
+
+/// The translation of a question into the SQL of a script
+export interface ScriptGeneration {
+    /// Aborts the translation
+    controller: AbortController;
+    /// The error of a failed translation, null while it runs
+    error: string | null;
+}
 
 export interface ScriptCardProps {
     notebookId: string;
@@ -69,6 +78,12 @@ export interface ScriptCardProps {
     onAcceptDiff: (scriptKey: number) => void;
     onRejectDiff: (scriptKey: number) => void;
     resultExpanded: boolean;
+    /// The running or failed translation of the question of the script into SQL
+    generation: ScriptGeneration | null;
+    /// Stop the translation of the script
+    onStopGeneration: (scriptKey: number) => void;
+    /// Dismiss the error of a failed translation
+    onDismissGeneration: (scriptKey: number) => void;
     onToggleResultExpanded: (scriptKey: number) => void;
     onAutoCollapseResult: (scriptKey: number, queryId: number) => void;
     onResetAutoCollapsedResult: (scriptKey: number, queryId: number | null) => void;
@@ -206,6 +221,15 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
         }
     }, [cancelQuery, entryStatus?.kind, props.databaseId, props.scriptData?.latestQueryId, notebookExecution.busy, notebookExecution.stop]);
 
+    // A question is being translated into the SQL of the script
+    const generating = props.generation != null && props.generation.error == null;
+    const stopGeneration = React.useCallback(() => {
+        if (scriptKey != null) props.onStopGeneration(scriptKey);
+    }, [scriptKey, props.onStopGeneration]);
+    const dismissGeneration = React.useCallback(() => {
+        if (scriptKey != null) props.onDismissGeneration(scriptKey);
+    }, [scriptKey, props.onDismissGeneration]);
+
     const acceptDiff = React.useCallback(() => {
         if (scriptKey != null) props.onAcceptDiff(scriptKey);
     }, [scriptKey, props.onAcceptDiff]);
@@ -215,6 +239,13 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
 
     const [isEditing, setIsEditing] = React.useState(false);
     const [editorView, setEditorView] = React.useState<EditorView | null>(null);
+    // The editor marks where the generated SQL will appear.
+    // Synced after every render, the script editor replaces its state when the script session changes.
+    React.useEffect(() => {
+        const shown = editorView?.state?.field(DashQLGenerationPlaceholder, false);
+        if (shown === undefined || shown === generating) return;
+        editorView!.dispatch({ effects: DashQLGenerationPlaceholderEffect.of(generating) });
+    });
     const formattingDialect = formattingDialectForConnector(props.connectorType);
     // Formattability only depends on the text, cursor moves bump the state revision but not the text version
     const isFormattable = React.useMemo(
@@ -285,6 +316,16 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
         >
             <div className={styles.feed_entry_cell} data-result-card={hasFooterContent ? '' : undefined}>
                 <div className={styles.feed_entry_action_bar}>
+                    {generating ? (
+                        <IconButton
+                            variant={ButtonVariant.Invisible}
+                            size={ButtonSize.Small}
+                            aria-label={`Stop generating ${displayName} query`}
+                            onClick={stopGeneration}
+                        >
+                            <SquareFillIcon size={14} />
+                        </IconButton>
+                    ) : (
                     <ExecuteConnectionGuard notebookId={props.notebookId} blocked={!queryActive && props.connectionHealth !== ConnectionHealth.ONLINE}>
                     <IconButton
                         className={props.isFocused ? undefined : styles.feed_entry_execute_unfocused}
@@ -305,6 +346,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
                         {queryActive ? <SquareFillIcon size={14} /> : <PaperAirplaneIcon size={16} />}
                     </IconButton>
                     </ExecuteConnectionGuard>
+                    )}
                     <div className={styles.feed_entry_file_name}>
                         <ScriptName
                             file={displayName}
@@ -411,6 +453,19 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
                             </div>
                         )}
                     </div>
+                    {props.generation?.error != null && (
+                        <div className={styles.feed_generation_error} role="alert">
+                            <span className={styles.feed_generation_error_message}>{props.generation.error}</span>
+                            <IconButton
+                                variant={ButtonVariant.Invisible}
+                                size={ButtonSize.Small}
+                                aria-label="Dismiss the error"
+                                onClick={dismissGeneration}
+                            >
+                                <CrossIcon size={14} />
+                            </IconButton>
+                        </div>
+                    )}
                 </div>
                 {hasFooterContent && (
                     <div className={styles.feed_entry_footer}>
@@ -484,6 +539,10 @@ export interface ScriptFeedRowProps {
     onAcceptDiff: (scriptKey: number) => void;
     onRejectDiff: (scriptKey: number) => void;
     collapsedResults: ReadonlyMap<number, number | null>;
+    /// The running or failed translations of questions into SQL by script key
+    generations: ReadonlyMap<number, ScriptGeneration>;
+    onStopGeneration: (scriptKey: number) => void;
+    onDismissGeneration: (scriptKey: number) => void;
     onToggleResultExpanded: (scriptKey: number) => void;
     onAutoCollapseResult: (scriptKey: number, queryId: number) => void;
     onResetAutoCollapsedResult: (scriptKey: number, queryId: number | null) => void;
@@ -630,6 +689,9 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                     onAcceptDiff={props.onAcceptDiff}
                     onRejectDiff={props.onRejectDiff}
                     resultExpanded={scriptData == null || !props.collapsedResults.has(scriptData.scriptKey)}
+                    generation={scriptData != null ? props.generations.get(scriptData.scriptKey) ?? null : null}
+                    onStopGeneration={props.onStopGeneration}
+                    onDismissGeneration={props.onDismissGeneration}
                     onToggleResultExpanded={props.onToggleResultExpanded}
                     onAutoCollapseResult={props.onAutoCollapseResult}
                     onResetAutoCollapsedResult={props.onResetAutoCollapsedResult}

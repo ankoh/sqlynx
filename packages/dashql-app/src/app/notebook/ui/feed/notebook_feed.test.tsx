@@ -15,7 +15,8 @@ import { WebFileDownloader } from '../../../../platform/file/web_file_downloader
 import { NotebookTestBackend } from '../../persistence/notebook_test_backend.js';
 import { NotebookFeed, type NotebookFeedDependencies } from './notebook_feed.js';
 import { NotebookComposerVariant, type NotebookComposerProps } from './notebook_composer.js';
-import { CREATE_SCRIPT, type NotebookScripts } from '../../scripts/notebook_scripts.js';
+import { ComposerInputMode } from './composer_input_mode.js';
+import { CREATE_SCRIPT, SET_SCRIPT_TEXT, type NotebookScripts } from '../../scripts/notebook_scripts.js';
 import { CONNECTOR_INFOS } from '../../connections/connector_info.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -63,6 +64,7 @@ function baseProps() {
         onRename: vi.fn(), onMoveUp: vi.fn(), onMoveDown: vi.fn(), onExecute: vi.fn(), onShowStatus: vi.fn(),
          onShowTable: vi.fn(), onShowVisualization: vi.fn(), onShowDetails: vi.fn(), onRerun: vi.fn(),
         onFormat: vi.fn(), onAcceptDiff: vi.fn(), onRejectDiff: vi.fn(), collapsedResults: new Map(), onToggleResultExpanded: vi.fn(),
+        generations: new Map(), onStopGeneration: vi.fn(), onDismissGeneration: vi.fn(),
         onAutoCollapseResult: vi.fn(), onResetAutoCollapsedResult: vi.fn(), topPadding: 16,
         onCreate: vi.fn(), onEditorView: vi.fn(), onRowHeightChange: vi.fn(), dependencies,
     };
@@ -233,6 +235,27 @@ describe('V2 notebook feed rows', () => {
         expect(container.querySelector('[role="tooltip"]')?.textContent).toContain('Connect to execute');
     });
 
+    it('offers to stop while the SQL of a question is generated', () => {
+        const props = baseProps();
+        const controller = new AbortController();
+        props.generations = new Map([[1, { controller, error: null }]]) as any;
+        act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
+        expect(container.querySelector('[aria-label="Execute alpha query"]')).toBeNull();
+        act(() => container.querySelector<HTMLButtonElement>('[aria-label="Stop generating alpha query"]')!.click());
+        expect(props.onStopGeneration).toHaveBeenCalledExactlyOnceWith(1);
+    });
+
+    it('shows a failed generation until it is dismissed', () => {
+        const props = baseProps();
+        props.generations = new Map([[1, { controller: new AbortController(), error: 'HTTP 500' }]]) as any;
+        act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
+        expect(container.querySelector('[aria-label="Stop generating alpha query"]')).toBeNull();
+        expect(container.querySelector('[role="alert"]')?.textContent).toContain('HTTP 500');
+        expect(container.querySelector('[aria-label="Execute alpha query"]')).not.toBeNull();
+        act(() => container.querySelector<HTMLButtonElement>('[aria-label="Dismiss the error"]')!.click());
+        expect(props.onDismissGeneration).toHaveBeenCalledExactlyOnceWith(1);
+    });
+
     it('translates a dragged card without applying dnd-kit scale distortion', () => {
         const props = baseProps();
         state.sortableTransform = { x: 0, y: 120, scaleX: 0.8, scaleY: 0.4 };
@@ -250,6 +273,9 @@ describe('Notebook feed composer', () => {
         composerProps: null as NotebookComposerProps | null,
         runNotebookScript: vi.fn(),
         executeQuery: vi.fn(),
+        generateSqlFromPrompt: vi.fn(),
+        aiClient: null as any,
+        submit: vi.fn(),
         view: null as any,
     };
     const feedDependencies: NotebookFeedDependencies = {
@@ -257,8 +283,11 @@ describe('Notebook feed composer', () => {
         useStorageReader: () => ({ backend: { listDataFiles: () => Promise.resolve([]) } }) as any,
         useKeyEvents: (handlers: any[]) => { feedState.keyHandlers = handlers; },
         runNotebookScript: feedState.runNotebookScript as any,
+        useAIClient: () => feedState.aiClient,
+        generateSqlFromPrompt: feedState.generateSqlFromPrompt as any,
         NotebookComposer: (props: NotebookComposerProps) => {
             feedState.composerProps = props;
+            if (props.submitRef) props.submitRef.current = feedState.submit;
             React.useEffect(() => props.setView?.(feedState.view), [props.setView]);
             return <div data-testid="composer" />;
         },
@@ -299,6 +328,9 @@ describe('Notebook feed composer', () => {
         feedState.keyHandlers = [];
         feedState.composerProps = null;
         feedState.runNotebookScript.mockReset();
+        feedState.generateSqlFromPrompt.mockReset();
+        feedState.submit.mockReset();
+        feedState.aiClient = null;
         feedState.view = fakeView('');
         attention = { notebookId: 'notebook', active: false, request: vi.fn() };
         container = document.createElement('div');
@@ -332,8 +364,9 @@ describe('Notebook feed composer', () => {
         const next = notebook(['1_alpha.sql']);
         const modify = vi.fn(() => Promise.resolve(next));
         render(notebook(), modify);
-        await act(async () => feedState.composerProps!.onSend('select 1'));
+        await act(async () => feedState.composerProps!.onSend('select 1', ComposerInputMode.Sql));
         expect(modify).toHaveBeenCalledExactlyOnceWith({ type: CREATE_SCRIPT, value: { index: null, text: 'select 1' } });
+        await vi.waitFor(() => expect(feedState.runNotebookScript).toHaveBeenCalledOnce());
         expect(feedState.runNotebookScript).toHaveBeenCalledExactlyOnceWith(
             'database', next, next.scripts[1], feedState.executeQuery, modify, expect.anything());
         expect(attention.request).not.toHaveBeenCalled();
@@ -342,26 +375,84 @@ describe('Notebook feed composer', () => {
     it('only creates the script without a healthy connection', async () => {
         const modify = vi.fn(() => Promise.resolve(notebook(['1_alpha.sql'])));
         render(notebook(), modify, null);
-        await act(async () => feedState.composerProps!.onSend('select 1'));
+        await act(async () => feedState.composerProps!.onSend('select 1', ComposerInputMode.Sql));
         expect(modify).toHaveBeenCalledOnce();
+        await vi.waitFor(() => expect(attention.request).toHaveBeenCalledExactlyOnceWith('notebook'));
         expect(feedState.runNotebookScript).not.toHaveBeenCalled();
-        expect(attention.request).toHaveBeenCalledExactlyOnceWith('notebook');
     });
 
     it('sends the draft on Ctrl+E only while the composer has focus', async () => {
-        const modify = vi.fn(() => Promise.resolve(notebook(['1_alpha.sql', '2_beta.sql'])));
         feedState.view = fakeView('select 2', false);
-        render(notebook(['1_alpha.sql']), modify);
+        render(notebook(['1_alpha.sql']), vi.fn());
         const handler = feedState.keyHandlers.find(h => h.key === 'e' && h.ctrlKey && h.capture);
         const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() };
         handler.callback(event);
         expect(event.stopPropagation).not.toHaveBeenCalled();
-        expect(modify).not.toHaveBeenCalled();
+        expect(feedState.submit).not.toHaveBeenCalled();
 
         feedState.view.hasFocus = true;
         await act(async () => handler.callback(event));
         expect(event.stopPropagation).toHaveBeenCalledOnce();
-        expect(modify).toHaveBeenCalledExactlyOnceWith({ type: CREATE_SCRIPT, value: { index: null, text: 'select 2' } });
-        expect(feedState.view.dispatch).toHaveBeenCalledWith(expect.objectContaining({ changes: { from: 0, to: 8, insert: '' } }));
+        expect(feedState.submit).toHaveBeenCalledOnce();
+    });
+
+    it('offers AI only with a configured provider', () => {
+        render(notebook(), vi.fn());
+        expect(feedState.composerProps?.aiAvailable).toBe(false);
+        feedState.aiClient = {};
+        render(notebook(), vi.fn());
+        expect(feedState.composerProps?.aiAvailable).toBe(true);
+    });
+
+    // A catalog without tables and a connection without relations, enough to build the AI prompt
+    const emptyCatalog = {
+        createSnapshot: () => ({
+            read: () => ({ catalogReader: { tablesLength: () => 0, columnsLength: () => 0 }, readName: () => '' }),
+        }),
+    };
+    const aiConn = { ...onlineConn, catalogRelationScript: { toString: () => '' } };
+
+    it('creates the script with the question as comment and appends the SQL once it is generated', async () => {
+        let resolveSql: (sql: string) => void = () => { };
+        feedState.generateSqlFromPrompt.mockImplementation(() => new Promise<string>(resolve => { resolveSql = resolve; }));
+        feedState.aiClient = {};
+        const created = { ...notebook(['1_alpha.sql']), connectionCatalog: emptyCatalog as any };
+        created.scripts[1] = { ...created.scripts[1], scriptSession: { getText: () => '-- how many rows' } } as any;
+        const filled = notebook(['1_alpha.sql']);
+        const modify = vi.fn((action: any) => Promise.resolve(action.type === CREATE_SCRIPT ? created : filled));
+        render({ ...notebook(), connectionCatalog: emptyCatalog as any }, modify, aiConn);
+
+        await act(async () => feedState.composerProps!.onSend('how many rows', ComposerInputMode.Ai));
+        expect(modify).toHaveBeenCalledExactlyOnceWith({ type: CREATE_SCRIPT, value: { index: null, text: '-- how many rows' } });
+        await vi.waitFor(() => expect(feedState.generateSqlFromPrompt).toHaveBeenCalledOnce());
+        expect(feedState.generateSqlFromPrompt).toHaveBeenCalledWith(feedState.aiClient, {
+            prompt: 'how many rows',
+            dialect: 'Tableau Hyper (PostgreSQL-compatible)',
+            schema: '',
+            mentionedIdentifiers: [],
+        }, expect.any(Function), expect.any(AbortSignal));
+        expect(feedState.runNotebookScript).not.toHaveBeenCalled();
+
+        // The feed has rendered the created script by the time the SQL arrives
+        render(created, modify, aiConn);
+        await act(async () => resolveSql('select count(*) from t'));
+        await vi.waitFor(() => expect(feedState.runNotebookScript).toHaveBeenCalledOnce());
+        expect(modify).toHaveBeenLastCalledWith({
+            type: SET_SCRIPT_TEXT, value: { scriptKey: 1, text: '-- how many rows\nselect count(*) from t' },
+        });
+        expect(feedState.runNotebookScript).toHaveBeenCalledWith('database', filled, filled.scripts[1], feedState.executeQuery, modify, expect.anything());
+    });
+
+    it('keeps the commented script when the generation fails', async () => {
+        feedState.generateSqlFromPrompt.mockRejectedValue(new Error('HTTP 500'));
+        feedState.aiClient = {};
+        const created = { ...notebook(['1_alpha.sql']), connectionCatalog: emptyCatalog as any };
+        const modify = vi.fn(() => Promise.resolve(created));
+        render({ ...notebook(), connectionCatalog: emptyCatalog as any }, modify, aiConn);
+        await act(async () => feedState.composerProps!.onSend('anything', ComposerInputMode.Ai));
+        await vi.waitFor(() => expect(feedState.generateSqlFromPrompt).toHaveBeenCalledOnce());
+        await act(async () => { });
+        expect(modify).toHaveBeenCalledOnce();
+        expect(feedState.runNotebookScript).not.toHaveBeenCalled();
     });
 });

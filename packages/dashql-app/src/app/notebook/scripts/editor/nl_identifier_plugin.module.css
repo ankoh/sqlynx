@@ -1,0 +1,19 @@
+.identifier_table {
+    color: #0f68a0;
+    background-color: color-mix(in srgb, #0f68a0 8%, transparent);
+    border-radius: 3px;
+}
+
+.identifier_column {
+    color: #326d74;
+    background-color: color-mix(in srgb, #326d74 8%, transparent);
+    border-radius: 3px;
+}
+
+.hint {
+    color: #888;
+    opacity: 0.7;
+    font-style: italic;
+    user-select: none;
+    pointer-events: none;
+}

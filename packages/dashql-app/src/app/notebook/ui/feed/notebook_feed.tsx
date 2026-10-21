@@ -23,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 
 import { ConnectionHealth, AttachedDatabaseState } from '../../connections/attached_database_state.js';
-import { getSelectedScriptRef, getSelectedScriptRefs, getSortedScriptFileNames, NotebookScripts, SELECT_SCRIPT, CREATE_SCRIPT, DELETE_SCRIPT, RENAME_SCRIPT, REORDER_SCRIPTS, SET_SCRIPT_TEXT, ACCEPT_PENDING_DIFF, REJECT_PENDING_DIFF } from '../../scripts/notebook_scripts.js';
+import { getSelectedScriptRef, getSelectedScriptRefs, getSortedScriptFileNames, NotebookScripts, type ScriptData, SELECT_SCRIPT, CREATE_SCRIPT, DELETE_SCRIPT, RENAME_SCRIPT, REORDER_SCRIPTS, SET_SCRIPT_TEXT, ACCEPT_PENDING_DIFF, REJECT_PENDING_DIFF } from '../../scripts/notebook_scripts.js';
 import { useQueryExecutor } from '../../connections/query_executor.js';
 import { type ModifyNotebookScripts } from '../../scripts/notebook_scripts_registry.js';
 import { type KeyEventHandler, useKeyEvents } from '../../../../utils/key_events.js';
@@ -34,7 +34,7 @@ import { VerticalScrollShadows } from '../../../../ui/foundations/vertical_scrol
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';
 import { useNotebookFeedLayout } from './notebook_feed_layout.js';
-import { ScriptFeedRow, type ScriptFeedRowProps } from './notebook_feed_row.js';
+import { ScriptFeedRow, type ScriptFeedRowProps, type ScriptGeneration } from './notebook_feed_row.js';
 import { getKeywordCase } from '../script_format.js';
 import { reorderFeedEntries } from './notebook_feed_drag.js';
 import type { DataFile } from '../../persistence/storage_backend.js';
@@ -44,7 +44,11 @@ import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundation
 import { ChevronDownIcon, ChevronUpIcon, PlusIcon } from '../../../../ui/foundations/symbol_icon.js';
 import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
 import { NotebookConnectionAttentionContext } from '../notebook_connection_attention.js';
-import { NotebookComposer, NotebookComposerVariant, takeComposerDraft } from './notebook_composer.js';
+import { NotebookComposer, NotebookComposerVariant } from './notebook_composer.js';
+import { ComposerInputMode } from './composer_input_mode.js';
+import { useAIClient } from '../../../../platform/ai/ai_client_provider.js';
+import { buildSchemaContext, describeSqlDialect, findSqlProblems, generateSqlFromPrompt, promptComment } from '../../ai/sql_generation.js';
+import { buildCatalogNameIndex, collectMentionedIdentifiers } from '../../ai/catalog_name_index.js';
 
 export interface NotebookFeedProps {
     notebookScripts: NotebookScripts;
@@ -64,6 +68,8 @@ export interface NotebookFeedDependencies {
     useStorageReader: typeof useStorageReader;
     useKeyEvents: typeof useKeyEvents;
     runNotebookScript: typeof runNotebookScript;
+    useAIClient: typeof useAIClient;
+    generateSqlFromPrompt: typeof generateSqlFromPrompt;
     NotebookComposer: typeof NotebookComposer;
     ScriptFeedRow: typeof ScriptFeedRow;
 }
@@ -73,10 +79,13 @@ const DEFAULT_DEPENDENCIES: NotebookFeedDependencies = {
     useStorageReader,
     useKeyEvents,
     runNotebookScript,
+    useAIClient,
+    generateSqlFromPrompt,
     NotebookComposer,
     ScriptFeedRow,
 };
 
+const LOG_CTX = 'notebook_feed';
 const OVERSCAN_ROW_COUNT = 16;
 const FEED_TOP_PADDING = 16;
 const COMPACT_FEED_TOP_PADDING = 8;
@@ -155,7 +164,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
             }
         }).catch(e => {
             if (!cancel.signal.aborted) {
-                logger.error('Listing notebook data files failed', { error: stringifyError(e) }, 'notebook_feed');
+                logger.error('Listing notebook data files failed', { error: stringifyError(e) }, LOG_CTX);
             }
         });
         return () => cancel.abort();
@@ -172,7 +181,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
             refreshDataFiles();
         } catch (e) {
             setAttachmentError('Adding attachment failed');
-            logger.error('Adding notebook attachment failed', { error: stringifyError(e) }, 'notebook_feed');
+            logger.error('Adding notebook attachment failed', { error: stringifyError(e) }, LOG_CTX);
         }
     }, [logger, notebookId, refreshDataFiles, storageReader.backend]);
     const handleAttachmentInput = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -335,7 +344,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     }, []);
 
     const [composerView, setComposerView] = React.useState<EditorView | null>(null);
-    const composerSendRef = React.useRef<(text: string) => void>(() => { });
+    const composerSubmitRef = React.useRef<(() => void) | null>(null);
 
     // The feed stays mounted (just hidden) while the catalog/details overlay is open, so its global
     // key handlers would otherwise keep firing behind the overlay. Gate them all on the active flag.
@@ -402,10 +411,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                 }
                 event.preventDefault();
                 event.stopPropagation();
-                const text = takeComposerDraft(composerView);
-                if (text != null) {
-                    composerSendRef.current(text);
-                }
+                composerSubmitRef.current?.();
             },
         },
     ], [feedActive, composerView, handleAcceptDiff, handleRejectDiff]);
@@ -448,23 +454,116 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     // Without a healthy connection, the script is only created and the connection asks for attention.
     const connectionAttention = React.useContext(NotebookConnectionAttentionContext);
     const pendingScrollToEndRef = React.useRef(false);
-    const handleComposerSend = React.useCallback((text: string) => {
+    const appendScript = React.useCallback(async (text: string) => {
         const result = props.modifyNotebookScripts({ type: CREATE_SCRIPT, value: { index: null, text } });
-        if (!result) return;
+        if (!result) return null;
         pendingScrollToEndRef.current = true;
-        void result.then(next => {
-            if (next == null) return;
-            const created = getSelectedScriptRef(next);
-            const scriptData = created != null ? next.scripts[created.scriptId] : undefined;
-            if (scriptData == null) return;
-            const conn = latest.current.conn;
-            if (conn == null || conn.connectionHealth !== ConnectionHealth.ONLINE) {
-                connectionAttention?.request(next.notebookId);
-                return;
-            }
-            dependencies.runNotebookScript(conn.databaseId, next, scriptData, executeQuery, props.modifyNotebookScripts, logger);
-        });
+        const next = await result;
+        if (next == null) return null;
+        const created = getSelectedScriptRef(next);
+        const scriptData = created != null ? next.scripts[created.scriptId] : undefined;
+        return scriptData != null ? { next, scriptData } : null;
+    }, [props.modifyNotebookScripts]);
+    const runAppendedScript = React.useCallback((next: NotebookScripts, scriptData: ScriptData) => {
+        const conn = latest.current.conn;
+        if (conn == null || conn.connectionHealth !== ConnectionHealth.ONLINE) {
+            connectionAttention?.request(next.notebookId);
+            return;
+        }
+        dependencies.runNotebookScript(conn.databaseId, next, scriptData, executeQuery, props.modifyNotebookScripts, logger);
     }, [connectionAttention, executeQuery, logger, props.modifyNotebookScripts]);
+
+    // The running and failed translations of questions into SQL by script key
+    const [generations, setGenerations] = React.useState<ReadonlyMap<number, ScriptGeneration>>(() => new Map());
+    const generationsRef = React.useRef(generations);
+    generationsRef.current = generations;
+    const setGeneration = React.useCallback((scriptKey: number, generation: ScriptGeneration | null) => {
+        setGenerations(prev => {
+            const next = new Map(prev);
+            if (generation == null) next.delete(scriptKey);
+            else next.set(scriptKey, generation);
+            return next;
+        });
+    }, []);
+    const handleStopGeneration = React.useCallback((scriptKey: number) => {
+        const generation = generationsRef.current.get(scriptKey);
+        if (generation == null) return;
+        generation.controller.abort();
+        setGeneration(scriptKey, null);
+        logger.info('Stopped translating a question into SQL', { scriptKey: String(scriptKey) }, LOG_CTX);
+    }, [logger, setGeneration]);
+    const handleDismissGeneration = React.useCallback((scriptKey: number) => setGeneration(scriptKey, null), [setGeneration]);
+    // A deleted script stops its translation, so does leaving the feed
+    React.useEffect(() => {
+        for (const [scriptKey, generation] of generationsRef.current) {
+            if (props.notebookScripts.scripts[scriptKey] == null) {
+                generation.controller.abort();
+                setGeneration(scriptKey, null);
+                logger.info('Stopped translating a question of a deleted script', { scriptKey: String(scriptKey) }, LOG_CTX);
+            }
+        }
+    }, [props.notebookScripts.scripts, logger, setGeneration]);
+    React.useEffect(() => () => {
+        for (const generation of generationsRef.current.values()) generation.controller.abort();
+    }, []);
+
+    // A question becomes a script with the question as comment right away.
+    // The translated SQL is appended once the AI provider answers, then the script runs.
+    const aiClient = dependencies.useAIClient();
+    const translateQuestion = React.useCallback(async (question: string) => {
+        if (aiClient == null) {
+            logger.error('Cannot translate a question without an AI provider', {}, LOG_CTX);
+            return;
+        }
+        const appended = await appendScript(promptComment(question));
+        if (appended == null) return;
+        const scriptKey = appended.scriptData.scriptKey;
+        const controller = new AbortController();
+        setGeneration(scriptKey, { controller, error: null });
+
+        const { notebookScripts, conn } = latest.current;
+        const dialect = describeSqlDialect(notebookScripts.connectorInfo.connectorType);
+        logger.info('Translating a question into SQL', { scriptKey: String(scriptKey), characters: String(question.length), dialect }, LOG_CTX);
+        let sql: string;
+        try {
+            sql = await dependencies.generateSqlFromPrompt(aiClient, {
+                prompt: question,
+                dialect,
+                schema: buildSchemaContext(conn, notebookScripts, logger),
+                mentionedIdentifiers: collectMentionedIdentifiers(
+                    buildCatalogNameIndex(notebookScripts.connectionCatalog.createSnapshot().read()), question),
+            }, sql => findSqlProblems(notebookScripts.instance, notebookScripts.connectionCatalog, sql), controller.signal);
+        } catch (e: unknown) {
+            if (controller.signal.aborted) return;
+            logger.error('Translating a question into SQL failed', { scriptKey: String(scriptKey), error: stringifyError(e) }, LOG_CTX);
+            setGeneration(scriptKey, { controller, error: stringifyError(e) });
+            return;
+        }
+        if (controller.signal.aborted) return;
+        setGeneration(scriptKey, null);
+        logger.info('Translated a question into SQL', { scriptKey: String(scriptKey), characters: String(sql.length) }, LOG_CTX);
+
+        // Keep whatever the user wrote into the script meanwhile, the SQL goes below
+        const current = latest.current.notebookScripts.scripts[scriptKey];
+        if (current == null) return;
+        const text = `${current.scriptSession.getText().trimEnd()}\n${sql}`;
+        const result = props.modifyNotebookScripts({ type: SET_SCRIPT_TEXT, value: { scriptKey, text } });
+        if (!result) return;
+        const next = await result;
+        const scriptData = next?.scripts[scriptKey];
+        if (next != null && scriptData != null) runAppendedScript(next, scriptData);
+    }, [aiClient, appendScript, runAppendedScript, logger, setGeneration, props.modifyNotebookScripts]);
+
+    const handleComposerSend = React.useCallback((text: string, mode: ComposerInputMode) => {
+        if (mode === ComposerInputMode.Ai) {
+            void translateQuestion(text);
+            return;
+        }
+        logger.debug('Running the composer draft as SQL', { characters: String(text.length) }, LOG_CTX);
+        void appendScript(text).then(appended => {
+            if (appended != null) runAppendedScript(appended.next, appended.scriptData);
+        });
+    }, [translateQuestion, appendScript, runAppendedScript, logger]);
     React.useEffect(() => {
         if (!pendingScrollToEndRef.current || entries.length === 0) return;
         pendingScrollToEndRef.current = false;
@@ -500,6 +599,9 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         onAcceptDiff: handleAcceptDiff,
         onRejectDiff: handleRejectDiff,
         collapsedResults,
+        generations,
+        onStopGeneration: handleStopGeneration,
+        onDismissGeneration: handleDismissGeneration,
         onToggleResultExpanded: handleToggleResultExpanded,
         onAutoCollapseResult: handleAutoCollapseResult,
         onResetAutoCollapsedResult: handleResetAutoCollapsedResult,
@@ -508,8 +610,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         onCreate: handleCreate,
         onEditorView: handleEditorView,
         onRowHeightChange: feedLayout.rowHeights.setRowHeight,
-    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
-    composerSendRef.current = handleComposerSend;
+    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, generations, handleStopGeneration, handleDismissGeneration, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
     const getScrollElement = React.useCallback(() => feedLayout.listRef.current?.element ?? null, [feedLayout.listRef]);
 
     // An empty notebook greets the user with the composer in place of the feed.
@@ -607,8 +708,10 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                         catalog={props.notebookScripts.connectionCatalog}
                         variant={landing ? NotebookComposerVariant.Hero : NotebookComposerVariant.Docked}
                         keywordCase={keywordCase}
+                        aiAvailable={aiClient != null}
                         onSend={handleComposerSend}
                         setView={setComposerView}
+                        submitRef={composerSubmitRef}
                     />
                 </div>
             </div>

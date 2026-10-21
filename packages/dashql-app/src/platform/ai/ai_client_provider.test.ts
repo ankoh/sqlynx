@@ -35,4 +35,19 @@ describe('resolveAIClientSettings', () => {
             auth,
         });
     });
+
+    it('returns null without an endpoint or a model', () => {
+        expect(resolveAIClientSettings({ enabled: true, endpointUrl: '' })).toBeNull();
+        expect(resolveAIClientSettings({ enabled: true, endpointUrl: '   ' })).toBeNull();
+        expect(resolveAIClientSettings({ enabled: true, endpointUrl: 'not a url' })).toBeNull();
+        expect(resolveAIClientSettings({ enabled: true, model: '' })).toBeNull();
+        expect(resolveAIClientSettings({ enabled: true, model: ' ' })).toBeNull();
+    });
+
+    it('keeps the defaults stable across calls', () => {
+        const a = resolveAIClientSettings({ enabled: true })!;
+        const b = resolveAIClientSettings({ enabled: true })!;
+        expect(a.headers).toBe(b.headers);
+        expect(a.auth).toBe(b.auth);
+    });
 });

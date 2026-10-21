@@ -1,6 +1,6 @@
 import * as dashql from '@ankoh/dashql-core';
 
-import { EditorState, StateField, StateEffect, StateEffectType, Text, Transaction } from '@codemirror/state';
+import { EditorState, Facet, StateField, StateEffect, StateEffectType, Text, Transaction } from '@codemirror/state';
 
 import { deriveFocusFromEditorUpdate, SemanticUserFocus } from '../focus.js';
 import { CompletionPatch, computePatches, UpdatePatchStartingFrom } from './dashql_completion_patches.js';
@@ -176,6 +176,10 @@ export function transactionToEditorEvent(
         transaction.docChanged,
     );
 }
+
+/// Disables completions, e.g. while the editor holds natural language instead of SQL.
+/// Takes effect with the transaction after the one that enables it, abort a running completion along with it.
+export const DashQLCompletionDisabled = Facet.define<boolean, boolean>({ combine: values => values.some(v => v) });
 
 /// Effect to update the state attached to a CodeMirror editor
 export const DashQLUpdateEffect: StateEffectType<DashQLProcessorUpdateIn> = StateEffect.define<DashQLProcessorUpdateIn>();
@@ -465,6 +469,13 @@ function userEventCanStartCompletion(transaction: Transaction, prevState: DashQL
 function updateCompletion(state: DashQLProcessorState, prevState: DashQLProcessorState, transaction: Transaction): DashQLProcessorState {
     // We need a script and script cursor to complete.
     if (!state.scriptSession || !state.editorUpdate?.primaryCursorState) {
+        return state;
+    }
+    if (transaction.startState.facet(DashQLCompletionDisabled)) {
+        if (state.scriptCompletion != null) {
+            state = copyLazily(state, prevState);
+            state.scriptCompletion = null;
+        }
         return state;
     }
     const scriptSession = state.scriptSession;

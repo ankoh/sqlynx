@@ -93,6 +93,95 @@ describe('AIClient', () => {
         });
     });
 
+    it('complete sends the whole conversation', async () => {
+        const fetch = vi.fn().mockResolvedValue(makeResponse({
+            choices: [{ message: { content: 'select 1' } }],
+        }));
+        const client = new AIClient(logger, { fetch }, {
+            endpointUrl: 'http://localhost:11434',
+            model: 'llama3',
+            headers: [],
+            auth: { type: 'none' },
+        });
+        const messages = [
+            { role: 'system' as const, content: 'Write SQL' },
+            { role: 'user' as const, content: 'one' },
+        ];
+        expect(await client.complete(messages, new AbortController().signal)).toBe('select 1');
+        const body = JSON.parse(fetch.mock.calls[0][1].body as string);
+        expect(body).toEqual({ model: 'llama3', messages, stream: false });
+    });
+
+    it('logs the prompt and the response', async () => {
+        const fetch = vi.fn().mockResolvedValue(makeResponse({ choices: [{ message: { content: 'select 1' } }] }));
+        const testLogger = new NullLogger();
+        const info = vi.spyOn(testLogger, 'info');
+        const client = new AIClient(testLogger, { fetch }, {
+            endpointUrl: 'http://localhost:11434',
+            model: 'llama3',
+            headers: [],
+            auth: { type: 'bearer', token: 'secret' },
+        });
+        await client.complete([
+            { role: 'system', content: 'Write SQL' },
+            { role: 'user', content: 'one' },
+        ], new AbortController().signal);
+        expect(info).toHaveBeenCalledWith('Sending AI chat completion', {
+            url: 'http://localhost:11434/v1/chat/completions',
+            model: 'llama3',
+            message_0_system: 'Write SQL',
+            message_1_user: 'one',
+        }, 'ai_client');
+        expect(info).toHaveBeenCalledWith('Received AI chat completion', expect.objectContaining({
+            model: 'llama3',
+            content: 'select 1',
+        }), 'ai_client');
+        expect(JSON.stringify(info.mock.calls)).not.toContain('secret');
+    });
+
+    describe('completeValidated', () => {
+        const answers = (...contents: string[]) => {
+            const fetch = vi.fn();
+            for (const content of contents) {
+                fetch.mockResolvedValueOnce(makeResponse({ choices: [{ message: { content } }] }));
+            }
+            return fetch;
+        };
+        const settings = { endpointUrl: 'http://localhost:11434', model: 'm', headers: [], auth: { type: 'none' as const } };
+        const validate = (content: string) => content === 'good'
+            ? { valid: true as const, value: content }
+            : { valid: false as const, value: content, feedback: `fix ${content}` };
+        const question = [{ role: 'user' as const, content: 'q' }];
+
+        it('returns the first valid answer', async () => {
+            const fetch = answers('good');
+            const client = new AIClient(logger, { fetch }, settings);
+            expect(await client.completeValidated(question, validate, new AbortController().signal))
+                .toEqual({ valid: true, value: 'good' });
+            expect(fetch).toHaveBeenCalledOnce();
+        });
+
+        it('retries with the rejected answer and the feedback', async () => {
+            const fetch = answers('bad', 'good');
+            const client = new AIClient(logger, { fetch }, settings);
+            expect(await client.completeValidated(question, validate, new AbortController().signal))
+                .toEqual({ valid: true, value: 'good' });
+            expect(JSON.parse(fetch.mock.calls[1][1].body as string).messages).toEqual([
+                { role: 'user', content: 'q' },
+                { role: 'assistant', content: 'bad' },
+                { role: 'user', content: 'fix bad' },
+            ]);
+        });
+
+        it('returns the verdict on the last answer once the attempts are used up', async () => {
+            const fetch = answers('bad', 'worse', 'good');
+            const client = new AIClient(logger, { fetch }, settings);
+            expect(await client.completeValidated(question, validate, new AbortController().signal))
+                .toEqual({ valid: false, value: 'worse', feedback: 'fix worse' });
+            expect(fetch).toHaveBeenCalledTimes(2);
+        });
+    });
+
     it('generate returns empty string when no choices', async () => {
         const fetch = vi.fn().mockResolvedValue(makeResponse({ choices: [] }));
         const client = new AIClient(logger, { fetch }, {

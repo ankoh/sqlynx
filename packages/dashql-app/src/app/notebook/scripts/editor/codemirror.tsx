@@ -6,6 +6,7 @@ import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
 import { search, searchKeymap } from '@codemirror/search';
 import { EditorView, drawSelection, keymap, lineNumbers } from '@codemirror/view';
 import { DashQLExtensions, DashQLReadonlyExtensions } from './dashql_extension.js';
+import { DashQLGenerationPlaceholder } from './dashql_generation_placeholder.js';
 
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 
@@ -42,6 +43,7 @@ export function createCodeMirrorExtensions(): Extension[] {
         drawSelection(),
         history(),
         ...DashQLExtensions,
+        DashQLGenerationPlaceholder,
         ...CodeMirrorSearchExtensions,
         keymapExtension
     ];

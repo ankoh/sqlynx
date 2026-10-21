@@ -1,0 +1,33 @@
+/* One line of the editor, the bar sits where the generated SQL will start */
+.placeholder_line {
+    display: flex;
+    align-items: center;
+    height: 1.45em;
+    padding: 0 2px 0 6px;
+}
+
+.placeholder_bar {
+    display: block;
+    width: 40%;
+    height: 0.7em;
+    border-radius: 4px;
+    background: linear-gradient(
+        90deg,
+        var(--base_color_neutral_2) 0%,
+        var(--base_color_neutral_1) 50%,
+        var(--base_color_neutral_2) 100%
+    );
+    background-size: 200% 100%;
+    animation: placeholder_shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes placeholder_shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .placeholder_bar {
+        animation: none;
+    }
+}
