@@ -53,6 +53,25 @@ analyzer-snapshots:
           catalog: "257.65537.4294967297.0"
           statement-id: 0
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: x
+              text: "db1.schema1.A x"
+            - type: table
+              name: y
+              text: "db2.schema2.A y"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: c
+              table-column: "257.65537.4294967297.0"
+            - name: d
+              table-column: "257.65537.4294967297.1"
+          text: "select * f..re x.a = c"
 
   - name: cross_1_entry_implicit
     catalog:
@@ -105,6 +124,21 @@ analyzer-snapshots:
           catalog: "257.65537.4294967297.0"
           statement-id: 0
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: x
+              text: "db1.schema1.A x"
+            - type: table
+              name: a
+              text: "db2.schema2.A"
+          columns:
+            - name: c
+              table-column: "257.65537.4294967297.0"
+            - name: d
+              table-column: "257.65537.4294967297.1"
+          text: "select * f..re x.a = c"
       inferred-tables:
         - name: db1.schema1.a
           confidence: confident
@@ -149,6 +183,16 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: a
+              text: "db1.schema1.A"
+            - type: unresolved
+              name: b
+              text: "db2.schema2.B"
+          text: "select * f..here a = c"
       inferred-tables:
         - name: db1.schema1.a
           confidence: candidate
@@ -201,6 +245,21 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "db1.schema1.A"
+            - type: unresolved
+              name: b
+              text: "db2.schema2.B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+          text: "select * f..here a = c"
       inferred-tables:
         - name: db2.schema2.b
           confidence: confident
@@ -264,3 +323,26 @@ analyzer-snapshots:
           text: "1"
         - expression: 3
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "db1.schema1.A"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+          text: "select * f..here a = 1"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: a
+              text: "db1.schema1.A"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+          text: "select * f..here c = 1"

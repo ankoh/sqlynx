@@ -154,6 +154,22 @@ analyzer-snapshots:
           text: "interval '30' day"
         - expression: 22
           text: "current_ti..l '30' day"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: some_queries
+              text: "iceberg.so..me_queries"
+          columns:
+            - name: query_hash_1
+              expression: 8
+            - name: literals_hash
+              expression: 9
+            - name: is_explain
+              computed: true
+            - name: is_count_star
+              computed: true
+          text: "select\n  *..l '30' day"
       inferred-tables:
         - name: iceberg.some_events.some_queries
           confidence: confident
@@ -278,6 +294,26 @@ analyzer-snapshots:
           text: "0"
         - expression: 16
           text: "3"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: some_queries
+              text: "iceberg.so..me_queries"
+          columns:
+            - name: event_timestamp
+              expression: 0
+            - name: elapsed
+              expression: 1
+            - name: processed_rows_byol
+              expression: 2
+            - name: workload_name
+              expression: 3
+            - name: inhibitors
+              expression: 9
+            - name: query_plan
+              expression: 5
+          text: "select\n  e.. by 3 desc"
       inferred-tables:
         - name: iceberg.some_events.some_queries
           confidence: confident

@@ -5,7 +5,7 @@ use crate::ryml::Node;
 use dashql_buffers::algebra::LiteralType;
 use dashql_buffers::parser::{Node as AstNode, SymbolSpan};
 use dashql_core::analyzer::*;
-use dashql_core::catalog::{QualifiedCatalogObjectId, TableDeclaration};
+use dashql_core::catalog::{Catalog, ColumnLoc, QualifiedCatalogObjectId, TableDeclaration};
 use dashql_parser::parser::context::resolve_text_span;
 use dashql_parser::span::TextSpan;
 use yaml_rust2::Yaml;
@@ -14,6 +14,9 @@ struct Encoder<'a> {
     script: &'a AnalyzedScript,
     text: &'a str,
 }
+
+/// The catalog of a script, the name scopes are encoded if it is given
+pub type ScopeCatalog<'a> = Option<&'a Catalog>;
 
 impl Encoder<'_> {
     fn resolve(&self, span: SymbolSpan) -> TextSpan {
@@ -89,7 +92,7 @@ pub fn format_double(value: f64) -> String {
 }
 
 /// Encode an analyzed script (`AnalyzerSnapshotTest::EncodeScript`)
-pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Node {
+pub fn encode_script(script: &AnalyzedScript, is_main: bool, scope_catalog: ScopeCatalog) -> Node {
     let e = Encoder { script, text: &script.parsed.scanned.text };
     let entry_id = script.catalog_entry_id();
     let mut out = Map::new();
@@ -216,6 +219,11 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Node {
                             match &column_ref.resolved_ids {
                                 None => {
                                     m.plain("type", "colref/local");
+                                    // A local column is an output column of a scope without a catalog column behind it
+                                    if let ColumnResolution::ScopeColumn { scope, column } = column_ref.resolved {
+                                        m.int("scope", scope as i64);
+                                        m.int("column", column as i64);
+                                    }
                                 }
                                 Some(ids) => {
                                     let (db, schema) = ids.catalog_schema_id.unpack_schema_id();
@@ -294,6 +302,15 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Node {
         out.insert("constants", Node::seq(items));
     }
 
+    // Name scopes, the FROM items and output columns that column refs resolve against
+    if let Some(catalog) = scope_catalog {
+        let items: Vec<Node> =
+            script.name_scopes.iter().filter_map(|scope| encode_name_scope(&e, catalog, scope)).collect();
+        if !items.is_empty() {
+            out.insert("name-scopes", Node::seq(items));
+        }
+    }
+
     // Visualization specs
     if !script.visualization_specs.is_empty() {
         let items = script.visualization_specs.iter().map(|spec| encode_visualization(&e, spec)).collect();
@@ -336,6 +353,106 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Node {
         out.insert("inferred-tables", Node::seq(items));
     }
     out.into_node()
+}
+
+/// `db.schema.packed_table_id.column` of a table column
+fn column_catalog_id(e: &Encoder, catalog: &Catalog, loc: ColumnLoc) -> String {
+    let table = if loc.table.entry == e.script.catalog_entry_id() {
+        e.script.entry.table_declarations.get(loc.table.index as usize)
+    } else {
+        catalog.table(loc.table)
+    };
+    match table {
+        Some(table) => format!("{}.{}", table_catalog_id(table.catalog_schema_id, table.object_id), loc.column),
+        None => "?".into(),
+    }
+}
+
+/// Encode a name scope, scopes without FROM items and output columns are skipped
+fn encode_name_scope(e: &Encoder, catalog: &Catalog, scope: &NameScope) -> Option<Node> {
+    if scope.sources.is_empty() && scope.output_columns.is_empty() {
+        return None;
+    }
+    let mut m = Map::new();
+    m.int("scope-id", scope.name_scope_id as i64);
+    if let Some(parent) = scope.parent_scope {
+        m.int("parent", parent as i64);
+    }
+    match scope.parent_visibility {
+        SourceVisibility::All => {}
+        SourceVisibility::Before(_) => {
+            m.plain("parent-sources", "before");
+        }
+        SourceVisibility::None => {
+            m.plain("parent-sources", "none");
+        }
+    }
+    if scope.column_correlation_barrier {
+        m.insert("correlation-barrier", boolean(true));
+    }
+    if !scope.sources.is_empty() {
+        let sources = scope
+            .sources
+            .iter()
+            .map(|source| {
+                let mut s = Map::new();
+                match &source.table {
+                    ReferencedTable::Table(_) => s.plain("type", "table"),
+                    ReferencedTable::Cte(_) => s.plain("type", "cte"),
+                    ReferencedTable::Subquery(_) => s.plain("type", "subquery"),
+                    ReferencedTable::Unresolved(_) => s.plain("type", "unresolved"),
+                };
+                if let Some(name) = &source.name {
+                    s.plain("name", name);
+                }
+                match &source.table {
+                    ReferencedTable::Cte(loc) => {
+                        let cte = e.script.name_scopes[loc.scope as usize].cte_definitions.at(loc.index as usize);
+                        if let Some(child) = cte.child_scope {
+                            s.int("scope", child as i64);
+                        }
+                    }
+                    ReferencedTable::Subquery(child) => {
+                        s.int("scope", *child as i64);
+                    }
+                    ReferencedTable::Table(_) | ReferencedTable::Unresolved(_) => {}
+                }
+                if !source.column_aliases.is_empty() {
+                    let aliases = source.column_aliases.iter().map(|a| super::plain(&a.text)).collect();
+                    s.insert("column-aliases", Node::seq(aliases));
+                }
+                e.location(&mut s, source.ast_node_id, "text");
+                s.into_node()
+            })
+            .collect();
+        m.insert("sources", Node::seq(sources));
+    }
+    if !scope.output_columns.is_empty() {
+        let columns = scope
+            .output_columns
+            .iter()
+            .map(|column| {
+                let mut c = Map::new();
+                let name = &column.column_name.text;
+                c.plain("name", if name.is_empty() { "?" } else { name });
+                match column.source {
+                    ScopeColumnSource::Expression(expr) => {
+                        c.int("expression", expr as i64);
+                    }
+                    ScopeColumnSource::TableColumn(loc) => {
+                        c.quoted("table-column", &column_catalog_id(e, catalog, loc));
+                    }
+                    ScopeColumnSource::Computed => {
+                        c.insert("computed", boolean(true));
+                    }
+                }
+                c.into_node()
+            })
+            .collect();
+        m.insert("columns", Node::seq(columns));
+    }
+    e.location(&mut m, scope.ast_node_id, "text");
+    Some(m.into_node())
 }
 
 fn encode_visualization(e: &Encoder, spec: &VisualizationSpec) -> Node {
@@ -514,8 +631,8 @@ fn encode_channel(channel: &VisEncodingChannel) -> Node {
 }
 
 /// The keys the analyzer snapshot test compares
-pub const COMPARED_KEYS: [&str; 7] =
-    ["errors", "tables", "table-refs", "inserts", "expressions", "constants", "inferred-tables"];
+pub const COMPARED_KEYS: [&str; 8] =
+    ["errors", "tables", "table-refs", "inserts", "expressions", "constants", "name-scopes", "inferred-tables"];
 
 /// Analyze the scripts of an analyzer snapshot case like `AnalyzerSnapshotTest` does: the catalog
 /// script is analyzed and loaded with its entry id as rank, then the main script is analyzed.
@@ -535,12 +652,12 @@ pub fn analyze_case(catalog_input: Option<&str>, main_input: &str) -> Result<(Op
     let mut catalog_yaml = None;
     if let Some(input) = catalog_input {
         let analyzed = analyze_text(&catalog, input)?;
-        catalog_yaml = Some(encode_script(&analyzed, false).to_yaml());
+        catalog_yaml = Some(encode_script(&analyzed, false, None).to_yaml());
         let rank = analyzed.catalog_entry_id();
         catalog.load_script(Arc::new(analyzed), rank).map_err(|e| e.message)?;
     }
     let analyzed = analyze_text(&catalog, main_input)?;
-    Ok((catalog_yaml, encode_script(&analyzed, true).to_yaml()))
+    Ok((catalog_yaml, encode_script(&analyzed, true, Some(&catalog)).to_yaml()))
 }
 
 /// Compare the keys that the analyzer snapshot test compares

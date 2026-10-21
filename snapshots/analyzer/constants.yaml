@@ -19,3 +19,9 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "interval '30 days'"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 1
+          text: "select int.. '30 days'"

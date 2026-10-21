@@ -1375,6 +1375,61 @@ analyzer-snapshots:
           text: "'EUROPE'"
         - expression: 39
           text: "100"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: partsupp
+              text: "partsupp"
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: nation
+              text: "nation"
+            - type: table
+              name: region
+              text: "region"
+          columns:
+            - name: '?'
+              expression: 34
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: part
+              text: "part"
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: partsupp
+              text: "partsupp"
+            - type: table
+              name: nation
+              text: "nation"
+            - type: table
+              name: region
+              text: "region"
+          columns:
+            - name: s_acctbal
+              expression: 0
+            - name: s_name
+              expression: 1
+            - name: n_name
+              expression: 2
+            - name: p_partkey
+              expression: 3
+            - name: p_mfgr
+              expression: 4
+            - name: s_address
+              expression: 5
+            - name: s_phone
+              expression: 6
+            - name: s_comment
+              expression: 7
+          text: "select\n   ..limit\n	100"
 
   - name: tpch_3
     catalog:
@@ -2031,7 +2086,9 @@ analyzer-snapshots:
           statement-id: 0
           text: "o_shippriority"
         - expression-idx: 15
-          type: colref/unresolved
+          type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "revenue"
         - expression-idx: 16
@@ -2080,6 +2137,28 @@ analyzer-snapshots:
           text: "'1995-03-15'"
         - expression: 22
           text: "10"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: customer
+              text: "customer"
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: l_orderkey
+              expression: 0
+            - name: revenue
+              expression: 17
+            - name: o_orderdate
+              expression: 3
+            - name: o_shippriority
+              expression: 4
+          text: "select\n   ..\nlimit\n	10"
 
   - name: tpch_4
     catalog:
@@ -2742,6 +2821,58 @@ analyzer-snapshots:
           text: "'1993-07-01'"
         - expression: 11
           text: "'1993-10-01'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: l_comment
+              table-column: "256.65536.4294967301.0"
+            - name: l_commitdate
+              table-column: "256.65536.4294967301.1"
+            - name: l_discount
+              table-column: "256.65536.4294967301.2"
+            - name: l_extendedprice
+              table-column: "256.65536.4294967301.3"
+            - name: l_linenumber
+              table-column: "256.65536.4294967301.4"
+            - name: l_linestatus
+              table-column: "256.65536.4294967301.5"
+            - name: l_orderkey
+              table-column: "256.65536.4294967301.6"
+            - name: l_partkey
+              table-column: "256.65536.4294967301.7"
+            - name: l_quantity
+              table-column: "256.65536.4294967301.8"
+            - name: l_receiptdate
+              table-column: "256.65536.4294967301.9"
+            - name: l_returnflag
+              table-column: "256.65536.4294967301.10"
+            - name: l_shipdate
+              table-column: "256.65536.4294967301.11"
+            - name: l_shipinstruct
+              table-column: "256.65536.4294967301.12"
+            - name: l_shipmode
+              table-column: "256.65536.4294967301.13"
+            - name: l_suppkey
+              table-column: "256.65536.4294967301.14"
+            - name: l_tax
+              table-column: "256.65536.4294967301.15"
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: o_orderpriority
+              expression: 0
+            - name: order_count
+              expression: 9
+          text: "select\n   ..erpriority"
 
   - name: tpch_5
     catalog:
@@ -3454,7 +3585,9 @@ analyzer-snapshots:
           statement-id: 0
           text: "n_name"
         - expression-idx: 19
-          type: colref/unresolved
+          type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "revenue"
         - expression-idx: 20
@@ -3491,6 +3624,33 @@ analyzer-snapshots:
           text: "'1994-01-01'"
         - expression: 24
           text: "'1995-01-01'"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: customer
+              text: "customer"
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: lineitem
+              text: "lineitem"
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: nation
+              text: "nation"
+            - type: table
+              name: region
+              text: "region"
+          columns:
+            - name: n_name
+              expression: 0
+            - name: revenue
+              expression: 20
+          text: "select\n   ..venue desc"
 
   - name: tpch_6
     catalog:
@@ -4177,6 +4337,16 @@ analyzer-snapshots:
           text: "0.06 + 0.01"
         - expression: 15
           text: "24"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: revenue
+              expression: 6
+          text: "select\n   ..ntity < 24"
 
   - name: tpch_7
     catalog:
@@ -4820,10 +4990,14 @@ analyzer-snapshots:
           text: "cust_nation"
         - expression-idx: 2
           type: colref/local
+          scope: 0
+          column: 2
           statement-id: 0
           text: "l_year"
         - expression-idx: 3
-          type: colref/unresolved
+          type: colref/local
+          scope: 0
+          column: 3
           statement-id: 0
           text: "volume"
         - expression-idx: 4
@@ -4938,6 +5112,8 @@ analyzer-snapshots:
           text: "cust_nation"
         - expression-idx: 26
           type: colref/local
+          scope: 0
+          column: 2
           statement-id: 0
           text: "l_year"
         - expression-idx: 27
@@ -4952,6 +5128,8 @@ analyzer-snapshots:
           text: "cust_nation"
         - expression-idx: 29
           type: colref/local
+          scope: 1
+          column: 2
           statement-id: 0
           text: "l_year"
         - expression-idx: 30
@@ -5015,6 +5193,55 @@ analyzer-snapshots:
           text: "'1995-01-01'"
         - expression: 38
           text: "'1996-12-31'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: lineitem
+              text: "lineitem"
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: customer
+              text: "customer"
+            - type: table
+              name: n1
+              text: "nation n1"
+            - type: table
+              name: n2
+              text: "nation n2"
+          columns:
+            - name: supp_nation
+              expression: 4
+            - name: cust_nation
+              expression: 5
+            - name: l_year
+              expression: 31
+            - name: volume
+              computed: true
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              name: shipping
+              scope: 0
+              text: "(\n        ..s shipping"
+          columns:
+            - name: supp_nation
+              expression: 0
+            - name: cust_nation
+              expression: 1
+            - name: l_year
+              expression: 2
+            - name: revenue
+              expression: 30
+          text: "select\n   ..    l_year"
 
   - name: tpch_8
     catalog:
@@ -5654,6 +5881,8 @@ analyzer-snapshots:
       expressions:
         - expression-idx: 0
           type: colref/local
+          scope: 0
+          column: 0
           statement-id: 0
           text: "o_year"
         - expression-idx: 1
@@ -5662,11 +5891,15 @@ analyzer-snapshots:
           statement-id: 0
           text: "nation"
         - expression-idx: 2
-          type: colref/unresolved
+          type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "volume"
         - expression-idx: 3
-          type: colref/unresolved
+          type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "volume"
         - expression-idx: 4
@@ -5776,10 +6009,14 @@ analyzer-snapshots:
           text: "p_type"
         - expression-idx: 25
           type: colref/local
+          scope: 0
+          column: 0
           statement-id: 0
           text: "o_year"
         - expression-idx: 26
           type: colref/local
+          scope: 1
+          column: 0
           statement-id: 0
           text: "o_year"
         - expression-idx: 27
@@ -5848,6 +6085,55 @@ analyzer-snapshots:
           text: "'1996-12-31'"
         - expression: 36
           text: "'ECONOMY A..ZED STEEL'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: part
+              text: "part"
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: lineitem
+              text: "lineitem"
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: customer
+              text: "customer"
+            - type: table
+              name: n1
+              text: "nation n1"
+            - type: table
+              name: n2
+              text: "nation n2"
+            - type: table
+              name: region
+              text: "region"
+          columns:
+            - name: o_year
+              expression: 29
+            - name: volume
+              computed: true
+            - name: nation
+              expression: 7
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              name: all_nations
+              scope: 0
+              text: "(\n        ..ll_nations"
+          columns:
+            - name: o_year
+              expression: 0
+            - name: mkt_share
+              computed: true
+          text: "select\n   ..    o_year"
 
   - name: tpch_9
     catalog:
@@ -6479,10 +6765,14 @@ analyzer-snapshots:
           text: "nation"
         - expression-idx: 1
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "o_year"
         - expression-idx: 2
-          type: colref/unresolved
+          type: colref/local
+          scope: 0
+          column: 2
           statement-id: 0
           text: "amount"
         - expression-idx: 3
@@ -6587,6 +6877,8 @@ analyzer-snapshots:
           text: "nation"
         - expression-idx: 23
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "o_year"
         - expression-idx: 24
@@ -6596,6 +6888,8 @@ analyzer-snapshots:
           text: "nation"
         - expression-idx: 25
           type: colref/local
+          scope: 1
+          column: 1
           statement-id: 0
           text: "o_year"
         - expression-idx: 26
@@ -6624,6 +6918,51 @@ analyzer-snapshots:
           text: "1"
         - expression: 29
           text: "'%green%'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: part
+              text: "part"
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: lineitem
+              text: "lineitem"
+            - type: table
+              name: partsupp
+              text: "partsupp"
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: nation
+              text: "nation"
+          columns:
+            - name: nation
+              expression: 3
+            - name: o_year
+              expression: 27
+            - name: amount
+              computed: true
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              name: profit
+              scope: 0
+              text: "(\n        .. as profit"
+          columns:
+            - name: nation
+              expression: 0
+            - name: o_year
+              expression: 1
+            - name: sum_profit
+              expression: 26
+          text: "select\n   .._year desc"
 
   - name: tpch_10
     catalog:
@@ -7334,7 +7673,9 @@ analyzer-snapshots:
           statement-id: 0
           text: "c_comment"
         - expression-idx: 25
-          type: colref/unresolved
+          type: colref/local
+          scope: 0
+          column: 2
           statement-id: 0
           text: "revenue"
         - expression-idx: 26
@@ -7378,6 +7719,39 @@ analyzer-snapshots:
           text: "'R'"
         - expression: 31
           text: "20"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: customer
+              text: "customer"
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: lineitem
+              text: "lineitem"
+            - type: table
+              name: nation
+              text: "nation"
+          columns:
+            - name: c_custkey
+              expression: 0
+            - name: c_name
+              expression: 1
+            - name: revenue
+              expression: 26
+            - name: c_acctbal
+              expression: 4
+            - name: n_name
+              expression: 5
+            - name: c_address
+              expression: 6
+            - name: c_phone
+              expression: 7
+            - name: c_comment
+              expression: 8
+          text: "select\n   ..\nlimit\n	20"
 
   - name: tpch_11
     catalog:
@@ -8088,7 +8462,9 @@ analyzer-snapshots:
           statement-id: 0
           text: "n_name"
         - expression-idx: 18
-          type: colref/unresolved
+          type: colref/local
+          scope: 1
+          column: 1
           statement-id: 0
           text: "\"value\""
         - expression-idx: 19
@@ -8128,6 +8504,40 @@ analyzer-snapshots:
           text: "0.0001"
         - expression: 24
           text: "'GERMANY'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: partsupp
+              text: "partsupp"
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: nation
+              text: "nation"
+          columns:
+            - name: '?'
+              computed: true
+          text: "(\n    sele..         )"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: partsupp
+              text: "partsupp"
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: nation
+              text: "nation"
+          columns:
+            - name: ps_partkey
+              expression: 0
+            - name: value
+              expression: 19
+          text: "select\n   ..alue\" desc"
 
   - name: tpch_12
     catalog:
@@ -8907,6 +9317,23 @@ analyzer-snapshots:
           text: "'1994-01-01'"
         - expression: 29
           text: "'1995-01-01'"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: l_shipmode
+              expression: 0
+            - name: high_line_count
+              expression: 16
+            - name: low_line_count
+              expression: 17
+          text: "select\n   ..l_shipmode"
 
   - name: tpch_13
     catalog:
@@ -9505,6 +9932,8 @@ analyzer-snapshots:
       expressions:
         - expression-idx: 0
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "c_count"
         - expression-idx: 1
@@ -9539,14 +9968,20 @@ analyzer-snapshots:
           text: "c_custkey"
         - expression-idx: 7
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "c_count"
         - expression-idx: 8
-          type: colref/unresolved
+          type: colref/local
+          scope: 1
+          column: 1
           statement-id: 0
           text: "custdist"
         - expression-idx: 9
           type: colref/local
+          scope: 1
+          column: 0
           statement-id: 0
           text: "c_count"
         - expression-idx: 10
@@ -9567,6 +10002,35 @@ analyzer-snapshots:
       constants:
         - expression: 12
           text: "'%special%..requests%'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: customer
+              text: "customer"
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: c_custkey
+              expression: 1
+            - name: c_count
+              expression: 11
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              name: c_orders
+              scope: 0
+              text: "(\n        ..s c_orders"
+          columns:
+            - name: c_count
+              expression: 0
+            - name: custdist
+              expression: 10
+          text: "select\n   ..count desc"
 
   - name: tpch_14
     catalog:
@@ -10261,6 +10725,19 @@ analyzer-snapshots:
           text: "'1995-09-01'"
         - expression: 17
           text: "'1995-10-01'"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+            - type: table
+              name: part
+              text: "part"
+          columns:
+            - name: promo_revenue
+              computed: true
+          text: "select\n   ..995-10-01'"
 
   - name: tpch_15
     catalog:
@@ -10895,6 +11372,8 @@ analyzer-snapshots:
           text: "s_phone"
         - expression-idx: 10
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "total_revenue"
         - expression-idx: 11
@@ -10909,10 +11388,14 @@ analyzer-snapshots:
           text: "supplier_no"
         - expression-idx: 13
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "total_revenue"
         - expression-idx: 14
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "total_revenue"
         - expression-idx: 15
@@ -10952,6 +11435,52 @@ analyzer-snapshots:
           text: "'1996-01-01'\n		"
         - expression: 20
           text: "'1996-04-01'\n	"
+      name-scopes:
+        - scope-id: 0
+          parent: 2
+          parent-sources: none
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: supplier_no
+              expression: 0
+            - name: total_revenue
+              expression: 16
+          text: "select\n		l..	l_suppkey"
+        - scope-id: 1
+          parent: 2
+          sources:
+            - type: cte
+              name: revenue
+              scope: 0
+              text: "revenue"
+          columns:
+            - name: '?'
+              expression: 17
+          text: "(\n		select..revenue\n	)"
+        - scope-id: 2
+          sources:
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: cte
+              name: revenue
+              scope: 0
+              text: "revenue"
+          columns:
+            - name: s_suppkey
+              expression: 6
+            - name: s_name
+              expression: 7
+            - name: s_address
+              expression: 8
+            - name: s_phone
+              expression: 9
+            - name: total_revenue
+              expression: 10
+          text: "with reven..	s_suppkey"
 
   - name: tpch_16
     catalog:
@@ -11638,7 +12167,9 @@ analyzer-snapshots:
           statement-id: 0
           text: "p_size"
         - expression-idx: 15
-          type: colref/unresolved
+          type: colref/local
+          scope: 1
+          column: 3
           statement-id: 0
           text: "supplier_cnt"
         - expression-idx: 16
@@ -11739,6 +12270,35 @@ analyzer-snapshots:
           text: "9"
         - expression: 30
           text: "'%Customer..mplaints%'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: supplier
+              text: "supplier"
+          columns:
+            - name: s_suppkey
+              expression: 9
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: partsupp
+              text: "partsupp"
+            - type: table
+              name: part
+              text: "part"
+          columns:
+            - name: p_brand
+              expression: 0
+            - name: p_type
+              expression: 1
+            - name: p_size
+              expression: 2
+            - name: supplier_cnt
+              expression: 19
+          text: "select\n   ..    p_size"
 
   - name: tpch_17
     catalog:
@@ -12420,6 +12980,29 @@ analyzer-snapshots:
           text: "'MED BOX'"
         - expression: 14
           text: "0.2"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: '?'
+              computed: true
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+            - type: table
+              name: part
+              text: "part"
+          columns:
+            - name: avg_yearly
+              computed: true
+          text: "select\n   ..\n        )"
 
   - name: tpch_18
     catalog:
@@ -13134,6 +13717,42 @@ analyzer-snapshots:
           text: "300"
         - expression: 24
           text: "100"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: l_orderkey
+              expression: 6
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: customer
+              text: "customer"
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: c_name
+              expression: 0
+            - name: c_custkey
+              expression: 1
+            - name: o_orderkey
+              expression: 2
+            - name: o_orderdate
+              expression: 3
+            - name: o_totalprice
+              expression: 4
+            - name: '?'
+              expression: 21
+          text: "select\n   ..limit\n	100"
 
   - name: tpch_19
     catalog:
@@ -14206,6 +14825,19 @@ analyzer-snapshots:
           text: "'AIR REG'"
         - expression: 72
           text: "'DELIVER IN PERSON'"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+            - type: table
+              name: part
+              text: "part"
+          columns:
+            - name: revenue
+              expression: 29
+          text: "select\n   ..\n        )"
 
   - name: tpch_20
     catalog:
@@ -14967,6 +15599,51 @@ analyzer-snapshots:
           text: "'1995-01-01'"
         - expression: 24
           text: "'CANADA'"
+      name-scopes:
+        - scope-id: 0
+          parent: 2
+          sources:
+            - type: table
+              name: part
+              text: "part"
+          columns:
+            - name: p_partkey
+              expression: 3
+          text: "(\n        ..st%'\n    )"
+        - scope-id: 1
+          parent: 2
+          sources:
+            - type: table
+              name: lineitem
+              text: "lineitem"
+          columns:
+            - name: '?'
+              computed: true
+          text: "(\n        ..-01'\n    )"
+        - scope-id: 2
+          parent: 3
+          sources:
+            - type: table
+              name: partsupp
+              text: "partsupp"
+          columns:
+            - name: ps_suppkey
+              expression: 2
+          text: "(\n        ..\n        )"
+        - scope-id: 3
+          sources:
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: nation
+              text: "nation"
+          columns:
+            - name: s_name
+              expression: 0
+            - name: s_address
+              expression: 1
+          text: "select\n   ..    s_name"
 
   - name: tpch_21
     catalog:
@@ -15670,7 +16347,9 @@ analyzer-snapshots:
           statement-id: 0
           text: "s_name"
         - expression-idx: 22
-          type: colref/unresolved
+          type: colref/local
+          scope: 2
+          column: 1
           statement-id: 0
           text: "numwait"
         - expression-idx: 23
@@ -15705,6 +16384,107 @@ analyzer-snapshots:
           text: "'SAUDI ARABIA'"
         - expression: 27
           text: "100"
+      name-scopes:
+        - scope-id: 0
+          parent: 2
+          sources:
+            - type: table
+              name: l2
+              text: "lineitem l2"
+          columns:
+            - name: l_comment
+              table-column: "256.65536.4294967301.0"
+            - name: l_commitdate
+              table-column: "256.65536.4294967301.1"
+            - name: l_discount
+              table-column: "256.65536.4294967301.2"
+            - name: l_extendedprice
+              table-column: "256.65536.4294967301.3"
+            - name: l_linenumber
+              table-column: "256.65536.4294967301.4"
+            - name: l_linestatus
+              table-column: "256.65536.4294967301.5"
+            - name: l_orderkey
+              table-column: "256.65536.4294967301.6"
+            - name: l_partkey
+              table-column: "256.65536.4294967301.7"
+            - name: l_quantity
+              table-column: "256.65536.4294967301.8"
+            - name: l_receiptdate
+              table-column: "256.65536.4294967301.9"
+            - name: l_returnflag
+              table-column: "256.65536.4294967301.10"
+            - name: l_shipdate
+              table-column: "256.65536.4294967301.11"
+            - name: l_shipinstruct
+              table-column: "256.65536.4294967301.12"
+            - name: l_shipmode
+              table-column: "256.65536.4294967301.13"
+            - name: l_suppkey
+              table-column: "256.65536.4294967301.14"
+            - name: l_tax
+              table-column: "256.65536.4294967301.15"
+          text: "(\n        ..\n        )"
+        - scope-id: 1
+          parent: 2
+          sources:
+            - type: table
+              name: l3
+              text: "lineitem l3"
+          columns:
+            - name: l_comment
+              table-column: "256.65536.4294967301.0"
+            - name: l_commitdate
+              table-column: "256.65536.4294967301.1"
+            - name: l_discount
+              table-column: "256.65536.4294967301.2"
+            - name: l_extendedprice
+              table-column: "256.65536.4294967301.3"
+            - name: l_linenumber
+              table-column: "256.65536.4294967301.4"
+            - name: l_linestatus
+              table-column: "256.65536.4294967301.5"
+            - name: l_orderkey
+              table-column: "256.65536.4294967301.6"
+            - name: l_partkey
+              table-column: "256.65536.4294967301.7"
+            - name: l_quantity
+              table-column: "256.65536.4294967301.8"
+            - name: l_receiptdate
+              table-column: "256.65536.4294967301.9"
+            - name: l_returnflag
+              table-column: "256.65536.4294967301.10"
+            - name: l_shipdate
+              table-column: "256.65536.4294967301.11"
+            - name: l_shipinstruct
+              table-column: "256.65536.4294967301.12"
+            - name: l_shipmode
+              table-column: "256.65536.4294967301.13"
+            - name: l_suppkey
+              table-column: "256.65536.4294967301.14"
+            - name: l_tax
+              table-column: "256.65536.4294967301.15"
+          text: "(\n        ..\n        )"
+        - scope-id: 2
+          sources:
+            - type: table
+              name: supplier
+              text: "supplier"
+            - type: table
+              name: l1
+              text: "lineitem l1"
+            - type: table
+              name: orders
+              text: "orders"
+            - type: table
+              name: nation
+              text: "nation"
+          columns:
+            - name: s_name
+              expression: 0
+            - name: numwait
+              expression: 24
+          text: "select\n   ..limit\n	100"
 
   - name: tpch_22
     catalog:
@@ -16324,6 +17104,8 @@ analyzer-snapshots:
       expressions:
         - expression-idx: 0
           type: colref/local
+          scope: 2
+          column: 0
           statement-id: 0
           text: "cntrycode"
         - expression-idx: 1
@@ -16378,10 +17160,14 @@ analyzer-snapshots:
           text: "c_custkey"
         - expression-idx: 11
           type: colref/local
+          scope: 2
+          column: 0
           statement-id: 0
           text: "cntrycode"
         - expression-idx: 12
           type: colref/local
+          scope: 3
+          column: 0
           statement-id: 0
           text: "cntrycode"
         - expression-idx: 13
@@ -16565,3 +17351,67 @@ analyzer-snapshots:
           text: "'18'"
         - expression: 39
           text: "'17'"
+      name-scopes:
+        - scope-id: 0
+          parent: 2
+          sources:
+            - type: table
+              name: customer
+              text: "customer"
+          columns:
+            - name: '?'
+              expression: 17
+          text: "(\n        ..17')\n    )"
+        - scope-id: 1
+          parent: 2
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: o_clerk
+              table-column: "256.65536.4294967300.0"
+            - name: o_comment
+              table-column: "256.65536.4294967300.1"
+            - name: o_custkey
+              table-column: "256.65536.4294967300.2"
+            - name: o_orderdate
+              table-column: "256.65536.4294967300.3"
+            - name: o_orderkey
+              table-column: "256.65536.4294967300.4"
+            - name: o_orderpriority
+              table-column: "256.65536.4294967300.5"
+            - name: o_orderstatus
+              table-column: "256.65536.4294967300.6"
+            - name: o_shippriority
+              table-column: "256.65536.4294967300.7"
+            - name: o_totalprice
+              table-column: "256.65536.4294967300.8"
+          text: "(\n        ..tkey\n    )"
+        - scope-id: 2
+          parent: 3
+          parent-sources: none
+          sources:
+            - type: table
+              name: customer
+              text: "customer"
+          columns:
+            - name: cntrycode
+              expression: 15
+            - name: c_acctbal
+              expression: 3
+          text: "(\n        ..\n        )"
+        - scope-id: 3
+          sources:
+            - type: subquery
+              name: custsale
+              scope: 2
+              text: "(\n        ..s custsale"
+          columns:
+            - name: cntrycode
+              expression: 0
+            - name: numcust
+              expression: 13
+            - name: totacctbal
+              expression: 14
+          text: "select\n   .. cntrycode"

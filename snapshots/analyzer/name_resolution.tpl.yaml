@@ -1,0 +1,422 @@
+analyzer-snapshots:
+
+  # Derived tables: the output columns of a subquery in FROM are a FROM item
+  - name: derived_alias
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select s.a, s.z, z from (select a, b as z from t) s
+
+  - name: derived_unaliased
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select z from (select b as z from t)
+
+  - name: derived_column_aliases
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select s.p, s.b, s.a from (select a, b from t) s(p)
+
+  - name: derived_more_aliases_than_columns
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select s.p, s.q, s.r from (select a, b from t) s(p, q, r)
+
+  - name: derived_nested
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q.k from (select s.z as k from (select b as z from t) s) q
+
+  - name: derived_star
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q.a, q.b from (select * from t) q
+
+  - name: derived_star_duplicate_names
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q.a, q.c from (select * from t, u) q
+
+  - name: derived_duplicate_alias
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select * from t as s, (select 1) s
+
+  - name: derived_ambiguous
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a from t, (select a from u) s
+
+  - name: derived_ambiguous_unaliased
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a from t, (select a from u)
+
+  - name: derived_computed_column
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select s.n from (select a + 1 as n from t) s
+
+  - name: derived_unnamed_column
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select s.p from (select a + 1 from t) s(p)
+
+  - name: derived_inner_name_invisible
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select s.b from (select b as z from t) s
+
+
+  # Column aliases rename the leading columns of a FROM item
+  - name: table_column_aliases
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select x.p, x.b, x.a from t as x(p)
+
+  - name: table_alias_hides_table_name
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select t.a, x.a from t as x
+
+  - name: values_column_aliases
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select r.k, r.l from (values (1, 2), (3, 4)) r(k, l)
+
+  - name: values_unaliased
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select * from (values (1, 2)) r
+
+  - name: cte_column_aliases_overridden
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: with c(p) as (select a from t) select x.q, x.p from c as x(q)
+
+
+  # Correlation: expression subqueries see their parent, derived tables and CTEs do not
+  - name: expression_subquery_outputs_invisible
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select c from t where a in (select c from u)
+
+  - name: exists_correlated
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a from t where exists (select 1 from u where u.c = t.b)
+
+  - name: scalar_subquery_correlated
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select (select max(c) from u where u.a = t.a) from t
+
+  - name: correlation_two_levels
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a from t where exists (select 1 from u where exists (select 1 from v where v.x = t.b))
+
+  - name: inner_shadows_outer
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a from t where exists (select a from u)
+
+  - name: ambiguous_does_not_correlate
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select 1 from t where exists (select a from u, u as u2)
+
+  - name: derived_no_sibling_correlation
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select * from t, (select t.a as k) s
+
+  - name: derived_lateral
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select s.k from t, lateral (select t.a as k) s
+
+  - name: derived_lateral_sees_preceding_only
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select * from lateral (select t.a as k) s, t
+
+  - name: derived_outer_correlation
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select (select s.k from (select t.a as k) s) from t
+
+  - name: cte_no_from_correlation
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: with c as (select t.b as k) select c.k from t, c
+
+  - name: cte_outer_correlation
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select (with c as (select t.a as k) select c.k from c) from t
+
+
+  # Stars forward the columns of the FROM items in FROM order
+  - name: qualified_star_derived
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q.c, q.a from (select s.* from t, (select c from u) s) q
+
+  - name: qualified_star_table
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q.a, q.c from (select u.* from t, u) q
+
+  - name: qualified_star_unresolved
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select m.* from missing m
+
+  - name: star_from_order
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q.a, q.c from (select * from (select c, a from u) s, t) q
+
+  - name: star_cte
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: with c as (select a as k from t) select q.k from (select * from c) q
+
+  - name: star_and_columns
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q.a, q.n from (select *, a + b as n from t) q
+
+
+  # USING and NATURAL make the joined columns one column
+  - name: join_using
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select id, x, y from v join w using (id)
+
+  - name: join_using_left
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select id from v left join w using (id)
+
+  - name: join_natural
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select id from v natural join w
+
+  - name: join_using_qualified
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select v.id, w.id from v join w using (id)
+
+  - name: join_using_other_column
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a from t join u using (b)
+
+  - name: join_using_third_input
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select id from v join w using (id) join v as v2 on v2.id = v.id
+
+  - name: join_on_ambiguous
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select id from v join w on v.id = w.id
+
+
+  # ORDER BY and GROUP BY names can refer to output columns
+  - name: order_by_output
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a + 1 as n from t order by n
+
+  - name: order_by_output_shadows_input
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select b as a from t order by a
+
+  - name: order_by_output_in_expression
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select b as n from t order by n + 1
+
+  - name: order_by_input
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a from t order by b
+
+  - name: group_by_input_first
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select b as a from t group by a
+
+  - name: group_by_output
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select b as n from t group by n
+
+  - name: window_order_by_no_output
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select b as n, row_number() over (order by n) from t
+
+  - name: union_order_by
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a from t union select c from u order by a
+
+  - name: union_columns_from_left
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q.a, q.c from (select a from t union select c from u) q
+
+  - name: computed_columns_keep_positions
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: with c(p, q) as (select case when a > 0 then 1 end, b from t) select c.q from c
+
+  - name: recursive_cte
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: with recursive r(n) as (select 1 union all select n + 1 from r where n < 3) select n from r
+
+
+  # Schema inference sees the same FROM items
+  - name: inference_through_derived
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select s.q from (select q from missing) s
+
+  - name: inference_expression_subquery
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select q from missing where id in (select q from missing2)
+
+  - name: inference_derived_no_sibling
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select * from missing m, (select m.q as k) s
+
+
+  # Visualization fields refer to the columns of the SELECT
+  - name: vis_fields
+    catalog:
+      script:
+        input: create table t (a int, b int); create table u (a int, c int); create table v (id int, x int); create table w (id int, y int);
+    script:
+      input: select a, b as n from t visualize using vegalite (mark => bar, encoding => (x => (field => a), y => (field => n)))

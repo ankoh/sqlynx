@@ -18,7 +18,7 @@ analyzer-snapshots:
   - name: trino_inhibitors
     script:
       input: |-
-        select 
+        select
           event_timestamp, elapsed, processed_rows_byol, workload_name,
           regexp_extract(pre_execution_query_metrics, '"federation-push-down-inhibitors":({.*}),"', 1) as inhibitors,
           query_plan

@@ -107,6 +107,7 @@ DASHQL_CORE_UNIT_TESTS = [
     "analyzer_declaration_test",
     "analyzer_delete_test",
     "analyzer_insert_test",
+    "analyzer_name_resolution_test",
     "catalog_test",
     "completion_test",
     "cursor_test",

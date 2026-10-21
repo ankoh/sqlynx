@@ -439,7 +439,7 @@ pub fn plan(planner_inputs: &[PlannerInput]) -> ExecutionGraphT {
                             Some((a, _)) => a.text.clone(),
                             None => relation.table_name.table_name.text.clone(),
                         };
-                        if matches!(analyzed.name_scopes[scope as usize].referenced_tables_by_name.get(&alias), Some(ReferencedTable::Cte(_))) {
+                        if matches!(analyzed.name_scopes[scope as usize].source(&alias).map(|s| &s.table), Some(ReferencedTable::Cte(_))) {
                             continue;
                         }
                     }

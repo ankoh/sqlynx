@@ -31,6 +31,28 @@ analyzer-snapshots:
           catalog-id: "256.65536.4294967296"
           statement-id: 0
           text: "sales"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..rk => bar)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -83,6 +105,28 @@ analyzer-snapshots:
       constants:
         - expression: 0
           text: "'white'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..white'))\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -186,6 +230,28 @@ analyzer-snapshots:
           text: "'monotone'"
         - expression: 6
           text: "0.5"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..true\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -238,6 +304,28 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.0"
           statement-id: 0
           text: "category"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..nal)\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -300,6 +388,28 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.2"
           statement-id: 0
           text: "revenue"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..ive)\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -359,6 +469,28 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.2"
           statement-id: 0
           text: "revenue"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..se))\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -426,6 +558,28 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "45"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..45))\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -496,6 +650,28 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.0"
           statement-id: 0
           text: "category"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..nal)\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -564,6 +740,28 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.2"
           statement-id: 0
           text: "revenue"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..enue\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -637,6 +835,26 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.2"
           statement-id: 0
           text: "revenue"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              expression: 0
+            - name: revenue
+              expression: 1
+          text: "SELECT cat..FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT cat..FROM sales"
+          text: "SELECT cat..ive)\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT cat..FROM sales"
@@ -674,6 +892,21 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "date"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: unresolved
+              name: sales
+              text: "sales"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..ral)\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -740,6 +973,28 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "sum"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..sum)\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -806,6 +1061,28 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.0"
           statement-id: 0
           text: "category"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..nal)\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -884,6 +1161,28 @@ analyzer-snapshots:
       constants:
         - expression: 2
           text: "'descending'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..ive)\n  )\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT * FROM sales"
@@ -950,6 +1249,26 @@ analyzer-snapshots:
       constants:
         - expression: 2
           text: "'## {{prod..revenue}}'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: product_summary
+              text: "product_summary"
+          columns:
+            - name: product
+              expression: 0
+            - name: revenue
+              expression: 1
+          text: "SELECT pro..ct_summary"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT pro..ct_summary"
+          text: "SELECT pro..venue}}'\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT pro..ct_summary"
@@ -1016,6 +1335,26 @@ analyzer-snapshots:
           text: "6"
         - expression: 5
           text: "0"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: unresolved
+              name: product_summary
+              text: "product_summary"
+          columns:
+            - name: product
+              expression: 0
+            - name: revenue
+              expression: 1
+          text: "SELECT pro..ct_summary"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT pro..ct_summary"
+          text: "SELECT pro..ht => 0)\n)"
       visualizations:
         - statement-id: 0
           source: "SELECT pro..ct_summary"

@@ -71,6 +71,39 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 1
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..here a = b"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: b
+              text: "B"
+            - type: unresolved
+              name: c
+              text: "C"
+          columns:
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..here d = c"
       inferred-tables:
         - name: c
           confidence: confident
@@ -150,6 +183,39 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 1
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..here a = b"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: b
+              text: "B"
+            - type: unresolved
+              name: c
+              text: "C"
+          columns:
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..here d = c"
       inferred-tables:
         - name: c
           confidence: confident

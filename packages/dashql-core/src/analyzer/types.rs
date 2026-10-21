@@ -115,6 +115,8 @@ pub struct TableReference {
     pub ast_scope_root: Option<u32>,
     /// The alias name and its location
     pub alias: Option<(Name, SymbolSpan)>,
+    /// The column names of the alias, they rename the leading columns of the table
+    pub column_aliases: Vec<Name>,
     pub inner: Option<RelationExpression>,
     pub role: TableRole,
 }
@@ -322,6 +324,8 @@ pub struct ResultTarget {
     pub column_name: Option<Name>,
     pub expression_id: Option<u32>,
     pub is_star: bool,
+    /// The source name of a qualified star (`t.*`)
+    pub star_qualifier: Option<Name>,
 }
 
 /// The source of a scope output column
@@ -329,6 +333,8 @@ pub struct ResultTarget {
 pub enum ScopeColumnSource {
     Expression(ExprId),
     TableColumn(ColumnLoc),
+    /// A computed column that has no expression of the analyzer
+    Computed,
 }
 
 /// An output column of a scope
@@ -376,12 +382,47 @@ pub struct UnresolvedRelation {
 pub enum ReferencedTable {
     Table(TableLoc),
     Cte(CteLoc),
+    /// A derived table, the output columns of a child scope
+    Subquery(ScopeId),
     Unresolved(UnresolvedRelation),
 }
 
 impl ReferencedTable {
     pub fn is_unresolved_relation(&self) -> bool {
         matches!(self, ReferencedTable::Unresolved(_))
+    }
+}
+
+/// A FROM item of a scope
+#[derive(Clone, Debug)]
+pub struct ScopeSource {
+    /// The table ref node
+    pub ast_node_id: u32,
+    /// The alias or the table name, an unaliased derived table has no name
+    pub name: Option<Arc<str>>,
+    /// The column names of the alias, they rename the leading columns of the source
+    pub column_aliases: Vec<Name>,
+    pub table: ReferencedTable,
+}
+
+/// The FROM items of a scope that column refs can see
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SourceVisibility {
+    #[default]
+    All,
+    /// The FROM items before a table ref node, a lateral derived table sees those of its parent
+    Before(u32),
+    /// Derived tables and CTEs see no FROM items of their parent, but those of the scopes above it
+    None,
+}
+
+impl SourceVisibility {
+    pub fn sees(self, source: &ScopeSource) -> bool {
+        match self {
+            SourceVisibility::All => true,
+            SourceVisibility::Before(node_id) => source.ast_node_id < node_id,
+            SourceVisibility::None => false,
+        }
     }
 }
 
@@ -402,9 +443,19 @@ pub struct NameScope {
     pub cte_definitions: OrderedMap<ResolvedCte>,
     pub cte_definition_nodes: HashMap<Arc<str>, u32>,
     pub ctes_recursive: bool,
-    pub child_output_resolution_barrier: bool,
+    /// Column refs cannot correlate with any parent scope
     pub column_correlation_barrier: bool,
-    pub referenced_tables_by_name: OrderedMap<ReferencedTable>,
+    /// The FROM items of the parent scope that the column refs of this scope can see
+    pub parent_visibility: SourceVisibility,
+    /// The FROM items in FROM order
+    pub sources: Vec<ScopeSource>,
+}
+
+impl NameScope {
+    /// The FROM item with a name
+    pub fn source(&self, name: &str) -> Option<&ScopeSource> {
+        self.sources.iter().find(|s| s.name.as_deref() == Some(name))
+    }
 }
 
 /// A candidate owner of an inference constraint

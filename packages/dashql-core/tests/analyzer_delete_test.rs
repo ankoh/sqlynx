@@ -45,8 +45,8 @@ fn unresolved_reads(analyzed: &AnalyzedScript) -> usize {
     analyzed
         .name_scopes
         .iter()
-        .flat_map(|scope| scope.referenced_tables_by_name.iter())
-        .filter(|(_, table)| table.is_unresolved_relation())
+        .flat_map(|scope| scope.sources.iter())
+        .filter(|source| source.table.is_unresolved_relation())
         .count()
 }
 

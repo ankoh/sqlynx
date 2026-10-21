@@ -25,6 +25,23 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "g.z"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: f
+              text: "foo f"
+            - type: unresolved
+              name: g
+              text: "bar g"
+          columns:
+            - name: x
+              expression: 0
+            - name: y
+              expression: 1
+            - name: z
+              expression: 2
+          text: "select f.x..o f, bar g"
       inferred-tables:
         - name: foo
           confidence: confident
@@ -72,6 +89,23 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "g.id"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: f
+              text: "foo f"
+            - type: unresolved
+              name: g
+              text: "bar g"
+          columns:
+            - name: x
+              expression: 0
+            - name: y
+              expression: 1
+            - name: z
+              expression: 2
+          text: "select f.x...id = g.id"
       inferred-tables:
         - name: foo
           confidence: confident
@@ -112,6 +146,20 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: foo
+              text: "foo"
+          columns:
+            - name: a
+              expression: 0
+            - name: b
+              expression: 1
+            - name: c
+              expression: 2
+          text: "select a, ..c from foo"
       inferred-tables:
         - name: foo
           confidence: confident
@@ -140,6 +188,19 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "x"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: f
+              text: "foo f"
+            - type: unresolved
+              name: g
+              text: "bar g"
+          columns:
+            - name: x
+              expression: 0
+          text: "select x f..o f, bar g"
       inferred-tables:
         - name: foo
           confidence: candidate
@@ -182,6 +243,21 @@ analyzer-snapshots:
       constants:
         - expression: 3
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: f
+              text: "foo f"
+            - type: unresolved
+              name: g
+              text: "bar g"
+          columns:
+            - name: id
+              expression: 0
+            - name: name
+              expression: 1
+          text: "select f.i..e f.id = 1"
       inferred-tables:
         - name: foo
           confidence: confident
@@ -216,6 +292,25 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 1
           text: "g.b"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: f
+              text: "foo f"
+          columns:
+            - name: a
+              expression: 0
+          text: "select f.a..from foo f"
+        - scope-id: 1
+          sources:
+            - type: unresolved
+              name: g
+              text: "foo g"
+          columns:
+            - name: b
+              expression: 1
+          text: "select g.b..from foo g"
       inferred-tables:
         - name: foo
           confidence: confident
@@ -251,6 +346,16 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.0"
           statement-id: 0
           text: "f.x"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: f
+              text: "foo f"
+          columns:
+            - name: x
+              expression: 0
+          text: "select f.x..from foo f"
 
   - name: cte_not_inferred
     script:
@@ -264,6 +369,8 @@ analyzer-snapshots:
       expressions:
         - expression-idx: 0
           type: colref/local
+          scope: 0
+          column: 0
           statement-id: 0
           text: "c.x"
         - expression-idx: 1
@@ -274,6 +381,24 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          columns:
+            - name: x
+              expression: 1
+          text: "select 1 as x"
+        - scope-id: 1
+          sources:
+            - type: cte
+              name: c
+              scope: 0
+              text: "cte c"
+          columns:
+            - name: x
+              expression: 0
+          text: "with cte a..from cte c"
 
   - name: self_join_distinct_aliases
     script:
@@ -304,6 +429,21 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "b.id"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: a
+              text: "foo a"
+            - type: unresolved
+              name: b
+              text: "foo b"
+          columns:
+            - name: x
+              expression: 0
+            - name: y
+              expression: 1
+          text: "select a.x...id = b.id"
       inferred-tables:
         - name: foo
           confidence: confident
@@ -335,6 +475,16 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "x"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: f
+              text: "foo f"
+          columns:
+            - name: x
+              expression: 0
+          text: "select x f..o f, bar f"
       inferred-tables:
         - name: foo
           confidence: confident
@@ -368,6 +518,28 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 1
           text: "f.name"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: f
+              text: "foo f"
+            - type: unresolved
+              name: g
+              text: "bar g"
+          columns:
+            - name: name
+              expression: 0
+          text: "select nam..o f, bar g"
+        - scope-id: 1
+          sources:
+            - type: unresolved
+              name: f
+              text: "foo f"
+          columns:
+            - name: name
+              expression: 1
+          text: "select f.n..from foo f"
       inferred-tables:
         - name: foo
           confidence: confident

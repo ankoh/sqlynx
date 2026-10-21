@@ -34,6 +34,16 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: o
+              text: "outer_source o"
+          columns:
+            - name: outer_column
+              expression: 0
+          text: "WITH pg AS..\n     ) gt"
       inferred-tables:
         - name: outer_source
           confidence: confident
@@ -61,6 +71,16 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "outer_column"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: outer_source
+              text: "outer_source"
+          columns:
+            - name: outer_column
+              expression: 0
+          text: "WITH pg AS..ter_source"
       inferred-tables:
         - name: outer_source
           confidence: confident

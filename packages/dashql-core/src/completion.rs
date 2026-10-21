@@ -8,7 +8,7 @@
 // Bison names some symbol kinds in mixed case (S_Op)
 #![allow(non_upper_case_globals)]
 
-use crate::analyzer::{AnalyzedScript, ColumnResolution, ReferencedTable, ResolvedCte, TableRole};
+use crate::analyzer::{AnalyzedScript, ColumnResolution, ReferencedTable, ScopeSource, TableRole};
 use crate::catalog::*;
 use crate::cursor::{CursorContext, NameComponentType, ScriptCursor, SymbolLocation};
 use crate::hash::HashMap;
@@ -891,13 +891,22 @@ impl<'c, 'a> Completion<'c, 'a> {
         }
     }
 
-    /// The output column names of a CTE (`forEachResolvedCTEColumn`)
-    fn cte_columns(analyzed: &AnalyzedScript, cte: &ResolvedCte) -> Vec<Arc<str>> {
-        let Some(child) = cte.child_scope else { return Vec::new() };
+    /// The output column names of a CTE or derived table source (`forEachResolvedCTEColumn`)
+    fn derived_columns(analyzed: &AnalyzedScript, source: &ScopeSource) -> Vec<Arc<str>> {
+        let (child, aliases) = match &source.table {
+            ReferencedTable::Cte(loc) => {
+                let cte = analyzed.name_scopes[loc.scope as usize].cte_definitions.at(loc.index as usize);
+                let Some(child) = cte.child_scope else { return Vec::new() };
+                let aliases = if source.column_aliases.is_empty() { &cte.column_aliases } else { &source.column_aliases };
+                (child, aliases)
+            }
+            ReferencedTable::Subquery(child) => (*child, &source.column_aliases),
+            ReferencedTable::Table(_) | ReferencedTable::Unresolved(_) => return Vec::new(),
+        };
         let outputs = &analyzed.name_scopes[child as usize].output_columns;
         let mut names = Vec::new();
         for (i, output) in outputs.iter().enumerate() {
-            let name = cte.column_aliases.get(i).unwrap_or(&output.column_name);
+            let name = aliases.get(i).unwrap_or(&output.column_name);
             if !name.text.is_empty() {
                 names.push(name.text.clone());
             }
@@ -962,13 +971,11 @@ impl<'c, 'a> Completion<'c, 'a> {
         if self.strategy != CompletionStrategy::COLUMN_REF {
             return;
         }
-        // The columns of CTE sources, catalog columns come from the name index
+        // The columns of CTE and derived table sources, catalog columns come from the name index
         for &scope_id in &cursor.name_scopes {
             let scope = &analyzed.name_scopes[scope_id as usize];
-            for (_, table) in scope.referenced_tables_by_name.iter() {
-                let ReferencedTable::Cte(loc) = table else { continue };
-                let cte = analyzed.name_scopes[loc.scope as usize].cte_definitions.at(loc.index as usize);
-                for name in Self::cte_columns(analyzed, cte) {
+            for source in &scope.sources {
+                for name in Self::derived_columns(analyzed, source) {
                     self.add_local_candidate(&name, NameTag::COLUMN_NAME.0, tags, prefix, location, location);
                 }
             }
@@ -1223,12 +1230,16 @@ impl<'c, 'a> Completion<'c, 'a> {
             let tags = CandidateTag::DOT_RESOLUTION_COLUMN.0 | CandidateTag::IN_NAME_SCOPE.0;
             for &scope_id in &cursor.name_scopes {
                 let scope = &analyzed.name_scopes[scope_id as usize];
-                let Some(table) = scope.referenced_tables_by_name.get(alias_text) else { continue };
-                match table {
+                let Some(source) = scope.source(alias_text) else { continue };
+                match &source.table {
                     ReferencedTable::Table(loc) => {
                         let names: Vec<Arc<str>> = self
                             .table(*loc)
-                            .map(|t| t.table_columns.iter().map(|c| c.column_name.text.clone()).collect())
+                            .map(|t| {
+                                let names = t.table_columns.iter().map(|c| &c.column_name);
+                                let names = source.column_aliases.iter().chain(names.skip(source.column_aliases.len()));
+                                names.map(|n| n.text.clone()).collect()
+                            })
                             .unwrap_or_default();
                         for name in names {
                             self.add_local_candidate(
@@ -1241,9 +1252,8 @@ impl<'c, 'a> Completion<'c, 'a> {
                             );
                         }
                     }
-                    ReferencedTable::Cte(loc) => {
-                        let cte = analyzed.name_scopes[loc.scope as usize].cte_definitions.at(loc.index as usize);
-                        for name in Self::cte_columns(analyzed, cte) {
+                    ReferencedTable::Cte(_) | ReferencedTable::Subquery(_) => {
+                        for name in Self::derived_columns(analyzed, source) {
                             self.add_local_candidate(
                                 &name,
                                 NameTag::COLUMN_NAME.0,
@@ -1375,8 +1385,8 @@ impl<'c, 'a> Completion<'c, 'a> {
                     let a = name_text(0);
                     for &scope_id in &cursor.name_scopes {
                         let scope = &analyzed.name_scopes[scope_id as usize];
-                        if let Some(table) = scope.referenced_tables_by_name.get(a) {
-                            match table {
+                        if let Some(source) = scope.source(a) {
+                            match &source.table {
                                 ReferencedTable::Table(loc) => {
                                     if let Some(decl) = self.table(*loc) {
                                         let through_catalog = decl.table_id().origin != analyzed.catalog_entry_id();
@@ -1385,8 +1395,10 @@ impl<'c, 'a> Completion<'c, 'a> {
                                             if through_catalog {
                                                 tags |= CandidateTag::THROUGH_CATALOG.0;
                                             }
+                                            // Column aliases rename the leading columns
+                                            let name = source.column_aliases.get(i).unwrap_or(&column.column_name);
                                             dot_candidates.push(DotCandidate {
-                                                name: column.column_name.text.clone(),
+                                                name: name.text.clone(),
                                                 candidate_tags: tags,
                                                 name_tags: NameTag::COLUMN_NAME.0,
                                                 object_id: column.object_id,
@@ -1398,11 +1410,9 @@ impl<'c, 'a> Completion<'c, 'a> {
                                         }
                                     }
                                 }
-                                ReferencedTable::Cte(loc) => {
-                                    let cte =
-                                        analyzed.name_scopes[loc.scope as usize].cte_definitions.at(loc.index as usize);
+                                ReferencedTable::Cte(_) | ReferencedTable::Subquery(_) => {
                                     let tags = CandidateTag::DOT_RESOLUTION_COLUMN.0 | CandidateTag::IN_NAME_SCOPE.0;
-                                    for name in Self::cte_columns(analyzed, cte) {
+                                    for name in Self::derived_columns(analyzed, source) {
                                         self.add_local_candidate(
                                             &name,
                                             NameTag::COLUMN_NAME.0,

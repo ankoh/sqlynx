@@ -17,8 +17,8 @@ analyzer-snapshots:
           create table B (a int);
     script:
       input: select * from A, (select * from B where a = 2);
-  # Outer a=3, inner a=2: correctly scoped
-  - name: names_columnref_ambiguous_correctly_scoped
+  # Inner a=2 resolves to B, outer a=3 is ambiguous: the derived table c forwards B.a
+  - name: names_columnref_ambiguous_with_derived_table
     catalog:
       script:
         input: |-

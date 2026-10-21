@@ -67,6 +67,22 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.1"
           statement-id: 0
           text: "product.quantity"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: o
+              text: "orders o"
+          columns:
+            - name: '?'
+              computed: true
+            - name: '?'
+              computed: true
+            - name: product
+              expression: 2
+            - name: quantity
+              expression: 3
+          text: "select (pr..m orders o"
 
   - name: row_field_access_table_wins
     catalog:
@@ -113,6 +129,19 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.0"
           statement-id: 0
           text: "product.name"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: product
+              text: "product"
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: name
+              expression: 0
+          text: "select pro..ct, orders"
 
   - name: row_field_access_correlated
     catalog:
@@ -180,6 +209,26 @@ analyzer-snapshots:
       constants:
         - expression: 3
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: stock
+              text: "stock"
+          columns:
+            - name: '?'
+              expression: 3
+          text: "(select 1 ..duct.name)"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: id
+              expression: 0
+          text: "select id ..duct.name)"
 
   - name: row_constructor_columns
     catalog:
@@ -243,6 +292,16 @@ analyzer-snapshots:
           text: "1"
         - expression: 5
           text: "2"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: '?'
+              computed: true
+          text: "select row..) = (1, 2)"
 
   - name: row_field_access_inferred
     script:
@@ -258,6 +317,16 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "o.product.name"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: o
+              text: "orders o"
+          columns:
+            - name: product
+              expression: 0
+          text: "select o.p..m orders o"
       inferred-tables:
         - name: orders
           confidence: confident
@@ -297,7 +366,8 @@ analyzer-snapshots:
           text: "orders"
       expressions:
         - expression-idx: 0
-          type: colref/unresolved
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
           statement-id: 0
           text: "s.id"
         - expression-idx: 1
@@ -309,3 +379,30 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.0"
           statement-id: 0
           text: "id"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: id
+              expression: 2
+          text: "(select id..om orders)"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              name: s
+              scope: 0
+              text: "(select id.. orders) s"
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: id
+              expression: 0
+            - name: name
+              expression: 1
+          text: "select s.i.. s, orders"

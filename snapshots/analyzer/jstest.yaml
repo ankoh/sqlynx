@@ -82,3 +82,13 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.3"
           statement-id: 0
           text: "col4"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: table1
+              text: "table1"
+          columns:
+            - name: col4
+              expression: 0
+          text: "select col..rom table1"

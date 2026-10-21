@@ -59,6 +59,25 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.1"
           statement-id: 0
           text: "b"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..here a = b"
 
   - name: edges_0
     catalog:
@@ -118,6 +137,25 @@ analyzer-snapshots:
           catalog: "256.65536.4294967297.1"
           statement-id: 0
           text: "e"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f.. a + d = e"
 
   - name: edges_1
     catalog:
@@ -182,6 +220,25 @@ analyzer-snapshots:
           catalog: "256.65536.4294967297.1"
           statement-id: 0
           text: "e"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f.. and b = e"
 
   - name: edges_2
     catalog:
@@ -269,6 +326,25 @@ analyzer-snapshots:
       constants:
         - expression: 7
           text: "42"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..nd d = 42)"
 
   - name: edges_3
     catalog:
@@ -331,6 +407,25 @@ analyzer-snapshots:
       constants:
         - expression: 2
           text: "42"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..= (d + 42)"
 
   - name: edges_4
     catalog:
@@ -385,6 +480,25 @@ analyzer-snapshots:
           catalog: "256.65536.4294967296.1"
           statement-id: 0
           text: "b"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..on (a = b)"
 
   - name: unresolved_0
     catalog:
@@ -437,6 +551,21 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: unresolved
+              name: c
+              text: "C"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+          text: "select * f..here a = c"
       inferred-tables:
         - name: c
           confidence: confident
@@ -496,6 +625,25 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "c"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "select * f..here a = c"
 
   - name: unresolved_2
     catalog:
@@ -511,6 +659,13 @@ analyzer-snapshots:
         - type: name/unresolved
           statement-id: 0
           text: "A"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: a
+              text: "A"
+          text: "select * from A"
 
   - name: unresolved_3
     catalog:
@@ -538,6 +693,16 @@ analyzer-snapshots:
           type: colref/unresolved
           statement-id: 0
           text: "d"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: unresolved
+              name: a
+              text: "A"
+            - type: unresolved
+              name: b
+              text: "B"
+          text: "select * f..here c = d"
       inferred-tables:
         - name: a
           confidence: candidate
@@ -604,6 +769,30 @@ analyzer-snapshots:
           catalog: "256.65536.4294967297.0"
           statement-id: 0
           text: "d"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "(select * ..ere a = d)"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: a
+              text: "A"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+          text: "select * f..ere a = d)"
 
   - name: nesting_2
     catalog:
@@ -662,6 +851,37 @@ analyzer-snapshots:
           catalog: "256.65536.4294967297.0"
           statement-id: 0
           text: "d"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "(select * ..ere a = d)"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: a
+              text: "A"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+          text: "select * f..ere a = d)"
 
   - name: nesting_correlated_select
     catalog:
@@ -731,6 +951,28 @@ analyzer-snapshots:
           name: sum
           statement-id: 0
           text: "sum(o_totalprice)"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: '?'
+              expression: 4
+          text: "(select su..c_custkey)"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: customer
+              text: "customer"
+          columns:
+            - name: c_name
+              expression: 0
+            - name: total
+              computed: true
+          text: "select c_n..m customer"
 
   - name: nesting_correlated_deep
     catalog:
@@ -810,6 +1052,42 @@ analyzer-snapshots:
           catalog: "256.65536.4294967297.0"
           statement-id: 0
           text: "d"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          sources:
+            - type: table
+              name: c
+              text: "C"
+          columns:
+            - name: f
+              table-column: "256.65536.4294967298.0"
+            - name: g
+              table-column: "256.65536.4294967298.1"
+          text: "(select * ..ere f = d)"
+        - scope-id: 1
+          parent: 2
+          sources:
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: d
+              table-column: "256.65536.4294967297.0"
+            - name: e
+              table-column: "256.65536.4294967297.1"
+          text: "(select * ..re f = d))"
+        - scope-id: 2
+          sources:
+            - type: table
+              name: a
+              text: "A"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+          text: "select * f..re f = d))"
 
   - name: nesting_derived_table
     catalog:
@@ -849,6 +1127,8 @@ analyzer-snapshots:
           text: "product"
         - expression-idx: 1
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "total"
         - expression-idx: 2
@@ -868,6 +1148,8 @@ analyzer-snapshots:
           text: "product"
         - expression-idx: 5
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "total"
         - expression-idx: 6
@@ -883,6 +1165,32 @@ analyzer-snapshots:
       constants:
         - expression: 7
           text: "100"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: product
+              expression: 2
+            - name: total
+              expression: 6
+          text: "(select pr..y product)"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              name: s
+              scope: 0
+              text: "(select pr..duct) as s"
+          columns:
+            - name: product
+              expression: 0
+            - name: total
+              expression: 1
+          text: "select pro..otal > 100"
 
   - name: cte_basic
     catalog:
@@ -940,6 +1248,8 @@ analyzer-snapshots:
           text: "product"
         - expression-idx: 4
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "total"
         - expression-idx: 5
@@ -947,6 +1257,32 @@ analyzer-snapshots:
           name: sum
           statement-id: 0
           text: "sum(amount)"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: product
+              expression: 0
+            - name: total
+              expression: 5
+          text: "select pro..by product"
+        - scope-id: 1
+          sources:
+            - type: cte
+              name: totals
+              scope: 0
+              text: "totals"
+          columns:
+            - name: product
+              expression: 3
+            - name: total
+              expression: 4
+          text: "with total..rom totals"
 
   - name: cte_column_aliases
     catalog:
@@ -1004,6 +1340,8 @@ analyzer-snapshots:
           text: "item"
         - expression-idx: 4
           type: colref/local
+          scope: 0
+          column: 1
           statement-id: 0
           text: "revenue"
         - expression-idx: 5
@@ -1011,6 +1349,32 @@ analyzer-snapshots:
           name: sum
           statement-id: 0
           text: "sum(amount)"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: product
+              expression: 0
+            - name: '?'
+              expression: 5
+          text: "select pro..by product"
+        - scope-id: 1
+          sources:
+            - type: cte
+              name: totals
+              scope: 0
+              text: "totals"
+          columns:
+            - name: item
+              expression: 3
+            - name: revenue
+              expression: 4
+          text: "with total..rom totals"
 
   - name: cte_chained
     catalog:
@@ -1090,6 +1454,8 @@ analyzer-snapshots:
           text: "customer_id"
         - expression-idx: 7
           type: colref/local
+          scope: 1
+          column: 1
           statement-id: 0
           text: "total"
         - expression-idx: 8
@@ -1105,3 +1471,43 @@ analyzer-snapshots:
       constants:
         - expression: 9
           text: "'done'"
+      name-scopes:
+        - scope-id: 0
+          parent: 2
+          parent-sources: none
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: customer_id
+              expression: 0
+            - name: amount
+              expression: 1
+          text: "select cus..s = 'done'"
+        - scope-id: 1
+          parent: 2
+          parent-sources: none
+          sources:
+            - type: cte
+              name: completed
+              scope: 0
+              text: "completed"
+          columns:
+            - name: customer_id
+              expression: 3
+            - name: total
+              expression: 8
+          text: "select cus..ustomer_id"
+        - scope-id: 2
+          sources:
+            - type: cte
+              name: summary
+              scope: 1
+              text: "summary"
+          columns:
+            - name: customer_id
+              expression: 6
+            - name: total
+              expression: 7
+          text: "with\n  com..om summary"

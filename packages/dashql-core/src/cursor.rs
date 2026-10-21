@@ -366,7 +366,7 @@ impl<'a> ScriptCursor<'a> {
 
         let mut best_scope = None;
         for &scope in &self.name_scopes {
-            if analyzed.name_scopes[scope as usize].referenced_tables_by_name.contains(qualifier_text) {
+            if analyzed.name_scopes[scope as usize].source(qualifier_text).is_some() {
                 best_scope = Some(scope);
                 break;
             }
@@ -376,7 +376,7 @@ impl<'a> ScriptCursor<'a> {
             let mut best_length = usize::MAX;
             let parsed = &analyzed.parsed;
             for scope in &analyzed.name_scopes {
-                if !scope.referenced_tables_by_name.contains(qualifier_text) {
+                if scope.source(qualifier_text).is_none() {
                     continue;
                 }
                 let span = resolve_text_span(&scanned.text, &scanned.symbols, *parsed.nodes[scope.ast_node_id as usize].symbol_span());

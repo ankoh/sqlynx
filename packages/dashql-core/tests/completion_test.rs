@@ -150,8 +150,8 @@ fn completes_qualified_columns_in_explicit_join() {
         assert!(!cursor.name_scopes.is_empty(), "{qualifier}");
         let analyzed = cursor.script.analyzed.unwrap();
         let scope = &analyzed.name_scopes[cursor.name_scopes[0] as usize];
-        assert!(scope.referenced_tables_by_name.contains("a"));
-        assert!(scope.referenced_tables_by_name.contains("b"));
+        assert!(scope.source("a").is_some());
+        assert!(scope.source("b").is_some());
         assert!(matches!(cursor.context, dashql_core::cursor::CursorContext::ColumnRef { .. }), "{qualifier}");
 
         let completion = Script::complete_at_cursor(&cursor, 50).unwrap();

@@ -52,6 +52,21 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "2"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: a
+              table-column: "256.65536.4294967297.0"
+          text: "select * f..here a = 2"
 
   - name: names_columnref_ambiguous_scope_overrules
     catalog:
@@ -103,8 +118,34 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "2"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967297.0"
+          text: "(select * ..ere a = 2)"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: subquery
+              scope: 0
+              text: "(select * ..ere a = 2)"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: a
+              table-column: "256.65536.4294967297.0"
+          text: "select * f..ere a = 2)"
 
-  - name: names_columnref_ambiguous_correctly_scoped
+  - name: names_columnref_ambiguous_with_derived_table
     catalog:
       script:
         input: |-
@@ -130,7 +171,10 @@ analyzer-snapshots:
     script:
       input: select * from A, (select * from B where a = 2) c where a = 3;
       catalog-id: 2
-      errors: []
+      errors:
+        - type: COLUMN_REF_AMBIGUOUS
+          message: 'column reference is ambiguous, candidates: a.a, c.a'
+          text: "a"
       table-refs:
         - type: name/catalog
           catalog-id: "256.65536.4294967297"
@@ -147,8 +191,7 @@ analyzer-snapshots:
           statement-id: 0
           text: "a"
         - expression-idx: 1
-          type: colref/catalog
-          catalog: "256.65536.4294967296.0"
+          type: colref/unresolved
           statement-id: 0
           text: "a"
         - expression-idx: 2
@@ -166,6 +209,33 @@ analyzer-snapshots:
           text: "2"
         - expression: 3
           text: "3"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: b
+              text: "B"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967297.0"
+          text: "(select * ..ere a = 2)"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: a
+              text: "A"
+            - type: subquery
+              name: c
+              scope: 0
+              text: "(select * ..e a = 2) c"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: a
+              table-column: "256.65536.4294967297.0"
+          text: "select * f..here a = 3"
 
   - name: names_duplicate_tableref
     catalog:
@@ -197,6 +267,16 @@ analyzer-snapshots:
           catalog-id: "256.65536.4294967296"
           statement-id: 0
           text: "A"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "A"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+          text: "select * from A, A"
 
   - name: names_duplicate_tableref_different_casing
     catalog:
@@ -234,6 +314,21 @@ analyzer-snapshots:
           catalog-id: "256.65536.4294967296"
           statement-id: 0
           text: "A"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: A
+              text: "\"A\""
+            - type: table
+              name: a
+              text: "A"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967297.0"
+            - name: a
+              table-column: "256.65536.4294967296.0"
+          text: "select * f..rom \"A\", A"
 
   - name: names_duplicate_tableref_colliding_with_quotes
     catalog:
@@ -265,6 +360,16 @@ analyzer-snapshots:
           catalog-id: "256.65536.4294967296"
           statement-id: 0
           text: "A"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "\"a\""
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+          text: "select * f..rom \"a\", A"
 
   - name: names_tablename_as_alias
     catalog:
@@ -303,6 +408,16 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: foo
+              text: "foo"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+          text: "select * f.. foo.a = 1"
 
   - name: names_tablename_as_alias_with_cross_join
     catalog:
@@ -345,6 +460,21 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: a
+              text: "foo a"
+            - type: table
+              name: foo
+              text: "foo"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: a
+              table-column: "256.65536.4294967296.0"
+          text: "select * f.. foo.a = 1"
 
   - name: names_tablename_as_alias_but_duplicate
     catalog:
@@ -394,6 +524,21 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: x
+              text: "foo x"
+            - type: table
+              name: foo
+              text: "foo"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: a
+              table-column: "256.65536.4294967296.0"
+          text: "select * f.. foo.a = 1"
 
   - name: names_unresolved_tablename_as_alias_with_tableref_alias
     catalog:
@@ -431,3 +576,13 @@ analyzer-snapshots:
       constants:
         - expression: 1
           text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: x
+              text: "foo x"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+          text: "select * f.. foo.a = 1"
