@@ -1,0 +1,63 @@
+# The core wasm module shipped by @ankoh/dashql-core (same pipeline as //packages/dashql-umap).
+#
+# All third-party crates resolve from the isolated @core_crates universe (MODULE.bazel).
+
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_shared_library")
+load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
+load("//bazel:wasm_tools.bzl", "optimize_wasm", "wasm_bindgen_module")
+
+exports_files(["Cargo.toml"])
+
+# The wasm-bindgen items of the core, shared by the core and the shell module.
+rust_library(
+    name = "dashql_core_wasm_lib",
+    srcs = glob(["src/**/*.rs"]),
+    crate_name = "dashql_core_wasm_lib",
+    crate_root = "src/lib.rs",
+    edition = "2021",
+    target_compatible_with = ["@platforms//cpu:wasm32"],
+    visibility = ["//packages/dashql-shell-wasm:__pkg__"],
+    deps = [
+        "//packages/dashql-core:dashql_core",
+        "//packages/dashql-grammar:dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+        "@core_crates//:wasm-bindgen",
+    ],
+)
+
+# The core module re-exports the bindings of :dashql_core_wasm_lib.
+rust_shared_library(
+    name = "dashql_core_wasm",
+    srcs = ["cdylib.rs"],
+    crate_name = "dashql_core_wasm",
+    crate_root = "cdylib.rs",
+    edition = "2021",
+    target_compatible_with = ["@platforms//cpu:wasm32"],
+    deps = [
+        ":dashql_core_wasm_lib",
+        "@core_crates//:wasm-bindgen",
+    ],
+)
+
+# The wasm_file attribute transitions to wasm32, independent of the host --platforms.
+rust_wasm_bindgen(
+    name = "dashql_core_bindgen",
+    out_name = "dashql_core",
+    target = "web",
+    visibility = ["//visibility:public"],
+    wasm_file = ":dashql_core_wasm",
+)
+
+wasm_bindgen_module(
+    name = "dashql_core_bindgen_wasm",
+    bindgen = ":dashql_core_bindgen",
+)
+
+# Release: wasm-opt -O3 + strip; dev: copy through unchanged.
+optimize_wasm(
+    name = "core_wasm",
+    src = ":dashql_core_bindgen_wasm",
+    out = "dashql_core_bg.wasm",
+    visibility = ["//visibility:public"],
+)

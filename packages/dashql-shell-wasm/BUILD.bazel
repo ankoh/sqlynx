@@ -1,0 +1,43 @@
+# The shell wasm module shipped by the app: the core bindings and the shell.
+#
+# All third-party crates resolve from the isolated @core_crates universe (MODULE.bazel).
+
+load("@rules_rust//rust:defs.bzl", "rust_shared_library")
+load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
+load("//bazel:wasm_tools.bzl", "optimize_wasm", "wasm_bindgen_module")
+
+exports_files(["Cargo.toml"])
+
+rust_shared_library(
+    name = "dashql_shell_wasm",
+    srcs = glob(["src/**/*.rs"]),
+    crate_name = "dashql_shell_wasm",
+    edition = "2021",
+    target_compatible_with = ["@platforms//cpu:wasm32"],
+    deps = [
+        "//packages/dashql-core:dashql_core",
+        "//packages/dashql-core-wasm:dashql_core_wasm_lib",
+        "@core_crates//:wasm-bindgen",
+    ],
+)
+
+rust_wasm_bindgen(
+    name = "dashql_shell_bindgen",
+    out_name = "dashql_shell",
+    target = "web",
+    visibility = ["//visibility:public"],
+    wasm_file = ":dashql_shell_wasm",
+)
+
+wasm_bindgen_module(
+    name = "dashql_shell_bindgen_wasm",
+    bindgen = ":dashql_shell_bindgen",
+)
+
+# Release: wasm-opt -O3 + strip; dev: copy through unchanged.
+optimize_wasm(
+    name = "shell_wasm",
+    src = ":dashql_shell_bindgen_wasm",
+    out = "dashql_shell_bg.wasm",
+    visibility = ["//visibility:public"],
+)

@@ -72,7 +72,7 @@ cc_binary(
 )
 
 # A never-throwing C ABI over the Hyper API for the Rust tests
-# (//packages/dashql-core-rs:formatter_validation_hyper_test).
+# (//packages/dashql-core:formatter_validation_hyper_test).
 cc_library(
     name = "hyper_ffi",
     srcs = ["hyper_ffi.cc"],

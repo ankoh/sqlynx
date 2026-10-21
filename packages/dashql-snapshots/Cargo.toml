@@ -1,0 +1,13 @@
+# Bazel builds this crate (BUILD.bazel). The manifest only feeds the @core_crates crate universe, see
+# MODULE.bazel. Generated sources (parser tables, FlatBuffers bindings) exist only in Bazel, so
+# `cargo build` is not expected to work.
+[package]
+name = "dashql-snapshots"
+description = "Loads the shared YAML snapshot tests in //snapshots for the Rust core"
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+
+[dependencies]
+libtest-mimic = "=0.8.1"
+yaml-rust2 = "=0.11.0"

@@ -1,0 +1,67 @@
+# The SQL grammar of DashQL: the LALR(1) tables and actions of //grammar emitted through
+# //grammar/rust:tables.rs.m4, the keywords, the scanner, the parse context and the LR driver.
+#
+# All third-party crates resolve from the isolated @core_crates universe (MODULE.bazel).
+
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("//grammar/rust:defs.bzl", "bison_rust_tables")
+
+exports_files(["Cargo.toml"])
+
+# rules_rust places generated sources next to the checked-in ones only if they belong to the same
+# package, copy the generated modules of //grammar into the crate.
+genrule(
+    name = "dashql_grammar_tables_rs",
+    srcs = ["//grammar:parser_tables_rs"],
+    outs = ["src/tables.rs"],
+    cmd = "cp $< $@",
+)
+
+genrule(
+    name = "dashql_grammar_keywords_rs",
+    srcs = ["//grammar:keywords_rs"],
+    outs = ["src/keywords/table.rs"],
+    cmd = "cp $< $@",
+)
+
+rust_library(
+    name = "dashql_grammar",
+    srcs = glob(["src/**/*.rs"]) + [
+        ":dashql_grammar_keywords_rs",
+        ":dashql_grammar_tables_rs",
+    ],
+    crate_name = "dashql_grammar",
+    crate_root = "src/lib.rs",
+    edition = "2021",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:logos",
+        "@core_crates//:serde_json",
+    ],
+)
+
+rust_test(
+    name = "dashql_grammar_unit_tests",
+    size = "small",
+    crate = ":dashql_grammar",
+)
+
+# A calculator grammar with Rust actions exercises the action path of the skeleton.
+bison_rust_tables(
+    name = "calc_tables_rs",
+    actions = True,
+    grammar = "tests/calc.y",
+    out = "tests/calc_tables.rs",
+)
+
+rust_test(
+    name = "dashql_grammar_skeleton_test",
+    size = "small",
+    srcs = [
+        "tests/calc_test.rs",
+        ":calc_tables_rs",
+    ],
+    crate_root = "tests/calc_test.rs",
+    edition = "2021",
+)

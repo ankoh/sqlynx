@@ -3,7 +3,7 @@
 //! The benchmarks named like the C++ ones (`scan_query`, `parse_query`, `format_query`, `analyze_query`,
 //! `analyze_query_only`, `move_cursor`, `complete_cursor`) measure the same work. The others isolate parts of it.
 //!
-//!   bazel run -c opt //packages/dashql-core-rs:bench_pipeline
+//!   bazel run -c opt //packages/dashql-core:bench_pipeline
 
 mod harness;
 

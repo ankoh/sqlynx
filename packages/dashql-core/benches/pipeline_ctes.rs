@@ -5,7 +5,7 @@
 //! against the TPC-H schema in the catalog. Each benchmark goes through the `Script` facade like the
 //! C++ benchmark.
 //!
-//!   bazel run -c opt //packages/dashql-core-rs:bench_pipeline_ctes [-- <filter>]
+//!   bazel run -c opt //packages/dashql-core:bench_pipeline_ctes [-- <filter>]
 
 mod harness;
 

@@ -1,0 +1,173 @@
+# The DashQL core: scripts, catalog, analyzer, completion, formatter, visualizations, planner, sessions and the
+# shell. The wasm modules are //packages/dashql-core-wasm and //packages/dashql-shell-wasm.
+#
+# All third-party crates resolve from the isolated @core_crates universe (MODULE.bazel).
+
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+
+exports_files(["Cargo.toml"])
+
+rust_library(
+    name = "dashql_core",
+    srcs = glob(["src/**/*.rs"]),
+    crate_name = "dashql_core",
+    crate_root = "src/lib.rs",
+    edition = "2021",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//packages/dashql-grammar:dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:arrow-array",
+        "@core_crates//:arrow-buffer",
+        "@core_crates//:arrow-cast",
+        "@core_crates//:arrow-ipc",
+        "@core_crates//:arrow-schema",
+        "@core_crates//:flatbuffers",
+        "@core_crates//:pulldown-cmark",
+        "@core_crates//:ropey",
+        "@core_crates//:serde_json",
+        "@core_crates//:unicode-segmentation",
+        "@core_crates//:unicode-width",
+    ],
+)
+
+rust_test(
+    name = "dashql_core_unit_tests",
+    size = "small",
+    crate = ":dashql_core",
+)
+
+# Snapshot tests of the core: one target per category, each a libtest-mimic binary.
+DASHQL_CORE_SNAPSHOT_TESTS = {
+    "formatter_snapshot_test": ("formatter_snapshots.rs", "//snapshots/formatter:files"),
+    "analyzer_snapshot_test": ("analyzer_snapshots.rs", "//snapshots/analyzer:files"),
+    "completion_snapshot_test": ("completion_snapshots.rs", "//snapshots/completion:files"),
+    "diff_snapshot_test": ("diff_snapshots.rs", "//snapshots/diff:files"),
+    "planner_snapshot_test": ("planner_snapshots.rs", "//snapshots/planner:files"),
+    "plan_view_model_snapshot_test": ("plan_view_model_snapshots.rs", "//snapshots/plans/hyper/tests:files"),
+    "visualize_snapshot_test": ("visualize_snapshots.rs", "//snapshots/visualize:files"),
+}
+
+[rust_test(
+    name = name,
+    size = "small",
+    srcs = ["tests/" + src],
+    data = [data],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-snapshots:dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+        "@core_crates//:serde_json",
+    ],
+) for name, (src, data) in DASHQL_CORE_SNAPSHOT_TESTS.items()]
+
+# Executes the formatted SQL of the formatter snapshots with a hyper validation in Hyper, through the C ABI
+# //packages/hyper-api:hyper_ffi over the Hyper C++ API.
+rust_test(
+    name = "formatter_validation_hyper_test",
+    size = "medium",
+    srcs = ["tests/formatter_validation_hyper.rs"],
+    data = [
+        "//packages/hyper-api:hyperd",
+        "//snapshots/formatter:files",
+    ],
+    edition = "2021",
+    env = {"HYPERD_BINARY": "$(rootpath //packages/hyper-api:hyperd)"},
+    target_compatible_with = select({
+        "//packages/hyper-api:linux_x86_64": [],
+        "//packages/hyper-api:macos_arm64": [],
+        "//packages/hyper-api:macos_x86_64": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-snapshots:dashql_snapshots",
+        "//packages/hyper-api:hyper_ffi",
+    ],
+)
+
+# The FlatBuffers bindings (//proto/fb:dashql_buffers_rs) must agree with the enum invariants the core relies on.
+rust_test(
+    name = "dashql_buffers_test",
+    size = "small",
+    srcs = ["tests/buffers_enums.rs"],
+    edition = "2021",
+    deps = [
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+    ],
+)
+
+# Unit tests of the core, one libtest binary per test file.
+DASHQL_CORE_UNIT_TESTS = [
+    "analyzer_declaration_test",
+    "analyzer_delete_test",
+    "analyzer_insert_test",
+    "catalog_test",
+    "completion_test",
+    "cursor_test",
+    "name_tagging_test",
+    "script_execution_test",
+    "script_session_test",
+    "script_test",
+    "shell_api_test",
+    "shell_arrow_renderer_test",
+    "shell_prompt_buffer_test",
+    "string_conversion_test",
+    "topk_test",
+    "unification_test",
+]
+
+[rust_test(
+    name = name,
+    size = "small",
+    srcs = ["tests/" + name + ".rs"],
+    edition = "2021",
+    deps = [
+        ":dashql_core",
+        "//packages/dashql-grammar:dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:arrow-array",
+        "@core_crates//:arrow-ipc",
+        "@core_crates//:arrow-schema",
+        "@core_crates//:flatbuffers",
+    ],
+) for name in DASHQL_CORE_UNIT_TESTS]
+
+# ---------------------------------------------------------------------------
+# Benchmarks (bazel run -c opt //packages/dashql-core:bench_pipeline)
+# ---------------------------------------------------------------------------
+
+rust_binary(
+    name = "bench_pipeline",
+    srcs = [
+        "benches/harness.rs",
+        "benches/pipeline.rs",
+    ],
+    crate_root = "benches/pipeline.rs",
+    edition = "2021",
+    deps = [
+        ":dashql_core",
+        "//packages/dashql-grammar:dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+    ],
+)
+
+# Scan, parse and analyze over CTE chains of 1 to 1000 TPC-H queries:
+# bazel run -c opt //packages/dashql-core:bench_pipeline_ctes [-- <filter>]
+rust_binary(
+    name = "bench_pipeline_ctes",
+    srcs = [
+        "benches/harness.rs",
+        "benches/pipeline_ctes.rs",
+    ],
+    crate_root = "benches/pipeline_ctes.rs",
+    edition = "2021",
+    deps = [":dashql_core"],
+)

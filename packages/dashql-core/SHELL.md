@@ -16,7 +16,7 @@ with an effect envelope (version, type, id, payload); JavaScript performs the Pr
 workflow through `Shell.completeEffect` or `Shell.cancelEffect`. This avoids Asyncify and JSPI while keeping workflow
 ownership in Rust.
 
-The wasm-bindgen API is the `Shell` class of `dashql-shell-wasm` (`//packages/dashql-core-rs:shell_wasm`), which also
+The wasm-bindgen API is the `Shell` class of `dashql-shell-wasm` (`//packages/dashql-shell-wasm:shell_wasm`), which also
 re-exports the core bindings. Shell instances are independent and results are owned by JavaScript. Arrow rendering is
 internal to the query workflow; consumers execute queries through the database effect interface rather than passing
 result buffers to a public rendering function.
@@ -39,9 +39,9 @@ implemented or duplicated in TypeScript.
 Build and test through Bazel:
 
 ```bash
-bazel test //packages/dashql-core-rs:shell_api_test //packages/dashql-core-rs:shell_arrow_renderer_test \
-    //packages/dashql-core-rs:shell_prompt_buffer_test //packages/dashql-core-rs:shell_differential_test
-bazel build //packages/dashql-core-rs:shell_wasm
+bazel test //packages/dashql-core:shell_api_test //packages/dashql-core:shell_arrow_renderer_test \
+    //packages/dashql-core:shell_prompt_buffer_test //packages/dashql-core:shell_differential_test
+bazel build //packages/dashql-shell-wasm:shell_wasm
 ```
 
 Prompt text uses a contiguous UTF-8 buffer with cached grapheme boundaries. Cursor movement and deletion operate on

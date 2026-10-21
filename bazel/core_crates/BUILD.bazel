@@ -1,0 +1,2 @@
+# The lockfile of the @core_crates crate universe (MODULE.bazel), shared by the manifests of the Rust core crates.
+exports_files(["Cargo.lock"])

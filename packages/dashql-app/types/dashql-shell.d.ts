@@ -1,4 +1,4 @@
-// The wasm-bindgen module of the Rust shell (//packages/dashql-core-rs:dashql_shell_bindgen).
+// The wasm-bindgen module of the Rust shell (//packages/dashql-shell-wasm:dashql_shell_bindgen).
 // It re-exports the core bindings, so `DashQL` can be created on it.
 declare module '@ankoh/dashql-shell-js' {
     import type { DashQLBindings } from '@ankoh/dashql-core';

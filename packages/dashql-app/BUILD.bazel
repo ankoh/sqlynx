@@ -43,20 +43,20 @@ copy_to_directory(
 genrule(
     name = "dep_shell_wasm",
     srcs = [
-        "//packages/dashql-core-rs:dashql_shell_bindgen",
-        "//packages/dashql-core-rs:shell_wasm",
+        "//packages/dashql-shell-wasm:dashql_shell_bindgen",
+        "//packages/dashql-shell-wasm:shell_wasm",
     ],
     outs = [
         "dependencies/dashql-shell-wasm/dashql_shell.wasm",
         "dependencies/dashql-shell-wasm/dashql_shell.js",
     ],
     cmd = """
-        for src in $(locations //packages/dashql-core-rs:dashql_shell_bindgen); do
+        for src in $(locations //packages/dashql-shell-wasm:dashql_shell_bindgen); do
             case "$$src" in
                 */dashql_shell.js) sed 's/dashql_shell_bg[.]wasm/dashql_shell.wasm/g' "$$src" > "$(RULEDIR)/dependencies/dashql-shell-wasm/dashql_shell.js" ;;
             esac
         done
-        cp "$(location //packages/dashql-core-rs:shell_wasm)" "$(RULEDIR)/dependencies/dashql-shell-wasm/dashql_shell.wasm"
+        cp "$(location //packages/dashql-shell-wasm:shell_wasm)" "$(RULEDIR)/dependencies/dashql-shell-wasm/dashql_shell.wasm"
     """,
     visibility = ["//visibility:private"],
 )

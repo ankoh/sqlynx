@@ -1,0 +1,68 @@
+# The shared //snapshots YAML files: loads them as libtest-mimic trials for the core tests, and the snapshot
+# encoders of :snapshotter, which regenerates the snapshot files.
+#
+# All third-party crates resolve from the isolated @core_crates universe (MODULE.bazel).
+
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+
+exports_files(["Cargo.toml"])
+
+rust_library(
+    name = "dashql_snapshots",
+    testonly = True,
+    srcs = glob(
+        ["src/**/*.rs"],
+        exclude = ["src/bin/**"],
+    ),
+    crate_name = "dashql_snapshots",
+    crate_root = "src/lib.rs",
+    edition = "2021",
+    visibility = ["//packages/dashql-core:__pkg__"],
+    deps = [
+        "//packages/dashql-core:dashql_core",
+        "//packages/dashql-grammar:dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+        "@core_crates//:libtest-mimic",
+        "@core_crates//:yaml-rust2",
+    ],
+)
+
+rust_test(
+    name = "dashql_snapshots_unit_tests",
+    size = "small",
+    crate = ":dashql_snapshots",
+)
+
+# Regenerates snapshots/**/*.yaml from the templates *.tpl.yaml.
+# bazel run //snapshots/<category>:update, or directly:
+#   bazel run //packages/dashql-snapshots:snapshotter -- --source_dir=$PWD [--filter=<category>]
+rust_binary(
+    name = "snapshotter",
+    testonly = True,
+    srcs = ["src/bin/snapshotter.rs"],
+    edition = "2021",
+    # Snapshot generation runs the whole pipeline over large scripts (TPC-DS), always optimize
+    rustc_flags = ["-Copt-level=3"],
+    visibility = ["//snapshots:__subpackages__"],
+    deps = [
+        ":dashql_snapshots",
+        "//packages/dashql-core:dashql_core",
+        "//packages/dashql-grammar:dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+    ],
+)
+
+# The parser snapshots.
+rust_test(
+    name = "parser_snapshot_test",
+    size = "small",
+    srcs = ["tests/parser_snapshots.rs"],
+    data = ["//snapshots/parser:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_snapshots",
+        "//packages/dashql-grammar:dashql_grammar",
+    ],
+)

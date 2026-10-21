@@ -16,7 +16,7 @@ dashql_buffers_ts_gen(
     index_fbs = "dashql/index.fbs",
 )
 
-# Rust codegen for the Rust core (//packages/dashql-core-rs). flatc writes one file per type;
+# Rust codegen for the Rust core (//packages/dashql-core). flatc writes one file per type;
 # flatbuf_rust_bundle.py inlines them into a single crate root so the output is declarable.
 # plan_view_model_events.fbs is excluded: flatc --rust does not support vectors of unions,
 # and the core does not use those tables.

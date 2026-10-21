@@ -5,7 +5,7 @@ import * as glue from './wasm/dashql_core.js';
 import { decodeBatchResult, encodeBatchRequest } from './batch.js';
 import type { BatchRequest, BatchResult } from './batch.js';
 
-/// The wasm-bindgen module of the Rust core (`packages/dashql-core-rs/dashql-core-wasm`).
+/// The wasm-bindgen module of the Rust core (`packages/dashql-core-wasm`).
 /// Every module that re-exports the core bindings (e.g. the shell module) satisfies this interface.
 export type DashQLBindings = Pick<
     typeof glue,
