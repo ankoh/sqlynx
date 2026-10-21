@@ -488,6 +488,8 @@ export interface ScriptFeedRowProps {
     onAutoCollapseResult: (scriptKey: number, queryId: number) => void;
     onResetAutoCollapsedResult: (scriptKey: number, queryId: number | null) => void;
     topPadding: number;
+    /// The space below the last script that the docked composer floats over
+    bottomPadding: number;
     onCreate: (index: number) => void;
     onEditorView: (scriptKey: number, view: EditorView) => void;
     onRowHeightChange: (index: number, height: number) => void;
@@ -560,6 +562,7 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                 style={{
                     ...props.style,
                     paddingTop: props.index === 0 ? props.topPadding : undefined,
+                    paddingBottom: props.index === props.entries.length * 2 ? 8 + props.bottomPadding : undefined,
                 }}
             >
                 <span className={styles.feed_cell_separator_line} aria-hidden="true" />

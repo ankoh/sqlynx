@@ -17,17 +17,17 @@
     background: var(--stage_background);
     overflow: hidden;
     display: grid;
-    /* The feed, then the docked composer */
-    grid-template-rows: minmax(0, 1fr) auto;
+    /* The feed spans the full height, the docked composer floats over its bottom edge */
+    grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr);
 }
 
 .feed_body_container[data-attachments-visible] {
-    grid-template-rows: 40px minmax(0, 1fr) auto;
+    grid-template-rows: 40px minmax(0, 1fr);
 }
 
 .feed_body_container[data-attachments-visible][data-attachments-expanded] {
-    grid-template-rows: 124px minmax(0, 1fr) auto;
+    grid-template-rows: 124px minmax(0, 1fr);
 }
 
 /* The landing header, the hero composer, then a spacer that keeps the prompt slightly above center */
@@ -60,27 +60,51 @@
     line-height: 1.3;
 }
 
+/* The docked composer floats over the bottom of the feed. The feed reserves the same space below its last
+   script (see the bottom padding of the last separator), so only the fade ever covers content. */
 .feed_composer_section {
-    position: relative;
-    padding: 8px calc(16px + var(--feed-scrollbar-inset, 0px)) 16px 16px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    /* Let clicks through the fade, only the composer itself is interactive */
+    pointer-events: none;
 }
 
-/* Fade the scripts out behind the docked composer */
+/* Padded separately so the size observer of the section sees the full height */
+.feed_composer_body {
+    padding: 40px calc(16px + var(--feed-scrollbar-inset, 0px)) 16px 16px;
+    pointer-events: auto;
+}
+
+/* Fade the scripts out behind the docked composer, the scrollbar stays uncovered */
 .feed_composer_section::before {
     content: '';
     position: absolute;
+    z-index: -1;
+    top: 0;
+    bottom: 0;
     left: 0;
     right: var(--feed-scrollbar-inset, 0px);
-    bottom: 100%;
-    height: 24px;
-    background: linear-gradient(to bottom, transparent, var(--stage_background));
+    background: linear-gradient(
+        to bottom,
+        hsla(210, 29%, 97%, 0) 0%,
+        hsla(210, 29%, 97%, 0.7) 20px,
+        hsl(210, 29%, 97%) 40px
+    );
     pointer-events: none;
 }
 
 .feed_body_container[data-landing] .feed_composer_section {
+    position: relative;
+    z-index: auto;
     justify-self: center;
     width: min(720px, 100%);
     box-sizing: border-box;
+}
+
+.feed_body_container[data-landing] .feed_composer_body {
     padding: 0 16px;
 }
 

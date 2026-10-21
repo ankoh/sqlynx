@@ -20,11 +20,13 @@ export class FeedRowHeightCache {
         private entries: FeedLayoutEntry[],
         private readonly onChange: (index: number, previousHeight: number, height: number) => void = () => {},
         private firstSeparatorHeight = FIRST_SEPARATOR_HEIGHT,
+        private bottomInset = 0,
     ) {}
 
-    updateEntries(entries: FeedLayoutEntry[], firstSeparatorHeight = this.firstSeparatorHeight) {
+    updateEntries(entries: FeedLayoutEntry[], firstSeparatorHeight = this.firstSeparatorHeight, bottomInset = this.bottomInset) {
         this.entries = entries;
         this.firstSeparatorHeight = firstSeparatorHeight;
+        this.bottomInset = bottomInset;
     }
 
     getAverageRowHeight() {
@@ -32,12 +34,16 @@ export class FeedRowHeightCache {
         const totalEntryHeight = this.entries.reduce((total, entry) => (
             total + (this.measuredHeights.get(entry.scriptId) ?? entry.estimatedHeight)
         ), 0);
-        const totalSeparatorHeight = this.firstSeparatorHeight + this.entries.length * SEPARATOR_HEIGHT;
+        const totalSeparatorHeight = this.firstSeparatorHeight + this.entries.length * SEPARATOR_HEIGHT + this.bottomInset;
         return (totalEntryHeight + totalSeparatorHeight) / (this.entries.length * 2 + 1);
     }
 
     getRowHeight(index: number) {
-        if (index % 2 === 0) return index === 0 ? this.firstSeparatorHeight : SEPARATOR_HEIGHT;
+        if (index % 2 === 0) {
+            // The last separator carries the space below the script that the docked composer floats over
+            const bottomInset = index === this.entries.length * 2 ? this.bottomInset : 0;
+            return (index === 0 ? this.firstSeparatorHeight : SEPARATOR_HEIGHT) + bottomInset;
+        }
         const entry = this.entries[Math.floor(index / 2)];
         return entry == null ? undefined : this.measuredHeights.get(entry.scriptId) ?? entry.estimatedHeight;
     }
@@ -56,7 +62,7 @@ export class FeedRowHeightCache {
     }
 }
 
-export function useNotebookFeedLayout(entries: FeedLayoutEntry[], firstSeparatorHeight = FIRST_SEPARATOR_HEIGHT) {
+export function useNotebookFeedLayout(entries: FeedLayoutEntry[], firstSeparatorHeight = FIRST_SEPARATOR_HEIGHT, bottomInset = 0) {
     const listContainerRef = React.useRef<HTMLDivElement>(null);
     const listRef = useListRef(null);
     const [heightsVersion, setHeightsVersion] = React.useState(0);
@@ -64,16 +70,16 @@ export function useNotebookFeedLayout(entries: FeedLayoutEntry[], firstSeparator
     if (rowHeightsRef.current == null) {
         rowHeightsRef.current = new FeedRowHeightCache(entries, () => {
             setHeightsVersion(version => version + 1);
-        }, firstSeparatorHeight);
+        }, firstSeparatorHeight, bottomInset);
     }
-    rowHeightsRef.current.updateEntries(entries, firstSeparatorHeight);
+    rowHeightsRef.current.updateEntries(entries, firstSeparatorHeight, bottomInset);
     const rowHeightCache = rowHeightsRef.current;
     const rowHeights = React.useMemo(() => ({
         getAverageRowHeight: () => rowHeightCache.getAverageRowHeight(),
         getRowHeight: (index: number) => rowHeightCache.getRowHeight(index),
         setRowHeight: rowHeightCache.setRowHeight,
         observeRowElements: () => () => {},
-    }), [rowHeightCache, heightsVersion, firstSeparatorHeight]);
+    }), [rowHeightCache, heightsVersion, firstSeparatorHeight, bottomInset]);
     const listContainerSize = observeSize(listContainerRef);
     const listWidth = listContainerSize?.width ?? 0;
     const listHeight = listContainerSize?.height ?? 0;

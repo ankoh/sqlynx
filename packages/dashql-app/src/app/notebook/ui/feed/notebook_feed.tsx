@@ -32,6 +32,7 @@ import { runNotebookScript } from '../rerun_query.js';
 import { useStorageReader } from '../../persistence/storage_provider.js';
 import { VerticalScrollShadows } from '../../../../ui/foundations/vertical_scroll_shadows.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
+import { observeSize } from '../../../../ui/foundations/size_observer.js';
 import { useNotebookFeedLayout } from './notebook_feed_layout.js';
 import { ScriptFeedRow, type ScriptFeedRowProps } from './notebook_feed_row.js';
 import { getKeywordCase } from '../script_format.js';
@@ -410,9 +411,14 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     ], [feedActive, composerView, handleAcceptDiff, handleRejectDiff]);
     dependencies.useKeyEvents(keyHandlers);
 
+    // The docked composer floats over the feed, the last script keeps clear of it
+    const composerSectionRef = React.useRef<HTMLDivElement>(null);
+    const composerSectionSize = observeSize(composerSectionRef);
+    const bottomInset = entries.length === 0 ? 0 : Math.ceil(composerSectionSize?.height ?? 0);
     const feedLayout = useNotebookFeedLayout(
         entries,
         compactLayout ? COMPACT_FIRST_SEPARATOR_HEIGHT : FIRST_SEPARATOR_HEIGHT,
+        bottomInset,
     );
 
     const handleEditorView = React.useCallback((scriptKey: number, view: EditorView) => {
@@ -498,10 +504,11 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         onAutoCollapseResult: handleAutoCollapseResult,
         onResetAutoCollapsedResult: handleResetAutoCollapsedResult,
         topPadding: compactLayout ? COMPACT_FEED_TOP_PADDING : FEED_TOP_PADDING,
+        bottomPadding: bottomInset,
         onCreate: handleCreate,
         onEditorView: handleEditorView,
         onRowHeightChange: feedLayout.rowHeights.setRowHeight,
-    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight]);
+    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
     composerSendRef.current = handleComposerSend;
     const getScrollElement = React.useCallback(() => feedLayout.listRef.current?.element ?? null, [feedLayout.listRef]);
 
@@ -592,16 +599,18 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                     />
                 )}
             </div>
-            <div className={styles.feed_composer_section}>
-                <dependencies.NotebookComposer
-                    key={props.notebookScripts.notebookId}
-                    instance={props.notebookScripts.instance}
-                    catalog={props.notebookScripts.connectionCatalog}
-                    variant={landing ? NotebookComposerVariant.Hero : NotebookComposerVariant.Docked}
-                    keywordCase={keywordCase}
-                    onSend={handleComposerSend}
-                    setView={setComposerView}
-                />
+            <div className={styles.feed_composer_section} ref={composerSectionRef}>
+                <div className={styles.feed_composer_body}>
+                    <dependencies.NotebookComposer
+                        key={props.notebookScripts.notebookId}
+                        instance={props.notebookScripts.instance}
+                        catalog={props.notebookScripts.connectionCatalog}
+                        variant={landing ? NotebookComposerVariant.Hero : NotebookComposerVariant.Docked}
+                        keywordCase={keywordCase}
+                        onSend={handleComposerSend}
+                        setView={setComposerView}
+                    />
+                </div>
             </div>
         </div>
     );

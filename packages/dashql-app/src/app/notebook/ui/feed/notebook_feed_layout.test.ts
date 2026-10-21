@@ -40,4 +40,16 @@ describe('FeedRowHeightCache', () => {
         expect(heights.getAverageRowHeight()).toBe((48 + 202 + 40 + 137 + 40) / 5);
         expect(onChange).toHaveBeenCalledWith(1, 122, 137);
     });
+
+    it('adds the composer inset to the last separator only', () => {
+        const heights = new FeedRowHeightCache([
+            { scriptId: 1, estimatedHeight: 122 },
+            { scriptId: 2, estimatedHeight: 202 },
+        ], undefined, undefined, 90);
+
+        expect([0, 1, 2, 3, 4].map(index => heights.getRowHeight(index))).toEqual([
+            48, 122, 40, 202, 130,
+        ]);
+        expect(heights.getAverageRowHeight()).toBe((48 + 122 + 40 + 202 + 130) / 5);
+    });
 });
