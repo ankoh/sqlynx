@@ -43,19 +43,14 @@ jobs:
                   bazel-mtls-client-cert: ${{ secrets.BAZEL_CACHE_MTLS_CLIENT_CERT }}
                   bazel-mtls-client-key: ${{ secrets.BAZEL_CACHE_MTLS_CLIENT_KEY }}
 
-            - name: Coverage dashql-core
+            - name: Coverage of the Rust core
               shell: bash
               run: |
                 bazel coverage --config=fastbuild \
-                    --instrumentation_filter="//packages/dashql-core[/:],-//packages/dashql-core/vendor[/:]" \
-                    //packages/dashql-core/...
+                    --instrumentation_filter="//packages/dashql-core[/:],//packages/dashql-grammar[/:]" \
+                    //packages/dashql-core/... //packages/dashql-grammar/... //packages/dashql-snapshots/...
                 cp "$(bazel info output_path)/_coverage/_coverage_report.dat" \
-                    /tmp/lcov_core.dat
-
-            - name: Prepare coverage report
-              shell: bash
-              run: |
-                cp /tmp/lcov_core.dat /tmp/lcov_linux.dat
+                    /tmp/lcov_linux.dat
 
             - name: Upload to Coveralls
               uses: coverallsapp/github-action@v2
