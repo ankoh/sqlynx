@@ -5,7 +5,7 @@ use super::types::*;
 use crate::error::{Error, Result};
 use dashql_buffers::algebra::FunctionCallModifier;
 use dashql_buffers::parser::{AttributeKey as K, KnownFunction, NodeType};
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use std::ops::Range;
 
 pub(super) fn visit(state: &mut AnalysisState, morsel: Range<usize>) -> Result<()> {

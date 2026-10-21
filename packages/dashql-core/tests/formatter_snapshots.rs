@@ -6,8 +6,8 @@
 //! their formatted output must scan and parse without errors.
 
 use dashql_core::formatter::{formatting_mode_to_string, Formatter};
-use dashql_grammar::parser::parse;
-use dashql_grammar::scanner::scan;
+use dashql_parser::parser::parse;
+use dashql_parser::scanner::scan;
 use dashql_snapshots::formatter::{load_formatter_cases, DialectExpectations};
 use dashql_snapshots::{run, Arguments, Failed, Trial};
 use std::sync::Arc;

@@ -4,8 +4,8 @@ use super::*;
 use crate::analyzer::analyze;
 use crate::catalog::Catalog;
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType};
-use dashql_grammar::parser::{parse, ParsedScript};
-use dashql_grammar::scanner::scan;
+use dashql_parser::parser::{parse, ParsedScript};
+use dashql_parser::scanner::scan;
 use std::sync::Arc;
 
 fn parse_text(catalog: &Catalog, text: &str) -> Arc<ParsedScript> {

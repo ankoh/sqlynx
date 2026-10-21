@@ -6,8 +6,8 @@ use dashql_buffers::algebra::LiteralType;
 use dashql_buffers::parser::{Node as AstNode, SymbolSpan};
 use dashql_core::analyzer::*;
 use dashql_core::catalog::{QualifiedCatalogObjectId, TableDeclaration};
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::span::TextSpan;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::span::TextSpan;
 use yaml_rust2::Yaml;
 
 struct Encoder<'a> {
@@ -522,8 +522,8 @@ pub const COMPARED_KEYS: [&str; 7] =
 /// Returns the encoded catalog script (if any) and the encoded main script.
 pub fn analyze_case(catalog_input: Option<&str>, main_input: &str) -> Result<(Option<Yaml>, Yaml), String> {
     use dashql_core::catalog::Catalog;
-    use dashql_grammar::parser::parse;
-    use dashql_grammar::scanner::scan;
+    use dashql_parser::parser::parse;
+    use dashql_parser::scanner::scan;
     use std::sync::Arc;
 
     let mut catalog = Catalog::new();

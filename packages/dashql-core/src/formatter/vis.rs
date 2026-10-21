@@ -1,6 +1,6 @@
 //! VISUALIZE statements (`formatter/formatter_vis.cc`).
 
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::formatting::FormattingMode;
 use dashql_buffers::parser::{AttributeKey, Node, NodeType, VisFieldType, VisMarkType, VisScaleType};

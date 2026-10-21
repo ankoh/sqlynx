@@ -10,8 +10,8 @@ use dashql_core::catalog::Catalog;
 use dashql_core::completion::{CandidateObjectRef, Completion};
 use dashql_core::cursor::{ScriptCursor, ScriptView};
 use dashql_core::utils::quote_identifier;
-use dashql_grammar::parser::parse;
-use dashql_grammar::scanner::scan;
+use dashql_parser::parser::parse;
+use dashql_parser::scanner::scan;
 use std::sync::Arc;
 use yaml_rust2::Yaml;
 

@@ -9,8 +9,8 @@ use dashql_buffers::analyzer::AnalyzerErrorSeverity;
 use dashql_buffers::batch::{
     BatchDiagnosticT, BatchRequest, BatchResultT, BatchScriptResultT, DiagnosticSeverity, ProcessingStage,
 };
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::span::TextSpan;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::span::TextSpan;
 
 /// Pack an object API value into FlatBuffer bytes
 macro_rules! pack_bytes {

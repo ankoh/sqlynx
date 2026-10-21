@@ -7,7 +7,7 @@
 use super::entry::CatalogObjectRef;
 use crate::utils::{ci_cmp, ci_starts_with};
 use dashql_buffers::analyzer::NameTag;
-use dashql_grammar::span::TextSpan;
+use dashql_parser::span::TextSpan;
 use std::sync::Arc;
 
 /// A name of the index (the fields of `RegisteredName` the completion reads)

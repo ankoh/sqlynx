@@ -2,7 +2,7 @@
 """Generate the Rust keyword table of the scanner from grammar/lists/*.list.
 
 Each list line is an X-macro `X(CATEGORY, "name", TOKEN)`, shared with the C++ scanner. The
-output is a Rust module (to be declared inside dashql-grammar, next to `tables`) that defines
+output is a Rust module (to be declared inside dashql-parser, next to `tables`) that defines
 `KEYWORDS`, sorted by name for binary search, and `MAX_KEYWORD_LENGTH`.
 """
 
@@ -44,7 +44,7 @@ def read_lists(paths):
 
 
 # The keyword lookup table: FNV-1a over the lower-case keyword, linear probing. Must match
-# keywords::fnv1a in dashql-grammar.
+# keywords::fnv1a in dashql-parser.
 TABLE_SIZE = 2048
 
 

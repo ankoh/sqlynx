@@ -5,7 +5,7 @@
 //! inline if they fit, otherwise broken according to their join policy.
 
 use dashql_buffers::formatting::{FormattingConfigT, FormattingDialect, FormattingMode, KeywordCase};
-use dashql_grammar::keywords::Keyword;
+use dashql_parser::keywords::Keyword;
 use std::cell::RefCell;
 
 pub const FORMATTING_DEFAULT_INDENTATION_WIDTH: usize = 2;

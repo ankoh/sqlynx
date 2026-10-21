@@ -4,7 +4,7 @@ use super::state::AnalysisState;
 use super::types::*;
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType};
 use dashql_buffers::parser::{AttributeKey as K, Node, NodeType, VisFieldType, VisMarkType, VisScaleType};
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use std::ops::Range;
 
 /// The state of a node

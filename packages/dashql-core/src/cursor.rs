@@ -6,11 +6,11 @@ use crate::analyzer::{AnalyzedScript, ExprId, ScopeId, TableRefId};
 use crate::catalog::Catalog;
 use dashql_buffers::cursor::RelativeSymbolPosition;
 use dashql_buffers::parser::{NodeType, SymbolSpan};
-use dashql_grammar::names::NameId;
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::ParsedScript;
-use dashql_grammar::scanner::{ScannedScript, Symbol};
-use dashql_grammar::symbol_kind::*;
+use dashql_parser::names::NameId;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::ParsedScript;
+use dashql_parser::scanner::{ScannedScript, Symbol};
+use dashql_parser::symbol_kind::*;
 use std::sync::Arc;
 
 /// The state of a script that a cursor points into (the parts of `Script` the cursor reads)

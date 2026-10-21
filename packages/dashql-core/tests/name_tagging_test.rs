@@ -6,8 +6,8 @@
 use dashql_buffers::analyzer::NameTag;
 use dashql_core::analyzer::analyze;
 use dashql_core::catalog::Catalog;
-use dashql_grammar::parser::parse;
-use dashql_grammar::scanner::scan;
+use dashql_parser::parser::parse;
+use dashql_parser::scanner::scan;
 use std::sync::Arc;
 
 const COLUMN_NAME: u8 = NameTag::COLUMN_NAME.0;

@@ -11,8 +11,8 @@ use dashql_buffers::formatting::FormattingConfigT;
 use dashql_core::catalog::Catalog;
 use dashql_core::formatter::Formatter;
 use dashql_core::script::Script;
-use dashql_grammar::parser::parse;
-use dashql_grammar::scanner::scan;
+use dashql_parser::parser::parse;
+use dashql_parser::scanner::scan;
 use harness::bench;
 use std::hint::black_box;
 use std::sync::Arc;
@@ -607,13 +607,13 @@ fn main() {
     });
     let scanned = scan(MAIN_SCRIPT, 0, 1);
     bench("parse_driver_only", || {
-        let mut ctx = dashql_grammar::parser::context::ParseContext::new(
+        let mut ctx = dashql_parser::parser::context::ParseContext::new(
             &scanned.text,
             &scanned.symbols,
             scanned.names.clone(),
             true,
         );
-        dashql_grammar::parser::driver::parse(&mut ctx);
+        dashql_parser::parser::driver::parse(&mut ctx);
         black_box(&ctx);
     });
     // The parser takes ownership of the scanned script, scan and parse together and subtract.
@@ -680,7 +680,7 @@ fn bench_cursor() {
 /// Attribute lookups of a wide object (the 21 keys of a vis scale) with 5, 21 and 40 children
 fn bench_attribute_lookups() {
     use dashql_buffers::parser::{AttributeKey as K, Node, NodeType, SymbolSpan};
-    use dashql_grammar::attrs;
+    use dashql_parser::attrs;
     const KEYS: [K; 21] = [
         K::VIS_SCALE_TYPE, K::VIS_SCALE_DOMAIN, K::VIS_SCALE_DOMAIN_MIN, K::VIS_SCALE_DOMAIN_MAX,
         K::VIS_SCALE_DOMAIN_MID, K::VIS_SCALE_RANGE, K::VIS_SCALE_RANGE_MIN, K::VIS_SCALE_RANGE_MAX,

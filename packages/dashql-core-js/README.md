@@ -130,6 +130,6 @@ and `NOTICE`. Both files are copied unchanged into the package; `NOTICE` is
 the repository-wide third-party notice.
 Source is available at <https://github.com/ankoh/dashql>, including the bindings
 under `packages/dashql-core-js`, the Rust core under `packages/dashql-core` and
-`packages/dashql-grammar`, its wasm-bindgen module under `packages/dashql-core-wasm`,
+`packages/dashql-parser`, its wasm-bindgen module under `packages/dashql-core-wasm`,
 and generated binding schemas under `proto/fb`. Third-party components retain
 their own licenses.

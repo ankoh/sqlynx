@@ -27,12 +27,12 @@ use dashql_buffers::parser::{
     StatementType, SymbolSpan, SymbolSpanT, TextSpanT,
 };
 use dashql_buffers::visualization::{DashboardSpecT, TableSpecT};
-use dashql_grammar::keywords::Keyword;
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::ParsedScript;
-use dashql_grammar::scanner::{ScannedScript, Symbol};
-use dashql_grammar::span::TextSpan;
-use dashql_grammar::symbol_kind::*;
+use dashql_parser::keywords::Keyword;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::ParsedScript;
+use dashql_parser::scanner::{ScannedScript, Symbol};
+use dashql_parser::span::TextSpan;
+use dashql_parser::symbol_kind::*;
 
 /// Build a FlatBuffers object API value, which are non-exhaustive: start from the default and
 /// assign the listed fields
@@ -69,7 +69,7 @@ fn n_index(nodes: &[Node], n: &Node) -> usize {
     (n as *const Node as usize - nodes.as_ptr() as usize) / std::mem::size_of::<Node>()
 }
 
-fn comment_block(b: &dashql_grammar::comment_blocks::CommentBlock) -> CommentBlockT {
+fn comment_block(b: &dashql_parser::comment_blocks::CommentBlock) -> CommentBlockT {
     build!(CommentBlockT {
         block_type: b.block_type,
         text_span: text_span(b.text_span),

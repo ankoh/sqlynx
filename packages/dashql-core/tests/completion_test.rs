@@ -9,7 +9,7 @@ use dashql_core::catalog::Catalog;
 use dashql_core::completion::{is_symbol_kind_completable, Candidate, Completion};
 use dashql_core::pack::pack_completion;
 use dashql_core::script::Script;
-use dashql_grammar::symbol_kind::*;
+use dashql_parser::symbol_kind::*;
 
 /// The default limit of `Script::CompleteAtCursor`
 const DEFAULT_LIMIT: usize = 10;

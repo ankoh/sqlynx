@@ -10,7 +10,7 @@ Each quirk can now be fixed as an ordinary change with a snapshot update; remove
 entry when you find another inherited quirk. The headings name where the behavior lives in the Rust
 core; C++ function names refer to the original implementation.
 
-## Scanner (`packages/dashql-grammar/src/scanner.rs`, ported from `grammar/scanner.l`)
+## Scanner (`packages/dashql-parser/src/scanner.rs`, ported from `grammar/scanner.l`)
 
 - **`1..` scans as FCONST.** The `{decimalfail}` rule returns FCONST for `1`, where Postgres returns
   ICONST.
@@ -40,7 +40,7 @@ core; C++ function names refer to the original implementation.
   text.
 - **Zero-length quoted identifiers still return an IDENT**, with an empty name, next to the error.
 
-## Parser (`grammar/rules/`, `packages/dashql-grammar/src/parser/`)
+## Parser (`grammar/rules/`, `packages/dashql-parser/src/parser/`)
 
 - **Keyword names carry token indexes as byte spans.** `name_from_keyword` and `name_from_string_literal`
   (C++ `NameFromKeyword`, `NameFromStringLiteral`) register names with `TextSpan(symbol.offset, ...)`,
@@ -150,7 +150,7 @@ the inputs that hit them:
 
 ## Formatter (`packages/dashql-core/src/formatter/`)
 
-- **Attribute lookup picks different duplicates** (`attrs!` in `dashql_grammar::attributes`, C++
+- **Attribute lookup picks different duplicates** (`attrs!` in `dashql_parser::attributes`, C++
   `LookupAttributes`). With one key it returns the first matching child; with several keys it returns
   the last match of each. The analyzer relies on the same helper.
 - **Comment wrapping splits words at byte offsets** (`AppendWrappedCommentParagraph`) and can cut a

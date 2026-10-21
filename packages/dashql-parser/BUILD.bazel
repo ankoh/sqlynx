@@ -11,26 +11,26 @@ exports_files(["Cargo.toml"])
 # rules_rust places generated sources next to the checked-in ones only if they belong to the same
 # package, copy the generated modules of //grammar into the crate.
 genrule(
-    name = "dashql_grammar_tables_rs",
+    name = "dashql_parser_tables_rs",
     srcs = ["//grammar:parser_tables_rs"],
     outs = ["src/tables.rs"],
     cmd = "cp $< $@",
 )
 
 genrule(
-    name = "dashql_grammar_keywords_rs",
+    name = "dashql_parser_keywords_rs",
     srcs = ["//grammar:keywords_rs"],
     outs = ["src/keywords/table.rs"],
     cmd = "cp $< $@",
 )
 
 rust_library(
-    name = "dashql_grammar",
+    name = "dashql_parser",
     srcs = glob(["src/**/*.rs"]) + [
-        ":dashql_grammar_keywords_rs",
-        ":dashql_grammar_tables_rs",
+        ":dashql_parser_keywords_rs",
+        ":dashql_parser_tables_rs",
     ],
-    crate_name = "dashql_grammar",
+    crate_name = "dashql_parser",
     crate_root = "src/lib.rs",
     edition = "2021",
     visibility = ["//visibility:public"],
@@ -42,9 +42,9 @@ rust_library(
 )
 
 rust_test(
-    name = "dashql_grammar_unit_tests",
+    name = "dashql_parser_unit_tests",
     size = "small",
-    crate = ":dashql_grammar",
+    crate = ":dashql_parser",
 )
 
 # A calculator grammar with Rust actions exercises the action path of the skeleton.
@@ -56,7 +56,7 @@ bison_rust_tables(
 )
 
 rust_test(
-    name = "dashql_grammar_skeleton_test",
+    name = "dashql_parser_skeleton_test",
     size = "small",
     srcs = [
         "tests/calc_test.rs",

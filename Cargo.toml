@@ -11,7 +11,7 @@ members = [
 exclude = [
     "packages/dashql-core",
     "packages/dashql-core-wasm",
-    "packages/dashql-grammar",
+    "packages/dashql-parser",
     "packages/dashql-shell-wasm",
     "packages/dashql-snapshots",
 ]

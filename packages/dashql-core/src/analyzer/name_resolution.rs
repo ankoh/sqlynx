@@ -12,7 +12,7 @@ use super::types::*;
 use crate::catalog::*;
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType, NameTag, SemanticNodeMarkerType};
 use dashql_buffers::parser::{AttributeKey as K, Node, NodeType, StatementType};
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use crate::hash::HashMap;
 use std::ops::Range;
 use std::sync::Arc;

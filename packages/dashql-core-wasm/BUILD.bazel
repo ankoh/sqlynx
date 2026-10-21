@@ -19,7 +19,7 @@ rust_library(
     visibility = ["//packages/dashql-shell-wasm:__pkg__"],
     deps = [
         "//packages/dashql-core:dashql_core",
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:flatbuffers",
         "@core_crates//:wasm-bindgen",

@@ -1,8 +1,8 @@
 # Rust Coverage Fix for Bazel 8/9
 
 The coverage workflow (`.github/workflows/coverage.yml`) covers the Rust core: it runs
-`bazel coverage` over `//packages/dashql-core/...`, `//packages/dashql-grammar/...` and
-`//packages/dashql-snapshots/...`, instruments `//packages/dashql-core` and `//packages/dashql-grammar`,
+`bazel coverage` over `//packages/dashql-core/...`, `//packages/dashql-parser/...` and
+`//packages/dashql-snapshots/...`, instruments `//packages/dashql-core` and `//packages/dashql-parser`,
 and uploads Bazel's combined report (`_coverage_report.dat`) to Coveralls.
 
 ## Problem

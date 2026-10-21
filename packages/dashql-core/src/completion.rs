@@ -18,12 +18,12 @@ use dashql_buffers::analyzer::NameTag;
 use dashql_buffers::completion::{CandidateTag, CompletionStrategy};
 use dashql_buffers::cursor::RelativeSymbolPosition;
 use dashql_buffers::parser::{AttributeKey, NodeType, SymbolSpan};
-use dashql_grammar::keywords::Keyword;
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::probe::{self, PrefixSnapshot};
-use dashql_grammar::scanner::Symbol;
-use dashql_grammar::symbol_kind::*;
-use dashql_grammar::SymbolKind;
+use dashql_parser::keywords::Keyword;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::probe::{self, PrefixSnapshot};
+use dashql_parser::scanner::Symbol;
+use dashql_parser::symbol_kind::*;
+use dashql_parser::SymbolKind;
 use std::cmp::Ordering;
 use std::sync::Arc;
 

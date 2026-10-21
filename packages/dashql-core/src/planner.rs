@@ -17,8 +17,8 @@ use dashql_buffers::execution::{
     ExecutionGraphScriptT, ExecutionGraphT, ExecutionGraphUnresolvedReferenceT,
 };
 use dashql_buffers::parser::{AttributeKey as Key, Node, NodeType, StatementType as Type, TempType};
-use dashql_grammar::attrs;
-use dashql_grammar::parser::context::resolve_text_span;
+use dashql_parser::attrs;
+use dashql_parser::parser::context::resolve_text_span;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 

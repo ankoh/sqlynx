@@ -15,7 +15,7 @@ use crate::utils::{ci_cmp, ci_find, ci_starts_with, quote_identifier};
 use dashql_buffers::completion::CandidateTag;
 use dashql_buffers::parser::{ParsedScriptFeature, ScannerTokenType};
 use dashql_buffers::status::StatusCode;
-use dashql_grammar::symbol_kind::S_SEMICOLON;
+use dashql_parser::symbol_kind::S_SEMICOLON;
 use std::cmp::Ordering;
 use std::collections::VecDeque;
 

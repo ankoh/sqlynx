@@ -1,8 +1,8 @@
 //! The diff snapshots (snapshots/diff/*.yaml).
 
 use dashql_core::script_diff::ScriptDiff;
-use dashql_grammar::parser::{parse, ParsedScript};
-use dashql_grammar::scanner::scan;
+use dashql_parser::parser::{parse, ParsedScript};
+use dashql_parser::scanner::scan;
 use dashql_snapshots::encode::diff::encode_diff;
 use dashql_snapshots::{compare, load_category, run, trim_input, Arguments, Failed, Trial};
 use std::sync::Arc;

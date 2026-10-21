@@ -21,7 +21,7 @@ The grammar then accepts `ext_dot_trailing` as a valid `sql_indirection_el`, pro
 Downstream, the completion engine recognizes trailing dots and offers completions for the namespace to the left.
 
 **Files:**
-- `packages/dashql-grammar/src/scanner.rs` — `{raw_dot_trailing}` pattern (`Initial::DotTrailing`), `DOT_TRAILING` token
+- `packages/dashql-parser/src/scanner.rs` — `{raw_dot_trailing}` pattern (`Initial::DotTrailing`), `DOT_TRAILING` token
 - `grammar/prologue.y` — `DOT_TRAILING` token declaration
 - `grammar/rules/sql_select.y` — `ext_dot_trailing` rule, usage in `sql_indirection_el` and `sql_attrs`
 
@@ -39,4 +39,4 @@ This allows DashQL to parse SQL dialects that use backticks for identifier quoti
 Embedded backticks are supported via doubling (``` `` ```), matching the MySQL convention.
 
 **Files:**
-- `packages/dashql-grammar/src/scanner.rs` — `xbt` exclusive state (the `Xbt` lexer and `State::Xbt`), backtick removed from `{op_chars}`, the identifier is read by `identifier_stop`
+- `packages/dashql-parser/src/scanner.rs` — `xbt` exclusive state (the `Xbt` lexer and `State::Xbt`), backtick removed from `{op_chars}`, the identifier is read by `identifier_stop`

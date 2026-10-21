@@ -1,6 +1,6 @@
 //! CREATE, DROP, ATTACH and SET statements (`formatter/formatter_create.cc`).
 
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::parser::{Node, NodeType, OnCommitOption, TempType};
 

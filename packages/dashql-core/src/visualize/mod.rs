@@ -22,7 +22,7 @@ pub use vegalite_generator::generate_vegalite_spec;
 pub use vegalite_parser::parse_vegalite_to_visualize;
 
 use crate::analyzer::AnalyzedScript;
-use dashql_grammar::parser::context::resolve_text_span;
+use dashql_parser::parser::context::resolve_text_span;
 
 /// The text of a node (`input.substr(span.offset(), span.length())`)
 fn node_text(script: &AnalyzedScript, node_id: u32) -> &[u8] {

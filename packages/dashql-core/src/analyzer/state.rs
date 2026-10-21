@@ -5,11 +5,11 @@ use super::AnalyzedScript;
 use crate::catalog::*;
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType, NameTag, SemanticNodeMarkerType};
 use dashql_buffers::parser::{Node, NodeType, SymbolSpan};
-use dashql_grammar::names::NameId;
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::ParsedScript;
-use dashql_grammar::scanner::ScannedScript;
-use dashql_grammar::span::TextSpan;
+use dashql_parser::names::NameId;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::ParsedScript;
+use dashql_parser::scanner::ScannedScript;
+use dashql_parser::span::TextSpan;
 use std::sync::Arc;
 
 pub(super) struct AnalysisState<'a> {

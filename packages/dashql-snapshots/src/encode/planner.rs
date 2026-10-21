@@ -6,7 +6,7 @@ use dashql_buffers::execution::{ExecutionGraphEntityType, ExecutionGraphT};
 use dashql_core::catalog::Catalog;
 use dashql_core::script::Script;
 use dashql_core::utils::quote_identifier;
-use dashql_grammar::keywords::Keyword;
+use dashql_parser::keywords::Keyword;
 use yaml_rust2::Yaml;
 
 /// Does `identifier_requires_quotes` hold?

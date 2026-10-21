@@ -21,7 +21,7 @@ mod vis;
 
 pub use program::*;
 
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use dashql_buffers::formatting::{FormattingConfigT, FormattingDialect, FormattingMode};
 use dashql_buffers::parser::{
     AttributeKey, CharacterType, ColumnConstraint, ConstraintAttribute, ExpressionOperator, ExtractTarget,
@@ -29,9 +29,9 @@ use dashql_buffers::parser::{
     NodeType, NumericType, OrderDirection, OrderNullRule, RowLockingBlockBehavior, RowLockingStrength, SampleCountUnit,
     SymbolSpan, TableConstraint, TempType, TrimDirection, WindowBoundDirection, WindowBoundMode, WindowRangeMode,
 };
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::ParsedScript;
-use dashql_grammar::scanner::ScannedScript;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::ParsedScript;
+use dashql_parser::scanner::ScannedScript;
 use std::cell::RefCell;
 
 type K = AttributeKey;
@@ -473,8 +473,8 @@ impl<'a> Formatter<'a> {
     }
 
     /// The obfuscated literal whose marker starts at a text offset (`FindObfuscatedLiteral`)
-    fn find_obfuscated_literal(&self, offset: u32) -> Option<&'a dashql_grammar::scanner::ObfuscatedLiteral> {
-        let literals: &'a [dashql_grammar::scanner::ObfuscatedLiteral] = &self.scanned.obfuscated_literals;
+    fn find_obfuscated_literal(&self, offset: u32) -> Option<&'a dashql_parser::scanner::ObfuscatedLiteral> {
+        let literals: &'a [dashql_parser::scanner::ObfuscatedLiteral] = &self.scanned.obfuscated_literals;
         let i = literals.partition_point(|l| l.location.offset < offset);
         literals.get(i).filter(|l| l.location.offset == offset)
     }
@@ -2646,8 +2646,8 @@ fn bytes_to_string(bytes: Vec<u8>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dashql_grammar::parser::parse;
-    use dashql_grammar::scanner::scan;
+    use dashql_parser::parser::parse;
+    use dashql_parser::scanner::scan;
     use std::sync::Arc;
 
     fn format(text: &str, mode: FormattingMode, max_width: u32) -> (String, Vec<u32>) {

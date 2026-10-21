@@ -1,4 +1,4 @@
-# The grammar of the dashql parser, compiled to Rust tables and actions for dashql_grammar.
+# The grammar of the dashql parser, compiled to Rust tables and actions for dashql_parser.
 
 load("//grammar/rust:defs.bzl", "bison_rust_tables")
 

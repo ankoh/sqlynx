@@ -7,7 +7,7 @@ use crate::catalog::*;
 use dashql_buffers::algebra::{BinaryExpressionFunction, ComparisonFunction, LiteralType};
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType};
 use dashql_buffers::parser::{AttributeKey, IntervalType as IntervalTypeEnum, KnownFunction, SymbolSpan, VisFieldType, VisMarkType, VisScaleType};
-use dashql_grammar::span::TextSpan;
+use dashql_parser::span::TextSpan;
 use crate::hash::HashMap;
 use std::sync::Arc;
 

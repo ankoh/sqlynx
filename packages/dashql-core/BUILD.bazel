@@ -15,7 +15,7 @@ rust_library(
     edition = "2021",
     visibility = ["//visibility:public"],
     deps = [
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:arrow-array",
         "@core_crates//:arrow-buffer",
@@ -57,7 +57,7 @@ DASHQL_CORE_SNAPSHOT_TESTS = {
     use_libtest_harness = False,
     deps = [
         ":dashql_core",
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
         "//packages/dashql-snapshots:dashql_snapshots",
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:flatbuffers",
@@ -86,7 +86,7 @@ rust_test(
     use_libtest_harness = False,
     deps = [
         ":dashql_core",
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
         "//packages/dashql-snapshots:dashql_snapshots",
         "//packages/hyper-api:hyper_ffi",
     ],
@@ -131,7 +131,7 @@ DASHQL_CORE_UNIT_TESTS = [
     edition = "2021",
     deps = [
         ":dashql_core",
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:arrow-array",
         "@core_crates//:arrow-ipc",
@@ -154,7 +154,7 @@ rust_binary(
     edition = "2021",
     deps = [
         ":dashql_core",
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
         "//proto/fb:dashql_buffers_rs",
     ],
 )

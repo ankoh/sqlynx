@@ -9,7 +9,7 @@ use super::types::*;
 use dashql_buffers::algebra::{BinaryExpressionFunction, ComparisonFunction};
 use dashql_buffers::analyzer::SemanticNodeMarkerType;
 use dashql_buffers::parser::{AttributeKey as K, ExpressionOperator as Op, IntervalType as IntervalTypeEnum, NodeType};
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use std::ops::Range;
 
 #[derive(Default)]

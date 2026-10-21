@@ -10,8 +10,8 @@ use dashql_core::visualize::{MarkdownDocument, MarkdownNode, UmapDocument};
 /// entry id as rank, then the main script is analyzed
 pub fn analyze_scripts(catalog_input: Option<&str>, main_input: &str) -> Result<AnalyzedScript, String> {
     use dashql_core::catalog::Catalog;
-    use dashql_grammar::parser::parse;
-    use dashql_grammar::scanner::scan;
+    use dashql_parser::parser::parse;
+    use dashql_parser::scanner::scan;
     use std::sync::Arc;
 
     let mut catalog = Catalog::new();

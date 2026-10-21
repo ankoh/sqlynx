@@ -8,9 +8,9 @@
 use crate::error::{Error, Result};
 use dashql_buffers::parser::{AttributeKey, Node, NodeType, StatementType};
 use dashql_buffers::status::StatusCode;
-use dashql_grammar::attrs;
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::ParsedScript;
+use dashql_parser::attrs;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::ParsedScript;
 
 /// The version of the signature encoding
 const SCRIPT_SIGNATURE_VERSION: u8 = 1;

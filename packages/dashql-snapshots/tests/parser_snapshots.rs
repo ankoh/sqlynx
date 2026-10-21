@@ -1,7 +1,7 @@
 //! The parser snapshots (snapshots/parser/*.yaml), produced by the Rust scanner and parser.
 
-use dashql_grammar::parser::parse;
-use dashql_grammar::scanner::scan;
+use dashql_parser::parser::parse;
+use dashql_parser::scanner::scan;
 use dashql_snapshots::encode::parser::encode_script;
 use dashql_snapshots::{compare, load_category, run, Arguments, Failed, Trial};
 use std::sync::Arc;

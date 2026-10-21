@@ -212,7 +212,7 @@ wasm_crate.from_cargo(
 )
 use_repo(wasm_crate, "umap_crates")
 
-# Crate universe of the Rust core (//packages/dashql-{grammar,core,snapshots,core-wasm,shell-wasm}). Isolated
+# Crate universe of the Rust core (//packages/dashql-{parser,core,snapshots,core-wasm,shell-wasm}). Isolated
 # like umap_crates: the core is built natively (tests, snapshotter, benchmarks) and for wasm32.
 # After changing one of the manifests below, repin:
 #   CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
@@ -223,7 +223,7 @@ core_crate.from_cargo(
     manifests = [
         "//packages/dashql-core:Cargo.toml",
         "//packages/dashql-core-wasm:Cargo.toml",
-        "//packages/dashql-grammar:Cargo.toml",
+        "//packages/dashql-parser:Cargo.toml",
         "//packages/dashql-shell-wasm:Cargo.toml",
         "//packages/dashql-snapshots:Cargo.toml",
     ],

@@ -1,6 +1,6 @@
 //! DELETE statements (`formatter/formatter_delete.cc`).
 
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::parser::Node;
 

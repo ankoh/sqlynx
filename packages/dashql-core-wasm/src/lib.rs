@@ -243,7 +243,7 @@ impl Script {
     #[wasm_bindgen(js_name = toString)]
     pub fn to_text(&self, offset: Option<u32>, length: Option<u32>) -> String {
         match (offset, length) {
-            (Some(offset), Some(length)) => self.inner.to_text_span(dashql_grammar::span::TextSpan::new(offset, length)),
+            (Some(offset), Some(length)) => self.inner.to_text_span(dashql_parser::span::TextSpan::new(offset, length)),
             _ => self.inner.to_text(),
         }
     }

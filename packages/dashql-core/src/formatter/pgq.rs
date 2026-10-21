@@ -1,6 +1,6 @@
 //! Property graphs and graph queries (`formatter/formatter_pgq.cc`).
 
-use dashql_grammar::attrs;
+use dashql_parser::attrs;
 use super::{is_true, FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::parser::{Node, NodeType};
 

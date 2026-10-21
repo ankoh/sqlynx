@@ -20,7 +20,7 @@ rust_library(
     visibility = ["//packages/dashql-core:__pkg__"],
     deps = [
         "//packages/dashql-core:dashql_core",
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:flatbuffers",
         "@core_crates//:libtest-mimic",
@@ -48,7 +48,7 @@ rust_binary(
     deps = [
         ":dashql_snapshots",
         "//packages/dashql-core:dashql_core",
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
         "//proto/fb:dashql_buffers_rs",
     ],
 )
@@ -63,6 +63,6 @@ rust_test(
     use_libtest_harness = False,
     deps = [
         ":dashql_snapshots",
-        "//packages/dashql-grammar:dashql_grammar",
+        "//packages/dashql-parser:dashql_parser",
     ],
 )

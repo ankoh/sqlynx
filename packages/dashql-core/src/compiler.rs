@@ -13,11 +13,11 @@ use dashql_buffers::execution::{
 use dashql_buffers::formatting::FormattingConfigT;
 use dashql_buffers::parser::{AttributeKey, NodeType, ParsedScriptFeature, StatementType, TextSpanT};
 use dashql_buffers::visualization::{DashboardSpecT, MarkdownSpec, TableSpecT, UmapSpec};
-use dashql_grammar::attrs;
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::{ParsedScript, Statement};
-use dashql_grammar::scanner::ScannedScript;
-use dashql_grammar::span::TextSpan;
+use dashql_parser::attrs;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::{ParsedScript, Statement};
+use dashql_parser::scanner::ScannedScript;
+use dashql_parser::span::TextSpan;
 
 /// Options of the compilation (`ScriptCompilationOptions`)
 #[derive(Clone, Copy, Debug)]

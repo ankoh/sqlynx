@@ -3,7 +3,7 @@
 The DashQL parser transforms source text into a flat, FlatBuffer-serializable AST.
 It runs in two phases—scanning then parsing—and produces a contiguous array of fixed-size nodes rather than a heap-allocated tree.
 
-It lives in `packages/dashql-grammar`: the scanner in `src/scanner.rs`, the LR driver, parse context and action helpers in `src/parser/`.
+It lives in `packages/dashql-parser`: the scanner in `src/scanner.rs`, the LR driver, parse context and action helpers in `src/parser/`.
 Bison compiles `grammar/rules/*.y` into tables and Rust actions (`//grammar:parser_tables_rs`).
 The parser was ported from the C++ core; some names below still mention the C++ originals.
 
@@ -252,7 +252,7 @@ This design enables:
 
 ### logos lexers
 
-The scanner (`packages/dashql-grammar/src/scanner.rs`) was ported from a flex scanner and keeps its rules and start conditions.
+The scanner (`packages/dashql-parser/src/scanner.rs`) was ported from a flex scanner and keeps its rules and start conditions.
 Every start condition is a `#[derive(Logos)]` enum that matches bytes; the actions (`yyless`, state switches, nested comments) are hand-written around them.
 
 Key characteristics:

@@ -53,7 +53,7 @@ bazel build //...
 | `//packages/dashql-core-wasm:core_wasm` | Core Wasm module (Rust, wasm-bindgen) shipped by `dashql-core-js` |
 | `//packages/dashql-shell-wasm:shell_wasm` | Shell Wasm module (Rust, includes the core bindings) shipped by the app |
 | `//packages/dashql-core:dashql_core` | Core library (Rust): scripts, catalog, analyzer, completion, formatter, visualizations, planner, sessions, shell |
-| `//packages/dashql-grammar:dashql_grammar` | Grammar crate: scanner, parser tables and actions, keywords |
+| `//packages/dashql-parser:dashql_parser` | Parser crate: scanner, parser tables and actions, keywords |
 | `//packages/dashql-core-js:compile` | Core ESM bindings and TypeScript declarations |
 | `//packages/dashql-core-js:npm_package` | Standalone core npm package directory |
 | `//packages/dashql-core-js:npm_tarball` | Core npm archive at `bazel-bin/packages/dashql-core-js/dashql-core.tgz` |
@@ -92,7 +92,7 @@ bazel test //...
 
 | Target | Purpose |
 |--------|---------|
-| `//packages/dashql-grammar:all` | Scanner and parser unit tests, bison skeleton test |
+| `//packages/dashql-parser:all` | Scanner and parser unit tests, bison skeleton test |
 | `//packages/dashql-core:all` | Core unit tests, the snapshot tests of all categories but the parser, and the Hyper validation |
 | `//packages/dashql-core:dashql_core_unit_tests` | Core unit tests |
 | `//packages/dashql-snapshots:parser_snapshot_test` | Parser snapshot tests |
@@ -268,7 +268,7 @@ bazel test //packages/dashql-app:test_chromium //packages/dashql-app:test_firefo
 bazel test //packages/dashql-native:test
 
 # The core
-bazel test //packages/dashql-grammar:all //packages/dashql-core:all //packages/dashql-snapshots:all
+bazel test //packages/dashql-parser:all //packages/dashql-core:all //packages/dashql-snapshots:all
 ```
 
 ### Core npm Package
@@ -298,12 +298,12 @@ untrusted fastbuild CI run both core JS test target sets.
 ### After Changing Parser Grammar
 
 `grammar/rules/*.y` hold the rules with their Rust actions. `//grammar:grammar_y` assembles them into
-`dashql.y`, and `//grammar:parser_tables_rs` compiles it into the tables and actions of `dashql_grammar`.
+`dashql.y`, and `//grammar:parser_tables_rs` compiles it into the tables and actions of `dashql_parser`.
 
 ```bash
 # Rebuild the parser and update the snapshots
 bazel run //snapshots/parser:update
-bazel test //packages/dashql-grammar:all //packages/dashql-snapshots:parser_snapshot_test
+bazel test //packages/dashql-parser:all //packages/dashql-snapshots:parser_snapshot_test
 
 # Verify snapshot changes
 git diff snapshots/parser/
@@ -346,7 +346,7 @@ bazel run //scripts:repin_crates
 
 This repins the `@crates` universe of the root `Cargo.toml` workspace.
 
-The core crates (`packages/dashql-grammar`, `dashql-core`, `dashql-snapshots`, `dashql-core-wasm`,
+The core crates (`packages/dashql-parser`, `dashql-core`, `dashql-snapshots`, `dashql-core-wasm`,
 `dashql-shell-wasm`) are no Cargo workspace. Their manifests feed the isolated `@core_crates` universe
 (`MODULE.bazel`) with the lockfile `bazel/core_crates/Cargo.lock`. After editing one of them:
 

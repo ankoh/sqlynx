@@ -1,5 +1,5 @@
 // The grammar of DashQL, assembled by grammar/assemble_grammar.py.
-// Emitted through //grammar/rust:tables.rs.m4, the actions run in dashql_grammar::parser.
+// Emitted through //grammar/rust:tables.rs.m4, the actions run in dashql_parser::parser.
 
 %code use {
 use crate::parser::actions::*;

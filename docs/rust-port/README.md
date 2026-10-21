@@ -5,7 +5,7 @@ core is a set of top-level packages; the app and `@ankoh/dashql-core` ship its w
 
 | Package | Crate | Content |
 |---|---|---|
-| `packages/dashql-grammar` | `dashql_grammar` | Scanner, keywords, names, parser (tables, actions, LR driver, completion probes), comment blocks |
+| `packages/dashql-parser` | `dashql_parser` | Scanner, keywords, names, parser (tables, actions, LR driver, completion probes), comment blocks |
 | `packages/dashql-core` | `dashql_core` | Script, catalog, analyzer, cursor, completion, formatter, script diff, visualize, compiler, batch, planner, plan view model, sessions, shell |
 | `packages/dashql-snapshots` | `dashql_snapshots` | Snapshot loading and encoders, YAML emitter, snapshotter |
 | `packages/dashql-core-wasm` | `dashql_core_wasm_lib`, `dashql_core_wasm` (cdylib) | wasm-bindgen API shipped by `@ankoh/dashql-core` |
@@ -69,7 +69,7 @@ phase results below mention them as history.
 | `//grammar:parser_tables_rs` | The tables and actions of `dashql.y` as Rust |
 | `//grammar:keywords_rs` | The keyword table of the scanner, generated from the keyword lists |
 | `//proto/fb:dashql_buffers_rs` | `flatc --rust` bindings, bundled into one crate by `proto/fb/bazel/flatbuf_rust_bundle.py`. `plan_view_model_events.fbs` is excluded because Rust does not support vectors of unions. |
-| `//packages/dashql-grammar:dashql_grammar` | Grammar crate (`dashql_grammar_unit_tests`, `dashql_grammar_skeleton_test`) |
+| `//packages/dashql-parser:dashql_parser` | Parser crate (`dashql_parser_unit_tests`, `dashql_parser_skeleton_test`) |
 | `//packages/dashql-core:dashql_core` | Core crate (`dashql_core_unit_tests`, ported unit tests, `*_snapshot_test`, `formatter_validation_hyper_test`, `dashql_buffers_test`, `bench_pipeline`, `bench_pipeline_ctes`) |
 | `//packages/dashql-snapshots:dashql_snapshots` | Loads snapshot categories as libtest-mimic trials, structural YAML comparison, the snapshot encoders, and a rapidyaml-compatible YAML emitter (`ryml`). `:parser_snapshot_test` runs the parser snapshots. |
 | `//packages/dashql-snapshots:snapshotter` | Regenerates `snapshots/**/*.yaml` from the templates, run through `bazel run //snapshots/<category>:update` |
@@ -77,9 +77,9 @@ phase results below mention them as history.
 | `//packages/dashql-shell-wasm:shell_wasm` | Shell wasm-bindgen module, `:dashql_shell_bindgen` is its JS glue |
 
 ```bash
-bazel test //packages/dashql-grammar/... //packages/dashql-core/... //packages/dashql-snapshots/...
+bazel test //packages/dashql-parser/... //packages/dashql-core/... //packages/dashql-snapshots/...
 bazel build --config=release //packages/dashql-core-wasm:core_wasm
-# After editing packages/dashql-{grammar,core,snapshots,core-wasm,shell-wasm}/Cargo.toml:
+# After editing packages/dashql-{parser,core,snapshots,core-wasm,shell-wasm}/Cargo.toml:
 CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 ```
 
@@ -127,7 +127,7 @@ No golden tests replace the deleted differentials. In particular, script signatu
 - It also emits the symbol names and `S_*` symbol kinds.
 - `:dashql_grammar_table_parity_test` checked every table entry, constant and symbol name against the
   lalr1.cc output (deleted with the C++ parser).
-- The action path works: `:dashql_grammar_skeleton_test` runs a calculator grammar with Rust block
+- The action path works: `:dashql_parser_skeleton_test` runs a calculator grammar with Rust block
   actions, typed `$n`, `@n`/`@$`, precedence, default actions and errors raised from actions.
 - Why our own skeleton instead of the `rust-bison-skeleton` crate:
   - That crate's m4 files carry bison's GPL header, so we can't vendor them.
@@ -147,7 +147,7 @@ No golden tests replace the deleted differentials. In particular, script signatu
 |---|---|
 | C++ `core_wasm`, `--config=release` | 2,807,795 bytes |
 | Rust `core_wasm` with all parser tables, `--config=release` | 324,207 bytes (48,321 gzipped) |
-| `dashql_grammar` compile time (release) | 4.5 s |
+| `dashql_parser` compile time (release) | 4.5 s |
 | C++ `benchmark_pipeline`, `-c opt`: scan_query | 3.2 µs |
 | C++ `benchmark_pipeline`, `-c opt`: parse_query | 7.7 µs |
 | C++ `benchmark_pipeline`, `-c opt`: analyze_query | 30.0 µs |
@@ -164,7 +164,7 @@ No golden tests replace the deleted differentials. In particular, script signatu
 ## Phase 1 results
 
 **Scanner**
-- `dashql_grammar::scanner` generates its DFAs with `logos` (`=0.16.1`). The rules of every flex start
+- `dashql_parser::scanner` generates its DFAs with `logos` (`=0.16.1`). The rules of every flex start
   condition are one `#[derive(Logos)]` enum (`Initial`, `Xc`, `XbXh`, `Xq`, `Xd`, `Xbt`). The enums
   match bytes (`utf8 = false`, byte-string patterns), so `\x80-\xFF` are identifier bytes like in flex.
 - Flex semantics on logos:
@@ -203,7 +203,7 @@ No golden tests replace the deleted differentials. In particular, script signatu
 - New quirks found along the way are in [quirks.md](quirks.md).
 
 **Comment blocks**
-- `dashql_grammar::comment_blocks` ports `GroupComments`.
+- `dashql_parser::comment_blocks` ports `GroupComments`.
 - Metadata JSON is validated with serde_json instead of rapidjson.
 
 ## Phase 2 results
@@ -218,7 +218,7 @@ No golden tests replace the deleted differentials. In particular, script signatu
 - With the C++ core removed, the translated rules were checked in as `grammar/rules/*.y`, and the
   translator and `--lang` were deleted.
 
-**Runtime** (`dashql_grammar::parser`)
+**Runtime** (`dashql_parser::parser`)
 - `ParseContext` is ported with interior mutability, so translated actions nest calls in the same
   order as the C++ actions. Semantic values are `Copy`, with lists and n-ary expressions in arenas.
 - The driver ports the lalr1.cc loop:
@@ -280,7 +280,7 @@ Changes that got the Rust code here:
   `tools/oracle_ffi_view.cc`.
 
 **Attribute lookups.** The C++ core looks up object attributes through compile-time
-`frozen::unordered_map`s. `dashql_grammar::attrs!` fixes the keys at compile time too (duplicate
+`frozen::unordered_map`s. `dashql_parser::attrs!` fixes the keys at compile time too (duplicate
 keys fail constant evaluation) and scans the children against the constant key array, which LLVM
 vectorizes. Measured with `bench_pipeline` (`attrs_21/*`, the 21 keys of a vis scale):
 
@@ -335,7 +335,7 @@ remaining per-list allocations.
 ## Phase 5 results
 
 - The LR probes of the completion (`DriveLALR` and its policies) are ported to
-  `dashql_grammar::parser::probe`: `parse_until_with_snapshot`, `parse_until_after`, and the suffix
+  `dashql_parser::parser::probe`: `parse_until_with_snapshot`, `parse_until_after`, and the suffix
   probes over a state snapshot, with the 128-reductions bound.
 - `dashql_core::cursor` ports `ScriptCursor` and the location lookups, `dashql_core::completion`
   ports the completion. Name lookups use per-entry suffix indexes in the case-insensitive order of

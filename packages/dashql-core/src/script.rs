@@ -18,11 +18,11 @@ use dashql_buffers::formatting::FormattingConfigT;
 use dashql_buffers::parser::{AttributeKey, Node, NodeType, StatementType};
 use dashql_buffers::statistics::{ScriptMemoryStatisticsT, ScriptProcessingTimingsT, ScriptStatisticsT};
 use dashql_buffers::status::StatusCode;
-use dashql_grammar::attrs;
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::{parse, ParsedScript};
-use dashql_grammar::scanner::{scan, ScannedScript};
-use dashql_grammar::span::TextSpan;
+use dashql_parser::attrs;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::{parse, ParsedScript};
+use dashql_parser::scanner::{scan, ScannedScript};
+use dashql_parser::span::TextSpan;
 use ropey::Rope;
 use std::sync::Arc;
 
@@ -462,11 +462,11 @@ impl Script {
         latest.parser_ast_bytes = (parsed.nodes.len() * size_of::<Node>()) as u32;
         let scanned = &parsed.scanned;
         latest.scanner_input_bytes = scanned.text.len() as u32;
-        latest.scanner_symbol_bytes = (scanned.symbols.len() * size_of::<dashql_grammar::scanner::Symbol>()) as u32;
+        latest.scanner_symbol_bytes = (scanned.symbols.len() * size_of::<dashql_parser::scanner::Symbol>()) as u32;
         let name_bytes: usize = scanned
             .names
             .iter()
-            .map(|n| n.text.len() + size_of::<dashql_grammar::names::RegisteredName>())
+            .map(|n| n.text.len() + size_of::<dashql_parser::names::RegisteredName>())
             .sum();
         latest.scanner_name_dictionary_bytes = name_bytes as u32;
         memory

@@ -10,9 +10,9 @@
 
 use dashql_buffers::diff::{ScriptDiffOpCode, ScriptDiffOpT, ScriptDiffT};
 use dashql_buffers::parser::{Node, NodeType, TextSpanT};
-use dashql_grammar::parser::context::resolve_text_span;
-use dashql_grammar::parser::{ParsedScript, Statement};
-use dashql_grammar::span::TextSpan;
+use dashql_parser::parser::context::resolve_text_span;
+use dashql_parser::parser::{ParsedScript, Statement};
+use dashql_parser::span::TextSpan;
 
 /// The fraction of nodes that must be equal between statements to emit an UPDATE (instead of
 /// DELETE + INSERT)

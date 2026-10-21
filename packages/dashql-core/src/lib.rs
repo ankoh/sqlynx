@@ -1,6 +1,6 @@
 //! The DashQL core, the Rust rewrite of `packages/dashql-core` (see docs/rust-port/README.md).
 //!
-//! Builds on `dashql_grammar` (scanner and parser) and the FlatBuffers bindings `dashql_buffers`.
+//! Builds on `dashql_parser` (scanner and parser) and the FlatBuffers bindings `dashql_buffers`.
 
 pub mod analyzer;
 pub mod batch;

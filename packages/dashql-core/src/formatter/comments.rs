@@ -3,7 +3,7 @@
 //! Comments work on bytes like the C++ code: wrapping splits long words at byte offsets, which can
 //! split UTF-8 sequences.
 
-use dashql_grammar::span::TextSpan;
+use dashql_parser::span::TextSpan;
 
 /// `std::isspace` in the C locale
 pub(super) fn is_space(ch: u8) -> bool {

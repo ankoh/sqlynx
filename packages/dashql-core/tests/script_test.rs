@@ -6,7 +6,7 @@
 use dashql_buffers::status::StatusCode;
 use dashql_core::catalog::Catalog;
 use dashql_core::script::Script;
-use dashql_grammar::span::TextSpan;
+use dashql_parser::span::TextSpan;
 
 #[test]
 fn text_version_changes_only_for_successful_text_edits() {

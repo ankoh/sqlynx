@@ -23,8 +23,8 @@ use dashql_core::view::PlanViewModel;
 use dashql_core::visualize::{
     compile_markdown_spec, compile_umap_spec, generate_vegalite_spec, parse_vegalite_to_visualize,
 };
-use dashql_grammar::parser::{parse, ParsedScript};
-use dashql_grammar::scanner::{scan, ScannedScript};
+use dashql_parser::parser::{parse, ParsedScript};
+use dashql_parser::scanner::{scan, ScannedScript};
 use dashql_snapshots::encode::completion::encode_completion;
 use dashql_snapshots::encode::plan_view_model::{encode_plan_view_model, snapshot_config};
 use dashql_snapshots::encode::visualize::{encode_markdown_spec, encode_umap_spec};
