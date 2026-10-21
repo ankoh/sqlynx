@@ -921,7 +921,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dashql-data"
+name = "dashql-datasets"
 version = "0.0.1"
 dependencies = [
  "anyhow",

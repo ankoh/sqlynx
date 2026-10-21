@@ -1,7 +1,7 @@
-//! `dashql-data` — build-artifact indexer + R2 mirror for data.dashql.app.
+//! `dashql-datasets` — build-artifact indexer + R2 mirror for data.dashql.app.
 //!
 //! Two subcommands, both operating on a locally-built directory tree (the Bazel
-//! `//packages/dashql-data:datasets` artifact — a versioned Parquet tree):
+//! `//packages/dashql-datasets:datasets` artifact — a versioned Parquet tree):
 //!
 //!   * `index` — walk the tree and emit `index.json`
 //!     (`{ dataset -> version -> files[{url,bytes,sha256}] }`). Run inside the
@@ -29,7 +29,7 @@ const INDEX_FILE: &str = "index.json";
 const FOLDER_INDEX_FILE: &str = "index.json";
 
 #[derive(Parser, Debug)]
-#[command(name = "dashql-data", about = "Indexer + R2 mirror for data.dashql.app")]
+#[command(name = "dashql-datasets", about = "Indexer + R2 mirror for data.dashql.app")]
 struct Cli {
     #[command(subcommand)]
     command: Command,

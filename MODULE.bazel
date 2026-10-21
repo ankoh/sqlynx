@@ -132,9 +132,9 @@ use_repo(
 )
 
 # data.dashql.app test datasets: one hash-pinned http_file per source, declared from
-# the DATASETS list in //packages/dashql-data:datasets.bzl (single source of truth).
+# the DATASETS list in //packages/dashql-datasets:datasets.bzl (single source of truth).
 # When adding/removing a dataset source, update the use_repo list below to match.
-dashql_datasets = use_extension("//packages/dashql-data:deps.bzl", "dashql_datasets")
+dashql_datasets = use_extension("//packages/dashql-datasets:deps.bzl", "dashql_datasets")
 use_repo(
     dashql_datasets,
     "dataset_vega_cars_cars",

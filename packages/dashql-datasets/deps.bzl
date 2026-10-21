@@ -11,7 +11,7 @@ Registered in `MODULE.bazel`; the generated repos are surfaced with `use_repo`.
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 load(
-    "//packages/dashql-data:datasets.bzl",
+    "//packages/dashql-datasets:datasets.bzl",
     "DATASETS",
     "TPCH_EXTENSION_SHA256",
     "dataset_repo_name",

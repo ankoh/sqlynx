@@ -20,13 +20,13 @@
         "commands": [
             "python3 scripts/update_bazel_hashes.py --force bazel/core_dependencies.bzl",
             "python3 scripts/update_bazel_hashes.py --force bazel/external_tableauhyperapi.bzl",
-            "python3 scripts/update_bazel_hashes.py --force packages/dashql-data/datasets.bzl"
+            "python3 scripts/update_bazel_hashes.py --force packages/dashql-datasets/datasets.bzl"
         ],
         "fileFilters": [
             "bazel/core_dependencies.bzl",
             "bazel/external_tableauhyperapi.bzl",
             "MODULE.bazel.lock",
-            "packages/dashql-data/datasets.bzl"
+            "packages/dashql-datasets/datasets.bzl"
         ],
         "executionMode": "branch"
     },
@@ -47,7 +47,7 @@
         },
         {
             "customType": "regex",
-            "managerFilePatterns": ["/^packages/dashql-data/datasets\\.bzl$/"],
+            "managerFilePatterns": ["/^packages/dashql-datasets/datasets\\.bzl$/"],
             "matchStrings": [
                 "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nTPCH_DUCKDB_VERSION = \"(?<currentValue>[^\"]+)\""
             ]

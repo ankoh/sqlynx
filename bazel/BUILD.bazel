@@ -7,7 +7,7 @@ exports_files([
 ])
 
 # DuckDB CLI executable, selected per exec platform. Used as a build tool
-# (exec config) by //packages/dashql-data for Parquet conversion genrules.
+# (exec config) by //packages/dashql-datasets for Parquet conversion genrules.
 alias(
     name = "duckdb_cli",
     actual = select({

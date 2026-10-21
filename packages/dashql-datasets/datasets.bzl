@@ -10,7 +10,7 @@ two places:
     output with its declared engine, assembles the versioned tree, and computes
     `index.json`.
 
-Adding a dataset = one entry here + `bazel run //packages/dashql-data:sync`. See
+Adding a dataset = one entry here + `bazel run //packages/dashql-datasets:sync`. See
 `README.md`. Source hashes sit beside `# renovate:` markers so Renovate can bump a
 tag and its hash together.
 
@@ -158,7 +158,7 @@ def _source_label(dataset_name, src_as):
     return "@{}//file".format(dataset_repo_name(dataset_name, src_as))
 
 # The vendored tpch extension, selected per exec platform by the alias in BUILD.bazel.
-_TPCH_EXTENSION = "//packages/dashql-data:tpch_extension"
+_TPCH_EXTENSION = "//packages/dashql-datasets:tpch_extension"
 
 def _resolve_sql(dataset, output):
     """Substitute the two placeholders in an output's verbatim SQL:
@@ -221,7 +221,7 @@ _hyper_folder_output = rule(
         "out": attr.string(mandatory = True),
         "_hyper_sql": attr.label(default = "//packages/hyper-api:hyper_sql", executable = True, cfg = "exec"),
         "_hyperd": attr.label(default = "//packages/hyper-api:hyperd", allow_single_file = True, cfg = "exec"),
-        "_folder_index": attr.label(default = "//packages/dashql-data:dashql-data", executable = True, cfg = "exec"),
+        "_folder_index": attr.label(default = "//packages/dashql-datasets:dashql-datasets", executable = True, cfg = "exec"),
     },
 )
 
@@ -326,7 +326,7 @@ def _declare_tpch_dataset(dataset):
     )
     return ":" + convert_name
 
-def declare_datasets(name = "datasets", index_tool = "//packages/dashql-data:dashql-data"):
+def declare_datasets(name = "datasets", index_tool = "//packages/dashql-datasets:dashql-datasets"):
     """Expand every dataset into convert genrules + assembled tree + index.json.
 
     Produces:

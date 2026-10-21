@@ -19,7 +19,7 @@ synthesize convincingly.
 - **The upload tool is a dumb mirror.** It takes a locally-built directory and mirrors it to
   the R2 bucket (skip-if-present for immutable files, always re-put `index.json`). It knows
   nothing about dataset definitions, DuckDB, or fetching.
-- **Independent from the release tool.** The mirror lives in `packages/dashql-data`, *not* as a
+- **Independent from the release tool.** The mirror lives in `packages/dashql-datasets`, *not* as a
   subcommand of `dashql-pack` (which owns get.dashql.app: git/semver/minisign/channels). They
   share only ~10 lines of S3-client setup, intentionally duplicated rather than coupled, so the
   release pipeline stays untouched and de-risked.
@@ -39,19 +39,19 @@ consumers see.
 ## Architecture
 
 ```
-packages/dashql-data/datasets.bzl   (DATASETS: url+sha256 sources, outputs = {file, sql})
+packages/dashql-datasets/datasets.bzl   (DATASETS: url+sha256 sources, outputs = {file, sql})
         │
         │  ── fetch phase (hash-pinned) ──►  @dataset_<name>_<as>//file   (http_file, via deps.bzl)
         ▼
-packages/dashql-data/BUILD.bazel    (declare_datasets() expands each dataset)
+packages/dashql-datasets/BUILD.bazel    (declare_datasets() expands each dataset)
    genrule       ─ DuckDB CLI (exec tool) runs each output's verbatim SQL ─►  <file>
    copy_to_directory ─ assemble  <name>/v<version>/<file>  ───────────────►
-   index_json    ─ dashql-data index: walk tree → {url,bytes,sha256} ─────►  index.json
+   index_json    ─ dashql-datasets index: walk tree → {url,bytes,sha256} ──►  index.json
         ▼
    :datasets     (one directory: all outputs + index.json)   ← the build artifact
         │
-        ▼   bazel run //packages/dashql-data:sync   (mirror :datasets → R2)
-   dashql-data sync (Rust): walk dir, per-file head_object on `dashql-data`,
+        ▼   bazel run //packages/dashql-datasets:sync   (mirror :datasets → R2)
+   dashql-datasets sync (Rust): walk dir, per-file head_object on `dashql-data`,
      skip-if-present (immutable), else put_object; index.json always re-put, LAST.
         ▼
 R2 bucket `dashql-data`  ──►  data.dashql.app
@@ -59,13 +59,13 @@ R2 bucket `dashql-data`  ──►  data.dashql.app
    /index.json                    (mutable registry, short TTL)
 ```
 
-Bazel owns fetch + convert + assemble + manifest (all hermetic, all cached). `dashql-data` owns
+Bazel owns fetch + convert + assemble + manifest (all hermetic, all cached). `dashql-datasets` owns
 only indexing and the R2 mirror — no definitions parsing, no fetch, no coupling to the release
 tool.
 
 ## Dataset declarations
 
-`DATASETS` in `packages/dashql-data/datasets.bzl` is the single source of truth, consumed by both
+`DATASETS` in `packages/dashql-datasets/datasets.bzl` is the single source of truth, consumed by both
 the fetch phase (`deps.bzl`) and the build phase (`declare_datasets()`). Source hashes sit beside
 `# renovate:` markers so Renovate can bump a tag and its hash together.
 
@@ -121,9 +121,9 @@ are registered in `scripts/update_bazel_hashes.py`). `//bazel:duckdb_cli` is an 
 per `@platforms//os`. Parquet/CSV/JSON are core CLI features, so no extension install is needed —
 conversion is fully offline.
 
-## The `dashql-data` binary
+## The `dashql-datasets` binary
 
-A small Rust crate (`packages/dashql-data`, a member of the root Cargo workspace and the `crates`
+A small Rust crate (`packages/dashql-datasets`, a member of the root Cargo workspace and the `crates`
 crate_universe) with two subcommands, both operating on the assembled directory tree:
 
 - **`index --dir <tree> --base-url <url> --out index.json`** — walks the tree and emits
@@ -143,15 +143,15 @@ crate_universe) with two subcommands, both operating on the assembled directory 
   uploaded **last**, so it only becomes visible after the files it references exist.
 
 The `sync` run target has `data = [":datasets"]` and `args = ["sync", "--dir", "$(rootpath
-:datasets)"]`, so `bazel run //packages/dashql-data:sync` builds the hermetic tree and then mirrors
+:datasets)"]`, so `bazel run //packages/dashql-datasets:sync` builds the hermetic tree and then mirrors
 it. It is `tags = ["manual"]`, excluded from wildcard builds (like `dashql-pack:publish`).
 
 ## Continuous deployment
 
 `.github/workflows/publish_data.yml` runs on `workflow_dispatch` and on push to
-`packages/dashql-data/**` — decoupled from the release pipeline, not on every main push. It checks
+`packages/dashql-datasets/**` — decoupled from the release pipeline, not on every main push. It checks
 out, runs `.github/actions/setup-bazel`, and `bazel run --config=release
-//packages/dashql-data:sync` with the three R2 secrets mapped to the `DASHQL_DATA_R2_*` env vars.
+//packages/dashql-datasets:sync` with the three R2 secrets mapped to the `DASHQL_DATA_R2_*` env vars.
 No Python/pip — Bazel provides the DuckDB CLI and the index generator.
 
 ## Adding a dataset
@@ -163,9 +163,9 @@ No Python/pip — Bazel provides the DuckDB CLI and the index generator.
 3. Pin the source hash (`shasum -a 256`, or `scripts/update_bazel_hashes.py`).
 4. Bump `version` whenever you reshape an existing dataset — paths are immutable, so old notebooks
    keep working against the old version.
-5. `bazel run //packages/dashql-data:sync` (or trigger the workflow).
+5. `bazel run //packages/dashql-datasets:sync` (or trigger the workflow).
 
-See `packages/dashql-data/README.md` for the operational walkthrough.
+See `packages/dashql-datasets/README.md` for the operational walkthrough.
 
 ## R2 / domain setup (one-time, out of repo)
 
@@ -178,12 +178,12 @@ See `packages/dashql-data/README.md` for the operational walkthrough.
 ## Verification
 
 1. **Vendored CLI**: `bazel run //bazel:duckdb_cli -- --version` resolves per platform.
-2. **Hermetic build**: `bazel build //packages/dashql-data:datasets` → inspect
-   `bazel-bin/packages/dashql-data/datasets/vega-cars/v1/cars.parquet` and `index.json`; rebuild →
+2. **Hermetic build**: `bazel build //packages/dashql-datasets:datasets` → inspect
+   `bazel-bin/packages/dashql-datasets/datasets/vega-cars/v1/cars.parquet` and `index.json`; rebuild →
    fully cached.
-3. **Dry-run mirror**: `bazel run //packages/dashql-data:sync -- --dry-run` prints planned keys
+3. **Dry-run mirror**: `bazel run //packages/dashql-datasets:sync -- --dry-run` prints planned keys
    (index last) without uploading — no credentials needed.
-4. **End-to-end**: set the three env vars, `bazel run //packages/dashql-data:sync`, then
+4. **End-to-end**: set the three env vars, `bazel run //packages/dashql-datasets:sync`, then
    `curl https://data.dashql.app/index.json` and query the Parquet from Hyper over HTTP.
 5. **Idempotency**: re-run `:sync`; every versioned file is skipped (HeadObject hit), only
    `index.json` re-uploads.

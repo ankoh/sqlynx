@@ -180,7 +180,7 @@ def update_tableauhyperapi_hashes(filepath: Path, workspace: Path, force: bool =
 
 
 # ---------------------------------------------------------------------------
-# Handler: packages/dashql-data/datasets.bzl (vendored DuckDB tpch extension)
+# Handler: packages/dashql-datasets/datasets.bzl (vendored DuckDB tpch extension)
 # ---------------------------------------------------------------------------
 #
 # The TPCH_EXTENSION_SHA256 dict pins one gzipped tpch extension per platform. The
@@ -189,7 +189,7 @@ def update_tableauhyperapi_hashes(filepath: Path, workspace: Path, force: bool =
 # hashes recomputed here. Keys match DuckDB's `PRAGMA platform` names.
 
 
-def update_dashql_data_datasets(filepath: Path, workspace: Path, force: bool = False) -> None:
+def update_dashql_datasets(filepath: Path, workspace: Path, force: bool = False) -> None:
     if not force and not versions_changed(filepath, workspace):
         print(f"No _VERSION changes detected in {filepath}, skipping hash update.")
         return
@@ -225,7 +225,7 @@ def update_dashql_data_datasets(filepath: Path, workspace: Path, force: bool = F
 
 _HANDLERS = {
     "external_tableauhyperapi.bzl": update_tableauhyperapi_hashes,
-    "datasets.bzl": update_dashql_data_datasets,
+    "datasets.bzl": update_dashql_datasets,
 }
 
 

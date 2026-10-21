@@ -33,7 +33,7 @@ def _dashql_core_deps_impl(mctx):
         strip_prefix = "flatbuffers-" + _FLATBUFFERS_VERSION,
         urls = ["https://github.com/google/flatbuffers/archive/refs/tags/v" + _FLATBUFFERS_VERSION + ".zip"],
     )
-    # DuckDB CLI: exec-config build tool used by //packages/dashql-data to convert
+    # DuckDB CLI: exec-config build tool used by //packages/dashql-datasets to convert
     # dataset sources to Parquet in a genrule. One archive per exec platform,
     # selected via the //bazel:duckdb_cli alias. The zip preserves the exec bit.
     # renovate: datasource=github-releases depName=duckdb/duckdb

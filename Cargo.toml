@@ -5,7 +5,7 @@ resolver = "2"
 members = [
     "packages/dashql-native-proxy",
     "packages/dashql-pack",
-    "packages/dashql-data",
+    "packages/dashql-datasets",
 ]
 # The Rust core crates belong to the isolated @core_crates universe (MODULE.bazel).
 exclude = [

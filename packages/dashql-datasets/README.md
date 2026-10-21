@@ -1,4 +1,4 @@
-# dashql-data — hosted test datasets for `data.dashql.app`
+# dashql-datasets — hosted test datasets for `data.dashql.app`
 
 Real test datasets (à la [vega-datasets](https://github.com/vega/vega-datasets)) that
 demo notebooks can query over HTTP — e.g. from a local Hyper connector reading remote
@@ -27,8 +27,8 @@ network access is only allowed in the fetch phase (repo rules requiring a pinned
    `COPY … TO … (FORMAT …)`); the format is whatever the SQL says (Parquet, CSV, …).
    `tpch` datasets instead `LOAD` the vendored tpch extension and `CALL dbgen`.
 3. **Assemble** (`copy_to_directory`): stage into `<dataset>/v<version>/<file>`.
-4. **Index** (`dashql-data index`): walk the tree → `index.json`.
-5. **Mirror** (`dashql-data sync`): upload to R2 — versioned files are immutable
+4. **Index** (`dashql-datasets index`): walk the tree → `index.json`.
+5. **Mirror** (`dashql-datasets sync`): upload to R2 — versioned files are immutable
    (skip-if-present via HeadObject), `index.json` is always re-put (and uploaded last).
 
 ## Add a dataset
@@ -89,7 +89,7 @@ To keep this **hermetic**, the signed `tpch.duckdb_extension` is vendored — Du
 `tpch` extension is not statically linked, so `CALL dbgen` would otherwise need
 `INSTALL tpch` (network, forbidden in the sandbox). It is fetched as a hash-pinned
 `http_file` per exec platform (`TPCH_EXTENSION_SHA256` in `datasets.bzl`, selected by
-the `//packages/dashql-data:tpch_extension` alias), gunzipped in the genrule, and
+the `//packages/dashql-datasets:tpch_extension` alias), gunzipped in the genrule, and
 `LOAD`ed by absolute path with autoinstall/autoload disabled.
 
 - **Add a scale factor**: append `{"name": "tpch-<sf>", "version": "1", "kind": "tpch",
@@ -98,27 +98,27 @@ the `//packages/dashql-data:tpch_extension` alias), gunzipped in the genrule, an
 - **Version coupling**: `TPCH_DUCKDB_VERSION` **must** equal `_DUCKDB_VERSION` in
   `bazel/core_dependencies.bzl` — an extension only loads into the exact CLI build it
   was compiled against. Renovate bumps both together and reruns
-  `scripts/update_bazel_hashes.py packages/dashql-data/datasets.bzl` to refresh the four
+  `scripts/update_bazel_hashes.py packages/dashql-datasets/datasets.bzl` to refresh the four
   extension hashes.
 
 ## Build & publish
 
 ```bash
 # Hermetic build (fetch + convert + assemble + index); re-runs are cached.
-bazel build //packages/dashql-data:datasets
+bazel build //packages/dashql-datasets:datasets
 
 # Inspect
-duckdb -c "SELECT * FROM 'bazel-bin/packages/dashql-data/datasets/vega-cars/v1/cars.parquet' LIMIT 5"
+duckdb -c "SELECT * FROM 'bazel-bin/packages/dashql-datasets/datasets/vega-cars/v1/cars.parquet' LIMIT 5"
 
 # Dry run — print planned uploads, touch nothing (no credentials needed)
-bazel run //packages/dashql-data:sync -- --dry-run
+bazel run //packages/dashql-datasets:sync -- --dry-run
 
 # Live mirror to R2 (needs the three env vars below)
 export DASHQL_DATA_R2_ENDPOINT=…
 export DASHQL_DATA_R2_ACCESS_KEY_ID=…
 export DASHQL_DATA_R2_SECRET_ACCESS_KEY=…
-bazel run //packages/dashql-data:sync
+bazel run //packages/dashql-datasets:sync
 ```
 
-CI does the same on `workflow_dispatch` (and on push to `packages/dashql-data/**`) via
+CI does the same on `workflow_dispatch` (and on push to `packages/dashql-datasets/**`) via
 `.github/workflows/publish_data.yml`, reading the credentials from GitHub secrets.

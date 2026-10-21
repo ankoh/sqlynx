@@ -39,4 +39,4 @@ jobs:
                 DASHQL_DATA_R2_ACCESS_KEY_ID: ${{ secrets.R2_DASHQL_DATA_ACCESS_KEY_ID }}
                 DASHQL_DATA_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_DASHQL_DATA_SECRET_ACCESS_KEY }}
               run: |
-                bazel run --config=release //packages/dashql-data:sync
+                bazel run --config=release //packages/dashql-datasets:sync

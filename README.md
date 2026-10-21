@@ -67,9 +67,9 @@ bazel run //scripts:repin_crates
 CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 
 # Fetch test datasets
-bazel build //packages/dashql-data:datasets
+bazel build //packages/dashql-datasets:datasets
 # Upload missing test datasets to data.dashql.app (requires R2 key)
-bazel run //packages/dashql-data:sync
+bazel run //packages/dashql-datasets:sync
 
 ```
 
@@ -83,7 +83,7 @@ bazel run //packages/dashql-data:sync
 - Native apps and update bundles are published to **get.dashql.app**
 - We're maintaining release manifests under [get.dashql.app/stable.json](https://get.dashql.app/stable.json) and [get.dashql.app/canary.json](https://get.dashql.app/canary.json)
 - Hosted test datasets are published to **data.dashql.app** (R2 bucket `dashql-data`)
-    - Built hermetically by `//packages/dashql-data` (hash-pinned sources -> DuckDB CLI) and mirrored with `bazel run //packages/dashql-data:sync`
+    - Built hermetically by `//packages/dashql-datasets` (hash-pinned sources -> DuckDB CLI) and mirrored with `bazel run //packages/dashql-datasets:sync`
     - Immutable versioned paths `data.dashql.app/<dataset>/v<version>/<file>.parquet`, plus a mutable `data.dashql.app/index.json` registry
 - Our builds heavily rely on a bazel-remote cache server under [bazel-cache.dashql.app](https://bazel-cache.dashql.app)
 - You can see bazel cache statistics [here](https://bazel-cache.dashql.app/public-dashboards/a9d003b26c7c4da6962c2c9bf3e5c329)

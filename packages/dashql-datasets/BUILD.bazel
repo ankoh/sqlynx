@@ -34,7 +34,7 @@ alias(
 # The indexer + R2 mirror. `index` runs inside the hermetic build (below); `sync`
 # runs via the :sync target. Client/deps mirror dashql-pack but stay independent.
 rust_binary(
-    name = "dashql-data",
+    name = "dashql-datasets",
     srcs = glob(["src/**/*.rs"]),
     crate_root = "src/main.rs",
     deps = [
@@ -58,12 +58,12 @@ rust_binary(
 # tree, index.json, and the final :datasets artifact (Parquet + index.json).
 declare_datasets(
     name = "datasets",
-    index_tool = ":dashql-data",
+    index_tool = ":dashql-datasets",
 )
 
 # Ergonomic run target: build the hermetic tree, then mirror it to R2.
-#   bazel run //packages/dashql-data:sync            (upload)
-#   bazel run //packages/dashql-data:sync -- --dry-run
+#   bazel run //packages/dashql-datasets:sync            (upload)
+#   bazel run //packages/dashql-datasets:sync -- --dry-run
 # Marked manual so it stays out of wildcard builds (like dashql-pack:publish).
 rust_binary(
     name = "sync",

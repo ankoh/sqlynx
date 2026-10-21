@@ -70,7 +70,7 @@ jobs:
                   # Allow the bazel-module manager to regenerate MODULE.bazel.lock
                   RENOVATE_ALLOWED_UNSAFE_EXECUTIONS: '["bazelModDeps"]'
                   # Allow postUpgradeTasks to recompute sha256 hashes in Bazel dependency files
-                  RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS: '["^python3 scripts/update_bazel_hashes\\.py --force bazel/core_dependencies\\.bzl$","^python3 scripts/update_bazel_hashes\\.py --force bazel/external_tableauhyperapi\\.bzl$","^python3 scripts/update_bazel_hashes\\.py --force packages/dashql-data/datasets\\.bzl$"]'
+                  RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS: '["^python3 scripts/update_bazel_hashes\\.py --force bazel/core_dependencies\\.bzl$","^python3 scripts/update_bazel_hashes\\.py --force bazel/external_tableauhyperapi\\.bzl$","^python3 scripts/update_bazel_hashes\\.py --force packages/dashql-datasets/datasets\\.bzl$"]'
                   # Override schedule if set
                   RENOVATE_FORCE: ${{ github.event.inputs.overrideSchedule == 'true' && '{''schedule'':null}' || '' }}
                   # Renovate logging
