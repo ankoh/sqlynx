@@ -1,0 +1,168 @@
+parser-snapshots:
+  # An unclosed parenthesis
+  - name: recovery_unbalanced_paren_open
+    input: |-
+      select (1 + 2
+
+  # An unmatched closing parenthesis
+  - name: recovery_unbalanced_paren_close
+    input: |-
+      select 1 + 2)
+
+  # A trailing binary operator
+  - name: recovery_trailing_operator
+    input: |-
+      select 1 +;
+      select 2
+
+  # A leading comma in the select list
+  - name: recovery_leading_comma
+    input: |-
+      select , a from t
+
+  # A double comma in the select list
+  - name: recovery_double_comma
+    input: |-
+      select a,, b from t
+
+  # Garbage between two statements
+  - name: recovery_garbage_between_statements
+    input: |-
+      select 1;
+      foo bar baz;
+      select 2;
+
+  # Many errors in one script
+  - name: recovery_many_errors
+    input: |-
+      select from;
+      select * frm t;
+      create table;
+      select 1 +;
+      insert into;
+      select 3
+
+  # Broken column definitions
+  - name: recovery_create_table_columns
+    input: |-
+      create table t (a int, b, c varchar(, d)
+
+  # An incomplete CREATE TABLE
+  - name: recovery_create_table_incomplete
+    input: |-
+      create table t (
+
+  # Broken INSERT values
+  - name: recovery_insert_values
+    input: |-
+      insert into t (a, b) values (1, , 3), (
+
+  # A broken CASE expression
+  - name: recovery_case_expression
+    input: |-
+      select case when then 1 else end from t
+
+  # Broken function call arguments
+  - name: recovery_function_call
+    input: |-
+      select f(1, , 2), g(, h(1
+
+  # Broken subqueries
+  - name: recovery_subquery
+    input: |-
+      select * from (select from) s where a in (select
+
+  # A broken join
+  - name: recovery_join
+    input: |-
+      select * from a join b on;
+      select * from a join;
+      select * from a left outer
+
+  # Broken GROUP BY and ORDER BY
+  - name: recovery_group_order
+    input: |-
+      select a from t group by order by;
+      select a from t order by a desc nulls
+
+  # A broken window clause
+  - name: recovery_window
+    input: |-
+      select sum(a) over (partition by order by b) from t
+
+  # A broken CTE
+  - name: recovery_cte
+    input: |-
+      with a as (select 1), b as select 2 select * from a
+
+  # A broken set operation
+  - name: recovery_set_operation
+    input: |-
+      select 1 union;
+      select 1 union all select
+
+  # Reserved keywords used as identifiers
+  - name: recovery_keyword_as_identifier
+    input: |-
+      select select, from from from
+
+  # A scanner error followed by more statements
+  - name: recovery_unterminated_string_then_statement
+    input: |-
+      select 'abc;
+      select 2;
+
+  # A broken VISUALIZE statement
+  - name: recovery_vis_statement
+    input: |-
+      select * from t visualize using vegalite (mark => , encoding => (x => (field => )));
+      select 1
+
+  # An unclosed VISUALIZE statement
+  - name: recovery_vis_statement_unclosed
+    input: |-
+      select * from t visualize using vegalite (mark => bar, encoding => (
+
+  # A broken SET statement
+  - name: recovery_set_statement
+    input: |-
+      set ;
+      set a = ;
+      set a to
+
+  # A broken EXPLAIN statement
+  - name: recovery_explain
+    input: |-
+      explain;
+      explain (analyze select 1;
+      explain select
+
+  # A broken DROP statement
+  - name: recovery_drop
+    input: |-
+      drop;
+      drop table;
+      drop table if
+
+  # A broken DELETE statement
+  - name: recovery_delete
+    input: |-
+      delete from;
+      delete from t where
+
+  # A broken UPDATE statement
+  - name: recovery_update
+    input: |-
+      update t set;
+      update t set a = ;
+      update
+
+  # Only separators
+  - name: recovery_only_semicolons
+    input: |-
+      ;;;
+
+  # A statement that ends in the middle of a clause
+  - name: recovery_eof_in_each_position
+    input: |-
+      select a, b from t where a = 1 and b in (1, 2) group by a having count(*) > 1 order by a limit

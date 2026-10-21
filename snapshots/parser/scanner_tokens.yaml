@@ -1,0 +1,2332 @@
+parser-snapshots:
+
+  - name: scanner_hex_string
+    input: |-
+      select x'1F'
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select x'1F'"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select x'1F'"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "x'1F'"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "x'1F'"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_STRING
+                        text: "x'1F'"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_bit_string
+    input: |-
+      select b'0101'
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select b'0101'"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select b'0101'"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "b'0101'"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "b'0101'"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_STRING
+                        text: "b'0101'"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_bit_string_quote_fail
+    input: |-
+      select b'01' -1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 8
+          description:
+            text: "select b'01' -1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select b'01' -1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "b'01' -1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "b'01' -1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "b'01' -1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: MINUS
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "b'01' -1"
+                            children:
+                              - type: LITERAL_STRING
+                                text: "b'01'"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_hex_string_quote_fail
+    input: |-
+      select x'1F' -1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 8
+          description:
+            text: "select x'1F' -1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select x'1F' -1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "x'1F' -1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "x'1F' -1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "x'1F' -1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: MINUS
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "x'1F' -1"
+                            children:
+                              - type: LITERAL_STRING
+                                text: "x'1F'"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_operator_trailing_minus
+    input: |-
+      select 1*-1, 2/-1, 3%-1, 4+-1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 35
+          description:
+            text: "select 1*-..3%-1, 4+-1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1*-..3%-1, 4+-1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1*-1, 2/-1..3%-1, 4+-1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1*-1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "1*-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: MULTIPLY
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "1*-1"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "2/-1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "2/-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: DIVIDE
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "2/-1"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "2"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "3%-1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "3%-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: OPERATOR
+                            text: "%-"
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "3%-1"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "3"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "4+-1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "4+-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: PLUS
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "4+-1"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "4"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_operator_comparison_sign
+    input: |-
+      select a from t where a<-1 or a>-1 or a=-1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 43
+          description:
+            text: "select a f..-1 or a=-1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a f..-1 or a=-1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "a<-1 or a>..-1 or a=-1"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: OR
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "a<-1 or a>..-1 or a=-1"
+                    children:
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a<-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: LESS_THAN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a<-1"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a>-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: GREATER_THAN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a>-1"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a=-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a=-1"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_operator_two_char_double_sign
+    input: |-
+      select a from t where a>=+-1 or a<=+-1 or a<>+-1 or f(x=>+-1)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 53
+          description:
+            text: "select a f.. f(x=>+-1)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a f.. f(x=>+-1)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "a>=+-1 or .. f(x=>+-1)"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: OR
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "a>=+-1 or .. f(x=>+-1)"
+                    children:
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a>=+-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: GREATER_EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a>=+-1"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a<=+-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: LESS_EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a<=+-1"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a<>+-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: NOT_EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a<>+-1"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                      - type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "f(x=>+-1)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ARRAY
+                            text: "f"
+                            children:
+                              - type: NAME
+                                text: "f"
+                          - key: SQL_FUNCTION_ARGUMENTS
+                            type: ARRAY
+                            text: "x=>+-1"
+                            children:
+                              - type: OBJECT_SQL_FUNCTION_ARG
+                                text: "x=>+-1"
+                                children:
+                                  - key: SQL_FUNCTION_ARG_NAME
+                                    type: NAME
+                                    text: "x"
+                                  - key: SQL_FUNCTION_ARG_VALUE
+                                    type: OBJECT_SQL_NARY_EXPRESSION
+                                    text: "-1"
+                                    children:
+                                      - key: SQL_EXPRESSION_OPERATOR
+                                        type: ENUM_SQL_EXPRESSION_OPERATOR
+                                        value: NEGATE
+                                      - key: SQL_EXPRESSION_ARGS
+                                        type: ARRAY
+                                        text: "-1"
+                                        children:
+                                          - type: LITERAL_INTEGER
+                                            text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_operator_custom
+    input: |-
+      select 1 @ 2, 3 ~~ 4
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 14
+          description:
+            text: "select 1 @.. 2, 3 ~~ 4"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1 @.. 2, 3 ~~ 4"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1 @ 2, 3 ~~ 4"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1 @ 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "1 @ 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: OPERATOR
+                            text: "@"
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "1 @ 2"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "3 ~~ 4"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "3 ~~ 4"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: OPERATOR
+                            text: "~~"
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "3 ~~ 4"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "3"
+                              - type: LITERAL_INTEGER
+                                text: "4"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_operator_special_chars_keep_sign
+    input: |-
+      select 1 @- 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 8
+          description:
+            text: "select 1 @- 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1 @- 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1 @- 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1 @- 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "1 @- 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: OPERATOR
+                            text: "@-"
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "1 @- 2"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_operator_too_long
+    input: |-
+      select 1 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 8
+          description:
+            text: "select 1 &..&&&&&&&& 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1 &..&&&&&&&& 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1 &&&&&&&&..&&&&&&&& 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1 &&&&&&&&..&&&&&&&& 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "1 &&&&&&&&..&&&&&&&& 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: OPERATOR
+                            text: "&&&&&&&&&&..&&&&&&&&&&"
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "1 &&&&&&&&..&&&&&&&& 2"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors:
+        - message: 'operator too long: operators longer than 64 bytes are not supported'
+          text: "&&&&&&&&&&..&&&&&&&&&&"
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_raw_char
+    input: |-
+      select \ 1
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected RAW_CHAR'
+          text: "\\"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_unterminated_comment
+    input: |-
+      select 1 /* abc
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors:
+        - message: unterminated comment
+          text: "/* abc"
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_unterminated_nested_comment
+    input: |-
+      select 1 /* a /* b */ c
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors:
+        - message: unterminated comment
+          text: "/* a /* b */ c"
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_unterminated_bit_string
+    input: |-
+      select b'01
+    expected:
+      statements: []
+      scanner-errors:
+        - message: unterminated bit string literal
+          text: "b'01"
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_unterminated_hex_string
+    input: |-
+      select x'1F
+    expected:
+      statements: []
+      scanner-errors:
+        - message: unterminated hexadecimal bit string literal
+          text: "x'1F"
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_unterminated_string
+    input: |-
+      select 'abc
+    expected:
+      statements: []
+      scanner-errors:
+        - message: unterminated quoted string
+          text: "'abc"
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_unterminated_identifier
+    input: |-
+      select "abc
+    expected:
+      statements: []
+      scanner-errors:
+        - message: unterminated delimited identifier
+          text: "\"abc"
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_unterminated_backtick
+    input: |-
+      select `abc
+    expected:
+      statements: []
+      scanner-errors:
+        - message: unterminated backtick-quoted identifier
+          text: "`abc"
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_empty_delimited_identifier
+    input: |-
+      select "" from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 10
+          description:
+            text: "select \"\" from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select \"\" from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "\"\""
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "\"\""
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "\"\""
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "\"\""
+                            children:
+                              - type: NAME
+                                text: "\"\""
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors:
+        - message: zero-length delimited identifier
+          text: "\"\""
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_escaped_quotes
+    input: |-
+      select 'it''s', "a""b", `c``d`
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 12
+          description:
+            text: "select 'it..b\", `c``d`"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 'it..b\", `c``d`"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "'it''s', \"..b\", `c``d`"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "'it''s'"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_STRING
+                        text: "'it''s'"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "\"a\"\"b\""
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "\"a\"\"b\""
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "\"a\"\"b\""
+                            children:
+                              - type: NAME
+                                text: "\"a\"\"b\""
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "`c``d`"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "`c``d`"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "`c``d`"
+                            children:
+                              - type: NAME
+                                text: "`c``d`"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: scanner_nested_comments
+    input: |-
+      select /* a /* b */ c */ 1 -- trailing
+      , 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 6
+          description:
+            text: "select /* ..ailing\n, 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select /* ..ailing\n, 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1 -- trailing\n, 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [38,39]
+      comments:
+        - text: "/* a /* b */ c */"
+        - text: "-- trailing"
+      comment-blocks:
+        - type: COMMENT
+          text: "/* a /* b */ c */"
+          comments: [0,1]
+          lines:
+            - "a /* b */ c"
+        - type: COMMENT
+          text: "-- trailing"
+          comments: [1,1]
+          lines:
+            - "trailing"
+      comment-warnings: []
+
+  - name: type_float_precision_low
+    input: |-
+      select cast(1 as float(0))
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 9
+          description:
+            text: "select cas.. float(0))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cas.. float(0))"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "cast(1 as float(0))"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "cast(1 as float(0))"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "cast(1 as float(0))"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CAST
+                          - key: SQL_FUNCTION_CAST_ARGS
+                            type: OBJECT_SQL_FUNCTION_CAST_ARGS
+                            text: "(1 as float(0))"
+                            children:
+                              - key: SQL_FUNCTION_CAST_VALUE
+                                type: LITERAL_INTEGER
+                                text: "1"
+                              - key: SQL_FUNCTION_CAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "float(0)"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: ENUM_SQL_NUMERIC_TYPE
+                                    value: FLOAT4
+      scanner-errors: []
+      parser-errors:
+        - message: precision for float type must be least 1 bit
+          text: "0"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: type_float_precision_real
+    input: |-
+      select cast(1 as float(10))
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 9
+          description:
+            text: "select cas..float(10))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cas..float(10))"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "cast(1 as ..float(10))"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "cast(1 as ..float(10))"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "cast(1 as ..float(10))"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CAST
+                          - key: SQL_FUNCTION_CAST_ARGS
+                            type: OBJECT_SQL_FUNCTION_CAST_ARGS
+                            text: "(1 as float(10))"
+                            children:
+                              - key: SQL_FUNCTION_CAST_VALUE
+                                type: LITERAL_INTEGER
+                                text: "1"
+                              - key: SQL_FUNCTION_CAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "float(10)"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: ENUM_SQL_NUMERIC_TYPE
+                                    value: FLOAT4
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: type_float_precision_double
+    input: |-
+      select cast(1 as float(30))
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 9
+          description:
+            text: "select cas..float(30))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cas..float(30))"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "cast(1 as ..float(30))"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "cast(1 as ..float(30))"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "cast(1 as ..float(30))"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CAST
+                          - key: SQL_FUNCTION_CAST_ARGS
+                            type: OBJECT_SQL_FUNCTION_CAST_ARGS
+                            text: "(1 as float(30))"
+                            children:
+                              - key: SQL_FUNCTION_CAST_VALUE
+                                type: LITERAL_INTEGER
+                                text: "1"
+                              - key: SQL_FUNCTION_CAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "float(30)"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: ENUM_SQL_NUMERIC_TYPE
+                                    value: FLOAT8
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: type_float_precision_high
+    input: |-
+      select cast(1 as float(60))
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 9
+          description:
+            text: "select cas..float(60))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cas..float(60))"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "cast(1 as ..float(60))"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "cast(1 as ..float(60))"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "cast(1 as ..float(60))"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CAST
+                          - key: SQL_FUNCTION_CAST_ARGS
+                            type: OBJECT_SQL_FUNCTION_CAST_ARGS
+                            text: "(1 as float(60))"
+                            children:
+                              - key: SQL_FUNCTION_CAST_VALUE
+                                type: LITERAL_INTEGER
+                                text: "1"
+                              - key: SQL_FUNCTION_CAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "float(60)"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: ENUM_SQL_NUMERIC_TYPE
+                                    value: FLOAT4
+      scanner-errors: []
+      parser-errors:
+        - message: precision for float type must be less than 54 bits
+          text: "60"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: pgq_edge_left_not_adjacent
+    input: |-
+      WITH pg AS PROPERTY GRAPH ()
+      SELECT * FROM GRAPH_TABLE(
+        pg MATCH (a)< -[e]-(b)
+        COLUMNS (a.x AS y)
+      ) gt
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 33
+          description:
+            text: "WITH pg AS..AS y)\n) gt"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "WITH pg AS..AS y)\n) gt"
+            children:
+              - key: SQL_SELECT_WITH_CTES
+                type: ARRAY
+                text: "pg AS PROP..Y GRAPH ()"
+                children:
+                  - type: OBJECT_SQL_CTE
+                    text: "pg AS PROP..Y GRAPH ()"
+                    children:
+                      - key: SQL_CTE_NAME
+                        type: NAME
+                        text: "pg"
+                      - key: SQL_CTE_PROPERTY_GRAPH
+                        type: OBJECT_SQL_PROPERTY_GRAPH
+                        text: "pg AS PROP..Y GRAPH ()"
+                        children: []
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "FROM GRAPH..AS y)\n) gt"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "GRAPH_TABL..AS y)\n) gt"
+                    children:
+                      - key: SQL_TABLEREF_ALIAS
+                        type: NAME
+                        text: "gt"
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_GRAPH_TABLE
+                        text: "GRAPH_TABL...x AS y)\n)"
+                        children:
+                          - key: SQL_GRAPH_TABLE_GRAPH
+                            type: ARRAY
+                            text: "pg"
+                            children:
+                              - type: NAME
+                                text: "pg"
+                          - key: SQL_GRAPH_TABLE_MATCH
+                            type: OBJECT_SQL_GRAPH_MATCH
+                            text: "(a)< -[e]-(b)"
+                            children:
+                              - key: SQL_GRAPH_MATCH_PATTERNS
+                                type: ARRAY
+                                text: "(a)< -[e]-(b)"
+                                children:
+                                  - type: ARRAY
+                                    text: "(a)< -[e]-(b)"
+                                    children:
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(a)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "a"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "< -[e]-"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_EDGE_LEFT
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "e"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(b)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "b"
+                          - key: SQL_GRAPH_TABLE_COLUMNS
+                            type: ARRAY
+                            text: "COLUMNS (a.x AS y)"
+                            children:
+                              - type: OBJECT_SQL_RESULT_TARGET
+                                text: "a.x AS y"
+                                children:
+                                  - key: SQL_RESULT_TARGET_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a.x"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a.x"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                                          - type: NAME
+                                            text: "x"
+                                  - key: SQL_RESULT_TARGET_NAME
+                                    type: NAME
+                                    text: "y"
+      scanner-errors: []
+      parser-errors:
+        - message: expected adjacent punctuation "<-"
+          text: "< -"
+      line-breaks:
+        - text: [28,29]
+        - text: [55,56]
+        - text: [80,81]
+        - text: [101,102]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: pgq_edge_left_bracket_gap
+    input: |-
+      WITH pg AS PROPERTY GRAPH ()
+      SELECT * FROM GRAPH_TABLE(
+        pg MATCH (a)<- [e]-(b)
+        COLUMNS (a.x AS y)
+      ) gt
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 33
+          description:
+            text: "WITH pg AS..AS y)\n) gt"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "WITH pg AS..AS y)\n) gt"
+            children:
+              - key: SQL_SELECT_WITH_CTES
+                type: ARRAY
+                text: "pg AS PROP..Y GRAPH ()"
+                children:
+                  - type: OBJECT_SQL_CTE
+                    text: "pg AS PROP..Y GRAPH ()"
+                    children:
+                      - key: SQL_CTE_NAME
+                        type: NAME
+                        text: "pg"
+                      - key: SQL_CTE_PROPERTY_GRAPH
+                        type: OBJECT_SQL_PROPERTY_GRAPH
+                        text: "pg AS PROP..Y GRAPH ()"
+                        children: []
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "FROM GRAPH..AS y)\n) gt"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "GRAPH_TABL..AS y)\n) gt"
+                    children:
+                      - key: SQL_TABLEREF_ALIAS
+                        type: NAME
+                        text: "gt"
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_GRAPH_TABLE
+                        text: "GRAPH_TABL...x AS y)\n)"
+                        children:
+                          - key: SQL_GRAPH_TABLE_GRAPH
+                            type: ARRAY
+                            text: "pg"
+                            children:
+                              - type: NAME
+                                text: "pg"
+                          - key: SQL_GRAPH_TABLE_MATCH
+                            type: OBJECT_SQL_GRAPH_MATCH
+                            text: "(a)<- [e]-(b)"
+                            children:
+                              - key: SQL_GRAPH_MATCH_PATTERNS
+                                type: ARRAY
+                                text: "(a)<- [e]-(b)"
+                                children:
+                                  - type: ARRAY
+                                    text: "(a)<- [e]-(b)"
+                                    children:
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(a)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "a"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "<- [e]-"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_EDGE_LEFT
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "e"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(b)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "b"
+                          - key: SQL_GRAPH_TABLE_COLUMNS
+                            type: ARRAY
+                            text: "COLUMNS (a.x AS y)"
+                            children:
+                              - type: OBJECT_SQL_RESULT_TARGET
+                                text: "a.x AS y"
+                                children:
+                                  - key: SQL_RESULT_TARGET_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a.x"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a.x"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                                          - type: NAME
+                                            text: "x"
+                                  - key: SQL_RESULT_TARGET_NAME
+                                    type: NAME
+                                    text: "y"
+      scanner-errors: []
+      parser-errors:
+        - message: 'expected adjacent punctuation "-["'
+          text: "- ["
+      line-breaks:
+        - text: [28,29]
+        - text: [55,56]
+        - text: [80,81]
+        - text: [101,102]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: pgq_edge_left_closing_gap
+    input: |-
+      WITH pg AS PROPERTY GRAPH ()
+      SELECT * FROM GRAPH_TABLE(
+        pg MATCH (a)<-[e] -(b)
+        COLUMNS (a.x AS y)
+      ) gt
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 33
+          description:
+            text: "WITH pg AS..AS y)\n) gt"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "WITH pg AS..AS y)\n) gt"
+            children:
+              - key: SQL_SELECT_WITH_CTES
+                type: ARRAY
+                text: "pg AS PROP..Y GRAPH ()"
+                children:
+                  - type: OBJECT_SQL_CTE
+                    text: "pg AS PROP..Y GRAPH ()"
+                    children:
+                      - key: SQL_CTE_NAME
+                        type: NAME
+                        text: "pg"
+                      - key: SQL_CTE_PROPERTY_GRAPH
+                        type: OBJECT_SQL_PROPERTY_GRAPH
+                        text: "pg AS PROP..Y GRAPH ()"
+                        children: []
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "FROM GRAPH..AS y)\n) gt"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "GRAPH_TABL..AS y)\n) gt"
+                    children:
+                      - key: SQL_TABLEREF_ALIAS
+                        type: NAME
+                        text: "gt"
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_GRAPH_TABLE
+                        text: "GRAPH_TABL...x AS y)\n)"
+                        children:
+                          - key: SQL_GRAPH_TABLE_GRAPH
+                            type: ARRAY
+                            text: "pg"
+                            children:
+                              - type: NAME
+                                text: "pg"
+                          - key: SQL_GRAPH_TABLE_MATCH
+                            type: OBJECT_SQL_GRAPH_MATCH
+                            text: "(a)<-[e] -(b)"
+                            children:
+                              - key: SQL_GRAPH_MATCH_PATTERNS
+                                type: ARRAY
+                                text: "(a)<-[e] -(b)"
+                                children:
+                                  - type: ARRAY
+                                    text: "(a)<-[e] -(b)"
+                                    children:
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(a)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "a"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "<-[e] -"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_EDGE_LEFT
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "e"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(b)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "b"
+                          - key: SQL_GRAPH_TABLE_COLUMNS
+                            type: ARRAY
+                            text: "COLUMNS (a.x AS y)"
+                            children:
+                              - type: OBJECT_SQL_RESULT_TARGET
+                                text: "a.x AS y"
+                                children:
+                                  - key: SQL_RESULT_TARGET_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a.x"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a.x"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                                          - type: NAME
+                                            text: "x"
+                                  - key: SQL_RESULT_TARGET_NAME
+                                    type: NAME
+                                    text: "y"
+      scanner-errors: []
+      parser-errors:
+        - message: 'expected adjacent punctuation "]-"'
+          text: "] -"
+      line-breaks:
+        - text: [28,29]
+        - text: [55,56]
+        - text: [80,81]
+        - text: [101,102]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: pgq_edge_right_bracket_gap
+    input: |-
+      WITH pg AS PROPERTY GRAPH ()
+      SELECT * FROM GRAPH_TABLE(
+        pg MATCH (a)- [e]->(b)
+        COLUMNS (a.x AS y)
+      ) gt
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 33
+          description:
+            text: "WITH pg AS..AS y)\n) gt"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "WITH pg AS..AS y)\n) gt"
+            children:
+              - key: SQL_SELECT_WITH_CTES
+                type: ARRAY
+                text: "pg AS PROP..Y GRAPH ()"
+                children:
+                  - type: OBJECT_SQL_CTE
+                    text: "pg AS PROP..Y GRAPH ()"
+                    children:
+                      - key: SQL_CTE_NAME
+                        type: NAME
+                        text: "pg"
+                      - key: SQL_CTE_PROPERTY_GRAPH
+                        type: OBJECT_SQL_PROPERTY_GRAPH
+                        text: "pg AS PROP..Y GRAPH ()"
+                        children: []
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "FROM GRAPH..AS y)\n) gt"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "GRAPH_TABL..AS y)\n) gt"
+                    children:
+                      - key: SQL_TABLEREF_ALIAS
+                        type: NAME
+                        text: "gt"
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_GRAPH_TABLE
+                        text: "GRAPH_TABL...x AS y)\n)"
+                        children:
+                          - key: SQL_GRAPH_TABLE_GRAPH
+                            type: ARRAY
+                            text: "pg"
+                            children:
+                              - type: NAME
+                                text: "pg"
+                          - key: SQL_GRAPH_TABLE_MATCH
+                            type: OBJECT_SQL_GRAPH_MATCH
+                            text: "(a)- [e]->(b)"
+                            children:
+                              - key: SQL_GRAPH_MATCH_PATTERNS
+                                type: ARRAY
+                                text: "(a)- [e]->(b)"
+                                children:
+                                  - type: ARRAY
+                                    text: "(a)- [e]->(b)"
+                                    children:
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(a)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "a"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "- [e]->"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_EDGE_RIGHT
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "e"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(b)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "b"
+                          - key: SQL_GRAPH_TABLE_COLUMNS
+                            type: ARRAY
+                            text: "COLUMNS (a.x AS y)"
+                            children:
+                              - type: OBJECT_SQL_RESULT_TARGET
+                                text: "a.x AS y"
+                                children:
+                                  - key: SQL_RESULT_TARGET_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a.x"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a.x"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                                          - type: NAME
+                                            text: "x"
+                                  - key: SQL_RESULT_TARGET_NAME
+                                    type: NAME
+                                    text: "y"
+      scanner-errors: []
+      parser-errors:
+        - message: 'expected adjacent punctuation "-["'
+          text: "- ["
+      line-breaks:
+        - text: [28,29]
+        - text: [55,56]
+        - text: [80,81]
+        - text: [101,102]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: pgq_edge_right_closing_gap
+    input: |-
+      WITH pg AS PROPERTY GRAPH ()
+      SELECT * FROM GRAPH_TABLE(
+        pg MATCH (a)-[e]- >(b)
+        COLUMNS (a.x AS y)
+      ) gt
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 15
+          description:
+            text: "WITH pg AS..AS y)\n) gt"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "WITH pg AS..AS y)\n) gt"
+            children:
+              - key: SQL_SELECT_WITH_CTES
+                type: ARRAY
+                text: "pg AS PROP..Y GRAPH ()"
+                children:
+                  - type: OBJECT_SQL_CTE
+                    text: "pg AS PROP..Y GRAPH ()"
+                    children:
+                      - key: SQL_CTE_NAME
+                        type: NAME
+                        text: "pg"
+                      - key: SQL_CTE_PROPERTY_GRAPH
+                        type: OBJECT_SQL_PROPERTY_GRAPH
+                        text: "pg AS PROP..Y GRAPH ()"
+                        children: []
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "* FROM GRA..AS y)\n) gt"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "* FROM GRA..AS y)\n) gt"
+                    children:
+                      - key: SQL_RESULT_TARGET_NAME
+                        type: NAME
+                        text: "gt"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected GREATER_THAN'
+          text: ">"
+      line-breaks:
+        - text: [28,29]
+        - text: [55,56]
+        - text: [80,81]
+        - text: [101,102]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: pgq_edge_right_wrong_operator
+    input: |-
+      WITH pg AS PROPERTY GRAPH ()
+      SELECT * FROM GRAPH_TABLE(
+        pg MATCH (a)-[e]~>(b)
+        COLUMNS (a.x AS y)
+      ) gt
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 33
+          description:
+            text: "WITH pg AS..AS y)\n) gt"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "WITH pg AS..AS y)\n) gt"
+            children:
+              - key: SQL_SELECT_WITH_CTES
+                type: ARRAY
+                text: "pg AS PROP..Y GRAPH ()"
+                children:
+                  - type: OBJECT_SQL_CTE
+                    text: "pg AS PROP..Y GRAPH ()"
+                    children:
+                      - key: SQL_CTE_NAME
+                        type: NAME
+                        text: "pg"
+                      - key: SQL_CTE_PROPERTY_GRAPH
+                        type: OBJECT_SQL_PROPERTY_GRAPH
+                        text: "pg AS PROP..Y GRAPH ()"
+                        children: []
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "FROM GRAPH..AS y)\n) gt"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "GRAPH_TABL..AS y)\n) gt"
+                    children:
+                      - key: SQL_TABLEREF_ALIAS
+                        type: NAME
+                        text: "gt"
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_GRAPH_TABLE
+                        text: "GRAPH_TABL...x AS y)\n)"
+                        children:
+                          - key: SQL_GRAPH_TABLE_GRAPH
+                            type: ARRAY
+                            text: "pg"
+                            children:
+                              - type: NAME
+                                text: "pg"
+                          - key: SQL_GRAPH_TABLE_MATCH
+                            type: OBJECT_SQL_GRAPH_MATCH
+                            text: "(a)-[e]~>(b)"
+                            children:
+                              - key: SQL_GRAPH_MATCH_PATTERNS
+                                type: ARRAY
+                                text: "(a)-[e]~>(b)"
+                                children:
+                                  - type: ARRAY
+                                    text: "(a)-[e]~>(b)"
+                                    children:
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(a)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "a"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "-[e]~>"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_EDGE_RIGHT
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "e"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(b)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "b"
+                          - key: SQL_GRAPH_TABLE_COLUMNS
+                            type: ARRAY
+                            text: "COLUMNS (a.x AS y)"
+                            children:
+                              - type: OBJECT_SQL_RESULT_TARGET
+                                text: "a.x AS y"
+                                children:
+                                  - key: SQL_RESULT_TARGET_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a.x"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a.x"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                                          - type: NAME
+                                            text: "x"
+                                  - key: SQL_RESULT_TARGET_NAME
+                                    type: NAME
+                                    text: "y"
+      scanner-errors: []
+      parser-errors:
+        - message: expected operator "->"
+          text: "~>"
+      line-breaks:
+        - text: [28,29]
+        - text: [55,56]
+        - text: [79,80]
+        - text: [100,101]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: pgq_edge_any_bracket_gap
+    input: |-
+      WITH pg AS PROPERTY GRAPH ()
+      SELECT * FROM GRAPH_TABLE(
+        pg MATCH (a)- [e]-(b)
+        COLUMNS (a.x AS y)
+      ) gt
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 33
+          description:
+            text: "WITH pg AS..AS y)\n) gt"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "WITH pg AS..AS y)\n) gt"
+            children:
+              - key: SQL_SELECT_WITH_CTES
+                type: ARRAY
+                text: "pg AS PROP..Y GRAPH ()"
+                children:
+                  - type: OBJECT_SQL_CTE
+                    text: "pg AS PROP..Y GRAPH ()"
+                    children:
+                      - key: SQL_CTE_NAME
+                        type: NAME
+                        text: "pg"
+                      - key: SQL_CTE_PROPERTY_GRAPH
+                        type: OBJECT_SQL_PROPERTY_GRAPH
+                        text: "pg AS PROP..Y GRAPH ()"
+                        children: []
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "FROM GRAPH..AS y)\n) gt"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "GRAPH_TABL..AS y)\n) gt"
+                    children:
+                      - key: SQL_TABLEREF_ALIAS
+                        type: NAME
+                        text: "gt"
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_GRAPH_TABLE
+                        text: "GRAPH_TABL...x AS y)\n)"
+                        children:
+                          - key: SQL_GRAPH_TABLE_GRAPH
+                            type: ARRAY
+                            text: "pg"
+                            children:
+                              - type: NAME
+                                text: "pg"
+                          - key: SQL_GRAPH_TABLE_MATCH
+                            type: OBJECT_SQL_GRAPH_MATCH
+                            text: "(a)- [e]-(b)"
+                            children:
+                              - key: SQL_GRAPH_MATCH_PATTERNS
+                                type: ARRAY
+                                text: "(a)- [e]-(b)"
+                                children:
+                                  - type: ARRAY
+                                    text: "(a)- [e]-(b)"
+                                    children:
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(a)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "a"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "- [e]-"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_EDGE_ANY
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "e"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(b)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "b"
+                          - key: SQL_GRAPH_TABLE_COLUMNS
+                            type: ARRAY
+                            text: "COLUMNS (a.x AS y)"
+                            children:
+                              - type: OBJECT_SQL_RESULT_TARGET
+                                text: "a.x AS y"
+                                children:
+                                  - key: SQL_RESULT_TARGET_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a.x"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a.x"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                                          - type: NAME
+                                            text: "x"
+                                  - key: SQL_RESULT_TARGET_NAME
+                                    type: NAME
+                                    text: "y"
+      scanner-errors: []
+      parser-errors:
+        - message: 'expected adjacent punctuation "-["'
+          text: "- ["
+      line-breaks:
+        - text: [28,29]
+        - text: [55,56]
+        - text: [79,80]
+        - text: [100,101]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: pgq_edge_any_closing_gap
+    input: |-
+      WITH pg AS PROPERTY GRAPH ()
+      SELECT * FROM GRAPH_TABLE(
+        pg MATCH (a)-[e] -(b)
+        COLUMNS (a.x AS y)
+      ) gt
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 33
+          description:
+            text: "WITH pg AS..AS y)\n) gt"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "WITH pg AS..AS y)\n) gt"
+            children:
+              - key: SQL_SELECT_WITH_CTES
+                type: ARRAY
+                text: "pg AS PROP..Y GRAPH ()"
+                children:
+                  - type: OBJECT_SQL_CTE
+                    text: "pg AS PROP..Y GRAPH ()"
+                    children:
+                      - key: SQL_CTE_NAME
+                        type: NAME
+                        text: "pg"
+                      - key: SQL_CTE_PROPERTY_GRAPH
+                        type: OBJECT_SQL_PROPERTY_GRAPH
+                        text: "pg AS PROP..Y GRAPH ()"
+                        children: []
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "FROM GRAPH..AS y)\n) gt"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "GRAPH_TABL..AS y)\n) gt"
+                    children:
+                      - key: SQL_TABLEREF_ALIAS
+                        type: NAME
+                        text: "gt"
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_GRAPH_TABLE
+                        text: "GRAPH_TABL...x AS y)\n)"
+                        children:
+                          - key: SQL_GRAPH_TABLE_GRAPH
+                            type: ARRAY
+                            text: "pg"
+                            children:
+                              - type: NAME
+                                text: "pg"
+                          - key: SQL_GRAPH_TABLE_MATCH
+                            type: OBJECT_SQL_GRAPH_MATCH
+                            text: "(a)-[e] -(b)"
+                            children:
+                              - key: SQL_GRAPH_MATCH_PATTERNS
+                                type: ARRAY
+                                text: "(a)-[e] -(b)"
+                                children:
+                                  - type: ARRAY
+                                    text: "(a)-[e] -(b)"
+                                    children:
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(a)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "a"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "-[e] -"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_EDGE_ANY
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "e"
+                                      - type: OBJECT_SQL_GRAPH_PATH_ELEMENT
+                                        text: "(b)"
+                                        children:
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VERTEX
+                                            type: BOOL
+                                            value: 1
+                                          - key: SQL_GRAPH_PATH_ELEMENT_VARIABLE
+                                            type: NAME
+                                            text: "b"
+                          - key: SQL_GRAPH_TABLE_COLUMNS
+                            type: ARRAY
+                            text: "COLUMNS (a.x AS y)"
+                            children:
+                              - type: OBJECT_SQL_RESULT_TARGET
+                                text: "a.x AS y"
+                                children:
+                                  - key: SQL_RESULT_TARGET_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a.x"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a.x"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                                          - type: NAME
+                                            text: "x"
+                                  - key: SQL_RESULT_TARGET_NAME
+                                    type: NAME
+                                    text: "y"
+      scanner-errors: []
+      parser-errors:
+        - message: 'expected adjacent punctuation "]-"'
+          text: "] -"
+      line-breaks:
+        - text: [28,29]
+        - text: [55,56]
+        - text: [79,80]
+        - text: [100,101]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []

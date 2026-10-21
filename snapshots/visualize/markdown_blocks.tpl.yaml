@@ -1,0 +1,71 @@
+visualize-snapshots:
+  - name: vis_markdown_code_blocks
+    script:
+      input: |
+        SELECT 'Ada' AS author VISUALIZE USING markdown (
+          template => '```sql extra
+        select {{author}};
+        ```
+
+            indented code
+
+        ---
+
+        done'
+        );
+
+  - name: vis_markdown_lists
+    script:
+      input: |
+        SELECT 'Ada' AS author, 3 AS n VISUALIZE USING markdown (
+          template => '- tight {{author}}
+        - items
+          - nested
+
+        3. loose
+
+        4. {{n}}
+
+        * star'
+        );
+
+  - name: vis_markdown_inline
+    script:
+      input: |
+        SELECT 'Ada' AS author VISUALIZE USING markdown (
+          template => 'Some *emphasis*, **strong**, _under_ and ![image](https://example.com/a.png "Title") by {{author}}.\
+        Hard break and <b>inline html</b> and <https://example.com> and <me@example.com>.
+
+        [relative](/docs) [mail](mailto:a@example.com) [field title](https://example.com "{{author}}")'
+        );
+
+  - name: vis_markdown_headings_quotes
+    script:
+      input: |
+        SELECT 'Ada' AS author VISUALIZE USING markdown (
+          template => '# One
+
+        ## Two {{author}}
+
+        ###### Six
+
+        Setext
+        ======
+
+        > quote
+        > > nested {{author}}'
+        );
+
+  - name: vis_markdown_empty_template
+    script:
+      input: |
+        SELECT 'Ada' AS author VISUALIZE USING markdown (
+          template => ''
+        );
+
+  - name: vis_markdown_only_fields
+    script:
+      input: |
+        SELECT 'Ada' AS author, 1 AS n VISUALIZE USING markdown (
+          template => '{{author}}{{n}}{{missing}}'
+        );

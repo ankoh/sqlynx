@@ -1,0 +1,126 @@
+completion-snapshots:
+  # Output columns of a CTE are candidates
+  - name: cov_cte_derived_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        with c as (select a as kay from t) select ka from c
+    cursor:
+      search:
+        text: 'ka from'
+        index: 2
+    completions:
+      limit: 5
+
+  # Output columns of a derived table are candidates
+  - name: cov_subquery_derived_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select ka from (select a as kay from t) s
+    cursor:
+      search:
+        text: 'ka from'
+        index: 2
+    completions:
+      limit: 5
+
+  # Column aliases of a CTE are candidates
+  - name: cov_cte_alias_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        with c(kay, bee) as (select a, b from t) select ka from c
+    cursor:
+      search:
+        text: 'ka from'
+        index: 2
+    completions:
+      limit: 5
+
+  # Tables of the own script after a schema
+  - name: cov_schema_tables_same_script
+    catalog: {}
+    editor:
+      input: |-
+        create table s1.tt (a int);
+        select * from s1.t
+    cursor:
+      search:
+        text: 'from s1.t'
+        index: 9
+    completions:
+      limit: 5
+
+  # Tables of the catalog after a schema
+  - name: cov_schema_tables_catalog
+    catalog:
+      script:
+        input: |-
+          create table s1.t1 (a int); create table s1.t2 (b int); create table db.s2.t3 (c int);
+    editor:
+      input: |-
+        select * from s1.t
+    cursor:
+      search:
+        text: 's1.t'
+        index: 4
+    completions:
+      limit: 5
+
+  # Tables of both the own script and the catalog after a schema
+  - name: cov_schema_tables_both
+    catalog:
+      script:
+        input: |-
+          create table s1.t1 (a int); create table s1.t2 (b int); create table db.s2.t3 (c int);
+    editor:
+      input: |-
+        create table s1.t9 (a int);
+        select * from s1.t
+    cursor:
+      search:
+        text: 'from s1.t'
+        index: 9
+    completions:
+      limit: 5
+
+  # Schemas after a database
+  - name: cov_database_schemas
+    catalog:
+      script:
+        input: |-
+          create table s1.t1 (a int); create table s1.t2 (b int); create table db.s2.t3 (c int);
+    editor:
+      input: |-
+        select * from db.s
+    cursor:
+      search:
+        text: 'db.s'
+        index: 4
+    completions:
+      limit: 5
+
+  # Schemas of the own script after a database
+  - name: cov_database_schemas_own
+    catalog: {}
+    editor:
+      input: |-
+        create table db.s9.x (a int);
+        select * from db.s
+    cursor:
+      search:
+        text: 'from db.s'
+        index: 9
+    completions:
+      limit: 5
+

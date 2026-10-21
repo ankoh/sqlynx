@@ -1,0 +1,557 @@
+completion-snapshots:
+  # Columns of a CTE after a dot
+  - name: cov_dot_cte_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        with c as (select a as k, b from t) select c. from c
+    cursor:
+      search:
+        text: 'c.'
+        index: 2
+    completions:
+      limit: 5
+
+  # Columns of a derived table after a dot
+  - name: cov_dot_subquery_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select s. from (select a as k, b from t) s
+    cursor:
+      search:
+        text: 's.'
+        index: 2
+    completions:
+      limit: 5
+
+  # A dot on an unknown relation
+  - name: cov_dot_unresolved_source
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select x. from nothing x
+    cursor:
+      search:
+        text: 'x.'
+        index: 2
+    completions:
+      limit: 5
+
+  # Columns of an aliased table after a dot
+  - name: cov_dot_table_alias
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select x. from t x
+    cursor:
+      search:
+        text: 'x.'
+        index: 2
+    completions:
+      limit: 5
+
+  # Columns after a dot with two tables in scope
+  - name: cov_dot_two_tables
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select u. from t, u
+    cursor:
+      search:
+        text: 'u.'
+        index: 2
+    completions:
+      limit: 5
+
+  # A partial column after a dot
+  - name: cov_dot_partial_column
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select t.na from t
+    cursor:
+      search:
+        text: 't.na'
+        index: 4
+    completions:
+      limit: 5
+
+  # Functions with qualified names
+  - name: cov_function_qualified
+    catalog:
+      script:
+        input: |-
+          create function db1.sch1.mysum(x int) returns int; create function sch2.mymax(x int) returns int; create function myabs(x int) returns int;
+    editor:
+      input: |-
+        select my
+    cursor:
+      search:
+        text: 'my'
+        index: 2
+    completions:
+      limit: 5
+
+  # Function names in a WHERE clause
+  - name: cov_function_in_where
+    catalog:
+      script:
+        input: |-
+          create function db1.sch1.mysum(x int) returns int; create function sch2.mymax(x int) returns int; create function myabs(x int) returns int;
+    editor:
+      input: |-
+        select 1 from t where my
+    cursor:
+      search:
+        text: 'where my'
+        index: 8
+    completions:
+      limit: 5
+
+  # The cursor at the beginning of a symbol
+  - name: cov_cursor_begin_of_symbol
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select * from t
+    cursor:
+      search:
+        text: 'from t'
+        index: 5
+    completions:
+      limit: 5
+
+  # The cursor at the beginning of a symbol after a space
+  - name: cov_cursor_begin_of_symbol_after_space
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select  a from t
+    cursor:
+      search:
+        text: 'a'
+        index: 0
+    completions:
+      limit: 5
+
+  # The cursor on an integer literal
+  - name: cov_cursor_on_literal
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select 12345 from t
+    cursor:
+      search:
+        text: '12345'
+        index: 3
+    completions:
+      limit: 5
+
+  # The cursor in a string literal
+  - name: cov_cursor_on_string
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select 'some text' from t
+    cursor:
+      search:
+        text: 'some'
+        index: 2
+    completions:
+      limit: 5
+
+  # The cursor on a closing parenthesis
+  - name: cov_cursor_on_paren
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select (a) from t
+    cursor:
+      search:
+        text: '(a)'
+        index: 3
+    completions:
+      limit: 5
+
+  # The cursor on an operator
+  - name: cov_cursor_on_operator
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select a + b from t
+    cursor:
+      search:
+        text: '+'
+        index: 1
+    completions:
+      limit: 5
+
+  # The cursor on a comma
+  - name: cov_cursor_on_comma
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select a, b from t
+    cursor:
+      search:
+        text: ','
+        index: 1
+    completions:
+      limit: 5
+
+  # The cursor on a semicolon
+  - name: cov_cursor_on_semicolon
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select a from t;
+    cursor:
+      search:
+        text: 't;'
+        index: 2
+    completions:
+      limit: 5
+
+  # An identifier longer than the identity limit
+  - name: cov_long_identifier
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa from t
+    cursor:
+      search:
+        text: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        index: 40
+    completions:
+      limit: 5
+
+  # Columns inside a VISUALIZE encoding
+  - name: cov_vis_column_in_field
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    editor:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => ca
+    cursor:
+      search:
+        text: 'ca'
+        index: 2
+    completions:
+      limit: 5
+
+  # Columns in a shorthand VISUALIZE encoding
+  - name: cov_vis_column_in_shorthand
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    editor:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => re
+    cursor:
+      search:
+        text: 're'
+        index: 2
+    completions:
+      limit: 5
+
+  # The source of a VISUALIZE statement
+  - name: cov_vis_select_source
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    editor:
+      input: |-
+        SELECT cat FROM sales VISUALIZE USING vegalite (mark => bar)
+    cursor:
+      search:
+        text: 'cat'
+        index: 3
+    completions:
+      limit: 5
+
+  # Columns in a correlated subquery
+  - name: cov_subquery_correlated
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select * from t where exists (select 1 from u where u.c = t.na)
+    cursor:
+      search:
+        text: 't.na'
+        index: 4
+    completions:
+      limit: 5
+
+  # Columns after a CTE star
+  - name: cov_cte_star
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        with c as (select * from t) select na from c
+    cursor:
+      search:
+        text: 'na from'
+        index: 2
+    completions:
+      limit: 5
+
+  # Columns in an INSERT column list
+  - name: cov_insert_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        insert into t (a, na) values (1, 2)
+    cursor:
+      search:
+        text: 'na)'
+        index: 2
+    completions:
+      limit: 5
+
+  # Tables in an INSERT target
+  - name: cov_insert_target
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        insert into u
+    cursor:
+      search:
+        text: 'into u'
+        index: 6
+    completions:
+      limit: 5
+
+  # Columns in a DELETE WHERE
+  - name: cov_delete_where
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        delete from t where na
+    cursor:
+      search:
+        text: 'where na'
+        index: 8
+    completions:
+      limit: 5
+
+  # Columns in GROUP BY
+  - name: cov_group_by
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select name from t group by na
+    cursor:
+      search:
+        text: 'by na'
+        index: 5
+    completions:
+      limit: 5
+
+  # ORDER BY sees select list aliases
+  - name: cov_order_by_alias
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select a as total from t order by to
+    cursor:
+      search:
+        text: 'to'
+        index: 2
+    completions:
+      limit: 5
+
+  # Columns in a JOIN ON
+  - name: cov_join_on
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select * from t join u on t.a = u.
+    cursor:
+      search:
+        text: 'u.'
+        index: 2
+    completions:
+      limit: 5
+
+  # Columns in a JOIN USING
+  - name: cov_join_using
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select * from t join u using (a
+    cursor:
+      search:
+        text: '(a'
+        index: 2
+    completions:
+      limit: 5
+
+  # Type names in a CREATE TABLE
+  - name: cov_create_table_type
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        create table x (a in
+    cursor:
+      search:
+        text: 'in'
+        index: 2
+    completions:
+      limit: 5
+
+  # Columns without a catalog
+  - name: cov_empty_catalog_columns
+    catalog: {}
+    editor:
+      input: |-
+        select a from t where a
+    cursor:
+      search:
+        text: 'where a'
+        index: 7
+    completions:
+      limit: 5
+
+  # An ambiguous column in two tables
+  - name: cov_two_tables_ambiguous
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select a from t, u where a
+    cursor:
+      search:
+        text: 'where a'
+        index: 7
+    completions:
+      limit: 5
+
+  # A quoted identifier prefix
+  - name: cov_quoted_identifier
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select "na" from t
+    cursor:
+      search:
+        text: '"na"'
+        index: 3
+    completions:
+      limit: 5
+
+  # A prefix in different casing
+  - name: cov_case_insensitive
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select NA from t
+    cursor:
+      search:
+        text: 'NA'
+        index: 2
+    completions:
+      limit: 5
+
+  # The second statement after a semicolon
+  - name: cov_after_semicolon
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+    editor:
+      input: |-
+        select 1; select a from t where na
+    cursor:
+      search:
+        text: 'na'
+        index: 2
+    completions:
+      limit: 5

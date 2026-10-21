@@ -1,0 +1,1003 @@
+parser-snapshots:
+
+  - name: recovery_unbalanced_paren_open
+    input: |-
+      select (1 + 2
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected EOF'
+          text: ""
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_unbalanced_paren_close
+    input: |-
+      select 1 + 2)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 7
+          description:
+            text: "select 1 + 2)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1 + 2)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1 + 2)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1 + 2)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "1 + 2)"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: PLUS
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "1 + 2)"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected RRB'
+          text: ")"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_trailing_operator
+    input: |-
+      select 1 +;
+      select 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 7
+          description:
+            text: "select 1 +..;\nselect 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1 +..;\nselect 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1 +;\nselect 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1 +;\nselect 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "1 +;\nselect 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: PLUS
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "1 +;\nselect 2"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+      line-breaks:
+        - text: [11,12]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_leading_comma
+    input: |-
+      select , a from t
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected COMMA'
+          text: ","
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_double_comma
+    input: |-
+      select a,, b from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 12
+          description:
+            text: "select a,, b from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a,, b from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a,, b"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: ", b"
+                    children:
+                      - key: SQL_RESULT_TARGET_NAME
+                        type: NAME
+                        text: "b"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected COMMA'
+          text: ","
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_garbage_between_statements
+    input: |-
+      select 1;
+      foo bar baz;
+      select 2;
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1;"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+        - type: SELECT
+          ast-begin: 4
+          ast-size: 4
+          description:
+            text: "select 2;"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "2"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected identifier literal'
+          text: "foo"
+      line-breaks:
+        - text: [9,10]
+        - text: [22,23]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_many_errors
+    input: |-
+      select from;
+      select * frm t;
+      create table;
+      select 1 +;
+      insert into;
+      select 3
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 5
+          description:
+            text: "select * frm t;"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * frm t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "* frm t"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "* frm t"
+                    children:
+                      - key: SQL_RESULT_TARGET_NAME
+                        type: NAME
+                        text: "t"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected identifier literal'
+          text: "frm"
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+      line-breaks:
+        - text: [12,13]
+        - text: [28,29]
+        - text: [42,43]
+        - text: [54,55]
+        - text: [67,68]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_create_table_columns
+    input: |-
+      create table t (a int, b, c varchar(, d)
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected COMMA'
+          text: ","
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_create_table_incomplete
+    input: |-
+      create table t (
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected EOF'
+          text: ""
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_insert_values
+    input: |-
+      insert into t (a, b) values (1, , 3), (
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected COMMA'
+          text: ","
+        - message: 'syntax error, unexpected EOF'
+          text: ""
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_case_expression
+    input: |-
+      select case when then 1 else end from t
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected THEN'
+          text: "then"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_function_call
+    input: |-
+      select f(1, , 2), g(, h(1
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected COMMA'
+          text: ","
+        - message: 'syntax error, unexpected COMMA'
+          text: ","
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_subquery
+    input: |-
+      select * from (select from) s where a in (select
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected EOF'
+          text: ""
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_join
+    input: |-
+      select * from a join b on;
+      select * from a join;
+      select * from a left outer
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+      line-breaks:
+        - text: [26,27]
+        - text: [48,49]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_group_order
+    input: |-
+      select a from t group by order by;
+      select a from t order by a desc nulls
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 13
+          description:
+            text: "select a f.. order by;"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a f..y order by"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_GROUPS
+                type: ARRAY
+                text: "group by order by"
+                children:
+                  - type: OBJECT_SQL_GROUP_BY_ITEM
+                    text: "order by"
+                    children:
+                      - key: SQL_GROUP_BY_ITEM_TYPE
+                        type: ENUM_SQL_GROUP_BY_ITEM_TYPE
+                        value: EXPRESSION
+        - type: SELECT
+          ast-begin: 13
+          ast-size: 12
+          description:
+            text: "select a f..desc nulls"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a f..desc nulls"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected ORDER'
+          text: "order"
+        - message: 'syntax error, unexpected NULLS_P'
+          text: "nulls"
+      line-breaks:
+        - text: [34,35]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_window
+    input: |-
+      select sum(a) over (partition by order by b) from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 16
+          description:
+            text: "select sum.. b) from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select sum.. b) from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "sum(a) ove..rder by b)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "sum(a) ove..rder by b)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "sum(a) ove..rder by b)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ARRAY
+                            text: "sum"
+                            children:
+                              - type: NAME
+                                text: "sum"
+                          - key: SQL_FUNCTION_ARGUMENTS
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: OBJECT_SQL_FUNCTION_ARG
+                                text: "a"
+                                children:
+                                  - key: SQL_FUNCTION_ARG_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                          - key: SQL_FUNCTION_OVER
+                            type: OBJECT_SQL_WINDOW_FRAME
+                            text: "(partition..rder by b)"
+                            children: []
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected ORDER'
+          text: "order"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_cte
+    input: |-
+      with a as (select 1), b as select 2 select * from a
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SELECT, expecting LRB or PROPERTY or SECURE'
+          text: "select"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_set_operation
+    input: |-
+      select 1 union;
+      select 1 union all select
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+      line-breaks:
+        - text: [15,16]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_keyword_as_identifier
+    input: |-
+      select select, from from from
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SELECT'
+          text: "select"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_unterminated_string_then_statement
+    input: |-
+      select 'abc;
+      select 2;
+    expected:
+      statements: []
+      scanner-errors:
+        - message: unterminated quoted string
+          text: "'abc;\nselect 2;"
+      parser-errors: []
+      line-breaks:
+        - text: [12,13]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_vis_statement
+    input: |-
+      select * from t visualize using vegalite (mark => , encoding => (x => (field => )));
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 5
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected COMMA'
+          text: ","
+      line-breaks:
+        - text: [84,85]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_vis_statement_unclosed
+    input: |-
+      select * from t visualize using vegalite (mark => bar, encoding => (
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected EOF'
+          text: ""
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_set_statement
+    input: |-
+      set ;
+      set a = ;
+      set a to
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+        - message: 'syntax error, unexpected TO, expecting DOT or EQUALS'
+          text: "to"
+      line-breaks:
+        - text: [5,6]
+        - text: [15,16]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_explain
+    input: |-
+      explain;
+      explain (analyze select 1;
+      explain select
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+      line-breaks:
+        - text: [8,9]
+        - text: [35,36]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_drop
+    input: |-
+      drop;
+      drop table;
+      drop table if
+    expected:
+      statements:
+        - type: DROP_TABLE
+          ast-begin: 0
+          ast-size: 3
+          description:
+            text: "drop table if"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_DROP_TABLE
+            text: "drop table if"
+            children:
+              - key: SQL_DROP_NAME
+                type: ARRAY
+                text: "if"
+                children:
+                  - type: NAME
+                    text: "if"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SEMICOLON, expecting TABLE or VIEW'
+          text: ";"
+      line-breaks:
+        - text: [5,6]
+        - text: [17,18]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_delete
+    input: |-
+      delete from;
+      delete from t where
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+      line-breaks:
+        - text: [12,13]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_update
+    input: |-
+      update t set;
+      update t set a = ;
+      update
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected UPDATE'
+          text: "update"
+      line-breaks:
+        - text: [13,14]
+        - text: [32,33]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_only_semicolons
+    input: |-
+      ;;;
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected SEMICOLON'
+          text: ";"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: recovery_eof_in_each_position
+    input: |-
+      select a, b from t where a = 1 and b in (1, 2) group by a having count(*) > 1 order by a limit
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 52
+          description:
+            text: "select a, ..y a limit"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a, ..y a limit"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a, b"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "b"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "b"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "b"
+                            children:
+                              - type: NAME
+                                text: "b"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "a = 1 and .. in (1, 2)"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: AND
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "a = 1 and .. in (1, 2)"
+                    children:
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a = 1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a = 1"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "b in (1, 2)"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: IN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "b in (1, 2)"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "b"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "b"
+                                    children:
+                                      - type: NAME
+                                        text: "b"
+                              - type: ARRAY
+                                text: "(1, 2)"
+                                children:
+                                  - type: LITERAL_INTEGER
+                                    text: "1"
+                                  - type: LITERAL_INTEGER
+                                    text: "2"
+              - key: SQL_SELECT_GROUPS
+                type: ARRAY
+                text: "group by a"
+                children:
+                  - type: OBJECT_SQL_GROUP_BY_ITEM
+                    text: "a"
+                    children:
+                      - key: SQL_GROUP_BY_ITEM_TYPE
+                        type: ENUM_SQL_GROUP_BY_ITEM_TYPE
+                        value: EXPRESSION
+                      - key: SQL_GROUP_BY_ITEM_ARG
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+              - key: SQL_SELECT_HAVING
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "count(*) > 1"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: GREATER_THAN
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "count(*) > 1"
+                    children:
+                      - type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "count(*)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ARRAY
+                            text: "count"
+                            children:
+                              - type: NAME
+                                text: "count"
+                          - key: SQL_FUNCTION_ARGUMENTS_STAR
+                            type: BOOL
+                            value: 1
+                      - type: LITERAL_INTEGER
+                        text: "1"
+              - key: SQL_SELECT_ORDER
+                type: ARRAY
+                text: "order by a"
+                children:
+                  - type: OBJECT_SQL_ORDER
+                    text: "a"
+                    children:
+                      - key: SQL_ORDER_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected EOF'
+          text: ""
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []

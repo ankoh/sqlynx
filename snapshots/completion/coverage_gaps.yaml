@@ -1,0 +1,3060 @@
+completion-snapshots:
+
+  - name: cov_dot_cte_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        with c as (select a as k, b from t) select c. from c
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+        - type: name/unresolved
+          statement-id: 0
+          text: "c"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "b"
+        - expression-idx: 2
+          type: colref/unresolved
+          statement-id: 0
+          text: "c."
+    cursor:
+      search:
+        text: 'c.'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      dot: 1
+      symbol: OBJECT_EXT_TRAILING_DOT
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 32
+          value: b
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "c."
+          objects: []
+        - score: 32
+          value: k
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "c."
+          objects: []
+      text: "."
+
+  - name: cov_dot_subquery_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select s. from (select a as k, b from t) s
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "s."
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 2
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "b"
+    cursor:
+      search:
+        text: 's.'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      dot: 1
+      symbol: OBJECT_EXT_TRAILING_DOT
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 32
+          value: b
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "s."
+          objects: []
+        - score: 32
+          value: k
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "s."
+          objects: []
+      text: "."
+
+  - name: cov_dot_unresolved_source
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select x. from nothing x
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/unresolved
+          statement-id: 0
+          text: "nothing x"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "x."
+      inferred-tables:
+        - name: nothing
+          confidence: confident
+          columns:
+            - name: x
+              confidence: confident
+    cursor:
+      search:
+        text: 'x.'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      dot: 1
+      symbol: OBJECT_EXT_TRAILING_DOT
+      relative: END_OF_SYMBOL
+      entries: []
+      text: "."
+
+  - name: cov_dot_table_alias
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select x. from t x
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t x"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "x."
+    cursor:
+      search:
+        text: 'x.'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      dot: 1
+      symbol: OBJECT_EXT_TRAILING_DOT
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 34
+          value: a
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "x."
+          objects:
+            - score: 14
+              type: column
+              id: "256.65536.4294967296.0"
+              candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: x.a
+              qualified-idx: 1
+              prefer-qualified: 1
+        - score: 34
+          value: b
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "x."
+          objects:
+            - score: 14
+              type: column
+              id: "256.65536.4294967296.1"
+              candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: x.b
+              qualified-idx: 1
+              prefer-qualified: 1
+        - score: 34
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "x."
+          objects:
+            - score: 14
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: x.name
+              qualified-idx: 1
+              prefer-qualified: 1
+      text: "."
+
+  - name: cov_dot_two_tables
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select u. from t, u
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967297"
+          statement-id: 0
+          text: "u"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "u."
+    cursor:
+      search:
+        text: 'u.'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      dot: 1
+      symbol: OBJECT_EXT_TRAILING_DOT
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 34
+          value: a
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "u."
+          objects:
+            - score: 14
+              type: column
+              id: "256.65536.4294967297.0"
+              candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: u.a
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 34
+          value: c
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "u."
+          objects:
+            - score: 14
+              type: column
+              id: "256.65536.4294967297.1"
+              candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: u.c
+              qualified-idx: 1
+              prefer-qualified: 0
+      text: "."
+
+  - name: cov_dot_partial_column
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select t.na from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "t.na"
+    cursor:
+      search:
+        text: 't.na'
+        index: 4
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      dot: 1
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 69
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "t.na"
+          objects:
+            - score: 49
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [DOT_RESOLUTION_COLUMN,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 34
+          value: a
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "t.na"
+          objects:
+            - score: 14
+              type: column
+              id: "256.65536.4294967296.0"
+              candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.a
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 34
+          value: b
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "t.na"
+          objects:
+            - score: 14
+              type: column
+              id: "256.65536.4294967296.1"
+              candidate-tags: [DOT_RESOLUTION_COLUMN,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.b
+              qualified-idx: 1
+              prefer-qualified: 0
+      text: "na"
+
+  - name: cov_function_qualified
+    catalog:
+      script:
+        input: |-
+          create function db1.sch1.mysum(x int) returns int; create function sch2.mymax(x int) returns int; create function myabs(x int) returns int;
+        catalog-id: 1
+        errors: []
+    editor:
+      input: |-
+        select my
+      catalog-id: 2
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "my"
+    cursor:
+      search:
+        text: 'my'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 59
+          value: my
+          candidate-tags: [IDENTITY]
+          location: "my"
+          location-qualified: "my"
+          objects: []
+        - score: 47
+          value: myabs
+          name-tags: [FUNCTION_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "my"
+          location-qualified: "my"
+          objects:
+            - score: 37
+              type: function
+              id: "257.65538.4294967298"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: myabs
+              qualified-idx: 0
+              prefer-qualified: 0
+        - score: 47
+          value: mymax
+          name-tags: [FUNCTION_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "my"
+          location-qualified: "my"
+          objects:
+            - score: 37
+              type: function
+              id: "257.65537.4294967297"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: sch2.mymax
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 47
+          value: mysum
+          name-tags: [FUNCTION_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "my"
+          location-qualified: "my"
+          objects:
+            - score: 37
+              type: function
+              id: "256.65536.4294967296"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: db1.sch1.mysum
+              qualified-idx: 2
+              prefer-qualified: 0
+        - score: 4
+          value: from
+          candidate-tags: [KEYWORD_A,EXPECTED_PARSER_SYMBOL]
+          location: "my"
+          location-qualified: "my"
+          objects: []
+      text: "my"
+
+  - name: cov_function_in_where
+    catalog:
+      script:
+        input: |-
+          create function db1.sch1.mysum(x int) returns int; create function sch2.mymax(x int) returns int; create function myabs(x int) returns int;
+        catalog-id: 1
+        errors: []
+    editor:
+      input: |-
+        select 1 from t where my
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/unresolved
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "my"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+      constants:
+        - expression: 1
+          text: "1"
+      inferred-tables:
+        - name: t
+          confidence: confident
+          columns:
+            - name: my
+              confidence: confident
+    cursor:
+      search:
+        text: 'where my'
+        index: 8
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 59
+          value: my
+          candidate-tags: [IDENTITY]
+          location: "my"
+          location-qualified: "my"
+          objects: []
+        - score: 47
+          value: myabs
+          name-tags: [FUNCTION_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "my"
+          location-qualified: "my"
+          objects:
+            - score: 37
+              type: function
+              id: "257.65538.4294967298"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: myabs
+              qualified-idx: 0
+              prefer-qualified: 0
+        - score: 47
+          value: mymax
+          name-tags: [FUNCTION_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "my"
+          location-qualified: "my"
+          objects:
+            - score: 37
+              type: function
+              id: "257.65537.4294967297"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: sch2.mymax
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 47
+          value: mysum
+          name-tags: [FUNCTION_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "my"
+          location-qualified: "my"
+          objects:
+            - score: 37
+              type: function
+              id: "256.65536.4294967296"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: db1.sch1.mysum
+              qualified-idx: 2
+              prefer-qualified: 0
+        - score: 3
+          value: group
+          keyword-continuation: by
+          candidate-tags: [KEYWORD_B,EXPECTED_PARSER_SYMBOL]
+          location: "my"
+          location-qualified: "my"
+          objects: []
+      text: "my"
+
+  - name: cov_cursor_begin_of_symbol
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select * from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+    cursor:
+      search:
+        text: 'from t'
+        index: 5
+    completions:
+      limit: 5
+      strategy: TABLE_REF
+      symbol: NAME
+      relative: BEGIN_OF_SYMBOL
+      entries:
+        - score: 57
+          value: t
+          name-tags: [TABLE_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "t"
+          location-qualified: "t"
+          objects:
+            - score: 37
+              type: table
+              id: "256.65536.4294967296"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: t
+              qualified-idx: 0
+              prefer-qualified: 0
+        - score: 50
+          value: t
+          candidate-tags: [IDENTITY]
+          location: "t"
+          location-qualified: "t"
+          objects: []
+        - score: 37
+          value: text
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "t"
+          location-qualified: "t"
+          objects: []
+        - score: 4
+          value: where
+          candidate-tags: [KEYWORD_A,EXPECTED_PARSER_SYMBOL]
+          location: "t"
+          location-qualified: "t"
+          objects: []
+        - score: 3
+          value: group
+          keyword-continuation: by
+          candidate-tags: [KEYWORD_B,EXPECTED_PARSER_SYMBOL]
+          location: "t"
+          location-qualified: "t"
+          objects: []
+      text: "t"
+
+  - name: cov_cursor_begin_of_symbol_after_space
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select  a from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+    cursor:
+      search:
+        text: 'a'
+        index: 0
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: BEGIN_OF_SYMBOL
+      entries:
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "a"
+          location-qualified: "a"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: a
+          candidate-tags: [IDENTITY]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 57
+          value: a
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "a"
+          location-qualified: "a"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.0"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.a
+              qualified-idx: 1
+              prefer-qualified: 0
+            - score: 37
+              type: column
+              id: "256.65536.4294967297.0"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: u.a
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 3
+          value: by
+          candidate-tags: [KEYWORD_C,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 3
+          value: set
+          candidate-tags: [KEYWORD_C,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+      text: "a"
+
+  - name: cov_cursor_on_literal
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select 12345 from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "12345"
+      constants:
+        - expression: 0
+          text: "12345"
+    cursor:
+      search:
+        text: '12345'
+        index: 3
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      symbol: LITERAL_INTEGER
+      relative: MID_OF_SYMBOL
+      entries: []
+      text: "12345"
+
+  - name: cov_cursor_on_string
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select 'some text' from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'some text'"
+      constants:
+        - expression: 0
+          text: "'some text'"
+    cursor:
+      search:
+        text: 'some'
+        index: 2
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      symbol: LITERAL_STRING
+      relative: MID_OF_SYMBOL
+      entries: []
+      text: "'some text'"
+
+  - name: cov_cursor_on_paren
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select (a) from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+    cursor:
+      search:
+        text: '(a)'
+        index: 3
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      symbol: OBJECT_SQL_RESULT_TARGET
+      relative: END_OF_SYMBOL
+      entries: []
+      text: ")"
+
+  - name: cov_cursor_on_operator
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select a + b from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "b"
+    cursor:
+      search:
+        text: '+'
+        index: 1
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      symbol: ARRAY
+      relative: END_OF_SYMBOL
+      entries: []
+      text: "+"
+
+  - name: cov_cursor_on_comma
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select a, b from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "b"
+    cursor:
+      search:
+        text: ','
+        index: 1
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      symbol: ARRAY
+      relative: END_OF_SYMBOL
+      entries: []
+      text: ","
+
+  - name: cov_cursor_on_semicolon
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select a from t;
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+    cursor:
+      search:
+        text: 't;'
+        index: 2
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      symbol: OBJECT_SQL_SELECT
+      relative: END_OF_SYMBOL
+      entries: []
+      text: ";"
+
+  - name: cov_long_identifier
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "aaaaaaaaaa..aaaaaaaaaa"
+    cursor:
+      search:
+        text: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        index: 40
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: MID_OF_SYMBOL
+      entries:
+        - score: 3
+          value: by
+          candidate-tags: [KEYWORD_C,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
+          location: "aaaaaaaaaa..aaaaaaaaaa"
+          location-qualified: "aaaaaaaaaa..aaaaaaaaaa"
+          objects: []
+        - score: 3
+          value: set
+          candidate-tags: [KEYWORD_C,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
+          location: "aaaaaaaaaa..aaaaaaaaaa"
+          location-qualified: "aaaaaaaaaa..aaaaaaaaaa"
+          objects: []
+        - score: 1
+          value: abort
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
+          location: "aaaaaaaaaa..aaaaaaaaaa"
+          location-qualified: "aaaaaaaaaa..aaaaaaaaaa"
+          objects: []
+        - score: 1
+          value: absolute
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
+          location: "aaaaaaaaaa..aaaaaaaaaa"
+          location-qualified: "aaaaaaaaaa..aaaaaaaaaa"
+          objects: []
+        - score: 1
+          value: access
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
+          location: "aaaaaaaaaa..aaaaaaaaaa"
+          location-qualified: "aaaaaaaaaa..aaaaaaaaaa"
+          objects: []
+      text: "aaaaaaaaaa..aaaaaaaaaa"
+
+  - name: cov_vis_column_in_field
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    editor:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => ca
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/unresolved
+          text: "sales"
+    cursor:
+      search:
+        text: 'ca'
+        index: 2
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      entries:
+        - score: 4294967295
+          value: ca
+          candidate-tags: [IDENTITY]
+          location: "ca"
+          location-qualified: "ca"
+          objects: []
+        - score: 57
+          value: cast
+          candidate-tags: [KEYWORD_C,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "ca"
+          location-qualified: "ca"
+          objects: []
+        - score: 57
+          value: category
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "ca"
+          location-qualified: "ca"
+          objects:
+            - score: 37
+              type: column
+              id: "256.65536.4294967296.0"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: sales.category
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 55
+          value: cache
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "ca"
+          location-qualified: "ca"
+          objects: []
+        - score: 55
+          value: call
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "ca"
+          location-qualified: "ca"
+          objects: []
+      text: "ca"
+
+  - name: cov_vis_column_in_shorthand
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    editor:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => re
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/unresolved
+          text: "sales"
+    cursor:
+      search:
+        text: 're'
+        index: 2
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      entries:
+        - score: 4294967295
+          value: re
+          candidate-tags: [IDENTITY]
+          location: "re"
+          location-qualified: "re"
+          objects: []
+        - score: 57
+          value: revenue
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+          location: "re"
+          location-qualified: "re"
+          objects:
+            - score: 37
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG]
+              qualified: sales.revenue
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 55
+          value: read
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "re"
+          location-qualified: "re"
+          objects: []
+        - score: 55
+          value: real
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "re"
+          location-qualified: "re"
+          objects: []
+        - score: 55
+          value: reassign
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "re"
+          location-qualified: "re"
+          objects: []
+      text: "re"
+
+  - name: cov_vis_select_source
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    editor:
+      input: |-
+        SELECT cat FROM sales VISUALIZE USING vegalite (mark => bar)
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "cat"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT cat..FROM sales"
+          renderer: vegalite
+          dashboard:
+            width: 6
+            height: 3
+          vegalite:
+            mark: BAR
+    cursor:
+      search:
+        text: 'cat'
+        index: 3
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 80
+          value: cat
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,IN_NAME_SCOPE,EXACT_MATCH]
+          location: "cat"
+          location-qualified: "cat"
+          objects: []
+        - score: 67
+          value: category
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "cat"
+          location-qualified: "cat"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.0"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: sales.category
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: cat
+          candidate-tags: [IDENTITY]
+          location: "cat"
+          location-qualified: "cat"
+          objects: []
+        - score: 56
+          value: catalog
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "cat"
+          location-qualified: "cat"
+          objects: []
+        - score: 56
+          value: category
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "cat"
+          location-qualified: "cat"
+          objects: []
+      text: "cat"
+
+  - name: cov_subquery_correlated
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select * from t where exists (select 1 from u where u.c = t.na)
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967297"
+          statement-id: 0
+          text: "u"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967297.1"
+          statement-id: 0
+          text: "u.c"
+        - expression-idx: 1
+          type: colref/unresolved
+          statement-id: 0
+          text: "t.na"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+      constants:
+        - expression: 2
+          text: "1"
+    cursor:
+      search:
+        text: 't.na'
+        index: 4
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "na"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: na
+          candidate-tags: [IDENTITY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 56
+          value: name
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 56
+          value: names
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 56
+          value: national
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+      text: "na"
+
+  - name: cov_cte_star
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        with c as (select * from t) select na from c
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+        - type: name/unresolved
+          statement-id: 0
+          text: "c"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "na"
+    cursor:
+      search:
+        text: 'na from'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 59
+          value: na
+          candidate-tags: [IDENTITY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 56
+          value: name
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 56
+          value: names
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 56
+          value: national
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+      text: "na"
+
+  - name: cov_insert_columns
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        insert into t (a, na) values (1, 2)
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          role: write
+          text: "t"
+      inserts:
+        - statement-id: 0
+          target-ref: 0
+          source: "values (1, 2)"
+          columns:
+            - name: a
+              resolved: true
+            - name: na
+              resolved: false
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+      constants:
+        - expression: 0
+          text: "1"
+        - expression: 1
+          text: "2"
+    cursor:
+      search:
+        text: 'na)'
+        index: 2
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 4294967295
+          value: na
+          candidate-tags: [IDENTITY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "na"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 56
+          value: name
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 56
+          value: names
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 56
+          value: national
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+      text: "na"
+
+  - name: cov_insert_target
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        insert into u
+      catalog-id: 2
+      errors: []
+    cursor:
+      search:
+        text: 'into u'
+        index: 6
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      entries:
+        - score: 4294967295
+          value: u
+          candidate-tags: [IDENTITY]
+          location: "u"
+          location-qualified: "u"
+          objects: []
+        - score: 72
+          value: u
+          name-tags: [TABLE_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,EXACT_MATCH]
+          location: "u"
+          location-qualified: "u"
+          objects:
+            - score: 52
+              type: table
+              id: "256.65536.4294967297"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,EXACT_MATCH]
+              qualified: u
+              qualified-idx: 0
+              prefer-qualified: 0
+        - score: 55
+          value: umap
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "u"
+          location-qualified: "u"
+          objects: []
+        - score: 55
+          value: unbounded
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "u"
+          location-qualified: "u"
+          objects: []
+        - score: 55
+          value: uncommitted
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "u"
+          location-qualified: "u"
+          objects: []
+      text: "u"
+
+  - name: cov_delete_where
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        delete from t where na
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          role: write
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "na"
+    cursor:
+      search:
+        text: 'where na'
+        index: 8
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "na"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: na
+          candidate-tags: [IDENTITY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: name
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: names
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: national
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+      text: "na"
+
+  - name: cov_group_by
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select name from t group by na
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.2"
+          statement-id: 0
+          text: "name"
+        - expression-idx: 1
+          type: colref/unresolved
+          statement-id: 0
+          text: "na"
+    cursor:
+      search:
+        text: 'by na'
+        index: 5
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "na"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: na
+          candidate-tags: [IDENTITY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: name
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: names
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: national
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+      text: "na"
+
+  - name: cov_order_by_alias
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select a as total from t order by to
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+    cursor:
+      search:
+        text: 'to'
+        index: 2
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      symbol: NAME
+      relative: MID_OF_SYMBOL
+      entries:
+        - score: 4294967295
+          value: total
+          candidate-tags: [IDENTITY]
+          location: "total"
+          location-qualified: "total"
+          objects: []
+        - score: 71
+          value: to
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,EXACT_MATCH,SUFFIX_DEPTH_MANY]
+          location: "total"
+          location-qualified: "total"
+          objects: []
+        - score: 56
+          value: tooltip
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "total"
+          location-qualified: "total"
+          objects: []
+        - score: 51
+          value: autosize
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "total"
+          location-qualified: "total"
+          objects: []
+        - score: 51
+          value: descriptor
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "total"
+          location-qualified: "total"
+          objects: []
+      text: "total"
+
+  - name: cov_join_on
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select * from t join u on t.a = u.
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967297"
+          statement-id: 0
+          text: "u"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "t.a"
+        - expression-idx: 1
+          type: colref/unresolved
+          statement-id: 0
+          text: "u."
+    cursor:
+      search:
+        text: 'u.'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      dot: 1
+      symbol: ARRAY
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 32
+          value: a
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "u."
+          objects: []
+        - score: 32
+          value: c
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [DOT_RESOLUTION_COLUMN,IN_NAME_SCOPE]
+          location: ""
+          location-qualified: "u."
+          objects: []
+      text: "."
+
+  - name: cov_join_using
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select * from t join u using (a
+      catalog-id: 2
+      errors: []
+    cursor:
+      search:
+        text: '(a'
+        index: 2
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      entries:
+        - score: 4294967295
+          value: a
+          candidate-tags: [IDENTITY]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 72
+          value: a
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,EXACT_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects:
+            - score: 52
+              type: column
+              id: "256.65536.4294967296.0"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,EXACT_MATCH]
+              qualified: t.a
+              qualified-idx: 1
+              prefer-qualified: 0
+            - score: 52
+              type: column
+              id: "256.65536.4294967297.0"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,EXACT_MATCH]
+              qualified: u.a
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 55
+          value: abort
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 55
+          value: absolute
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 55
+          value: access
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+      text: "a"
+
+  - name: cov_create_table_type
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        create table x (a in
+      catalog-id: 2
+      errors: []
+    cursor:
+      search:
+        text: 'in'
+        index: 2
+    completions:
+      limit: 5
+      strategy: DEFAULT
+      entries:
+        - score: 4294967295
+          value: in
+          candidate-tags: [IDENTITY]
+          location: "in"
+          location-qualified: "in"
+          objects: []
+        - score: 55
+          value: including
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "in"
+          location-qualified: "in"
+          objects: []
+        - score: 55
+          value: increment
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "in"
+          location-qualified: "in"
+          objects: []
+        - score: 55
+          value: index
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "in"
+          location-qualified: "in"
+          objects: []
+        - score: 55
+          value: indexes
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "in"
+          location-qualified: "in"
+          objects: []
+      text: "in"
+
+  - name: cov_empty_catalog_columns
+    catalog: {}
+    editor:
+      input: |-
+        select a from t where a
+      catalog-id: 1
+      errors: []
+      table-refs:
+        - type: name/unresolved
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: colref/unresolved
+          statement-id: 0
+          text: "a"
+      inferred-tables:
+        - name: t
+          confidence: confident
+          columns:
+            - name: a
+              confidence: confident
+    cursor:
+      search:
+        text: 'where a'
+        index: 7
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 70
+          value: a
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,EXACT_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 59
+          value: a
+          candidate-tags: [IDENTITY]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 55
+          value: abort
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 55
+          value: absolute
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 55
+          value: access
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+      text: "a"
+
+  - name: cov_two_tables_ambiguous
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select a from t, u where a
+      catalog-id: 2
+      errors:
+        - type: COLUMN_REF_AMBIGUOUS
+          message: 'column reference is ambiguous, candidates: t.a, u.a'
+          text: "a"
+        - type: COLUMN_REF_AMBIGUOUS
+          message: 'column reference is ambiguous, candidates: t.a, u.a'
+          text: "a"
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967297"
+          statement-id: 0
+          text: "u"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: colref/unresolved
+          statement-id: 0
+          text: "a"
+    cursor:
+      search:
+        text: 'where a'
+        index: 7
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 83
+          value: a
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,UNRESOLVED_PEER,THROUGH_CATALOG,IN_NAME_SCOPE,EXACT_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects:
+            - score: 63
+              type: column
+              id: "256.65536.4294967296.0"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,UNRESOLVED_PEER,THROUGH_CATALOG,IN_NAME_SCOPE,EXACT_MATCH]
+              qualified: t.a
+              qualified-idx: 1
+              prefer-qualified: 1
+            - score: 63
+              type: column
+              id: "256.65536.4294967297.0"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,UNRESOLVED_PEER,THROUGH_CATALOG,IN_NAME_SCOPE,EXACT_MATCH]
+              qualified: u.a
+              qualified-idx: 1
+              prefer-qualified: 1
+        - score: 63
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,SUBSTRING_MATCH,UNRESOLVED_PEER,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "a"
+          location-qualified: "a"
+          objects:
+            - score: 43
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,SUBSTRING_MATCH,UNRESOLVED_PEER,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: a
+          candidate-tags: [IDENTITY]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 55
+          value: abort
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+        - score: 55
+          value: absolute
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "a"
+          location-qualified: "a"
+          objects: []
+      text: "a"
+
+  - name: cov_quoted_identifier
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select "na" from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "\"na\""
+    cursor:
+      search:
+        text: '"na"'
+        index: 3
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: MID_OF_SYMBOL
+      entries:
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "\"na\""
+          location-qualified: "\"na\""
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: '"na"'
+          candidate-tags: [IDENTITY]
+          location: "\"na\""
+          location-qualified: "\"na\""
+          objects: []
+        - score: 56
+          value: name
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "\"na\""
+          location-qualified: "\"na\""
+          objects: []
+        - score: 56
+          value: names
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "\"na\""
+          location-qualified: "\"na\""
+          objects: []
+        - score: 56
+          value: national
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "\"na\""
+          location-qualified: "\"na\""
+          objects: []
+      text: "\"na\""
+
+  - name: cov_case_insensitive
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select NA from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "NA"
+    cursor:
+      search:
+        text: 'NA'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "NA"
+          location-qualified: "NA"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: NA
+          candidate-tags: [IDENTITY]
+          location: "NA"
+          location-qualified: "NA"
+          objects: []
+        - score: 56
+          value: name
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "NA"
+          location-qualified: "NA"
+          objects: []
+        - score: 56
+          value: names
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "NA"
+          location-qualified: "NA"
+          objects: []
+        - score: 56
+          value: national
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "NA"
+          location-qualified: "NA"
+          objects: []
+      text: "NA"
+
+  - name: cov_after_semicolon
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int, name text); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+              - catalog-id: "256.65536.4294967296.2"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    editor:
+      input: |-
+        select 1; select a from t where na
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 1
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 1
+          text: "a"
+        - expression-idx: 1
+          type: colref/unresolved
+          statement-id: 1
+          text: "na"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          text: "1"
+      constants:
+        - expression: 2
+          text: "1"
+    cursor:
+      search:
+        text: 'na'
+        index: 2
+    completions:
+      limit: 5
+      strategy: COLUMN_REF
+      symbol: NAME
+      relative: END_OF_SYMBOL
+      entries:
+        - score: 67
+          value: name
+          name-tags: [COLUMN_NAME]
+          candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+          location: "na"
+          location-qualified: "na"
+          objects:
+            - score: 47
+              type: column
+              id: "256.65536.4294967296.2"
+              candidate-tags: [NAME_INDEX,PREFIX_MATCH,SUBSTRING_MATCH,THROUGH_CATALOG,IN_NAME_SCOPE]
+              qualified: t.name
+              qualified-idx: 1
+              prefer-qualified: 0
+        - score: 59
+          value: na
+          candidate-tags: [IDENTITY]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: name
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: names
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+        - score: 55
+          value: national
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "na"
+          location-qualified: "na"
+          objects: []
+      text: "na"

@@ -1,0 +1,1834 @@
+visualize-snapshots:
+
+  - name: vis_channels_position
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => category,
+            x2 => date,
+            y => revenue,
+            y2 => target,
+            x_offset => category,
+            y_offset => revenue
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "category"
+          },
+          "x2": {
+            "field": "date"
+          },
+          "y": {
+            "field": "revenue"
+          },
+          "y2": {
+            "field": "target"
+          },
+          "xOffset": {
+            "field": "category"
+          },
+          "yOffset": {
+            "field": "revenue"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => category),
+          x2 => (field => date),
+          y => (field => revenue),
+          y2 => (field => target),
+          x_offset => (field => category),
+          y_offset => (field => revenue)
+        )
+      );
+
+  - name: vis_channels_style
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            fill => (field => category, type => nominal),
+            stroke => (field => category, type => nominal),
+            fill_opacity => (field => revenue, type => quantitative),
+            stroke_opacity => (field => revenue, type => quantitative),
+            stroke_width => (field => revenue, type => quantitative),
+            stroke_dash => (field => category, type => nominal),
+            opacity => (field => revenue, type => quantitative),
+            size => (field => target, type => quantitative),
+            shape => (field => category, type => nominal),
+            angle => (field => target, type => quantitative)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "point",
+        "encoding": {
+          "fill": {
+            "field": "category",
+            "type": "nominal"
+          },
+          "stroke": {
+            "field": "category",
+            "type": "nominal"
+          },
+          "fillOpacity": {
+            "field": "revenue",
+            "type": "quantitative"
+          },
+          "strokeOpacity": {
+            "field": "revenue",
+            "type": "quantitative"
+          },
+          "strokeWidth": {
+            "field": "revenue",
+            "type": "quantitative"
+          },
+          "strokeDash": {
+            "field": "category",
+            "type": "nominal"
+          },
+          "opacity": {
+            "field": "revenue",
+            "type": "quantitative"
+          },
+          "size": {
+            "field": "target",
+            "type": "quantitative"
+          },
+          "shape": {
+            "field": "category",
+            "type": "nominal"
+          },
+          "angle": {
+            "field": "target",
+            "type": "quantitative"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => point,
+        encoding => (
+          fill => (field => category, type => nominal),
+          stroke => (field => category, type => nominal),
+          fill_opacity => (field => revenue, type => quantitative),
+          stroke_opacity => (field => revenue, type => quantitative),
+          stroke_width => (field => revenue, type => quantitative),
+          stroke_dash => (field => category, type => nominal),
+          opacity => (field => revenue, type => quantitative),
+          size => (field => target, type => quantitative),
+          shape => (field => category, type => nominal),
+          angle => (field => target, type => quantitative)
+        )
+      );
+
+  - name: vis_channels_polar
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => arc,
+          encoding => (
+            theta => (field => revenue, type => quantitative, stack => true),
+            theta2 => (field => target, type => quantitative),
+            radius => (field => revenue, type => quantitative, scale => (type => sqrt, zero => true)),
+            radius2 => (field => target, type => quantitative),
+            color => (field => category, type => nominal)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "arc",
+        "encoding": {
+          "theta": {
+            "field": "revenue",
+            "type": "quantitative",
+            "stack": true
+          },
+          "theta2": {
+            "field": "target",
+            "type": "quantitative"
+          },
+          "radius": {
+            "field": "revenue",
+            "type": "quantitative",
+            "scale": {
+              "type": "sqrt",
+              "zero": true
+            }
+          },
+          "radius2": {
+            "field": "target",
+            "type": "quantitative"
+          },
+          "color": {
+            "field": "category",
+            "type": "nominal"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => arc,
+        encoding => (
+          theta => (field => revenue, type => quantitative, stack => true),
+          theta2 => (field => target, type => quantitative),
+          radius => (field => revenue, type => quantitative, scale => (type => sqrt, zero => true)),
+          radius2 => (field => target, type => quantitative),
+          color => (field => category, type => nominal)
+        )
+      );
+
+  - name: vis_channels_misc
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => text,
+          encoding => (
+            detail => (field => category, type => nominal),
+            order => (field => date, type => temporal),
+            tooltip => (field => revenue, type => quantitative),
+            text => (field => label, type => nominal),
+            row => (field => category, type => nominal),
+            column => (field => category, type => ordinal),
+            facet => (field => category, type => nominal),
+            href => (field => link, type => nominal),
+            url => (field => link, type => nominal),
+            key => (field => category, type => nominal)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "text",
+        "encoding": {
+          "detail": {
+            "field": "category",
+            "type": "nominal"
+          },
+          "order": {
+            "field": "date",
+            "type": "temporal"
+          },
+          "tooltip": {
+            "field": "revenue",
+            "type": "quantitative"
+          },
+          "text": {
+            "field": "label",
+            "type": "nominal"
+          },
+          "row": {
+            "field": "category",
+            "type": "nominal"
+          },
+          "column": {
+            "field": "category",
+            "type": "ordinal"
+          },
+          "facet": {
+            "field": "category",
+            "type": "nominal"
+          },
+          "href": {
+            "field": "link",
+            "type": "nominal"
+          },
+          "url": {
+            "field": "link",
+            "type": "nominal"
+          },
+          "key": {
+            "field": "category",
+            "type": "nominal"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => text,
+        encoding => (
+          detail => (field => category, type => nominal),
+          order => (field => date, type => temporal),
+          tooltip => (field => revenue, type => quantitative),
+          text => (field => label, type => nominal),
+          row => (field => category, type => nominal),
+          column => (field => category, type => ordinal),
+          facet => (field => category, type => nominal),
+          href => (field => link, type => nominal),
+          url => (field => link, type => nominal),
+          key => (field => category, type => nominal)
+        )
+      );
+
+  - name: vis_channels_geo
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => circle,
+          encoding => (
+            latitude => (field => lat, type => quantitative),
+            longitude => (field => lon, type => quantitative),
+            latitude2 => (field => lat2, type => quantitative),
+            longitude2 => (field => lon2, type => quantitative)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "circle",
+        "encoding": {
+          "latitude": {
+            "field": "lat",
+            "type": "quantitative"
+          },
+          "longitude": {
+            "field": "lon",
+            "type": "quantitative"
+          },
+          "latitude2": {
+            "field": "lat2",
+            "type": "quantitative"
+          },
+          "longitude2": {
+            "field": "lon2",
+            "type": "quantitative"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => circle,
+        encoding => (
+          latitude => (field => lat, type => quantitative),
+          longitude => (field => lon, type => quantitative),
+          latitude2 => (field => lat2, type => quantitative),
+          longitude2 => (field => lon2, type => quantitative)
+        )
+      );
+
+  - name: vis_field_time_unit
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => line,
+          encoding => (
+            x => (field => date, type => temporal, time_unit => yearmonth),
+            y => (field => revenue, type => quantitative, aggregate => mean)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "line",
+        "encoding": {
+          "x": {
+            "field": "date",
+            "type": "temporal",
+            "timeUnit": "yearmonth"
+          },
+          "y": {
+            "field": "revenue",
+            "type": "quantitative",
+            "aggregate": "mean"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => line,
+        encoding => (
+          x => (field => date, type => temporal, time_unit => yearmonth),
+          y => (field => revenue, type => quantitative, aggregate => mean)
+        )
+      );
+
+  - name: vis_field_type_geojson
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => geoshape,
+          encoding => (
+            color => (field => lower(category), type => geojson)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "geoshape",
+        "encoding": {
+          "color": {
+            "field": "lower(category)",
+            "type": "geojson"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => geoshape,
+        encoding => (
+          color => (field => "lower(category)", type => geojson)
+        )
+      );
+
+  - name: vis_field_stack_values
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => area,
+          encoding => (
+            x => (field => date, type => temporal),
+            y => (field => revenue, type => quantitative, stack => 'center'),
+            color => (field => category, type => nominal)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "area",
+        "encoding": {
+          "x": {
+            "field": "date",
+            "type": "temporal"
+          },
+          "y": {
+            "field": "revenue",
+            "type": "quantitative",
+            "stack": "center"
+          },
+          "color": {
+            "field": "category",
+            "type": "nominal"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => area,
+        encoding => (
+          x => (field => date, type => temporal),
+          y => (field => revenue, type => quantitative, stack => 'center'),
+          color => (field => category, type => nominal)
+        )
+      );
+
+  - name: vis_field_stack_false
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => area,
+          encoding => (
+            x => (field => date, type => temporal),
+            y => (field => revenue, type => quantitative, stack => false)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "area",
+        "encoding": {
+          "x": {
+            "field": "date",
+            "type": "temporal"
+          },
+          "y": {
+            "field": "revenue",
+            "type": "quantitative",
+            "stack": false
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => area,
+        encoding => (
+          x => (field => date, type => temporal),
+          y => (field => revenue, type => quantitative, stack => false)
+        )
+      );
+
+  - name: vis_legend_full
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => category, type => nominal),
+            y => (field => revenue, type => quantitative),
+            color => (
+              field => category,
+              type => nominal,
+              legend => (
+                type => 'symbol',
+                orient => 'right',
+                format => 'd',
+                format_type => 'number',
+                direction => 'vertical',
+                title => 'Category',
+                values => ['a', 'b'],
+                padding => 4,
+                offset => 2,
+                z_index => 1,
+                name => 'main_legend'
+              )
+            )
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "category",
+            "type": "nominal"
+          },
+          "y": {
+            "field": "revenue",
+            "type": "quantitative"
+          },
+          "color": {
+            "field": "category",
+            "type": "nominal",
+            "legend": {
+              "type": "symbol",
+              "orient": "right",
+              "title": "Category",
+              "format": "d",
+              "formatType": "number",
+              "direction": "vertical",
+              "padding": 4.0,
+              "offset": 2.0,
+              "zIndex": 1,
+              "name": "main_legend"
+            }
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => category, type => nominal),
+          y => (field => revenue, type => quantitative),
+          color => (field => category, type => nominal, legend => (type => 'symbol', orient => 'right', title => 'Category', format => 'd', format_type => 'number', direction => 'vertical', padding => 4.0, offset => 2.0, z_index => 1, name => 'main_legend'))
+        )
+      );
+
+  - name: vis_scale_full
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            x => (
+              field => revenue,
+              type => quantitative,
+              scale => (
+                type => pow,
+                domain => [0, 100],
+                domain_min => 0,
+                domain_max => 100.5,
+                domain_mid => 50,
+                range => [0, 1],
+                range_min => 0,
+                range_max => 1,
+                scheme => 'blues',
+                interpolate => 'rgb',
+                nice => true,
+                zero => false,
+                clamp => true,
+                padding => 0.1,
+                padding_inner => 0.2,
+                padding_outer => 0.3,
+                reverse => true,
+                round => true,
+                exponent => 2,
+                bins => [0, 10, 20],
+                name => 'sx'
+              )
+            ),
+            y => (field => category, type => nominal, scale => (type => band, domain => ['a', 'b'], range => [-1, 1.5]))
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "point",
+        "encoding": {
+          "x": {
+            "field": "revenue",
+            "type": "quantitative",
+            "scale": {
+              "type": "pow",
+              "zero": false,
+              "nice": true,
+              "clamp": true,
+              "reverse": true,
+              "round": true,
+              "scheme": "blues",
+              "interpolate": "rgb",
+              "exponent": 2.0,
+              "padding": 0.1,
+              "paddingInner": 0.2,
+              "paddingOuter": 0.3,
+              "domain": [
+                0,
+                100
+              ],
+              "domainMin": 0.0,
+              "domainMax": 100.5,
+              "domainMid": 50.0,
+              "range": [
+                0,
+                1
+              ],
+              "rangeMin": 0.0,
+              "rangeMax": 1.0,
+              "name": "sx"
+            }
+          },
+          "y": {
+            "field": "category",
+            "type": "nominal",
+            "scale": {
+              "type": "band",
+              "domain": [
+                "a",
+                "b"
+              ],
+              "range": [
+                -1.0,
+                1.5
+              ]
+            }
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => point,
+        encoding => (
+          x => (field => revenue, type => quantitative, scale => (type => pow, zero => false, nice => true, clamp => true, reverse => true, round => true, scheme => 'blues', interpolate => 'rgb', exponent => 2.0, padding => 0.1, padding_inner => 0.2, padding_outer => 0.3, domain => [0, 100], domain_min => 0.0, domain_max => 100.5, domain_mid => 50.0, range => [0, 1], range_min => 0.0, range_max => 1.0, name => 'sx')),
+          y => (field => category, type => nominal, scale => (type => band, domain => ['a', 'b'], range => [-1.0, 1.5]))
+        )
+      );
+
+  - name: vis_scale_types
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            x => (field => date, type => temporal, scale => (type => utc, domain_min => 1, domain_max => 2)),
+            y => (field => revenue, type => quantitative, scale => (type => symlog)),
+            size => (field => revenue, type => quantitative, scale => (type => quantile)),
+            color => (field => revenue, type => quantitative, scale => (type => sequential)),
+            opacity => (field => revenue, type => quantitative, scale => (type => threshold, domain => [1, 2])),
+            shape => (field => category, type => nominal, scale => (type => ordinal))
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "point",
+        "encoding": {
+          "x": {
+            "field": "date",
+            "type": "temporal",
+            "scale": {
+              "type": "utc",
+              "domainMin": 1.0,
+              "domainMax": 2.0
+            }
+          },
+          "y": {
+            "field": "revenue",
+            "type": "quantitative",
+            "scale": {
+              "type": "symlog"
+            }
+          },
+          "size": {
+            "field": "revenue",
+            "type": "quantitative",
+            "scale": {
+              "type": "quantile"
+            }
+          },
+          "color": {
+            "field": "revenue",
+            "type": "quantitative",
+            "scale": {
+              "type": "sequential"
+            }
+          },
+          "opacity": {
+            "field": "revenue",
+            "type": "quantitative",
+            "scale": {
+              "type": "threshold",
+              "domain": [
+                1,
+                2
+              ]
+            }
+          },
+          "shape": {
+            "field": "category",
+            "type": "nominal",
+            "scale": {
+              "type": "ordinal"
+            }
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => point,
+        encoding => (
+          x => (field => date, type => temporal, scale => (type => utc, domain_min => 1.0, domain_max => 2.0)),
+          y => (field => revenue, type => quantitative, scale => (type => symlog)),
+          size => (field => revenue, type => quantitative, scale => (type => quantile)),
+          color => (field => revenue, type => quantitative, scale => (type => sequential)),
+          opacity => (field => revenue, type => quantitative, scale => (type => threshold, domain => [1, 2])),
+          shape => (field => category, type => nominal, scale => (type => ordinal))
+        )
+      );
+
+  - name: vis_axis_full
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (
+              field => category,
+              type => nominal,
+              axis => (
+                orient => 'top',
+                format => 'd',
+                format_type => 'number',
+                grid => true,
+                ticks => false,
+                tick_count => 5,
+                tick_size => 3,
+                label_angle => 45,
+                label_font_size => 12,
+                label_overlap => 'parity',
+                direction => 'horizontal',
+                offset => 4,
+                values => ['a', 'b'],
+                z_index => 2,
+                title => 'Category',
+                domain => false,
+                name => 'ax'
+              )
+            ),
+            y => (field => revenue, type => quantitative)
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "category",
+            "type": "nominal",
+            "axis": {
+              "orient": "top",
+              "title": "Category",
+              "format": "d",
+              "formatType": "number",
+              "grid": true,
+              "ticks": false,
+              "domain": false,
+              "tickCount": 5.0,
+              "tickSize": 3.0,
+              "labelAngle": 45.0,
+              "labelFontSize": 12.0,
+              "labelOverlap": "parity",
+              "direction": "horizontal",
+              "offset": 4.0,
+              "zIndex": 2,
+              "name": "ax"
+            }
+          },
+          "y": {
+            "field": "revenue",
+            "type": "quantitative"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => category, type => nominal, axis => (orient => 'top', title => 'Category', format => 'd', format_type => 'number', grid => true, ticks => false, domain => false, tick_count => 5.0, tick_size => 3.0, label_angle => 45.0, label_font_size => 12.0, label_overlap => 'parity', direction => 'horizontal', offset => 4.0, z_index => 2, name => 'ax')),
+          y => (field => revenue, type => quantitative)
+        )
+      );
+
+  - name: vis_mark_all_properties
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => (
+            type => point,
+            filled => true,
+            fill => 'red',
+            stroke => 'black',
+            color => 'steelblue',
+            opacity => 0.5,
+            fill_opacity => 0.4,
+            stroke_opacity => 0.3,
+            stroke_width => 2,
+            size => 100,
+            shape => 'diamond',
+            angle => 45,
+            radius => 5,
+            corner_radius => 3,
+            orient => 'vertical',
+            interpolate => 'step',
+            tension => 0.7,
+            thickness => 2,
+            tooltip => false
+          ),
+          encoding => (
+            x => category,
+            y => revenue
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": {
+          "type": "point",
+          "filled": true,
+          "fill": "red",
+          "stroke": "black",
+          "color": "steelblue",
+          "opacity": 0.5,
+          "fillOpacity": 0.4,
+          "strokeOpacity": 0.3,
+          "strokeWidth": 2.0,
+          "size": 100.0,
+          "shape": "diamond",
+          "angle": 45.0,
+          "radius": 5.0,
+          "cornerRadius": 3.0,
+          "orient": "vertical",
+          "interpolate": "step",
+          "tension": 0.7,
+          "thickness": 2.0,
+          "tooltip": false
+        },
+        "encoding": {
+          "x": {
+            "field": "category"
+          },
+          "y": {
+            "field": "revenue"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => (type => point, filled => true, fill => 'red', stroke => 'black', color => 'steelblue', opacity => 0.5, fill_opacity => 0.4, stroke_opacity => 0.3, stroke_width => 2.0, size => 100.0, shape => 'diamond', angle => 45.0, radius => 5.0, corner_radius => 3.0, orient => 'vertical', interpolate => 'step', tension => 0.7, thickness => 2.0, tooltip => false),
+        encoding => (
+          x => (field => category),
+          y => (field => revenue)
+        )
+      );
+
+  - name: vis_mark_line_toggle
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => (type => area, line => true, point => (filled => true, size => 20)),
+          encoding => (
+            x => date,
+            y => revenue
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": {
+          "type": "area",
+          "point": {
+            "filled": true,
+            "size": 20.0
+          },
+          "line": true
+        },
+        "encoding": {
+          "x": {
+            "field": "date"
+          },
+          "y": {
+            "field": "revenue"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => (type => area, point => (filled => true, size => 20.0), line => true),
+        encoding => (
+          x => (field => date),
+          y => (field => revenue)
+        )
+      );
+
+  - name: vis_mark_types
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          title => 'Revenue',
+          mark => trail,
+          encoding => (
+            x => date,
+            y => revenue
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "trail",
+        "title": "Revenue",
+        "encoding": {
+          "x": {
+            "field": "date"
+          },
+          "y": {
+            "field": "revenue"
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => trail,
+        title => 'Revenue',
+        encoding => (
+          x => (field => date),
+          y => (field => revenue)
+        )
+      );
+
+  - name: vis_layer_nested_channels
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp, target int, lat double precision, lon double precision, lat2 double precision, lon2 double precision, label text, link text);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..link text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: label
+                text: "label text"
+              - catalog-id: "256.65536.4294967296.3"
+                name: lat
+                text: "lat double.. precision"
+              - catalog-id: "256.65536.4294967296.4"
+                name: lat2
+                text: "lat2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.5"
+                name: link
+                text: "link text"
+              - catalog-id: "256.65536.4294967296.6"
+                name: lon
+                text: "lon double.. precision"
+              - catalog-id: "256.65536.4294967296.7"
+                name: lon2
+                text: "lon2 doubl.. precision"
+              - catalog-id: "256.65536.4294967296.8"
+                name: revenue
+                text: "revenue int"
+              - catalog-id: "256.65536.4294967296.9"
+                name: target
+                text: "target int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          title => 'Layered',
+          layer => [
+            (
+              mark => (type => line, point => true, tension => 0.5),
+              encoding => (
+                x => (field => date, type => temporal, time_unit => yearmonth, axis => (grid => false, title => 'Date')),
+                y => (field => revenue, type => quantitative, aggregate => sum, scale => (zero => false, domain => [0, 10])),
+                color => (field => category, type => nominal, legend => (title => 'Category', orient => 'bottom'))
+              )
+            ),
+            (
+              mark => rule,
+              encoding => (
+                y => (field => target, type => quantitative, bin => true, stack => 'zero'),
+                x => date,
+                size => 3
+              )
+            ),
+            (
+              title => 'Nested',
+              layer => [
+                (
+                  mark => tick,
+                  encoding => (
+                    y => target
+                  )
+                )
+              ]
+            )
+          ]
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "title": "Layered",
+        "layer": [
+          {
+            "mark": {
+              "type": "line",
+              "tension": 0.5,
+              "point": true
+            },
+            "encoding": {
+              "x": {
+                "field": "date",
+                "type": "temporal",
+                "timeUnit": "yearmonth",
+                "axis": {
+                  "title": "Date",
+                  "grid": false
+                }
+              },
+              "y": {
+                "field": "revenue",
+                "type": "quantitative",
+                "aggregate": "sum",
+                "scale": {
+                  "zero": false,
+                  "domain": [
+                    0,
+                    10
+                  ]
+                }
+              },
+              "color": {
+                "field": "category",
+                "type": "nominal",
+                "legend": {
+                  "orient": "bottom",
+                  "title": "Category"
+                }
+              }
+            }
+          },
+          {
+            "mark": "rule",
+            "encoding": {
+              "y": {
+                "field": "target",
+                "type": "quantitative",
+                "bin": true,
+                "stack": "zero"
+              },
+              "x": {
+                "field": "date"
+              }
+            }
+          },
+          {
+            "title": "Nested",
+            "layer": [
+              {
+                "mark": "tick",
+                "encoding": {
+                  "y": {
+                    "field": "target"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        title => 'Layered',
+        layer => [
+          (
+            mark => (type => line, tension => 0.5, point => true),
+            encoding => (
+              x => (field => date, type => temporal, time_unit => yearmonth, axis => (title => 'Date', grid => false)),
+              y => (field => revenue, type => quantitative, aggregate => sum, scale => (zero => false, domain => [0, 10])),
+              color => (field => category, type => nominal, legend => (orient => 'bottom', title => 'Category'))
+            )
+          ),
+          (
+            mark => rule,
+            encoding => (
+              y => (field => target, type => quantitative, bin => true, stack => 'zero'),
+              x => (field => date)
+            )
+          ),
+          (
+            title => 'Nested',
+            layer => [
+              (
+                mark => tick,
+                encoding => (
+                  y => (field => target)
+                )
+              )
+            ]
+          )
+        ]
+      );

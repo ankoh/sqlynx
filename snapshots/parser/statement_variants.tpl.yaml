@@ -1,0 +1,68 @@
+parser-snapshots:
+  # Temporary table that drops on commit
+  - name: on_commit_drop
+    input: |-
+      create temp table t (a int) on commit drop
+
+  # Temporary table that deletes rows on commit
+  - name: on_commit_delete_rows
+    input: |-
+      create temporary table t (a int) on commit delete rows
+
+  # Temporary table that preserves rows on commit
+  - name: on_commit_preserve_rows
+    input: |-
+      create temp table if not exists t (a int) on commit preserve rows
+
+  # CTAS with an ON COMMIT option
+  - name: ctas_on_commit
+    input: |-
+      create temp table t on commit drop as select 1
+
+  # EXPLAIN options with every kind of value
+  - name: explain_option_values
+    input: |-
+      explain (analyze, verbose true, buffers off, timing false, rows 10, cost 1.5, format 'json', cols (a, b), mode fast, w on) select 1
+
+  # A comment after unparsable tokens is no description
+  - name: description_after_garbage
+    input: |-
+      select 1;
+      foo bar -- c1
+      select 2;
+
+  # Comments separated by unparsable tokens
+  - name: description_between_garbage
+    input: |-
+      select 1;
+      -- a
+      foo
+      -- b
+      select 2;
+
+  # A comment trailing a statement on the same line
+  - name: description_trailing_comment
+    input: |-
+      select 1; -- trailing
+      select 2; /* a */ /* b */
+      -- leading
+      select 3;
+
+  # Comments separated from a statement by blank lines
+  - name: description_blank_lines
+    input: |-
+      -- far
+
+
+      select 1;
+
+      -- near
+      select 2; -- end
+
+  # A dashql description block
+  - name: description_dashql_block
+    input: |-
+      -- @dashql:description
+      -- Some text
+      -- @dashql:end
+      select 1;

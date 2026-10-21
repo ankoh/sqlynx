@@ -1,0 +1,253 @@
+analyzer-snapshots:
+  # Constant arithmetic folds into binary expression constants
+  - name: const_arithmetic
+    script:
+      input: select 1 + 2, 3 - 1, 2 * 3, 6 / 2, 7 % 3, 5 ^ 2
+
+  # Constant comparisons are constant expressions
+  - name: const_comparisons
+    script:
+      input: select 1 = 1, 1 <> 2, 1 < 2, 1 <= 2, 3 > 2, 3 >= 2
+
+  # An expression with a column is not constant
+  - name: const_mixed_not_constant
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+    script:
+      input: select a + 1, 2 * 3, b = 2 from t where a < 5 + 5
+
+  # Unary minus and nested constants
+  - name: const_unary_and_nested
+    script:
+      input: select -1, -(2 + 3), (1 + 2) * (3 + 4)
+
+  # Interval casts with a precision and type
+  - name: const_interval_precision
+    script:
+      input: select interval '1' day, interval '1 2' day to hour, interval(3) '4' second, interval '1' year to month
+
+  # Functions of constants are constant, functions of columns are not
+  - name: const_function_calls
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+    script:
+      input: select now(), upper('a'), lower(upper('b')), length(a), coalesce(1, 2) from t
+
+  # Functions with modifiers are not constants
+  - name: const_function_modifiers
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+    script:
+      input: select count(*), count(distinct 1), sum(1) over (), sum(1) over w from t window w as ()
+
+  # Named function arguments
+  - name: func_named_arguments
+    script:
+      input: select f(a => 1, b => 'x'), g(1, name => 2)
+
+  # Qualified function names
+  - name: func_qualified_name
+    script:
+      input: select pg_catalog.length('a'), db.sch.f(1), s.f()
+
+  # Special function syntax
+  - name: func_known_functions
+    script:
+      input: select extract(year from date '2020-01-01'), position('a' in 'abc'), substring('abc' from 2 for 1), trim(both 'a' from 'abc'), overlay('abc' placing 'x' from 2), nullif(1, 2), coalesce(1, 2), cast(1 as text), current_date, current_timestamp, current_user
+
+  # Function call modifiers
+  - name: func_variadic_star_all_distinct
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+    script:
+      input: select count(*), count(all a), count(distinct a), f(variadic arr), string_agg(a, ',' order by b) from t
+
+  # Ordered-set aggregates and filters
+  - name: func_within_group_filter
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+    script:
+      input: select percentile_cont(0.5) within group (order by a), count(*) filter (where b > 1) from t
+
+  # A function call with an incomplete argument
+  - name: func_incomplete_args
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+    script:
+      input: select f(a => ), g(1, ) from t
+
+  # A malformed @dashql tag comment is a warning
+  - name: malformed_comment_tag
+    script:
+      input: |-
+        -- @dashql:unknown
+        select 1
+
+  # Dashboard placement outside the grid is clamped
+  - name: vis_dashboard_clamped
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          dashboard => (row => -1, column => 20, width => 20, height => 0)
+        );
+
+  # A negative dashboard column is removed
+  - name: vis_dashboard_negative_column
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          dashboard => (row => 3, column => -2, width => 0, height => 2)
+        );
+
+  # Column plus width beyond the grid moves the column
+  - name: vis_dashboard_overflow
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          dashboard => (row => 0, column => 8, width => 6, height => 2)
+        );
+
+  # A dashboard height below one is clamped
+  - name: vis_dashboard_height_clamped
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          dashboard => (row => 0, column => 0, width => 13, height => -3)
+        );
+
+  # Every unsupported field-def key is reported
+  - name: vis_field_unsupported_keys
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (
+              field => category,
+              type => nominal,
+              sort => 'ascending',
+              impute => 'zero',
+              condition => 'x',
+              title => 'Category',
+              band_position => 0.5,
+              datum => 'a',
+              value => 1,
+              format => 'd',
+              format_type => 'number'
+            ),
+            y => (field => revenue, type => quantitative)
+          )
+        );
+
+  # Legend properties are extracted
+  - name: vis_legend_properties
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            color => (field => category, type => nominal, legend => (type => 'symbol', title => 'Category', z_index => 2, padding => 3, offset => 1, name => 'l', values => [1, 2]))
+          )
+        );
+
+  # Legends, scales and axes of layer channels
+  - name: vis_nested_legend_in_layer
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          layer => [
+            (
+              mark => (type => bar, size => 3, shape => 'circle', angle => 2, radius => 1, corner_radius => 1, orient => 'v', thickness => 1, fill_opacity => 0.1, stroke_opacity => 0.2, line => true),
+              encoding => (
+                x => category,
+                y => (field => revenue, type => quantitative, scale => (zero => true), axis => (grid => true)),
+                color => (field => category, type => nominal, legend => (title => 'c'), time_unit => year)
+              )
+            )
+          ]
+        );
+
+  # Boolean toggles given as strings
+  - name: vis_mark_toggles_as_text
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => (type => line, point => 'true', line => 'false', tooltip => 'maybe', filled => 'true')
+        );
+
+  # Two visualization statements in a script
+  - name: vis_two_visualizations
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => category));
+        SELECT * FROM sales VISUALIZE USING vegalite (mark => line, encoding => (x => date, y => revenue));
+
+  # A umap spec without vector
+  - name: vis_umap_missing_vector
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: SELECT * FROM sales VISUALIZE USING umap (category => category);
+
+  # A markdown spec without a template
+  - name: vis_markdown_without_template
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: SELECT category FROM sales VISUALIZE USING markdown ();

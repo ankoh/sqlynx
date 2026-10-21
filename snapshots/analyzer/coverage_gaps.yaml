@@ -1,0 +1,2742 @@
+analyzer-snapshots:
+
+  - name: const_arithmetic
+    script:
+      input: select 1 + 2, 3 - 1, 2 * 3, 6 / 2, 7 % 3, 5 ^ 2
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 2
+          type: binary
+          op: PLUS
+          arg-left: 0
+          arg-right: 1
+          is-const: true
+          statement-id: 0
+          text: "1 + 2"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 5
+          type: binary
+          op: MINUS
+          arg-left: 3
+          arg-right: 4
+          is-const: true
+          statement-id: 0
+          text: "3 - 1"
+        - expression-idx: 6
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 7
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 8
+          type: binary
+          op: MULTIPLY
+          arg-left: 6
+          arg-right: 7
+          is-const: true
+          statement-id: 0
+          text: "2 * 3"
+        - expression-idx: 9
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "6"
+        - expression-idx: 10
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 11
+          type: binary
+          op: DIVIDE
+          arg-left: 9
+          arg-right: 10
+          is-const: true
+          statement-id: 0
+          text: "6 / 2"
+        - expression-idx: 12
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "7"
+        - expression-idx: 13
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 14
+          type: binary
+          op: MODULUS
+          arg-left: 12
+          arg-right: 13
+          is-const: true
+          statement-id: 0
+          text: "7 % 3"
+        - expression-idx: 15
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "5"
+        - expression-idx: 16
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 17
+          type: binary
+          op: XOR
+          arg-left: 15
+          arg-right: 16
+          is-const: true
+          statement-id: 0
+          text: "5 ^ 2"
+      constants:
+        - expression: 0
+          text: "1"
+        - expression: 1
+          text: "2"
+        - expression: 2
+          text: "1 + 2"
+        - expression: 3
+          text: "3"
+        - expression: 4
+          text: "1"
+        - expression: 5
+          text: "3 - 1"
+        - expression: 6
+          text: "2"
+        - expression: 7
+          text: "3"
+        - expression: 8
+          text: "2 * 3"
+        - expression: 9
+          text: "6"
+        - expression: 10
+          text: "2"
+        - expression: 11
+          text: "6 / 2"
+        - expression: 12
+          text: "7"
+        - expression: 13
+          text: "3"
+        - expression: 14
+          text: "7 % 3"
+        - expression: 15
+          text: "5"
+        - expression: 16
+          text: "2"
+        - expression: 17
+          text: "5 ^ 2"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 2
+            - name: '?'
+              expression: 5
+            - name: '?'
+              expression: 8
+            - name: '?'
+              expression: 11
+            - name: '?'
+              expression: 14
+            - name: '?'
+              expression: 17
+          text: "select 1 +..% 3, 5 ^ 2"
+
+  - name: const_comparisons
+    script:
+      input: select 1 = 1, 1 <> 2, 1 < 2, 1 <= 2, 3 > 2, 3 >= 2
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 2
+          type: comparison
+          op: EQUAL
+          arg-left: 0
+          arg-right: 1
+          is-const: true
+          statement-id: 0
+          text: "1 = 1"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 5
+          type: comparison
+          op: NOT_EQUAL
+          arg-left: 3
+          arg-right: 4
+          is-const: true
+          statement-id: 0
+          text: "1 <> 2"
+        - expression-idx: 6
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 7
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 8
+          type: comparison
+          op: LESS_THAN
+          arg-left: 6
+          arg-right: 7
+          is-const: true
+          statement-id: 0
+          text: "1 < 2"
+        - expression-idx: 9
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 10
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 11
+          type: comparison
+          op: LESS_EQUAL
+          arg-left: 9
+          arg-right: 10
+          is-const: true
+          statement-id: 0
+          text: "1 <= 2"
+        - expression-idx: 12
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 13
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 14
+          type: comparison
+          op: GREATER_THAN
+          arg-left: 12
+          arg-right: 13
+          is-const: true
+          statement-id: 0
+          text: "3 > 2"
+        - expression-idx: 15
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 16
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 17
+          type: comparison
+          op: GREATER_EQUAL
+          arg-left: 15
+          arg-right: 16
+          is-const: true
+          statement-id: 0
+          text: "3 >= 2"
+      constants:
+        - expression: 0
+          text: "1"
+        - expression: 1
+          text: "1"
+        - expression: 2
+          text: "1 = 1"
+        - expression: 3
+          text: "1"
+        - expression: 4
+          text: "2"
+        - expression: 5
+          text: "1 <> 2"
+        - expression: 6
+          text: "1"
+        - expression: 7
+          text: "2"
+        - expression: 8
+          text: "1 < 2"
+        - expression: 9
+          text: "1"
+        - expression: 10
+          text: "2"
+        - expression: 11
+          text: "1 <= 2"
+        - expression: 12
+          text: "3"
+        - expression: 13
+          text: "2"
+        - expression: 14
+          text: "3 > 2"
+        - expression: 15
+          text: "3"
+        - expression: 16
+          text: "2"
+        - expression: 17
+          text: "3 >= 2"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 2
+            - name: '?'
+              expression: 5
+            - name: '?'
+              expression: 8
+            - name: '?'
+              expression: 11
+            - name: '?'
+              expression: 14
+            - name: '?'
+              expression: 17
+          text: "select 1 =.. 2, 3 >= 2"
+
+  - name: const_mixed_not_constant
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..nt, b int)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    script:
+      input: select a + 1, 2 * 3, b = 2 from t where a < 5 + 5
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "b"
+        - expression-idx: 2
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 6
+          type: binary
+          op: MULTIPLY
+          arg-left: 4
+          arg-right: 5
+          is-const: true
+          statement-id: 0
+          text: "2 * 3"
+        - expression-idx: 7
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 8
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "5"
+        - expression-idx: 9
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "5"
+        - expression-idx: 10
+          type: binary
+          op: PLUS
+          arg-left: 8
+          arg-right: 9
+          is-const: true
+          statement-id: 0
+          text: "5 + 5"
+      constants:
+        - expression: 3
+          text: "1"
+        - expression: 4
+          text: "2"
+        - expression: 5
+          text: "3"
+        - expression: 6
+          text: "2 * 3"
+        - expression: 7
+          text: "2"
+        - expression: 8
+          text: "5"
+        - expression: 9
+          text: "5"
+        - expression: 10
+          text: "5 + 5"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: t
+              text: "t"
+          columns:
+            - name: '?'
+              computed: true
+            - name: '?'
+              expression: 6
+            - name: '?'
+              computed: true
+          text: "select a +.. a < 5 + 5"
+
+  - name: const_unary_and_nested
+    script:
+      input: select -1, -(2 + 3), (1 + 2) * (3 + 4)
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 3
+          type: binary
+          op: PLUS
+          arg-left: 1
+          arg-right: 2
+          is-const: true
+          statement-id: 0
+          text: "2 + 3"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 6
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 7
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "4"
+        - expression-idx: 8
+          type: binary
+          op: PLUS
+          arg-left: 4
+          arg-right: 5
+          is-const: true
+          statement-id: 0
+          text: "1 + 2"
+        - expression-idx: 9
+          type: binary
+          op: PLUS
+          arg-left: 6
+          arg-right: 7
+          is-const: true
+          statement-id: 0
+          text: "3 + 4"
+        - expression-idx: 10
+          type: binary
+          op: MULTIPLY
+          arg-left: 8
+          arg-right: 9
+          is-const: true
+          statement-id: 0
+          text: "(1 + 2) * (3 + 4)"
+      constants:
+        - expression: 0
+          text: "1"
+        - expression: 1
+          text: "2"
+        - expression: 2
+          text: "3"
+        - expression: 3
+          text: "2 + 3"
+        - expression: 4
+          text: "1"
+        - expression: 5
+          text: "2"
+        - expression: 6
+          text: "3"
+        - expression: 7
+          text: "4"
+        - expression: 8
+          text: "1 + 2"
+        - expression: 9
+          text: "3 + 4"
+        - expression: 10
+          text: "(1 + 2) * (3 + 4)"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              computed: true
+            - name: '?'
+              computed: true
+            - name: '?'
+              expression: 10
+          text: "select -1,.. * (3 + 4)"
+
+  - name: const_interval_precision
+    script:
+      input: select interval '1' day, interval '1 2' day to hour, interval(3) '4' second, interval '1' year to month
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'1'"
+        - expression-idx: 1
+          type: constcast/interval
+          is-const: true
+          statement-id: 0
+          text: "interval '1' day"
+        - expression-idx: 2
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'1 2'"
+        - expression-idx: 3
+          type: constcast/interval
+          is-const: true
+          statement-id: 0
+          text: "interval '..ay to hour"
+        - expression-idx: 4
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'4'"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 6
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'1'"
+        - expression-idx: 7
+          type: constcast/interval
+          is-const: true
+          statement-id: 0
+          text: "interval '..r to month"
+      constants:
+        - expression: 1
+          text: "interval '1' day"
+        - expression: 3
+          text: "interval '..ay to hour"
+        - expression: 7
+          text: "interval '..r to month"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 1
+            - name: '?'
+              expression: 3
+            - name: '?'
+              expression: 7
+          text: "select int..r to month"
+
+  - name: const_function_calls
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..nt, b int)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    script:
+      input: select now(), upper('a'), lower(upper('b')), length(a), coalesce(1, 2) from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: function
+          name: now
+          is-const: true
+          statement-id: 0
+          text: "now()"
+        - expression-idx: 2
+          type: function
+          name: upper
+          is-const: true
+          statement-id: 0
+          text: "upper('a')"
+        - expression-idx: 3
+          type: function
+          name: upper
+          is-const: true
+          statement-id: 0
+          text: "upper('b')"
+        - expression-idx: 4
+          type: function
+          name: lower
+          is-const: true
+          statement-id: 0
+          text: "lower(upper('b'))"
+        - expression-idx: 5
+          type: function
+          name: length
+          statement-id: 0
+          text: "length(a)"
+        - expression-idx: 6
+          type: function
+          known-function: COALESCE
+          is-const: true
+          statement-id: 0
+          text: "coalesce(1, 2)"
+        - expression-idx: 7
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'a'"
+        - expression-idx: 8
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'b'"
+        - expression-idx: 9
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 10
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+      constants:
+        - expression: 7
+          text: "'a'"
+        - expression: 2
+          text: "upper('a')"
+        - expression: 8
+          text: "'b'"
+        - expression: 3
+          text: "upper('b')"
+        - expression: 4
+          text: "lower(upper('b'))"
+        - expression: 9
+          text: "1"
+        - expression: 10
+          text: "2"
+        - expression: 6
+          text: "coalesce(1, 2)"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: t
+              text: "t"
+          columns:
+            - name: '?'
+              expression: 1
+            - name: '?'
+              expression: 2
+            - name: '?'
+              expression: 4
+            - name: '?'
+              expression: 5
+            - name: '?'
+              expression: 6
+          text: "select now.. 2) from t"
+
+  - name: const_function_modifiers
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..nt, b int)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    script:
+      input: select count(*), count(distinct 1), sum(1) over (), sum(1) over w from t window w as ()
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: function
+          name: count
+          statement-id: 0
+          text: "count(*)"
+        - expression-idx: 1
+          type: function
+          name: count
+          statement-id: 0
+          text: "count(distinct 1)"
+        - expression-idx: 2
+          type: function
+          name: sum
+          statement-id: 0
+          text: "sum(1) over ()"
+        - expression-idx: 3
+          type: function
+          name: sum
+          statement-id: 0
+          text: "sum(1) over w"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 6
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+      constants:
+        - expression: 4
+          text: "1"
+        - expression: 5
+          text: "1"
+        - expression: 6
+          text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: t
+              text: "t"
+          columns:
+            - name: '?'
+              expression: 0
+            - name: '?'
+              expression: 1
+            - name: '?'
+              expression: 2
+            - name: '?'
+              expression: 3
+          text: "select cou..ow w as ()"
+
+  - name: func_named_arguments
+    script:
+      input: select f(a => 1, b => 'x'), g(1, name => 2)
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: function
+          name: f
+          is-const: true
+          statement-id: 0
+          text: "f(a => 1, b => 'x')"
+        - expression-idx: 1
+          type: function
+          name: g
+          is-const: true
+          statement-id: 0
+          text: "g(1, name => 2)"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 3
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'x'"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+      constants:
+        - expression: 2
+          text: "1"
+        - expression: 3
+          text: "'x'"
+        - expression: 0
+          text: "f(a => 1, b => 'x')"
+        - expression: 4
+          text: "1"
+        - expression: 5
+          text: "2"
+        - expression: 1
+          text: "g(1, name => 2)"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 0
+            - name: '?'
+              expression: 1
+          text: "select f(a..name => 2)"
+
+  - name: func_qualified_name
+    script:
+      input: select pg_catalog.length('a'), db.sch.f(1), s.f()
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: function
+          name: pg_catalog.length
+          is-const: true
+          statement-id: 0
+          text: "pg_catalog..ength('a')"
+        - expression-idx: 1
+          type: function
+          name: db.sch.f
+          is-const: true
+          statement-id: 0
+          text: "db.sch.f(1)"
+        - expression-idx: 2
+          type: function
+          name: s.f
+          is-const: true
+          statement-id: 0
+          text: "s.f()"
+        - expression-idx: 3
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'a'"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+      constants:
+        - expression: 3
+          text: "'a'"
+        - expression: 0
+          text: "pg_catalog..ength('a')"
+        - expression: 4
+          text: "1"
+        - expression: 1
+          text: "db.sch.f(1)"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 0
+            - name: '?'
+              expression: 1
+            - name: '?'
+              expression: 2
+          text: "select pg_..(1), s.f()"
+
+  - name: func_known_functions
+    script:
+      input: select extract(year from date '2020-01-01'), position('a' in 'abc'), substring('abc' from 2 for 1), trim(both 'a' from 'abc'), overlay('abc' placing 'x' from 2), nullif(1, 2), coalesce(1, 2), cast(1 as text), current_date, current_timestamp, current_user
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: function
+          known-function: EXTRACT
+          is-const: true
+          statement-id: 0
+          text: "extract(ye..20-01-01')"
+        - expression-idx: 1
+          type: function
+          known-function: POSITION
+          is-const: true
+          statement-id: 0
+          text: "position('.. in 'abc')"
+        - expression-idx: 2
+          type: function
+          known-function: SUBSTRING
+          is-const: true
+          statement-id: 0
+          text: "substring(..m 2 for 1)"
+        - expression-idx: 3
+          type: function
+          known-function: TRIM
+          is-const: true
+          statement-id: 0
+          text: "trim(both ..rom 'abc')"
+        - expression-idx: 4
+          type: function
+          known-function: OVERLAY
+          is-const: true
+          statement-id: 0
+          text: "overlay('a..x' from 2)"
+        - expression-idx: 5
+          type: function
+          known-function: NULLIF
+          is-const: true
+          statement-id: 0
+          text: "nullif(1, 2)"
+        - expression-idx: 6
+          type: function
+          known-function: COALESCE
+          is-const: true
+          statement-id: 0
+          text: "coalesce(1, 2)"
+        - expression-idx: 7
+          type: function
+          known-function: CAST
+          is-const: true
+          statement-id: 0
+          text: "cast(1 as text)"
+        - expression-idx: 8
+          type: function
+          known-function: CURRENT_DATE
+          is-const: true
+          statement-id: 0
+          text: "current_date"
+        - expression-idx: 9
+          type: function
+          known-function: CURRENT_TIMESTAMP
+          is-const: true
+          statement-id: 0
+          text: "current_timestamp"
+        - expression-idx: 10
+          type: function
+          known-function: CURRENT_USER
+          is-const: true
+          statement-id: 0
+          text: "current_user"
+        - expression-idx: 11
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'2020-01-01'"
+        - expression-idx: 12
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'a'"
+        - expression-idx: 13
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'abc'"
+        - expression-idx: 14
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'abc'"
+        - expression-idx: 15
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 16
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 17
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'abc'"
+        - expression-idx: 18
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'a'"
+        - expression-idx: 19
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'abc'"
+        - expression-idx: 20
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'x'"
+        - expression-idx: 21
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 22
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 23
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 24
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 25
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 26
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+      constants:
+        - expression: 11
+          text: "'2020-01-01'"
+        - expression: 12
+          text: "'a'"
+        - expression: 13
+          text: "'abc'"
+        - expression: 14
+          text: "'abc'"
+        - expression: 15
+          text: "2"
+        - expression: 16
+          text: "1"
+        - expression: 17
+          text: "'abc'"
+        - expression: 18
+          text: "'a'"
+        - expression: 19
+          text: "'abc'"
+        - expression: 20
+          text: "'x'"
+        - expression: 21
+          text: "2"
+        - expression: 22
+          text: "1"
+        - expression: 23
+          text: "2"
+        - expression: 5
+          text: "nullif(1, 2)"
+        - expression: 24
+          text: "1"
+        - expression: 25
+          text: "2"
+        - expression: 6
+          text: "coalesce(1, 2)"
+        - expression: 26
+          text: "1"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 0
+            - name: '?'
+              expression: 1
+            - name: '?'
+              expression: 2
+            - name: '?'
+              expression: 3
+            - name: '?'
+              expression: 4
+            - name: '?'
+              expression: 5
+            - name: '?'
+              expression: 6
+            - name: '?'
+              expression: 7
+            - name: '?'
+              expression: 8
+            - name: '?'
+              expression: 9
+            - name: '?'
+              expression: 10
+          text: "select ext..rrent_user"
+
+  - name: func_variadic_star_all_distinct
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..nt, b int)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    script:
+      input: select count(*), count(all a), count(distinct a), f(variadic arr), string_agg(a, ',' order by b) from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 2
+          type: colref/unresolved
+          statement-id: 0
+          text: "arr"
+        - expression-idx: 3
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 4
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "b"
+        - expression-idx: 5
+          type: function
+          name: count
+          statement-id: 0
+          text: "count(*)"
+        - expression-idx: 6
+          type: function
+          name: count
+          statement-id: 0
+          text: "count(all a)"
+        - expression-idx: 7
+          type: function
+          name: count
+          statement-id: 0
+          text: "count(distinct a)"
+        - expression-idx: 8
+          type: function
+          name: f
+          statement-id: 0
+          text: "f(variadic arr)"
+        - expression-idx: 9
+          type: function
+          name: string_agg
+          statement-id: 0
+          text: "string_agg..rder by b)"
+        - expression-idx: 10
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "','"
+      constants:
+        - expression: 10
+          text: "','"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: t
+              text: "t"
+          columns:
+            - name: '?'
+              expression: 5
+            - name: '?'
+              expression: 6
+            - name: '?'
+              expression: 7
+            - name: '?'
+              expression: 8
+            - name: '?'
+              expression: 9
+          text: "select cou.. b) from t"
+
+  - name: func_within_group_filter
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..nt, b int)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    script:
+      input: select percentile_cont(0.5) within group (order by a), count(*) filter (where b > 1) from t
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "t"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "a"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "b"
+        - expression-idx: 2
+          type: function
+          name: percentile_cont
+          statement-id: 0
+          text: "percentile..rder by a)"
+        - expression-idx: 3
+          type: function
+          name: count
+          statement-id: 0
+          text: "count(*) f..ere b > 1)"
+        - expression-idx: 4
+          type: literal/float
+          is-const: true
+          statement-id: 0
+          text: "0.5"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+      constants:
+        - expression: 4
+          text: "0.5"
+        - expression: 5
+          text: "1"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: t
+              text: "t"
+          columns:
+            - name: '?'
+              expression: 2
+            - name: '?'
+              expression: 3
+          text: "select per.. 1) from t"
+
+  - name: func_incomplete_args
+    catalog:
+      script:
+        input: |-
+          create table t (a int, b int); create table u (a int, c int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: t
+            text: "create tab..nt, b int)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+          - catalog-id: "256.65536.4294967297"
+            name: u
+            text: "create tab..nt, c int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: c
+                text: "c int"
+        errors: []
+    script:
+      input: select f(a => ), g(1, ) from t
+      catalog-id: 2
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          text: "1"
+
+  - name: malformed_comment_tag
+    script:
+      input: |-
+        -- @dashql:unknown
+        select 1
+      catalog-id: 1
+      errors:
+        - type: MALFORMED_COMMENT_TAG
+          severity: WARNING
+          message: '@dashql:unknown is not closed by a -- @dashql:end line'
+          text: "-- @dashql:unknown"
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+      constants:
+        - expression: 0
+          text: "1"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 0
+          text: "select 1"
+
+  - name: vis_dashboard_clamped
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          dashboard => (row => -1, column => 20, width => 20, height => 0)
+        );
+      catalog-id: 2
+      errors:
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard row must be non-negative and was removed
+          text: "-1"
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard column was clamped to 11
+          text: "20"
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard width was clamped to the range 1..12
+          text: "20"
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard height was clamped to 1
+          text: "0"
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "-1"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "20"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "20"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "0"
+      constants:
+        - expression: 0
+          text: "-1"
+        - expression: 1
+          text: "20"
+        - expression: 2
+          text: "20"
+        - expression: 3
+          text: "0"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..ht => 0)\n)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            column: 0
+            width: 12
+            height: 1
+          vegalite:
+            mark: BAR
+
+  - name: vis_dashboard_negative_column
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          dashboard => (row => 3, column => -2, width => 0, height => 2)
+        );
+      catalog-id: 2
+      errors:
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard column must be non-negative and was removed
+          text: "-2"
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard width was clamped to the range 1..12
+          text: "0"
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "-2"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "0"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+      constants:
+        - expression: 0
+          text: "3"
+        - expression: 1
+          text: "-2"
+        - expression: 2
+          text: "0"
+        - expression: 3
+          text: "2"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..ht => 2)\n)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            row: 3
+            width: 1
+            height: 2
+          vegalite:
+            mark: BAR
+
+  - name: vis_dashboard_overflow
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          dashboard => (row => 0, column => 8, width => 6, height => 2)
+        );
+      catalog-id: 2
+      errors:
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard column was moved so column + width does not exceed 12
+          text: "8"
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "0"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "8"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "6"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+      constants:
+        - expression: 0
+          text: "0"
+        - expression: 1
+          text: "8"
+        - expression: 2
+          text: "6"
+        - expression: 3
+          text: "2"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..ht => 2)\n)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            row: 0
+            column: 6
+            width: 6
+            height: 2
+          vegalite:
+            mark: BAR
+
+  - name: vis_dashboard_height_clamped
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          dashboard => (row => 0, column => 0, width => 13, height => -3)
+        );
+      catalog-id: 2
+      errors:
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard width was clamped to the range 1..12
+          text: "13"
+        - type: INVALID_DASHBOARD_LAYOUT
+          severity: WARNING
+          message: dashboard height was clamped to 1
+          text: "-3"
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "0"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "0"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "13"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "-3"
+      constants:
+        - expression: 0
+          text: "0"
+        - expression: 1
+          text: "0"
+        - expression: 2
+          text: "13"
+        - expression: 3
+          text: "-3"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..t => -3)\n)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            row: 0
+            column: 0
+            width: 12
+            height: 1
+          vegalite:
+            mark: BAR
+
+  - name: vis_field_unsupported_keys
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (
+              field => category,
+              type => nominal,
+              sort => 'ascending',
+              impute => 'zero',
+              condition => 'x',
+              title => 'Category',
+              band_position => 0.5,
+              datum => 'a',
+              value => 1,
+              format => 'd',
+              format_type => 'number'
+            ),
+            y => (field => revenue, type => quantitative)
+          )
+        );
+      catalog-id: 2
+      errors:
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: sort is not yet supported and will be ignored
+          text: "'ascending'"
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: impute is not yet supported and will be ignored
+          text: "'zero'"
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: condition is not yet supported and will be ignored
+          text: "'x'"
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: title is not yet supported and will be ignored
+          text: "'Category'"
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: band_position is not yet supported and will be ignored
+          text: "0.5"
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: datum is not yet supported and will be ignored
+          text: "'a'"
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: value is not yet supported and will be ignored
+          text: "1"
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: format is not yet supported and will be ignored
+          text: "'d'"
+        - type: UNSUPPORTED_VIS_KEY
+          severity: WARNING
+          message: format_type is not yet supported and will be ignored
+          text: "'number'"
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "category"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.2"
+          statement-id: 0
+          text: "revenue"
+        - expression-idx: 2
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'ascending'"
+        - expression-idx: 3
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'zero'"
+        - expression-idx: 4
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'x'"
+        - expression-idx: 5
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'Category'"
+        - expression-idx: 6
+          type: literal/float
+          is-const: true
+          statement-id: 0
+          text: "0.5"
+        - expression-idx: 7
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'a'"
+        - expression-idx: 8
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 9
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'d'"
+        - expression-idx: 10
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'number'"
+      constants:
+        - expression: 2
+          text: "'ascending'"
+        - expression: 3
+          text: "'zero'"
+        - expression: 4
+          text: "'x'"
+        - expression: 5
+          text: "'Category'"
+        - expression: 6
+          text: "0.5"
+        - expression: 7
+          text: "'a'"
+        - expression: 8
+          text: "1"
+        - expression: 9
+          text: "'d'"
+        - expression: 10
+          text: "'number'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..ive)\n  )\n)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            width: 6
+            height: 3
+          vegalite:
+            mark: BAR
+            encodings:
+              - channel: VIS_ENCODING_X
+                field-expr: 0
+                field-type: NOMINAL
+              - channel: VIS_ENCODING_Y
+                field-expr: 1
+                field-type: QUANTITATIVE
+
+  - name: vis_legend_properties
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            color => (field => category, type => nominal, legend => (type => 'symbol', title => 'Category', z_index => 2, padding => 3, offset => 1, name => 'l', values => [1, 2]))
+          )
+        );
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "category"
+        - expression-idx: 1
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 2
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 3
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'symbol'"
+        - expression-idx: 4
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'Category'"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 6
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 7
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 8
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'l'"
+      constants:
+        - expression: 1
+          text: "1"
+        - expression: 2
+          text: "2"
+        - expression: 3
+          text: "'symbol'"
+        - expression: 4
+          text: "'Category'"
+        - expression: 5
+          text: "2"
+        - expression: 6
+          text: "3"
+        - expression: 7
+          text: "1"
+        - expression: 8
+          text: "'l'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..2]))\n  )\n)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            width: 6
+            height: 3
+          vegalite:
+            mark: BAR
+            encodings:
+              - channel: VIS_ENCODING_COLOR
+                field-expr: 0
+                field-type: NOMINAL
+                legend:
+                  type: symbol
+                  title: Category
+                  padding: 3.0
+                  offset: 1.0
+                  zindex: 2
+                  values-node-id: 16
+                  name: l
+
+  - name: vis_nested_legend_in_layer
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          layer => [
+            (
+              mark => (type => bar, size => 3, shape => 'circle', angle => 2, radius => 1, corner_radius => 1, orient => 'v', thickness => 1, fill_opacity => 0.1, stroke_opacity => 0.2, line => true),
+              encoding => (
+                x => category,
+                y => (field => revenue, type => quantitative, scale => (zero => true), axis => (grid => true)),
+                color => (field => category, type => nominal, legend => (title => 'c'), time_unit => year)
+              )
+            )
+          ]
+        );
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.2"
+          statement-id: 0
+          text: "revenue"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "category"
+        - expression-idx: 2
+          type: colref/unresolved
+          statement-id: 0
+          text: "year"
+        - expression-idx: 3
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "category"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "3"
+        - expression-idx: 5
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'circle'"
+        - expression-idx: 6
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 7
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 8
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 9
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'v'"
+        - expression-idx: 10
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 11
+          type: literal/float
+          is-const: true
+          statement-id: 0
+          text: "0.1"
+        - expression-idx: 12
+          type: literal/float
+          is-const: true
+          statement-id: 0
+          text: "0.2"
+        - expression-idx: 13
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'c'"
+      constants:
+        - expression: 4
+          text: "3"
+        - expression: 5
+          text: "'circle'"
+        - expression: 6
+          text: "2"
+        - expression: 7
+          text: "1"
+        - expression: 8
+          text: "1"
+        - expression: 9
+          text: "'v'"
+        - expression: 10
+          text: "1"
+        - expression: 11
+          text: "0.1"
+        - expression: 12
+          text: "0.2"
+        - expression: 13
+          text: "'c'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..   )\n  ]\n)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            width: 6
+            height: 3
+          vegalite:
+            layer-count: 1
+
+  - name: vis_mark_toggles_as_text
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => (type => line, point => 'true', line => 'false', tooltip => 'maybe', filled => 'true')
+        );
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'true'"
+        - expression-idx: 1
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'false'"
+        - expression-idx: 2
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'maybe'"
+        - expression-idx: 3
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'true'"
+      constants:
+        - expression: 0
+          text: "'true'"
+        - expression: 1
+          text: "'false'"
+        - expression: 2
+          text: "'maybe'"
+        - expression: 3
+          text: "'true'"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F.. 'true')\n)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            width: 6
+            height: 3
+          vegalite:
+            mark: LINE
+
+  - name: vis_two_visualizations
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |-
+        SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => category));
+        SELECT * FROM sales VISUALIZE USING vegalite (mark => line, encoding => (x => date, y => revenue));
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 1
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "category"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 1
+          text: "date"
+        - expression-idx: 2
+          type: colref/catalog
+          catalog: "256.65536.4294967296.2"
+          statement-id: 1
+          text: "revenue"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F..category))"
+        - scope-id: 2
+          parent: 3
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 3
+          sources:
+            - type: subquery
+              scope: 2
+              text: "SELECT * FROM sales"
+          text: "SELECT * F.. revenue))"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            width: 6
+            height: 3
+          vegalite:
+            mark: BAR
+            encodings:
+              - channel: VIS_ENCODING_X
+                field-expr: 0
+        - statement-id: 1
+          source: "SELECT * FROM sales"
+          renderer: vegalite
+          dashboard:
+            width: 6
+            height: 3
+          vegalite:
+            mark: LINE
+            encodings:
+              - channel: VIS_ENCODING_X
+                field-expr: 1
+              - channel: VIS_ENCODING_Y
+                field-expr: 2
+
+  - name: vis_umap_missing_vector
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: SELECT * FROM sales VISUALIZE USING umap (category => category);
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "category"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              table-column: "256.65536.4294967296.0"
+            - name: date
+              table-column: "256.65536.4294967296.1"
+            - name: revenue
+              table-column: "256.65536.4294967296.2"
+          text: "SELECT * FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT * FROM sales"
+          text: "SELECT * F.. category)"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT * FROM sales"
+          renderer: umap
+          dashboard:
+            width: 6
+            height: 3
+
+  - name: vis_markdown_without_template
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: SELECT category FROM sales VISUALIZE USING markdown ();
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "sales"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "category"
+      name-scopes:
+        - scope-id: 0
+          parent: 1
+          parent-sources: none
+          sources:
+            - type: table
+              name: sales
+              text: "sales"
+          columns:
+            - name: category
+              expression: 0
+          text: "SELECT cat..FROM sales"
+        - scope-id: 1
+          sources:
+            - type: subquery
+              scope: 0
+              text: "SELECT cat..FROM sales"
+          text: "SELECT cat..arkdown ()"
+      visualizations:
+        - statement-id: 0
+          source: "SELECT cat..FROM sales"
+          renderer: markdown
+          dashboard:
+            width: 6
+            height: 3

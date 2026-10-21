@@ -1,0 +1,184 @@
+diff-snapshots:
+  # Two identical source statements map to one target statement: both are ambiguous
+  - name: duplicate_source_statements
+    source: |
+      select 1;
+      select 1;
+
+    target: |
+      select 1;
+
+
+  # One source statement maps to two identical target statements: all are ambiguous
+  - name: duplicate_target_statements
+    source: |
+      select 1;
+
+    target: |
+      select 1;
+      select 1;
+
+
+  # Identical statements on both sides
+  - name: duplicate_statements_both_sides
+    source: |
+      select 1;
+      select 1;
+
+    target: |
+      select 1;
+      select 1;
+
+
+  # Two changed literals in a wide statement are reported as separate spans
+  - name: update_two_literals
+    source: |
+      select a, b, c, d, e, f from t where x = 1 and y = 2 and z = 3;
+
+    target: |
+      select a, b, c, d, e, f from t where x = 4 and y = 2 and z = 5;
+
+
+  # A literal that changes its type replaces the whole subtree
+  - name: update_literal_type_changes
+    source: |
+      select a, b, c, d, e, f from t where x = 1;
+
+    target: |
+      select a, b, c, d, e, f from t where x = 'one';
+
+
+  # A clause that only exists in the target
+  - name: update_clause_added
+    source: |
+      select a, b, c, d, e, f from t where x = 1;
+
+    target: |
+      select a, b, c, d, e, f from t where x = 1 order by a limit 10;
+
+
+  # A clause that only exists in the source
+  - name: update_clause_removed
+    source: |
+      select a, b, c, d, e, f from t where x = 1 order by a limit 10;
+
+    target: |
+      select a, b, c, d, e, f from t where x = 1;
+
+
+  # One clause is replaced by another
+  - name: update_clause_swapped
+    source: |
+      select a, b, c, d, e, f from t where x = 1 order by a;
+
+    target: |
+      select a, b, c, d, e, f from t where x = 1 limit 10;
+
+
+  # Statements of different kinds are never updates
+  - name: different_statement_kinds
+    source: |
+      select a, b, c from t;
+
+    target: |
+      create table t (a int, b int, c int);
+
+
+  # Two empty scripts
+  - name: both_empty
+    source: |
+
+    target: |
+
+
+  # Scripts with comments only
+  - name: comments_only
+    source: |
+      -- a
+
+
+    target: |
+      -- b
+
+
+
+  # A source statement with a syntax error
+  - name: broken_statement_source
+    source: |
+      select a, b, c from t; select (;
+
+    target: |
+      select a, b, c from t;
+
+
+  # A target statement with a syntax error
+  - name: broken_statement_target
+    source: |
+      select a, b, c from t;
+
+    target: |
+      select a, b, c from t; select (;
+
+
+  # Visualization statements that differ in their encoding
+  - name: update_vis_encoding
+    source: |
+      SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => category, type => nominal), y => (field => revenue, type => quantitative)));
+
+    target: |
+      SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => category, type => ordinal), y => (field => revenue, type => quantitative)));
+
+
+  # A column added to a table definition
+  - name: update_create_table
+    source: |
+      create table t (a int, b int, c int, d int);
+
+    target: |
+      create table t (a int, b int, c int, d int, e int);
+
+
+  # A changed function name and argument
+  - name: update_function_call
+    source: |
+      select lower(a), upper(b), coalesce(c, 0), d, e from t;
+
+    target: |
+      select lower(a), upper(b), coalesce(c, 1), d, e from t;
+
+
+  # One statement moves and another changes
+  - name: move_and_update
+    source: |
+      select a, b, c, d, e from t;
+      select 1;
+      select x, y, z, w from u;
+
+    target: |
+      select x, y, z, w from u;
+      select a, b, c, d, f from t;
+      select 1;
+
+
+  # Statements that only differ in whitespace are kept
+  - name: whitespace_only
+    source: |
+      select   a,b
+      from t;
+
+    target: |
+      select a, b from t;
+
+
+  # Replacing all statements
+  - name: many_inserts_and_deletes
+    source: |
+      select 1;
+      select 2;
+      select 3;
+
+    target: |
+      select 'a';
+      select 'b';
+      select 'c';
+

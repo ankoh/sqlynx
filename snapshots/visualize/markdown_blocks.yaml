@@ -1,0 +1,329 @@
+visualize-snapshots:
+
+  - name: vis_markdown_code_blocks
+    script:
+      input: |
+        SELECT 'Ada' AS author VISUALIZE USING markdown (
+          template => '```sql extra
+        select {{author}};
+        ```
+
+            indented code
+
+        ---
+
+        done'
+        );
+    markdown:
+      template: |-
+        ```sql extra
+        select {{author}};
+        ```
+
+            indented code
+
+        ---
+
+        done
+      fields:
+        - author
+      document:
+        type: document
+        children:
+          - type: codeBlock
+            language: sql
+            children:
+              - type: text
+                value: "select "
+              - type: field
+                field: author
+              - type: text
+                value: ";\n"
+          - type: codeBlock
+            children:
+              - type: text
+                value: "indented code\n"
+          - type: thematicBreak
+          - type: paragraph
+            children:
+              - type: text
+                value: done
+
+  - name: vis_markdown_lists
+    script:
+      input: |
+        SELECT 'Ada' AS author, 3 AS n VISUALIZE USING markdown (
+          template => '- tight {{author}}
+        - items
+          - nested
+
+        3. loose
+
+        4. {{n}}
+
+        * star'
+        );
+    markdown:
+      template: |-
+        - tight {{author}}
+        - items
+          - nested
+
+        3. loose
+
+        4. {{n}}
+
+        * star
+      fields:
+        - author
+        - n
+      document:
+        type: document
+        children:
+          - type: list
+            ordered: false
+            tight: true
+            children:
+              - type: listItem
+                children:
+                  - type: text
+                    value: "tight "
+                  - type: field
+                    field: author
+              - type: listItem
+                children:
+                  - type: text
+                    value: items
+                  - type: list
+                    ordered: false
+                    tight: true
+                    children:
+                      - type: listItem
+                        children:
+                          - type: text
+                            value: nested
+          - type: list
+            ordered: true
+            tight: false
+            start: 3
+            children:
+              - type: listItem
+                children:
+                  - type: paragraph
+                    children:
+                      - type: text
+                        value: loose
+              - type: listItem
+                children:
+                  - type: paragraph
+                    children:
+                      - type: field
+                        field: n
+          - type: list
+            ordered: false
+            tight: true
+            children:
+              - type: listItem
+                children:
+                  - type: text
+                    value: star
+
+  - name: vis_markdown_inline
+    script:
+      input: |
+        SELECT 'Ada' AS author VISUALIZE USING markdown (
+          template => 'Some *emphasis*, **strong**, _under_ and ![image](https://example.com/a.png "Title") by {{author}}.\
+        Hard break and <b>inline html</b> and <https://example.com> and <me@example.com>.
+
+        [relative](/docs) [mail](mailto:a@example.com) [field title](https://example.com "{{author}}")'
+        );
+    markdown:
+      template: |-
+        Some *emphasis*, **strong**, _under_ and ![image](https://example.com/a.png "Title") by {{author}}.\
+        Hard break and <b>inline html</b> and <https://example.com> and <me@example.com>.
+
+        [relative](/docs) [mail](mailto:a@example.com) [field title](https://example.com "{{author}}")
+      fields:
+        - author
+      document:
+        type: document
+        children:
+          - type: paragraph
+            children:
+              - type: text
+                value: "Some "
+              - type: emphasis
+                children:
+                  - type: text
+                    value: emphasis
+              - type: text
+                value: ", "
+              - type: strong
+                children:
+                  - type: text
+                    value: strong
+              - type: text
+                value: ", "
+              - type: emphasis
+                children:
+                  - type: text
+                    value: under
+              - type: text
+                value: " and "
+              - type: image
+                url: 'https://example.com/a.png'
+                title: Title
+                children:
+                  - type: text
+                    value: image
+              - type: text
+                value: " by "
+              - type: field
+                field: author
+              - type: text
+                value: .
+              - type: hardBreak
+              - type: text
+                value: "Hard break and inline html and "
+              - type: link
+                url: 'https://example.com'
+                children:
+                  - type: text
+                    value: 'https://example.com'
+              - type: text
+                value: " and "
+              - type: link
+                url: 'mailto:me@example.com'
+                children:
+                  - type: text
+                    value: me@example.com
+              - type: text
+                value: .
+          - type: paragraph
+            children:
+              - type: link
+                url: /docs
+                children:
+                  - type: text
+                    value: relative
+              - type: text
+                value: " "
+              - type: link
+                url: 'mailto:a@example.com'
+                children:
+                  - type: text
+                    value: mail
+              - type: text
+                value: " "
+              - type: link
+                url: 'https://example.com'
+                children:
+                  - type: text
+                    value: field title
+
+  - name: vis_markdown_headings_quotes
+    script:
+      input: |
+        SELECT 'Ada' AS author VISUALIZE USING markdown (
+          template => '# One
+
+        ## Two {{author}}
+
+        ###### Six
+
+        Setext
+        ======
+
+        > quote
+        > > nested {{author}}'
+        );
+    markdown:
+      template: |-
+        # One
+
+        ## Two {{author}}
+
+        ###### Six
+
+        Setext
+        ======
+
+        > quote
+        > > nested {{author}}
+      fields:
+        - author
+      document:
+        type: document
+        children:
+          - type: heading
+            level: 1
+            children:
+              - type: text
+                value: One
+          - type: heading
+            level: 2
+            children:
+              - type: text
+                value: "Two "
+              - type: field
+                field: author
+          - type: heading
+            level: 6
+            children:
+              - type: text
+                value: Six
+          - type: heading
+            level: 1
+            children:
+              - type: text
+                value: Setext
+          - type: blockquote
+            children:
+              - type: paragraph
+                children:
+                  - type: text
+                    value: quote
+              - type: blockquote
+                children:
+                  - type: paragraph
+                    children:
+                      - type: text
+                        value: "nested "
+                      - type: field
+                        field: author
+
+  - name: vis_markdown_empty_template
+    script:
+      input: |
+        SELECT 'Ada' AS author VISUALIZE USING markdown (
+          template => ''
+        );
+    markdown:
+      template: ''
+      fields: []
+      document:
+        type: document
+
+  - name: vis_markdown_only_fields
+    script:
+      input: |
+        SELECT 'Ada' AS author, 1 AS n VISUALIZE USING markdown (
+          template => '{{author}}{{n}}{{missing}}'
+        );
+    markdown:
+      template: '{{author}}{{n}}{{missing}}'
+      fields:
+        - author
+        - n
+        - missing
+      document:
+        type: document
+        children:
+          - type: paragraph
+            children:
+              - type: field
+                field: author
+              - type: field
+                field: n
+              - type: field
+                field: missing

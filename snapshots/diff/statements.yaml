@@ -1,0 +1,274 @@
+diff-snapshots:
+
+  - name: duplicate_source_statements
+    source: |-
+      select 1;
+      select 1;
+    target: |-
+      select 1;
+    expected:
+      ops:
+        - code: MOVE
+          source-statement: 0
+          target-statement: 0
+          target-span: "select 1"
+        - code: DELETE
+          source-statement: 1
+          source-span: "select 1"
+
+  - name: duplicate_target_statements
+    source: |-
+      select 1;
+    target: |-
+      select 1;
+      select 1;
+    expected:
+      ops:
+        - code: MOVE
+          source-statement: 0
+          target-statement: 0
+          target-span: "select 1"
+        - code: INSERT
+          target-statement: 1
+          target-span: "select 1"
+
+  - name: duplicate_statements_both_sides
+    source: |-
+      select 1;
+      select 1;
+    target: |-
+      select 1;
+      select 1;
+    expected:
+      ops:
+        - code: MOVE
+          source-statement: 0
+          target-statement: 0
+          target-span: "select 1"
+        - code: MOVE
+          source-statement: 1
+          target-statement: 1
+          target-span: "select 1"
+
+  - name: update_two_literals
+    source: |-
+      select a, b, c, d, e, f from t where x = 1 and y = 2 and z = 3;
+    target: |-
+      select a, b, c, d, e, f from t where x = 4 and y = 2 and z = 5;
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes:
+            - text: "4"
+            - text: "5"
+
+  - name: update_literal_type_changes
+    source: |-
+      select a, b, c, d, e, f from t where x = 1;
+    target: |-
+      select a, b, c, d, e, f from t where x = 'one';
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes:
+            - text: "'one'"
+
+  - name: update_clause_added
+    source: |-
+      select a, b, c, d, e, f from t where x = 1;
+    target: |-
+      select a, b, c, d, e, f from t where x = 1 order by a limit 10;
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes:
+            - text: "order by a"
+            - text: "10"
+
+  - name: update_clause_removed
+    source: |-
+      select a, b, c, d, e, f from t where x = 1 order by a limit 10;
+    target: |-
+      select a, b, c, d, e, f from t where x = 1;
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes: []
+
+  - name: update_clause_swapped
+    source: |-
+      select a, b, c, d, e, f from t where x = 1 order by a;
+    target: |-
+      select a, b, c, d, e, f from t where x = 1 limit 10;
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes:
+            - text: "10"
+
+  - name: different_statement_kinds
+    source: |-
+      select a, b, c from t;
+    target: |-
+      create table t (a int, b int, c int);
+    expected:
+      ops:
+        - code: DELETE
+          source-statement: 0
+          source-span: "select a, .., c from t"
+        - code: INSERT
+          target-statement: 0
+          target-span: "create tab..nt, c int)"
+
+  - name: both_empty
+    source: |-
+    target: |-
+    expected:
+      ops: []
+
+  - name: comments_only
+    source: |-
+      -- a
+    target: |-
+      -- b
+    expected:
+      ops: []
+
+  - name: broken_statement_source
+    source: |-
+      select a, b, c from t; select (;
+    target: |-
+      select a, b, c from t;
+    expected:
+      ops:
+        - code: KEEP
+          source-statement: 0
+          target-statement: 0
+          target-span: "select a, .., c from t"
+
+  - name: broken_statement_target
+    source: |-
+      select a, b, c from t;
+    target: |-
+      select a, b, c from t; select (;
+    expected:
+      ops:
+        - code: KEEP
+          source-statement: 0
+          target-statement: 0
+          target-span: "select a, .., c from t"
+
+  - name: update_vis_encoding
+    source: |-
+      SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => category, type => nominal), y => (field => revenue, type => quantitative)));
+    target: |-
+      SELECT * FROM sales VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => category, type => ordinal), y => (field => revenue, type => quantitative)));
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes:
+            - text: "ordinal"
+
+  - name: update_create_table
+    source: |-
+      create table t (a int, b int, c int, d int);
+    target: |-
+      create table t (a int, b int, c int, d int, e int);
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes:
+            - text: "e int"
+
+  - name: update_function_call
+    source: |-
+      select lower(a), upper(b), coalesce(c, 0), d, e from t;
+    target: |-
+      select lower(a), upper(b), coalesce(c, 1), d, e from t;
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes:
+            - text: "1"
+
+  - name: move_and_update
+    source: |-
+      select a, b, c, d, e from t;
+      select 1;
+      select x, y, z, w from u;
+    target: |-
+      select x, y, z, w from u;
+      select a, b, c, d, f from t;
+      select 1;
+    expected:
+      ops:
+        - code: DELETE
+          source-statement: 0
+          source-span: "select a, .., e from t"
+        - code: MOVE
+          source-statement: 1
+          target-statement: 2
+          target-span: "select 1"
+        - code: KEEP
+          source-statement: 2
+          target-statement: 0
+          target-span: "select x, .., w from u"
+        - code: INSERT
+          target-statement: 1
+          target-span: "select a, .., f from t"
+
+  - name: whitespace_only
+    source: |-
+      select   a,b
+      from t;
+    target: |-
+      select a, b from t;
+    expected:
+      ops:
+        - code: KEEP
+          source-statement: 0
+          target-statement: 0
+          target-span: "select a, b from t"
+
+  - name: many_inserts_and_deletes
+    source: |-
+      select 1;
+      select 2;
+      select 3;
+    target: |-
+      select 'a';
+      select 'b';
+      select 'c';
+    expected:
+      ops:
+        - code: UPDATE
+          source-statement: 0
+          target-statement: 0
+          target-changes:
+            - text: "'a'"
+        - code: UPDATE
+          source-statement: 1
+          target-statement: 1
+          target-changes:
+            - text: "'b'"
+        - code: UPDATE
+          source-statement: 2
+          target-statement: 2
+          target-changes:
+            - text: "'c'"

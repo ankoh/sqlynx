@@ -1,0 +1,181 @@
+planner-snapshots:
+  # An analyzer error in a statement is a barrier
+  - name: AnalyzerErrorBarrier
+    catalog: |
+      create table t (a int, b int);
+      create table u (a int, c int);
+    scripts:
+      - name: queries
+        input: |
+          select 1;
+          select a from t, u;
+          select b from t;
+
+  # A table function is not a supported table source
+  - name: TableFunctionSource
+    scripts:
+      - name: queries
+        input: |
+          select * from generate_series(1, 3);
+          select 1;
+
+  # A table name that resolves in two schemas is ambiguous
+  - name: AmbiguousRelation
+    catalog: |
+      create table s1.t (a int);
+      create table s2.t (a int);
+    scripts:
+      - name: queries
+        input: |
+          select * from t;
+          select 1;
+
+  # A DROP of a name that resolves to two tables is ambiguous
+  - name: AmbiguousDropTarget
+    catalog: |
+      create table s1.t (a int);
+      create table s2.t (a int);
+    scripts:
+      - name: queries
+        input: |
+          drop table t;
+          select 1;
+
+  # Reading a relation after it was dropped without a producer cannot be reordered
+  - name: ReadAfterDrop
+    catalog: |
+      create table a (id int);
+    scripts:
+      - name: queries
+        input: |
+          drop table a;
+          select * from a;
+
+  # Table aliases and derived tables
+  - name: AliasesAndDerivedTables
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+    scripts:
+      - name: queries
+        input: |
+          select x.id from a x join b y on x.id = y.id;
+          select s.id from (select id from a) s;
+          select * from a, a as a2;
+
+  # The same name as table in one script and as view in another
+  - name: TableAndViewKinds
+    catalog: |
+      create table base (id int);
+    scripts:
+      - name: table_producer
+        input: create table shared as select * from base;
+      - name: view_producer
+        input: create view shared as select * from base;
+      - name: consumer
+        input: select * from shared;
+
+  # A VISUALIZE statement with an unresolved source
+  - name: VisualizationUnresolvedSource
+    scripts:
+      - name: queries
+        input: |
+          select category, revenue from sales visualize using vegalite (mark => bar, encoding => (x => category, y => revenue));
+          select 1;
+
+  # VISUALIZE statements of every renderer
+  - name: VisualizationRenderers
+    catalog: |
+      create table sales (category text, revenue int, embedding float[]);
+    scripts:
+      - name: queries
+        input: |
+          select category, revenue from sales visualize using vegalite (mark => bar, encoding => (x => category, y => revenue));
+          select category, revenue from sales visualize using table (dashboard => (row => 0, column => 0, width => 6, height => 2));
+          select category from sales visualize using markdown (template => '{{category}}');
+          select embedding from sales visualize using umap (vector => embedding);
+
+  # EXPLAIN without a body
+  - name: ExplainWithoutBody
+    scripts:
+      - name: queries
+        input: |
+          explain;
+          select 1;
+
+  # EXPLAIN of expressions and options
+  - name: ExplainOptions
+    catalog: |
+      create table a (id int);
+    scripts:
+      - name: queries
+        input: |
+          explain (analyze, verbose) select * from a;
+          explain (costs off) select 1;
+          explain select * from a where id = 1;
+
+  # DDL statements on unresolved targets
+  - name: DdlOnUnresolvedTargets
+    scripts:
+      - name: queries
+        input: |
+          create table x (a int);
+          create view y as select * from x;
+          drop view y;
+          drop table x;
+          select 1;
+
+  # INSERT, DELETE and CTAS in the same script
+  - name: WriteSequence
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+    scripts:
+      - name: writes
+        input: |
+          insert into a values (1);
+          insert into b select * from a;
+          delete from a where id = 1;
+          create table c as select * from b;
+          select * from c;
+
+  # Several scripts reading and writing the same table
+  - name: CrossScriptWriters
+    catalog: |
+      create table a (id int);
+    scripts:
+      - name: first
+        input: |
+          insert into a values (1);
+      - name: second
+        input: |
+          select * from a;
+      - name: third
+        input: |
+          insert into a values (2);
+      - name: fourth
+        input: |
+          select * from a;
+
+  # The same unresolved relation referenced repeatedly in several scripts
+  - name: RepeatedUnresolvedReference
+    scripts:
+      - name: first
+        input: |
+          select * from missing;
+          select * from missing;
+      - name: second
+        input: |
+          select * from missing;
+          select * from db.sch.missing;
+          select * from db.sch.missing;
+
+  # CTE references with and without aliases
+  - name: CteAliases
+    catalog: |
+      create table a (id int);
+    scripts:
+      - name: queries
+        input: |
+          with c as (select * from a) select * from c x;
+          with c as (select * from a), d as (select * from c) select * from d, c as y;
