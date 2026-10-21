@@ -29,8 +29,17 @@ const dependencies = {
     QueryResultDownloadButton: props => <QueryResultDownloadButton {...props} dependencies={{
         useFileDownloader: () => ({ downloadBufferAsFile: mockState.download }),
         useLogger: () => ({ error: mockState.logError }),
+        useComputeDatabase: () => null,
+        exportArrowTableAsParquet: vi.fn(),
     }} />,
 } as QueryResultDetailsDependencies;
+
+async function downloadArrow(button: HTMLButtonElement) {
+    act(() => button.click());
+    const item = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Download formats"] button'))
+        .find(element => element.textContent === 'Download as Arrow')!;
+    await act(async () => item.click());
+}
 
 describe('QueryResultDetails', () => {
     let container: HTMLDivElement;
@@ -129,9 +138,9 @@ describe('QueryResultDetails', () => {
             />,
         ));
 
-        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result as Arrow file"]')!;
+        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
         expect(button.disabled).toBe(false);
-        await act(async () => button.click());
+        await downloadArrow(button);
 
         expect(mockState.download).toHaveBeenCalledTimes(1);
         const [bytes, filename] = mockState.download.mock.calls[0];
@@ -151,13 +160,31 @@ describe('QueryResultDetails', () => {
                 dependencies={dependencies}
             />,
         ));
-        const button = () => container.querySelector<HTMLButtonElement>('button[aria-label="Download query result as Arrow file"]')!;
+        const button = () => container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
 
         render(QueryExecutionStatus.RUNNING, arrow.tableFromArrays({ value: [1] }));
         expect(button().disabled).toBe(true);
         render(QueryExecutionStatus.SUCCEEDED, null);
         expect(button().disabled).toBe(true);
         expect(mockState.download).not.toHaveBeenCalled();
+    });
+
+    it('disables the Parquet download without a compute database', () => {
+        mockState.computationState = { tableComputations: {} };
+        act(() => root.render(
+            <QueryResultDetails
+                query={{ queryId: 42, status: QueryExecutionStatus.SUCCEEDED, resultTable: arrow.tableFromArrays({ value: [1] }) } as any}
+                debugMode={false}
+                dependencies={dependencies}
+            />,
+        ));
+
+        act(() => container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!.click());
+        const items = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Download formats"] button'));
+        expect(items.map(item => [item.textContent, item.disabled])).toEqual([
+            ['Download as Arrow', false],
+            ['Download as Parquet', true],
+        ]);
     });
 
     it('reports download failures and re-enables the action', async () => {
@@ -171,12 +198,12 @@ describe('QueryResultDetails', () => {
             />,
         ));
 
-        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result as Arrow file"]')!;
-        await act(async () => button.click());
+        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
+        await downloadArrow(button);
 
-        expect(mockState.logError).toHaveBeenCalledWith('Failed to download query result', { error: 'Disk full' }, 'query_result_download');
+        expect(mockState.logError).toHaveBeenCalledWith('Failed to download query result', { format: 'arrow', error: 'Disk full' }, 'query_result_download');
         await vi.waitFor(() => expect(button.disabled).toBe(false));
-        await act(async () => button.click());
+        await downloadArrow(button);
         expect(mockState.download).toHaveBeenCalledTimes(2);
     });
 });

@@ -11,6 +11,8 @@ import { FeedEntryFooter, type FeedEntryFooterDependencies } from './feed_entry_
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
 const download = vi.fn();
+const exportParquet = vi.fn();
+const computeDatabase = { registerExternalDirectory: vi.fn(), removeExternalDirectory: vi.fn() };
 const onShowTable = vi.fn();
 const dependencies = {
     useResultRowCount: () => ({ hasResult: true, totalRows: 3 }),
@@ -20,6 +22,8 @@ const dependencies = {
     QueryResultDownloadButton: props => <QueryResultDownloadButton {...props} dependencies={{
         useFileDownloader: () => ({ downloadBufferAsFile: download }),
         useLogger: () => ({ error: vi.fn() }),
+        useComputeDatabase: () => computeDatabase as any,
+        exportArrowTableAsParquet: exportParquet,
     }} />,
 } as FeedEntryFooterDependencies;
 
@@ -32,6 +36,7 @@ describe('FeedEntryFooter', () => {
         document.body.appendChild(container);
         root = createRoot(container);
         download.mockReset().mockResolvedValue(undefined);
+        exportParquet.mockReset();
         onShowTable.mockReset();
     });
 
@@ -40,8 +45,7 @@ describe('FeedEntryFooter', () => {
         container.remove();
     });
 
-    it('downloads the full original result from the feed header without opening Details', async () => {
-        const resultTable = arrow.tableFromArrays({ value: [10, 20, 30] });
+    function renderFooter(resultTable: arrow.Table) {
         act(() => root.render(
             <FeedEntryFooter
                 notebookId="notebook"
@@ -51,14 +55,27 @@ describe('FeedEntryFooter', () => {
                 dependencies={dependencies}
             />,
         ));
+    }
 
-        expect(container.querySelector('[data-testid="feed-preview"]')).not.toBeNull();
+    async function chooseDownloadFormat(label: string) {
         const header = Array.from(container.querySelectorAll<HTMLDivElement>('div'))
             .find(element => element.querySelector(':scope > button')?.textContent?.includes('Query Results'))!;
-        const button = header.querySelector<HTMLButtonElement>('button[aria-label="Download query result as Arrow file"]')!;
+        const button = header.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
         expect(button).not.toBeNull();
         expect(button.disabled).toBe(false);
-        await act(async () => button.click());
+        act(() => button.click());
+        const item = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Download formats"] button'))
+            .find(element => element.textContent === label)!;
+        expect(item).not.toBeUndefined();
+        await act(async () => item.click());
+    }
+
+    it('downloads the full original result as Arrow from the feed header without opening Details', async () => {
+        const resultTable = arrow.tableFromArrays({ value: [10, 20, 30] });
+        renderFooter(resultTable);
+        expect(container.querySelector('[data-testid="feed-preview"]')).not.toBeNull();
+
+        await chooseDownloadFormat('Download as Arrow');
 
         expect(onShowTable).not.toHaveBeenCalled();
         expect(download).toHaveBeenCalledTimes(1);
@@ -68,5 +85,17 @@ describe('FeedEntryFooter', () => {
         const exported = arrow.tableFromIPC(bytes);
         expect(exported.schema.fields.map(field => field.name)).toEqual(['value']);
         expect(Array.from(exported.getChild('value')!)).toEqual([10, 20, 30]);
+    });
+
+    it('downloads the full original result as Parquet through the compute database', async () => {
+        const resultTable = arrow.tableFromArrays({ value: [10, 20, 30] });
+        const parquet = new TextEncoder().encode('PAR1');
+        exportParquet.mockResolvedValue(parquet);
+        renderFooter(resultTable);
+
+        await chooseDownloadFormat('Download as Parquet');
+
+        expect(exportParquet).toHaveBeenCalledWith(computeDatabase, resultTable);
+        expect(download).toHaveBeenCalledWith(parquet, 'query-result-42.parquet');
     });
 });

@@ -8,6 +8,7 @@ import { ShellFileRegistry } from '../../shell/shell_files.js';
 import { createWebHyperDBClient, setupWebHyperDB } from './hyperdb_provider_web.js';
 import { TestLogger } from '../logger/test_logger.js';
 import { HyperDB, type HyperDBEngineClient, type HyperDBResult } from './hyperdb_wasm.js';
+import { exportArrowTableAsParquet, PARQUET_EXPORT_DIRECTORY } from './hyperdb_parquet_export.js';
 
 function toPlainObjects(table: arrow.Table): Record<string, unknown>[] {
     return table.toArray().map(row => Object.fromEntries(Object.keys(row).map(key => [key, row[key]])));
@@ -272,6 +273,33 @@ describe('HyperDB embedded database integration', () => {
         } finally {
             if (path != null) await ignoreCleanupFailure(() => database!.removeExternalDirectory(path!));
             await ignoreCleanupFailure(() => root.removeEntry(name, { recursive: true }));
+            await connection.close();
+        }
+    }, 60_000);
+
+    it('exports an Arrow table as Parquet through OPFS', async () => {
+        const table = arrow.tableFromArrays({
+            id: Int32Array.from([1, 2, 3]),
+            name: ['alpha', 'beta', 'gamma'],
+        });
+        const bytes = await exportArrowTableAsParquet(database!, table);
+        expect(new TextDecoder().decode(bytes.subarray(0, 4))).toBe('PAR1');
+        expect(new TextDecoder().decode(bytes.subarray(bytes.byteLength - 4))).toBe('PAR1');
+
+        const root = await navigator.storage.getDirectory();
+        const exports = await root.getDirectoryHandle(PARQUET_EXPORT_DIRECTORY);
+        const remaining: string[] = [];
+        for await (const name of exports.keys()) remaining.push(name);
+        expect(remaining).toEqual([]);
+
+        const connection = await database!.connect();
+        let path: string | null = null;
+        try {
+            path = await database!.registerExternalFile('export.parquet', new Blob([bytes as BlobPart]));
+            expect(toPlainObjects(await connection.query(`SELECT id, name FROM external('${path}') ORDER BY id`)))
+                .toEqual([{ id: 1, name: 'alpha' }, { id: 2, name: 'beta' }, { id: 3, name: 'gamma' }]);
+        } finally {
+            if (path != null) await ignoreCleanupFailure(() => database!.removeExternalFile(path!));
             await connection.close();
         }
     }, 60_000);
