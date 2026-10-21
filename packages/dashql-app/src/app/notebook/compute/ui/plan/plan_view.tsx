@@ -11,6 +11,7 @@ import { AnchoredOverlay } from '../../../../../ui/foundations/anchored_overlay.
 import { AnchorAlignment, AnchorSide } from '../../../../../ui/foundations/anchored_position.js';
 import { OverlaySize } from '../../../../../ui/foundations/overlay.js';
 import { SymbolIcon } from '../../../../../ui/foundations/symbol_icon.js';
+import { computePlanFitTransform } from './plan_fit.js';
 import { PlanExecutionController } from './plan_execution_controller.js';
 import { findPlanOperatorInDirection } from './plan_navigation.js';
 import type { PlanNavigationDirection } from './plan_navigation.js';
@@ -20,7 +21,6 @@ import * as styles from './plan_view.module.css';
 
 const FitIcon = SymbolIcon('graph_align');
 
-const FIT_PADDING = 24;
 const EDGE_WIDTH = 2;
 const EDGE_BADGE_MIN_WIDTH = 25;
 const EDGE_BADGE_HEIGHT = 15;
@@ -252,15 +252,11 @@ export function PlanView({ plan, showProgress = false, controllerRef, autoFocus 
         const svg = svgRef.current;
         const behavior = zoomRef.current;
         if (viewport == null || svg == null || behavior == null || scene.width <= 0 || scene.height <= 0) return;
-        const width = viewport.clientWidth;
-        const height = viewport.clientHeight;
-        const scale = Math.min(1, (width - FIT_PADDING * 2) / scene.width, (height - FIT_PADDING * 2) / scene.height);
-        const x = (width - scene.width * scale) / 2;
-        const y = (height - scene.height * scale) / 2;
+        const { x, y, scale } = computePlanFitTransform(scene, viewport.clientWidth, viewport.clientHeight);
         const target = zoomIdentity.translate(x, y).scale(scale);
         const targetSelection = animate ? select(svg).transition().duration(160) : select(svg);
         targetSelection.call(behavior.transform as any, target);
-    }, [scene.height, scene.width]);
+    }, [scene]);
 
     // The zoom transform is applied to the DOM directly. Only the open inspector depends on the
     // operator positions, so bump its position revision at most once per frame and only while it is open.
