@@ -65,7 +65,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.1",
     "typescript-plugin-css-modules": "^5.2.0",
-    "vega": "^5.33.1",
+    "vega": "^6.0.0",
     "vega-embed": "^6.29.0",
     "vega-interpreter": "^1.2.1",
     "vega-lite": "^5.23.0",
