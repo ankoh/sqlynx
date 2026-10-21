@@ -939,15 +939,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dashql-native-napi"
-version = "0.0.2-dev.17"
-dependencies = [
- "http 1.4.2",
- "napi",
- "napi-derive",
-]
-
-[[package]]
 name = "dashql-native-proxy"
 version = "0.0.2-dev.17"
 dependencies = [
@@ -958,6 +949,8 @@ dependencies = [
  "lazy_static",
  "log",
  "mime",
+ "napi",
+ "napi-derive",
  "once_cell",
  "regex-automata",
  "reqwest",

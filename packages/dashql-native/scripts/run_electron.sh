@@ -6,7 +6,7 @@ WORKSPACE_ROOT="${RUNFILES_ROOT}/_main"
 ELECTRON_PACKAGE="${WORKSPACE_ROOT}/node_modules/electron"
 
 export DASHQL_ELECTRON_RENDERER="${WORKSPACE_ROOT}/packages/dashql-app/electron_deploy"
-export DASHQL_NATIVE_ADDON="${WORKSPACE_ROOT}/packages/dashql-native-napi/dashql_native_napi.node"
+export DASHQL_NATIVE_ADDON="${WORKSPACE_ROOT}/packages/dashql-native-proxy/dashql_native_napi.node"
 export DASHQL_NATIVE_UTILITY_WORKER="${WORKSPACE_ROOT}/packages/dashql-native/dist/native_utility_worker.js"
 export DASHQL_ELECTRON_PRELOAD="${WORKSPACE_ROOT}/packages/dashql-native/src/preload.cjs"
 

@@ -161,7 +161,7 @@ Rust type checking happens automatically during `bazel build` and `bazel test`. 
 
 ```bash
 # This type-checks as part of building
-bazel build //packages/dashql-native-napi:addon
+bazel build //packages/dashql-native-proxy:addon
 ```
 
 ### C++
@@ -180,7 +180,7 @@ bazel query //packages/dashql-core:all
 bazel query 'kind(".*_test", //...)'
 
 # Find all Rust targets
-bazel query 'kind("rust_.*", //packages/dashql-native-napi:all)'
+bazel query 'kind("rust_.*", //packages/dashql-native-proxy:all)'
 
 # Show dependencies of a target
 bazel query 'deps(//packages/dashql-app:pages)'
@@ -242,7 +242,7 @@ rm -rf bazel-bin/packages/bar/
 bazel test //packages/dashql-app:tsc_typecheck_test
 
 # ✅ Bazel building
-bazel build //packages/dashql-native-napi:addon
+bazel build //packages/dashql-native-proxy:addon
 
 # ✅ Bazel testing
 bazel test //packages/dashql-native:test

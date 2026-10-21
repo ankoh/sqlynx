@@ -3,7 +3,6 @@
 [workspace]
 resolver = "2"
 members = [
-    "packages/dashql-native-napi",
     "packages/dashql-native-proxy",
     "packages/dashql-pack",
     "packages/dashql-data",

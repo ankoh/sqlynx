@@ -1,7 +1,7 @@
 [package]
 name = "dashql-native-proxy"
 version = "0.0.2-dev.17"
-description = "Host-neutral HTTP and gRPC proxies for DashQL desktop"
+description = "HTTP and gRPC proxies for DashQL desktop, with their Node-API addon"
 edition = "2021"
 rust-version = "1.70"
 
@@ -16,6 +16,9 @@ http = "1"
 lazy_static = "1.5.1"
 log = "0.4.34"
 mime = "0.3.17"
+# napi and napi-derive are only used by the Bazel addon target (src/napi.rs).
+napi = { version = "3.12.2", features = ["async", "napi8", "tokio_rt"] }
+napi-derive = "3.6.3"
 once_cell = "1.21.4"
 regex-automata = "0.4.18"
 reqwest = { version = "0.13.4", default-features = false, features = ["charset", "http2", "json", "native-tls", "stream", "system-proxy"] }

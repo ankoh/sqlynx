@@ -1,4 +1,6 @@
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_shared_library", "rust_test")
+load("//bazel:macos_packaging.bzl", "platform_binary")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -6,7 +8,10 @@ exports_files(["Cargo.toml"])
 
 rust_library(
     name = "proxy",
-    srcs = glob(["src/**/*.rs"]),
+    srcs = glob(
+        ["src/**/*.rs"],
+        exclude = ["src/napi.rs"],
+    ),
     crate_name = "dashql_native_proxy",
     crate_root = "src/lib.rs",
     edition = "2021",
@@ -29,5 +34,60 @@ rust_library(
         "@crates//:url",
         "@crates//:uuid",
     ],
-    visibility = ["//packages/dashql-native-napi:__pkg__"],
+)
+
+rust_test(
+    name = "test",
+    size = "small",
+    crate = ":proxy",
+)
+
+# Node-API addon loaded by the Electron utility process (packages/dashql-native).
+rust_shared_library(
+    name = "addon_cdylib",
+    srcs = ["src/napi.rs"],
+    crate_name = "dashql_native_napi",
+    crate_root = "src/napi.rs",
+    edition = "2021",
+    experimental_use_cc_common_link = 0,
+    proc_macro_deps = ["@crates//:napi-derive"],
+    rustc_flags = select({
+        "@platforms//os:macos": [
+            "-C",
+            "link-arg=-undefined",
+            "-C",
+            "link-arg=dynamic_lookup",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":proxy",
+        "@crates//:http",
+        "@crates//:napi",
+    ],
+)
+
+copy_file(
+    name = "addon",
+    src = ":addon_cdylib",
+    out = "dashql_native_napi.node",
+    visibility = ["//visibility:public"],
+)
+
+platform_binary(
+    name = "addon_aarch64",
+    binary = ":addon_cdylib",
+    platform = "//bazel/platforms:aarch64_macos",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:macos"],
+    visibility = ["//packages/dashql-native:__pkg__"],
+)
+
+platform_binary(
+    name = "addon_x86_64",
+    binary = ":addon_cdylib",
+    platform = "//bazel/platforms:x86_64_macos",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:macos"],
+    visibility = ["//packages/dashql-native:__pkg__"],
 )
