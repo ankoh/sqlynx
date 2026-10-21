@@ -385,3 +385,41 @@ formatter-snapshots:
               )
               select *
               from s, t;
+
+  - name: graph_label_expression_parentheses
+    input: |-
+      select * from graph_table(g match (a is (A | B) & !C) columns (a.x)), graph_table(g match (a is A | B & C) columns (a.x)), graph_table(g match (a is !(A | B)) columns (a.x)), graph_table(g match (a is A & (B | C)) columns (a.x))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from graph_table(g match (a :(A | B) & !C) columns (a.x)), graph_table(g match (a :A | B & C) columns (a.x)), graph_table(g match (a :!(A | B)) columns (a.x)), graph_table(g match (a :A & (B | C)) columns (a.x));
+          - mode: compact
+            expected: |-
+              select *
+              from graph_table(g match (a :(A | B) & !C) columns (a.x)), graph_table(g match (a :A | B & C) columns (a.x)),
+                graph_table(g match (a :!(A | B)) columns (a.x)), graph_table(g match (a :A & (B | C)) columns (a.x));
+          - mode: pretty
+            expected: |-
+              select *
+              from graph_table(
+                  g
+                    match (a :(A | B) & !C)
+                    columns (a.x)
+                ),
+                graph_table(
+                  g
+                    match (a :A | B & C)
+                    columns (a.x)
+                ),
+                graph_table(
+                  g
+                    match (a :!(A | B))
+                    columns (a.x)
+                ),
+                graph_table(
+                  g
+                    match (a :A & (B | C))
+                    columns (a.x)
+                );

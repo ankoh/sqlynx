@@ -99,3 +99,45 @@ formatter-snapshots:
         validation:
           setup: |-
             create table t(a int, b int);
+
+  # Ordered aggregates
+  - name: function_aggregate_order
+    input: select string_agg(a, ',' order by a), array_agg(a order by b desc nulls last) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a text, b int);
+
+  # TREAT
+  - name: function_treat
+    input: select treat(a as int) from t
+    dialects:
+      hyper:
+
+  # ROWS FROM
+  - name: function_rows_from
+    input: select * from rows from (generate_series(1, 3), generate_series(4, 6)) with ordinality
+    dialects:
+      hyper:
+
+  # ROWS FROM with column definitions
+  - name: function_rows_from_columns
+    input: select * from rows from (f(1) as (x int, y text), g(2)) as r
+    dialects:
+      hyper:
+
+  # SUBSTRING with only a length
+  - name: function_substring_for
+    input: select substring(a for 2), substring(a from 2), substring(a from 2 for 3) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a text);
+
+  # The precision of current_time
+  - name: function_current_time_precision
+    input: select current_time(3), current_timestamp(2), localtime(1), localtimestamp(4)
+    dialects:
+      hyper:

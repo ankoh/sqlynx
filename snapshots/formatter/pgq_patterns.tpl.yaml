@@ -116,3 +116,9 @@ formatter-snapshots:
       WITH s AS SECURE (SELECT 1 AS a), t (b) AS SECURE (SELECT 2) SELECT * FROM s, t
     dialects:
       hyper:
+
+  # Parentheses of label expressions
+  - name: graph_label_expression_parentheses
+    input: select * from graph_table(g match (a is (A | B) & !C) columns (a.x)), graph_table(g match (a is A | B & C) columns (a.x)), graph_table(g match (a is !(A | B)) columns (a.x)), graph_table(g match (a is A & (B | C)) columns (a.x))
+    dialects:
+      hyper:

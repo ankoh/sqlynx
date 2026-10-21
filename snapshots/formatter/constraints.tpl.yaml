@@ -54,3 +54,20 @@ formatter-snapshots:
     input: create table t as select 1
     dialects:
       hyper:
+  # Options of constraints
+  - name: table_constraint_with_options
+    input: create table u (a int, unique (a) with (fillfactor = 70), primary key (a) with (fillfactor = 70))
+    dialects:
+      hyper:
+
+  # Every constraint attribute has its own text
+  - name: table_constraint_attributes
+    input: create table u (a int, b int, c int, unique (a) not deferrable, unique (b) initially deferred, primary key (c) deferrable initially immediate)
+    dialects:
+      hyper:
+
+  # Attributes of check constraints
+  - name: table_constraint_check_attributes
+    input: create table u (a int, check (a > 0) not valid, check (a < 10) no inherit)
+    dialects:
+      hyper:

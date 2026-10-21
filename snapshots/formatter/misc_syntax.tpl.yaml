@@ -99,3 +99,43 @@ formatter-snapshots:
     input: explain (format json) select 1
     dialects:
       hyper:
+
+  # Subscripts and slices
+  - name: misc_subscripts
+    input: select a[1], a[1:2], a[:2], a[1:], a[:] from t
+    dialects:
+      hyper:
+
+  # Field access of a subquery
+  - name: misc_subquery_field
+    input: select (select a from t).foo
+    dialects:
+      hyper:
+
+  # Collations of row type fields
+  - name: misc_row_type_collate
+    input: create table u (p row(name text collate "de_DE"))
+    dialects:
+      hyper:
+
+  # A function without parameters
+  - name: misc_create_function_no_params
+    input: create function foo() returns int
+    dialects:
+      hyper:
+
+  # Tablesample counts without a unit are percentages for bernoulli and system
+  - name: misc_tablesample_default_unit
+    input: select * from t tablesample bernoulli (10), u tablesample system (10) repeatable (1)
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+            create table u(a int);
+
+  # Tablesample with explicit units
+  - name: misc_tablesample_units
+    input: select * from t tablesample bernoulli (10 percent), t tablesample reservoir (10 rows), t tablesample reservoir (10)
+    dialects:
+      hyper:

@@ -254,3 +254,110 @@ formatter-snapshots:
         validation:
           setup: |-
             create table t(a int, b int);
+
+  - name: function_aggregate_order
+    input: |-
+      select string_agg(a, ',' order by a), array_agg(a order by b desc nulls last) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select string_agg(a, ',' order by a), array_agg(a order by b desc nulls last) from t;
+          - mode: compact
+            expected: |-
+              select string_agg(a, ',' order by a), array_agg(a order by b desc nulls last) from t;
+          - mode: pretty
+            expected: |-
+              select string_agg(a, ',' order by a), array_agg(a order by b desc nulls last)
+              from t;
+        validation:
+          setup: |-
+            create table t(a text, b int);
+
+  - name: function_treat
+    input: |-
+      select treat(a as int) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select treat(a as integer) from t;
+          - mode: compact
+            expected: |-
+              select treat(a as integer) from t;
+          - mode: pretty
+            expected: |-
+              select treat(a as integer)
+              from t;
+
+  - name: function_rows_from
+    input: |-
+      select * from rows from (generate_series(1, 3), generate_series(4, 6)) with ordinality
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from rows from (generate_series(1, 3), generate_series(4, 6)) with ordinality;
+          - mode: compact
+            expected: |-
+              select * from rows from (generate_series(1, 3), generate_series(4, 6)) with ordinality;
+          - mode: pretty
+            expected: |-
+              select *
+              from rows from (generate_series(1, 3), generate_series(4, 6)) with ordinality;
+
+  - name: function_rows_from_columns
+    input: |-
+      select * from rows from (f(1) as (x int, y text), g(2)) as r
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from rows from (f(1) as (x integer, y text), g(2)) r;
+          - mode: compact
+            expected: |-
+              select * from rows from (f(1) as (x integer, y text), g(2)) r;
+          - mode: pretty
+            expected: |-
+              select *
+              from rows from (f(1) as (x integer, y text), g(2)) r;
+
+  - name: function_substring_for
+    input: |-
+      select substring(a for 2), substring(a from 2), substring(a from 2 for 3) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select substring(a for 2), substring(a from 2), substring(a from 2 for 3) from t;
+          - mode: compact
+            expected: |-
+              select substring(a for 2), substring(a from 2), substring(a from 2 for 3) from t;
+          - mode: pretty
+            expected: |-
+              select substring(a for 2), substring(a from 2), substring(a from 2 for 3)
+              from t;
+        validation:
+          setup: |-
+            create table t(a text);
+
+  - name: function_current_time_precision
+    input: |-
+      select current_time(3), current_timestamp(2), localtime(1), localtimestamp(4)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select current_time(3), current_timestamp(2), localtime(1), localtimestamp(4);
+          - mode: compact
+            expected: |-
+              select current_time(3), current_timestamp(2), localtime(1), localtimestamp(4);
+          - mode: pretty
+            expected: |-
+              select current_time(3), current_timestamp(2), localtime(1), localtimestamp(4);

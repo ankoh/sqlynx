@@ -180,3 +180,123 @@ formatter-snapshots:
             expected: |-
               select row(1, 2), (a, b)
               from t;
+
+  - name: operator_between_symmetric
+    input: |-
+      select a between 1 and 2, a between asymmetric 1 and 2, a between symmetric 1 and 2, a not between symmetric 1 and 2, a not between asymmetric 1 and 2 from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a between 1 and 2, a between 1 and 2, a between symmetric 1 and 2, a not between symmetric 1 and 2, a not between 1 and 2 from t;
+          - mode: compact
+            expected: |-
+              select a between 1 and 2, a between 1 and 2, a between symmetric 1 and 2, a not between symmetric 1 and 2,
+                a not between 1 and 2
+              from t;
+          - mode: pretty
+            expected: |-
+              select a between 1 and 2,
+                a between 1 and 2,
+                a between symmetric 1 and 2,
+                a not between symmetric 1 and 2,
+                a not between 1 and 2
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  - name: operator_subquery_quantifiers
+    input: |-
+      select * from t where a < all (select 1) and a = any (select 1) and a <> some (select 1)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t where a < all (select 1) and a = any (select 1) and a <> some (select 1);
+          - mode: compact
+            expected: |-
+              select * from t where a < all (select 1) and a = any (select 1) and a <> some (select 1);
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              where a < all (select 1) and a = any (select 1) and a <> some (select 1);
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  - name: operator_subquery_like
+    input: |-
+      select * from t where a::text like any (select 'x') and a operator(pg_catalog.=) any (select 1)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t where a::text like any (select 'x') and a operator(pg_catalog.=) any (select 1);
+          - mode: compact
+            expected: |-
+              select * from t where a::text like any (select 'x') and a operator(pg_catalog.=) any (select 1);
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              where a::text like any (select 'x') and a operator(pg_catalog.=) any (select 1);
+
+  - name: operator_quantified_expression
+    input: |-
+      select * from t where a = any (b)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t where a = any (b);
+          - mode: compact
+            expected: |-
+              select * from t where a = any (b);
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              where a = any (b);
+
+  - name: operator_qualified
+    input: |-
+      select 1 operator(pg_catalog.+) 2, a operator(pg_catalog.-) b from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1 operator(pg_catalog.+) 2, a operator(pg_catalog.-) b from t;
+          - mode: compact
+            expected: |-
+              select 1 operator(pg_catalog.+) 2, a operator(pg_catalog.-) b from t;
+          - mode: pretty
+            expected: |-
+              select 1 operator(pg_catalog.+) 2, a operator(pg_catalog.-) b
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  - name: operator_type_test
+    input: |-
+      select a is of (int, text), a is not of (int) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a is of (integer, text), a is not of (integer) from t;
+          - mode: compact
+            expected: |-
+              select a is of (integer, text), a is not of (integer) from t;
+          - mode: pretty
+            expected: |-
+              select a is of (integer, text), a is not of (integer)
+              from t;

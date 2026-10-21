@@ -97,3 +97,51 @@ formatter-snapshots:
         validation:
           setup: |-
             create table t(a int);
+
+  # Set operations keep the parentheses of their operands
+  - name: select_set_operation_parentheses
+    input: select 1 union (select 2 union select 3)
+    dialects:
+      hyper:
+
+  # INTERSECT binds tighter than UNION
+  - name: select_set_operation_precedence
+    input: (select 1 union select 2) intersect select 3
+    dialects:
+      hyper:
+
+  # Parentheses are not needed for left associative operations
+  - name: select_set_operation_chain
+    input: (select 1 except select 2) except select 3 union (select 4 intersect select 5) union select 6 intersect select 7
+    dialects:
+      hyper:
+
+  # ORDER BY and LIMIT of a set operation apply to the combination
+  - name: select_set_operation_order_limit
+    input: (select 1) union (select 2) order by 1 limit 1
+    dialects:
+      hyper:
+
+  # OFFSET of a set operation with parenthesized operands that have their own clauses
+  - name: select_set_operation_operand_clauses
+    input: with x as (select 1) (select * from x order by 1 limit 1) union all select 2 order by 1 offset 1
+    dialects:
+      hyper:
+
+  # A select without targets
+  - name: select_no_targets
+    input: select from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  # A select without targets and with a quantifier
+  - name: select_no_targets_quantifier
+    input: select all from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);

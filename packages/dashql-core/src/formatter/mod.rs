@@ -27,12 +27,14 @@ use dashql_buffers::parser::{
     AttributeKey, CharacterType, ColumnConstraint, ConstraintAttribute, ExpressionOperator, ExtractTarget,
     GroupByItemType, IntervalType, JoinType, KeyActionCommand, KeyActionTrigger, KeyMatch, KnownFunction, Node,
     NodeType, NumericType, OrderDirection, OrderNullRule, RowLockingBlockBehavior, RowLockingStrength, SampleCountUnit,
-    SymbolSpan, TableConstraint, TempType, TrimDirection, WindowBoundDirection, WindowBoundMode, WindowRangeMode,
+    SubqueryQuantifier, SymbolSpan, TableConstraint, TempType, TrimDirection, WindowBoundDirection, WindowBoundMode,
+    WindowRangeMode,
 };
 use dashql_parser::parser::context::resolve_text_span;
 use dashql_parser::parser::ParsedScript;
 use dashql_parser::scanner::ScannedScript;
-use std::cell::RefCell;
+use dashql_parser::span::TextSpan;
+use std::cell::{Cell, RefCell};
 
 type K = AttributeKey;
 
@@ -157,8 +159,10 @@ fn get_operator_text(op: ExpressionOperator) -> &'static str {
         O::IS_NOT_DISTINCT_FROM => "is not distinct from",
         O::IN => "in",
         O::NOT_IN => "not in",
-        O::BETWEEN_ASYMMETRIC | O::BETWEEN_SYMMETRIC => "between",
-        O::NOT_BETWEEN_ASYMMETRIC | O::NOT_BETWEEN_SYMMETRIC => "not between",
+        O::BETWEEN_ASYMMETRIC => "between",
+        O::BETWEEN_SYMMETRIC => "between symmetric",
+        O::NOT_BETWEEN_ASYMMETRIC => "not between",
+        O::NOT_BETWEEN_SYMMETRIC => "not between symmetric",
         O::COLLATE => "collate",
         O::AT_TIMEZONE => "at time zone",
         O::DEFAULT => "default",
@@ -204,6 +208,15 @@ fn is_true(node: Option<&Node>) -> bool {
     node.is_some_and(|n| n.node_type() == NodeType::BOOL && n.children_begin_or_value() != 0)
 }
 
+/// A part of the formatted script
+#[derive(Clone, Copy, Debug)]
+enum OutputPart {
+    /// A parsed statement without errors, the index in the statements of the parsed script
+    Statement(usize),
+    /// A statement with syntax errors, the text span that is copied as written
+    Damaged(TextSpan),
+}
+
 /// The SQL formatter
 pub struct Formatter<'a> {
     /// The scanned script
@@ -222,6 +235,8 @@ pub struct Formatter<'a> {
     node_states: Vec<FormattingNodeState>,
     /// The ids of the nodes that were rendered as placeholders
     unformattable_nodes: RefCell<Vec<u32>>,
+    /// Was a part of the script with syntax errors copied as written?
+    copied_damaged_text: Cell<bool>,
 }
 
 impl<'a> Formatter<'a> {
@@ -235,6 +250,7 @@ impl<'a> Formatter<'a> {
             fmt: FormattingProgram::new(),
             node_states: vec![FormattingNodeState::default(); parsed.nodes.len()],
             unformattable_nodes: RefCell::new(Vec::new()),
+            copied_damaged_text: Cell::new(false),
         };
         formatter.mark_statement_roots();
         formatter
@@ -254,8 +270,10 @@ impl<'a> Formatter<'a> {
         self.unformattable_nodes.borrow().clone()
     }
 
+    /// Was everything formatted? Parts with syntax errors are copied as written and nodes that cannot be
+    /// formatted are rendered as placeholders.
     pub fn is_fully_formatted(&self) -> bool {
-        self.unformattable_nodes.borrow().is_empty()
+        self.unformattable_nodes.borrow().is_empty() && !self.copied_damaged_text.get()
     }
 
     /// Format the script
@@ -296,6 +314,7 @@ impl<'a> Formatter<'a> {
         self.node_states.clear();
         self.node_states.resize(self.ast.len(), FormattingNodeState::default());
         self.unformattable_nodes.borrow_mut().clear();
+        self.copied_damaged_text.set(false);
     }
 
     fn mark_statement_roots(&mut self) {
@@ -414,7 +433,7 @@ impl<'a> Formatter<'a> {
 
             let (precedence, associativity) = if op_node.node_type() == NodeType::ENUM_SQL_EXPRESSION_OPERATOR {
                 get_operator_precedence(ExpressionOperator(value_u8(op_node)))
-            } else if op_node.node_type() == NodeType::OPERATOR {
+            } else if matches!(op_node.node_type(), NodeType::OPERATOR | NodeType::ARRAY) {
                 (11, Associativity::Left)
             } else {
                 continue;
@@ -540,11 +559,24 @@ impl<'a> Formatter<'a> {
     }
 
     fn format_qualified_name(&self, node: &Node) -> FmtReg {
-        let parts = self.array_regs(node);
+        let f = &self.fmt;
+        // An index like `a[1]` follows its name without a dot
+        let mut parts: Vec<FmtReg> = Vec::new();
+        for (child, reg) in self.children(node).iter().zip(self.array_regs(node)) {
+            match parts.pop() {
+                Some(previous) if child.node_type() == NodeType::OBJECT_SQL_INDIRECTION_INDEX => {
+                    parts.push(f.concat(&[previous, reg]))
+                }
+                Some(previous) => {
+                    parts.push(previous);
+                    parts.push(reg);
+                }
+                None => parts.push(reg),
+            }
+        }
         if parts.is_empty() {
             return self.fmt.empty();
         }
-        let f = &self.fmt;
         let inline_separator = f.text(".");
         let break_separator = f.concat(&[f.break_(), f.text(".")]);
         f.join(&parts, inline_separator, break_separator, None, true)
@@ -583,6 +615,7 @@ impl<'a> Formatter<'a> {
             | K::SQL_WINDOW_FRAME_ORDER
             | K::SQL_FUNCTION_WITHIN_GROUP
             | K::SQL_FUNCTION_ARGUMENTS
+            | K::SQL_FUNCTION_ORDER
             | K::SQL_EXPRESSION_ARGS
             | K::SQL_DESCRIPTOR_COLUMNS
             | K::SQL_ROW_TYPE_FIELDS
@@ -606,7 +639,14 @@ impl<'a> Formatter<'a> {
             | K::SQL_CTE_COLUMNS
             | K::SQL_GRAPH_ELEMENT_TABLE_LABELS
             | K::SQL_GRAPH_MATCH_PATTERNS
-            | K::SQL_RESULT_TARGET_EXCLUDE => self.format_comma_list(node, true),
+            | K::SQL_RESULT_TARGET_EXCLUDE
+            | K::SQL_TYPETEST_TYPES
+            | K::SQL_FUNCTION_TABLE_ROWS_FROM
+            | K::SQL_COLUMN_DEF_OPTIONS
+            | K::SQL_CONST_CAST_FUNC_ARGS_LIST
+            | K::SQL_ROWSFROM_ITEM_COLUMNS
+            | K::SQL_TABLE_CONSTRAINT_DEFINITION
+            | K::SQL_COLUMN_CONSTRAINT_DEFINITION => self.format_comma_list(node, true),
             K::SQL_PROPERTY_GRAPH_VERTEX_TABLES
             | K::SQL_PROPERTY_GRAPH_EDGE_TABLES
             | K::SQL_GRAPH_ELEMENT_TABLE_KEY
@@ -615,6 +655,10 @@ impl<'a> Formatter<'a> {
             | K::SQL_GRAPH_PROPERTIES_COLUMNS
             | K::SQL_GRAPH_PROPERTIES_EXCLUDE
             | K::SQL_GRAPH_TABLE_COLUMNS => self.format_comma_list(node, false),
+            K::SQL_SUBQUERY_OPERATOR | K::SQL_DEFINITION_ARG_VALUE | K::SQL_EXPRESSION_OPERATOR => {
+                self.format_operator_path(node)
+            }
+            K::SQL_TABLE_CONSTRAINT_ATTRIBUTES | K::SQL_COLUMN_DEF_CONSTRAINTS => self.format_space_list(node),
             K::EXT_EXPLAIN_OPTIONS => self.format_comma_list(node, false),
             K::EXT_EXPLAIN_EXPRESSIONS => {
                 let parts = self.array_regs(node);
@@ -624,20 +668,7 @@ impl<'a> Formatter<'a> {
             K::EXT_VARARG_FIELD_VALUE | K::SQL_GENERIC_OPTION_VALUE => {
                 f.parenthesized(self.format_comma_list(node, true))
             }
-            K::SQL_INDIRECTION_PATH => {
-                // Only field accesses for now, (p).x
-                let elements = self.array_regs(node);
-                let begin = node.children_begin_or_value() as usize;
-                let mut parts = Vec::with_capacity(elements.len() * 2);
-                for (i, &element) in elements.iter().enumerate() {
-                    if self.ast[begin + i].node_type() != NodeType::NAME || element == 0 {
-                        return self.format_unimplemented(node);
-                    }
-                    parts.push(f.text("."));
-                    parts.push(element);
-                }
-                f.concat(&parts)
-            }
+            K::SQL_INDIRECTION_PATH | K::SQL_SELECT_EXPRESSION_INDIRECTION => self.format_indirection_path(node),
             K::SQL_ROW_EXPRESSION_VALUES => {
                 let values = self.array_regs(node);
                 if values.iter().any(|&v| v == 0) {
@@ -674,6 +705,7 @@ impl<'a> Formatter<'a> {
             | K::SQL_PARAMETER_NAME
             | K::SQL_TABLE_CONSTRAINT_REFERENCES_NAME
             | K::SQL_COLUMN_REF_PATH
+            | K::SQL_COLUMN_DEF_COLLATE
             | K::SQL_CREATE_AS_NAME
             | K::SQL_VIEW_NAME
             | K::SQL_CREATE_FUNCTION_NAME
@@ -765,7 +797,10 @@ impl<'a> Formatter<'a> {
         let f = &self.fmt;
         let [name, frame] = attrs!(self.children(node), [K::SQL_WINDOW_DEF_NAME, K::SQL_WINDOW_DEF_FRAME]);
         let (Some(name), Some(frame)) = (name, frame) else { return self.format_unimplemented(node) };
-        f.concat(&[self.reg(name), f.text(" as "), f.parenthesized(self.reg(frame))])
+        // An empty window specification is still a pair of parentheses
+        let frame_reg = self.reg(frame);
+        let frame_reg = if frame_reg == 0 { f.text("()") } else { f.parenthesized(frame_reg) };
+        f.concat(&[self.reg(name), f.text(" as "), frame_reg])
     }
 
     fn format_row_locking_strength(&self, node: &'a Node) -> FmtReg {
@@ -827,7 +862,11 @@ impl<'a> Formatter<'a> {
         );
         let (Some(value), Some(unit)) = (value, unit) else { return self.format_unimplemented(node) };
 
-        let count = f.concat(&[self.reg(value), self.reg(unit)]);
+        // Hyper only knows the word PERCENT for a table sample, DuckDB's `using sample` also takes `%`
+        let is_percent = unit.node_type() == NodeType::ENUM_SQL_SAMPLE_UNIT_TYPE
+            && SampleCountUnit(value_u8(unit)) == SampleCountUnit::PERCENT;
+        let unit_reg = if table_sample && is_percent { f.text(" percent") } else { self.reg(unit) };
+        let count = f.concat(&[self.reg(value), unit_reg]);
         let mut body = count;
         match (function, seed) {
             (Some(function), Some(seed)) => {
@@ -942,16 +981,21 @@ impl<'a> Formatter<'a> {
         if let Some(array) = array.filter(|a| a.node_type() == NodeType::ARRAY) {
             // Hyper does not accept row(...)[], only array(row(...))
             let row_element = type_node.node_type() == NodeType::OBJECT_SQL_ROW_TYPE;
-            for bound in self.children(array) {
+            // The keyword form `text array` has no children, a type without array has no text
+            let keyword_form = array.children_count() == 0 && array.symbol_span().length() > 0;
+            let bounds: Vec<Option<&Node>> =
+                if keyword_form { vec![None] } else { self.children(array).iter().map(Some).collect() };
+            for bound in bounds {
+                let unbounded = bound.map_or(true, |b| b.node_type() == NodeType::BOOL);
                 if self.config.dialect == FormattingDialect::TRINO {
-                    if bound.node_type() != NodeType::BOOL {
+                    if !unbounded {
                         return self.format_unimplemented(node);
                     }
                     type_reg = f.concat(&[f.text("array("), type_reg, f.text(")")]);
-                } else if row_element && bound.node_type() == NodeType::BOOL {
+                } else if row_element && unbounded {
                     type_reg = f.concat(&[f.text("array("), type_reg, f.text(")")]);
                 } else {
-                    let bound_reg = if bound.node_type() == NodeType::BOOL { f.empty() } else { self.reg(bound) };
+                    let bound_reg = bound.filter(|b| b.node_type() != NodeType::BOOL).map_or(f.empty(), |b| self.reg(b));
                     type_reg = f.concat(&[type_reg, f.text("["), bound_reg, f.text("]")]);
                 }
             }
@@ -988,11 +1032,23 @@ impl<'a> Formatter<'a> {
         self.fmt.text(text)
     }
 
+    /// The type of `interval '1' day` is the interval qualifier alone, a type name needs the keyword
     fn format_interval_type(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [interval_type, precision] = attrs!(self.children(node), [K::SQL_INTERVAL_TYPE, K::SQL_INTERVAL_PRECISION]);
-        let Some(interval_type) = interval_type else { return self.format_unimplemented(node) };
-        let mut parts = vec![self.reg(interval_type)];
+        let is_qualifier = node.attribute_key() == K::SQL_CONST_CAST_INTERVAL;
+        let mut parts = Vec::with_capacity(4);
+        if !is_qualifier {
+            parts.push(f.text("interval"));
+        }
+        if let Some(interval_type) = interval_type {
+            if !is_qualifier {
+                parts.push(f.text(" "));
+            }
+            parts.push(self.reg(interval_type));
+        } else if is_qualifier {
+            return self.format_unimplemented(node);
+        }
         if let Some(precision) = precision {
             parts.push(f.parenthesized(self.reg(precision)));
         }
@@ -1342,14 +1398,24 @@ impl<'a> Formatter<'a> {
 
     fn format_column_def(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, type_node, options, constraints] = attrs!(self.children(node), [K::SQL_COLUMN_DEF_NAME, K::SQL_COLUMN_DEF_TYPE, K::SQL_COLUMN_DEF_OPTIONS, K::SQL_COLUMN_DEF_CONSTRAINTS],
-        );
+        #[rustfmt::skip]
+        let [name, type_node, options, constraints, collate] = attrs!(self.children(node), [
+            K::SQL_COLUMN_DEF_NAME,
+            K::SQL_COLUMN_DEF_TYPE,
+            K::SQL_COLUMN_DEF_OPTIONS,
+            K::SQL_COLUMN_DEF_CONSTRAINTS,
+            K::SQL_COLUMN_DEF_COLLATE,
+        ]);
         let (Some(name), Some(type_node)) = (name, type_node) else { return self.format_unimplemented(node) };
 
         let mut parts = Vec::with_capacity(6);
         parts.push(self.reg_or_placeholder(name));
         parts.push(f.text(" "));
         parts.push(self.reg_or_placeholder(type_node));
+        if let Some(collate) = collate {
+            parts.push(f.text(" collate "));
+            parts.push(self.reg_or_placeholder(collate));
+        }
 
         if let Some(options) = options {
             if options.node_type() != NodeType::ARRAY {
@@ -1761,6 +1827,13 @@ impl<'a> Formatter<'a> {
                     [K::SQL_FUNCTION_POSITION_SEARCH, K::SQL_FUNCTION_POSITION_INPUT],
                     " in ",
                 )
+            } else if let Some(treat_args) = treat_args {
+                self.format_special_call(
+                    name_reg,
+                    treat_args,
+                    [K::SQL_FUNCTION_TREAT_VALUE, K::SQL_FUNCTION_TREAT_TYPE],
+                    " as ",
+                )
             } else if let Some(substring_args) = substring_args {
                 self.format_substring_args(name_reg, substring_args)
             } else if let Some(trim_args) = trim_args {
@@ -1850,6 +1923,9 @@ impl<'a> Formatter<'a> {
             let over_reg = self.reg(over);
             result = if over_reg == 0 {
                 f.concat(&[result, f.text(" over ()")])
+            } else if over.node_type() == NodeType::NAME {
+                // A reference to a named window, `over w`
+                f.concat(&[result, f.text(" over "), over_reg])
             } else {
                 f.concat(&[result, f.text(" over "), f.parenthesized(over_reg)])
             };
@@ -1862,11 +1938,19 @@ impl<'a> Formatter<'a> {
         let [sub_input, sub_from, sub_for] = attrs!(self.children(args), [K::SQL_FUNCTION_SUBSTRING_INPUT, K::SQL_FUNCTION_SUBSTRING_FROM, K::SQL_FUNCTION_SUBSTRING_FOR],
         );
         let input_reg = self.reg(sub_input?);
-        let from_reg = self.reg(sub_from?);
-        if input_reg == 0 || from_reg == 0 {
+        if input_reg == 0 {
             return None;
         }
-        let mut parts = vec![input_reg, f.text(" from "), from_reg];
+        // `substring(x from 2)`, `substring(x for 3)` or both
+        let mut parts = vec![input_reg];
+        if let Some(sub_from) = sub_from {
+            let from_reg = self.reg(sub_from);
+            if from_reg == 0 {
+                return None;
+            }
+            parts.push(f.text(" from "));
+            parts.push(from_reg);
+        }
         if let Some(sub_for) = sub_for {
             let for_reg = self.reg(sub_for);
             if for_reg == 0 {
@@ -1874,6 +1958,8 @@ impl<'a> Formatter<'a> {
             }
             parts.push(f.text(" for "));
             parts.push(for_reg);
+        } else if sub_from.is_none() {
+            return None;
         }
         Some(f.concat(&[name_reg, f.parenthesized(f.concat(&parts))]))
     }
@@ -2152,6 +2238,135 @@ impl<'a> Formatter<'a> {
         self.format_keyword_call(node, K::SQL_EXISTS_EXPRESSION_STATEMENT, "exists ")
     }
 
+    /// `OPERATOR(schema.op)`, the elements are the qualifying names and the operator
+    fn format_operator_path(&self, node: &'a Node) -> FmtReg {
+        let f = &self.fmt;
+        let parts = self.array_regs(node);
+        if parts.is_empty() || parts.iter().any(|&p| p == 0) {
+            return self.format_unimplemented(node);
+        }
+        let joined = f.join(&parts, f.text("."), f.text("."), None, false);
+        f.concat(&[f.text("operator"), f.parenthesized(joined)])
+    }
+
+    /// `a = any (select ...)`
+    fn format_subquery_expression(&self, node: &'a Node) -> FmtReg {
+        let f = &self.fmt;
+        #[rustfmt::skip]
+        let [arg0, arg1, operator, quantifier] = attrs!(self.children(node), [
+            K::SQL_SUBQUERY_ARG0, K::SQL_SUBQUERY_ARG1, K::SQL_SUBQUERY_OPERATOR, K::SQL_SUBQUERY_QUANTIFIER,
+        ]);
+        let (Some(arg0), Some(arg1), Some(operator), Some(quantifier)) = (arg0, arg1, operator, quantifier) else {
+            return self.format_unimplemented(node);
+        };
+        let (arg0_reg, arg1_reg, op_reg) = (self.reg(arg0), self.reg(arg1), self.reg(operator));
+        if arg0_reg == 0 || arg1_reg == 0 || op_reg == 0 {
+            return self.format_unimplemented(node);
+        }
+        // The right hand side is either a subquery, which parenthesizes itself, or an expression
+        let arg1_reg =
+            if arg1.node_type() == NodeType::OBJECT_SQL_SELECT_EXPRESSION { arg1_reg } else { f.parenthesized(arg1_reg) };
+        f.concat(&[arg0_reg, f.text(" "), op_reg, f.text(" "), self.reg(quantifier), f.text(" "), arg1_reg])
+    }
+
+    fn format_subquery_quantifier(&self, node: &'a Node) -> FmtReg {
+        let text = match SubqueryQuantifier(value_u8(node)) {
+            SubqueryQuantifier::ANY => "any",
+            SubqueryQuantifier::SOME => "some",
+            SubqueryQuantifier::ALL => "all",
+            _ => return self.format_unimplemented(node),
+        };
+        self.fmt.text(text)
+    }
+
+    /// `[value]` or `[lower:upper]`, a missing bound of a slice stays empty
+    fn format_indirection_index(&self, node: &'a Node) -> FmtReg {
+        let f = &self.fmt;
+        let [value, lower, upper] = attrs!(self.children(node), [
+            K::SQL_INDIRECTION_INDEX_VALUE,
+            K::SQL_INDIRECTION_INDEX_LOWER_BOUND,
+            K::SQL_INDIRECTION_INDEX_UPPER_BOUND,
+        ]);
+        let reg_of = |bound: Option<&'a Node>| bound.map_or(f.empty(), |b| self.reg(b));
+        if let Some(value) = value {
+            return f.concat(&[f.text("["), self.reg(value), f.text("]")]);
+        }
+        f.concat(&[f.text("["), reg_of(lower), f.text(":"), reg_of(upper), f.text("]")])
+    }
+
+    /// The elements of a path after a value: `.field` and `[index]`
+    fn format_indirection_path(&self, node: &'a Node) -> FmtReg {
+        let f = &self.fmt;
+        let mut parts = Vec::with_capacity(node.children_count() as usize * 2);
+        for element in self.children(node) {
+            let reg = self.reg(element);
+            match element.node_type() {
+                NodeType::NAME if reg != 0 => {
+                    parts.push(f.text("."));
+                    parts.push(reg);
+                }
+                NodeType::OBJECT_SQL_INDIRECTION_INDEX if reg != 0 => parts.push(reg),
+                _ => return self.format_unimplemented(node),
+            }
+        }
+        f.concat(&parts)
+    }
+
+    /// `a is [not] of (type, ...)`
+    fn format_typetest_expression(&self, node: &'a Node) -> FmtReg {
+        let f = &self.fmt;
+        let [negate, value, types] =
+            attrs!(self.children(node), [K::SQL_TYPETEST_NEGATE, K::SQL_TYPETEST_VALUE, K::SQL_TYPETEST_TYPES]);
+        let (Some(value), Some(types)) = (value, types) else { return self.format_unimplemented(node) };
+        let (value_reg, types_reg) = (self.reg(value), self.reg(types));
+        if value_reg == 0 || types_reg == 0 {
+            return self.format_unimplemented(node);
+        }
+        let keyword = if is_true(negate) { " is not of " } else { " is of " };
+        f.concat(&[value_reg, f.text(keyword), f.parenthesized(types_reg)])
+    }
+
+    /// `f(...) [as (column definitions)]` of `rows from (...)`
+    fn format_rows_from_item(&self, node: &'a Node) -> FmtReg {
+        let f = &self.fmt;
+        let [function, columns] = attrs!(self.children(node), [K::SQL_ROWSFROM_ITEM_FUNCTION, K::SQL_ROWSFROM_ITEM_COLUMNS]);
+        let Some(function) = function else { return self.format_unimplemented(node) };
+        let function_reg = self.reg(function);
+        if function_reg == 0 {
+            return self.format_unimplemented(node);
+        }
+        match columns.filter(|c| c.node_type() == NodeType::ARRAY) {
+            Some(columns) => f.concat(&[function_reg, f.text(" as "), f.parenthesized(self.reg(columns))]),
+            None => function_reg,
+        }
+    }
+
+    /// `bit [varying] [(length)]`
+    fn format_bit_type(&self, node: &'a Node) -> FmtReg {
+        let f = &self.fmt;
+        let [varying, length] = attrs!(self.children(node), [K::SQL_BIT_TYPE_VARYING, K::SQL_BIT_TYPE_LENGTH]);
+        let mut parts = vec![f.text(if is_true(varying) { "bit varying" } else { "bit" })];
+        if let Some(length) = length {
+            parts.push(f.parenthesized(self.reg(length)));
+        }
+        f.concat(&parts)
+    }
+
+    /// `key = value` of a definition list
+    fn format_definition_arg(&self, node: &'a Node) -> FmtReg {
+        let f = &self.fmt;
+        let [key, value] = attrs!(self.children(node), [K::SQL_DEFINITION_ARG_KEY, K::SQL_DEFINITION_ARG_VALUE]);
+        let Some(key) = key else { return self.format_unimplemented(node) };
+        let value_reg = match value {
+            Some(value) => self.reg(value),
+            None => f.text("none"),
+        };
+        if value_reg == 0 {
+            return self.format_unimplemented(node);
+        }
+        f.concat(&[self.reg(key), f.text(" = "), value_reg])
+    }
+
     fn format_cte(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [name, columns, statement, graph, secure, options] = attrs!(self.children(node), [
@@ -2267,10 +2482,11 @@ impl<'a> Formatter<'a> {
         let [statement, indirection] =
             attrs!(self.children(node), [K::SQL_SELECT_EXPRESSION_STATEMENT, K::SQL_SELECT_EXPRESSION_INDIRECTION]);
         let Some(statement) = statement else { return self.format_unimplemented(node) };
-        if indirection.is_some_and(|i| i.node_type() == NodeType::ARRAY && i.children_count() > 0) {
-            return self.format_unimplemented(node);
+        let subquery = self.fmt.parenthesized(self.reg(statement));
+        match indirection.filter(|i| i.node_type() == NodeType::ARRAY && i.children_count() > 0) {
+            Some(indirection) => self.fmt.concat(&[subquery, self.reg(indirection)]),
+            None => subquery,
         }
-        self.fmt.parenthesized(self.reg(statement))
     }
 
     /// Is a DEFAULT expression a value of an INSERT ... VALUES?
@@ -2313,8 +2529,10 @@ impl<'a> Formatter<'a> {
             }
         }
         let (Some(op_node), Some(args_node)) = (op_node, args_node) else { return self.format_unimplemented(node) };
-        if (op_node.node_type() != NodeType::ENUM_SQL_EXPRESSION_OPERATOR && op_node.node_type() != NodeType::OPERATOR)
-            || args_node.node_type() != NodeType::ARRAY
+        if !matches!(
+            op_node.node_type(),
+            NodeType::ENUM_SQL_EXPRESSION_OPERATOR | NodeType::OPERATOR | NodeType::ARRAY
+        ) || args_node.node_type() != NodeType::ARRAY
             || args_node.children_count() == 0
         {
             return self.format_unimplemented(node);
@@ -2464,6 +2682,13 @@ impl<'a> Formatter<'a> {
             NodeType::OBJECT_SQL_CASE => self.format_case(node),
             NodeType::OBJECT_SQL_CASE_CLAUSE => self.format_case_clause(node),
             NodeType::OBJECT_SQL_EXISTS_EXPRESSION => self.format_exists_expression(node),
+            NodeType::OBJECT_SQL_SUBQUERY_EXPRESSION => self.format_subquery_expression(node),
+            NodeType::ENUM_SQL_SUBQUERY_QUANTIFIER => self.format_subquery_quantifier(node),
+            NodeType::OBJECT_SQL_INDIRECTION_INDEX => self.format_indirection_index(node),
+            NodeType::OBJECT_SQL_TYPETEST_EXPRESSION => self.format_typetest_expression(node),
+            NodeType::OBJECT_SQL_ROWSFROM_ITEM => self.format_rows_from_item(node),
+            NodeType::OBJECT_SQL_BIT_TYPE => self.format_bit_type(node),
+            NodeType::OBJECT_SQL_DEF_ARG => self.format_definition_arg(node),
             NodeType::OBJECT_SQL_CTE => self.format_cte(node),
             NodeType::OBJECT_SQL_PROPERTY_GRAPH => self.format_property_graph(node),
             NodeType::OBJECT_SQL_GRAPH_ELEMENT_TABLE => self.format_graph_element_table(node),
@@ -2552,9 +2777,77 @@ impl<'a> Formatter<'a> {
         self.fmt.render(reg, &self.render_options())
     }
 
+    /// The parts of the script in text order.
+    ///
+    /// The parser recovers from syntax errors by dropping the broken statement or by keeping a partial one.
+    /// Formatting these would silently remove or truncate what the user wrote, so every statement (the text up
+    /// to the next semicolon) with a scanner or parser error is copied as written.
+    fn output_parts(&self) -> Vec<OutputPart> {
+        use dashql_parser::symbol_kind::{S_SEMICOLON, S_YYEOF};
+        let symbols = &self.scanned.symbols;
+        let statements = &self.parsed.statements;
+        let mut parts = Vec::with_capacity(statements.len());
+
+        // The symbol index ranges of the statements, each ends with a semicolon
+        let mut chunks: Vec<(usize, usize)> = Vec::new();
+        let mut begin = 0;
+        for (i, symbol) in symbols.iter().enumerate() {
+            if symbol.kind == S_SEMICOLON || symbol.kind == S_YYEOF {
+                if i > begin || symbol.kind == S_SEMICOLON {
+                    chunks.push((begin, if symbol.kind == S_SEMICOLON { i + 1 } else { i }));
+                }
+                begin = i + 1;
+            }
+        }
+        let chunk_of_symbol = |symbol: usize| chunks.iter().position(|&(b, e)| symbol >= b && symbol < e);
+        let mut damaged = vec![false; chunks.len()];
+        for error in &self.parsed.errors {
+            let symbol = (error.location.offset() as usize).min(symbols.len().saturating_sub(1));
+            if let Some(chunk) = chunk_of_symbol(symbol).or(chunks.len().checked_sub(1)) {
+                damaged[chunk] = true;
+            }
+        }
+        for error in &self.scanned.errors {
+            let offset = error.location.offset;
+            let symbol = symbols.partition_point(|s| s.location.end() <= offset);
+            if let Some(chunk) = chunk_of_symbol(symbol).or(chunks.len().checked_sub(1)) {
+                damaged[chunk] = true;
+            }
+        }
+
+        let mut next_statement = 0;
+        for (chunk, &(begin, end)) in chunks.iter().enumerate() {
+            let chunk_symbols = &symbols[begin..end];
+            let begin_offset = chunk_symbols.first().map_or(0, |s| s.location.offset);
+            // The last statement may end in text that the scanner dropped, like an unterminated string
+            let end_offset = match chunk_symbols.last() {
+                Some(last) if last.kind == S_SEMICOLON => last.location.end(),
+                _ => self.scanned.text.trim_end().len() as u32,
+            };
+            let mut in_chunk = Vec::new();
+            while next_statement < statements.len() {
+                let root = self.ast[statements[next_statement].root as usize];
+                let root_offset = resolve_text_span(&self.scanned.text, symbols, *root.symbol_span()).offset;
+                if root_offset >= end_offset {
+                    break;
+                }
+                in_chunk.push(next_statement);
+                next_statement += 1;
+            }
+            let only_separator = chunk_symbols.len() == 1 && chunk_symbols[0].kind == S_SEMICOLON;
+            if !damaged[chunk] && (!in_chunk.is_empty() || only_separator) {
+                parts.extend(in_chunk.into_iter().map(OutputPart::Statement));
+            } else if !only_separator {
+                parts.push(OutputPart::Damaged(TextSpan::new(begin_offset, end_offset - begin_offset)));
+            }
+        }
+        parts
+    }
+
     fn write_output(&self) -> Vec<u8> {
         let options = self.render_options();
         let statements = &self.parsed.statements;
+        let parts = self.output_parts();
         let mut output: Vec<u8> = Vec::with_capacity(self.estimate_formatted_size());
 
         if self.config.debug_mode {
@@ -2564,20 +2857,29 @@ impl<'a> Formatter<'a> {
             );
         }
 
+        let input = self.scanned.text.as_bytes();
+        let damaged_text = |span: &TextSpan| &input[span.offset as usize..span.end() as usize];
+        if parts.iter().any(|p| matches!(p, OutputPart::Damaged(_))) {
+            self.copied_damaged_text.set(true);
+        }
+
         if self.config.mode == FormattingMode::INLINE {
-            for (i, statement) in statements.iter().enumerate() {
-                output.extend_from_slice(
-                    self.fmt.render(self.node_states[statement.root as usize].reg, &options).as_bytes(),
-                );
-                output.push(b';');
-                if i + 1 < statements.len() {
+            for (i, part) in parts.iter().enumerate() {
+                match part {
+                    OutputPart::Statement(statement) => {
+                        let root = statements[*statement].root as usize;
+                        output.extend_from_slice(self.fmt.render(self.node_states[root].reg, &options).as_bytes());
+                        output.push(b';');
+                    }
+                    OutputPart::Damaged(span) => output.extend_from_slice(damaged_text(span)),
+                }
+                if i + 1 < parts.len() {
                     output.extend_from_slice(b"\n\n");
                 }
             }
             return output;
         }
 
-        let input = self.scanned.text.as_bytes();
         let comments = &self.scanned.comments[..];
         let max_width = self.config.max_width as usize;
         let descriptions = self.parsed.associate_descriptions();
@@ -2587,17 +2889,38 @@ impl<'a> Formatter<'a> {
             }
         };
         let mut comment_begin = 0;
-        for (i, statement) in statements.iter().enumerate() {
+        for (i, part) in parts.iter().enumerate() {
             if i > 0 {
                 ensure_line_break(&mut output);
                 output.push(b'\n');
             }
-            let description = &descriptions[i];
-            let root_span = resolve_text_span(
-                &self.scanned.text,
-                &self.scanned.symbols,
-                *self.ast[statement.root as usize].symbol_span(),
-            );
+            let statement = match part {
+                OutputPart::Statement(statement) => *statement,
+                OutputPart::Damaged(span) => {
+                    // Comments inside the damaged text are part of it
+                    let mut before_end = comment_begin;
+                    while before_end < comments.len() && comments[before_end].offset < span.offset {
+                        before_end += 1;
+                    }
+                    comments::append_comments(
+                        &mut output,
+                        input,
+                        &comments[comment_begin..before_end],
+                        max_width,
+                        Some(span.offset as usize),
+                    );
+                    ensure_line_break(&mut output);
+                    output.extend_from_slice(damaged_text(span));
+                    comment_begin = before_end;
+                    while comment_begin < comments.len() && comments[comment_begin].offset < span.end() {
+                        comment_begin += 1;
+                    }
+                    continue;
+                }
+            };
+            let root = statements[statement].root as usize;
+            let description = &descriptions[statement];
+            let root_span = resolve_text_span(&self.scanned.text, &self.scanned.symbols, *self.ast[root].symbol_span());
             let mut before_end = comment_begin;
             while before_end < comments.len() && comments[before_end].offset < root_span.offset {
                 before_end += 1;
@@ -2630,8 +2953,7 @@ impl<'a> Formatter<'a> {
             }
 
             ensure_line_break(&mut output);
-            output
-                .extend_from_slice(self.fmt.render(self.node_states[statement.root as usize].reg, &options).as_bytes());
+            output.extend_from_slice(self.fmt.render(self.node_states[root].reg, &options).as_bytes());
             output.push(b';');
 
             let statement_end = description.source_span.end() as usize;
@@ -2687,6 +3009,18 @@ mod tests {
     fn adds_parentheses_by_precedence() {
         let (out, _) = format("select (1 + 2) * 3, 1 + 2 * 3, (a or b) and c", FormattingMode::INLINE, 120);
         assert_eq!(out, "select (1 + 2) * 3, 1 + 2 * 3, (a or b) and c;");
+    }
+
+    #[test]
+    fn copies_statements_with_syntax_errors() {
+        let (out, unformattable) = format("select  1; selec  1; select  2", FormattingMode::INLINE, 120);
+        assert_eq!(out, "select 1;\n\nselec  1;\n\nselect 2;");
+        assert!(unformattable.is_empty());
+        // Comments inside the copied text stay, the comments around it are formatted
+        let (out, _) = format("-- a\nselect from /* b */ from;\n-- c\nselect  2", FormattingMode::COMPACT, 120);
+        assert_eq!(out, "-- a\nselect from /* b */ from;\n\n-- c\nselect 2;");
+        // A script that is nothing but an error is copied
+        assert_eq!(format("select from where", FormattingMode::PRETTY, 120).0, "select from where");
     }
 
     #[test]

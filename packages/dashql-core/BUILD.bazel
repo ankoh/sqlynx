@@ -90,6 +90,22 @@ rust_test(
     ],
 )
 
+# Formats every script of the parser snapshots without syntax errors: the formatter must be able to represent every
+# node and its output must parse again.
+rust_test(
+    name = "formatter_roundtrip_test",
+    size = "small",
+    srcs = ["tests/formatter_roundtrip.rs"],
+    data = ["//snapshots/parser:files"],
+    edition = "2021",
+    deps = [
+        ":dashql_core",
+        "//packages/dashql-parser:dashql_parser",
+        "//packages/dashql-snapshots:dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+    ],
+)
+
 # The FlatBuffers bindings (//proto/fb:dashql_buffers_rs) must agree with the enum invariants the core relies on.
 rust_test(
     name = "dashql_buffers_test",

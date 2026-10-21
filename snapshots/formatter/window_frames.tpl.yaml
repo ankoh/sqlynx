@@ -69,3 +69,33 @@ formatter-snapshots:
         validation:
           setup: |-
             create table t(a int, b int);
+
+  # GROUPS frames
+  - name: window_groups_frame
+    input: select sum(a) over (order by a groups between 1 preceding and current row), sum(a) over (order by a groups unbounded preceding) from t
+    dialects:
+      hyper:
+
+  # A reference to a window is not the same text as a parenthesized one
+  - name: window_reference_forms
+    input: select sum(a) over (w), sum(a) over (w order by b) from t window w as (partition by b)
+    dialects:
+      hyper:
+
+  # An empty window definition
+  - name: window_empty_definition
+    input: select sum(a) over w from t window w as ()
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  # A reference to a named window
+  - name: window_reference_name
+    input: select sum(a) over w from t window w as (partition by b)
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);

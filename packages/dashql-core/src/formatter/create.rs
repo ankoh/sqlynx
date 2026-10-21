@@ -160,7 +160,8 @@ impl<'a> Formatter<'a> {
         let (Some(name), Some(returns)) = (name, returns) else { return self.format_unimplemented(node) };
         let kind = if aggregate.is_some() { "create aggregate " } else { "create function " };
         let params_reg = params.map(|p| self.reg(p)).unwrap_or(0);
-        f.concat(&[f.text(kind), self.reg(name), f.parenthesized(params_reg), f.text(" returns "), self.reg(returns)])
+        let params_reg = if params_reg == 0 { f.text("()") } else { f.parenthesized(params_reg) };
+        f.concat(&[f.text(kind), self.reg(name), params_reg, f.text(" returns "), self.reg(returns)])
     }
 
     pub(super) fn format_drop(&self, node: &'a Node, table: bool) -> FmtReg {

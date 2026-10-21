@@ -1303,3 +1303,77 @@ formatter-snapshots:
                   height => 2
                 )
               );
+
+  - name: vis_empty_specs
+    input: |-
+      select * from t visualize using vegalite ()
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t visualize using vegalite ();
+          - mode: compact
+            expected: |-
+              select * from t
+              visualize using vegalite ();
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              visualize using vegalite ();
+
+  - name: vis_empty_renderer_specs
+    input: |-
+      select * from t visualize using umap ()
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t visualize using umap ();
+          - mode: compact
+            expected: |-
+              select * from t
+              visualize using umap ();
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              visualize using umap ();
+
+  - name: vis_empty_nested
+    input: |-
+      select * from t visualize using vegalite (layer => [(), (mark => point)], encoding => (detail => [], x => (field => x, scale => ())))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t visualize using vegalite (layer => [(), (mark => point)], encoding => (detail => [], x => (field => x, scale => ())));
+          - mode: compact
+            expected: |-
+              select * from t
+              visualize using vegalite (
+                layer => [(),
+                (
+                  mark => point
+                )], encoding => (detail => [], x => (field => x, scale => ()))
+              );
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              visualize using vegalite (
+                layer => [(),
+                (
+                  mark => point
+                )],
+                encoding => (
+                  detail => [],
+                  x => (
+                    field => x,
+                    scale => ()
+                  )
+                )
+              );

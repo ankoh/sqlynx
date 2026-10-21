@@ -1,0 +1,192 @@
+formatter-snapshots:
+
+  - name: syntax_error_between_statements
+    input: |-
+      select  1;
+      selec 1;
+      select   2
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+
+              selec 1;
+
+              select 2;
+          - mode: compact
+            expected: |-
+              select 1;
+
+              selec 1;
+
+              select 2;
+          - mode: pretty
+            expected: |-
+              select 1;
+
+              selec 1;
+
+              select 2;
+
+  - name: syntax_error_all_broken
+    input: |-
+      select from from;
+      selec
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select from from;
+
+              selec
+          - mode: compact
+            expected: |-
+              select from from;
+
+              selec
+          - mode: pretty
+            expected: |-
+              select from from;
+
+              selec
+
+  - name: syntax_error_only
+    input: |-
+      select * from where
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from where
+          - mode: compact
+            expected: |-
+              select * from where
+          - mode: pretty
+            expected: |-
+              select * from where
+
+  - name: syntax_error_unterminated_string
+    input: |-
+      select 1; select 'unterminated; select 3
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+
+              select 'unterminated; select 3
+          - mode: compact
+            expected: |-
+              select 1;
+
+              select 'unterminated; select 3
+          - mode: pretty
+            expected: |-
+              select 1;
+
+              select 'unterminated; select 3
+
+  - name: syntax_error_partial_parse
+    input: |-
+      select * from t where a = any (array[1]); select  2
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t where a = any (array[1]);
+
+              select 2;
+          - mode: compact
+            expected: |-
+              select * from t where a = any (array[1]);
+
+              select 2;
+          - mode: pretty
+            expected: |-
+              select * from t where a = any (array[1]);
+
+              select 2;
+
+  - name: syntax_error_comments
+    input: |-
+      -- first
+      select  1; -- one
+      -- broken one
+      select from from /* inner */ where; -- broken
+      /* second */ select   2
+      ;
+      select 3 +
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+
+              select from from /* inner */ where;
+
+              select 2;
+
+              select 3 +
+          - mode: compact
+            expected: |-
+              -- first
+              select 1;
+              -- one
+
+              -- broken one
+              select from from /* inner */ where;
+
+              -- broken
+              /* second */
+              select 2;
+
+              select 3 +
+          - mode: pretty
+            expected: |-
+              -- first
+              select 1;
+              -- one
+
+              -- broken one
+              select from from /* inner */ where;
+
+              -- broken
+              /* second */
+              select 2;
+
+              select 3 +
+
+  - name: syntax_error_empty_statements
+    input: |-
+      select 1;;select from;;select 2
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+
+              select from;
+
+              select 2;
+          - mode: compact
+            expected: |-
+              select 1;
+
+              select from;
+
+              select 2;
+          - mode: pretty
+            expected: |-
+              select 1;
+
+              select from;
+
+              select 2;

@@ -61,16 +61,16 @@ formatter-snapshots:
         formatted:
           - mode: inline
             expected: |-
-              select sum(value) over (first_window) from source window first_window as (partition by category rows between 1 preceding and current row), second_window as (partition by region);
+              select sum(value) over first_window from source window first_window as (partition by category rows between 1 preceding and current row), second_window as (partition by region);
           - mode: compact
             expected: |-
-              select sum(value) over (first_window)
+              select sum(value) over first_window
               from source
               window first_window as (partition by category rows between 1 preceding and current row),
                 second_window as (partition by region);
           - mode: pretty
             expected: |-
-              select sum(value) over (first_window)
+              select sum(value) over first_window
               from source
               window first_window as (partition by category rows between 1 preceding and current row),
                 second_window as (partition by region);
@@ -245,14 +245,14 @@ formatter-snapshots:
         formatted:
           - mode: inline
             expected: |-
-              select * from source tablesample reservoir(20%);
+              select * from source tablesample reservoir(20 percent);
           - mode: compact
             expected: |-
-              select * from source tablesample reservoir(20%);
+              select * from source tablesample reservoir(20 percent);
           - mode: pretty
             expected: |-
               select *
-              from source tablesample reservoir(20%);
+              from source tablesample reservoir(20 percent);
 
   - name: coverage_limit_all
     input: |-

@@ -883,13 +883,13 @@ formatter-snapshots:
         formatted:
           - mode: inline
             expected: |-
-              select a between 1 and 10;
+              select a between symmetric 1 and 10;
           - mode: compact
             expected: |-
-              select a between 1 and 10;
+              select a between symmetric 1 and 10;
           - mode: pretty
             expected: |-
-              select a between 1 and 10;
+              select a between symmetric 1 and 10;
 
   - name: expr_not_between_symmetric
     input: |-
@@ -899,13 +899,13 @@ formatter-snapshots:
         formatted:
           - mode: inline
             expected: |-
-              select a not between 1 and 10;
+              select a not between symmetric 1 and 10;
           - mode: compact
             expected: |-
-              select a not between 1 and 10;
+              select a not between symmetric 1 and 10;
           - mode: pretty
             expected: |-
-              select a not between 1 and 10;
+              select a not between symmetric 1 and 10;
 
   - name: expr_in_list
     input: |-

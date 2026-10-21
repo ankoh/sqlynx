@@ -275,8 +275,9 @@ impl<'a> Formatter<'a> {
             }
             parts.push(f.concat(&[f.verbatim(key_text), f.text(" => "), value_reg]));
         }
+        // An empty spec or property list is still a value, dropping it would change what the script says
         if parts.is_empty() {
-            return f.empty();
+            return f.text("()");
         }
 
         let eager_break = self.config.mode == FormattingMode::PRETTY;

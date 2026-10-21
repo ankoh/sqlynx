@@ -4,6 +4,15 @@ use dashql_parser::attrs;
 use super::{is_true, FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::parser::{Node, NodeType};
 
+/// Binding strength of `A | B`
+const GRAPH_LABEL_DISJUNCTION: u8 = 1;
+/// Binding strength of `A & B`
+const GRAPH_LABEL_CONJUNCTION: u8 = 2;
+/// Binding strength of `!A`
+const GRAPH_LABEL_NEGATION: u8 = 3;
+/// Binding strength of a label or the wildcard
+const GRAPH_LABEL_ATOM: u8 = 4;
+
 impl<'a> Formatter<'a> {
     pub(super) fn format_property_graph(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
@@ -245,15 +254,50 @@ impl<'a> Formatter<'a> {
         if is_true(wildcard) {
             return f.text("%");
         }
+        // The operand of an operator needs parentheses if it binds weaker (or equally strong on the right)
+        let operand = |node: &'a Node, level: u8, is_right: bool| {
+            let operand_level = self.graph_label_expression_level(node);
+            let reg = self.reg(node);
+            if operand_level < level || (is_right && operand_level == level) {
+                f.parenthesized(reg)
+            } else {
+                reg
+            }
+        };
         if is_true(negated) {
             return match left {
-                Some(left) => f.concat(&[f.text("!"), self.reg(left)]),
+                Some(left) => f.concat(&[f.text("!"), operand(left, GRAPH_LABEL_NEGATION, false)]),
                 None => self.format_unimplemented(node),
             };
         }
         let (Some(left), Some(right)) = (left, right) else { return self.format_unimplemented(node) };
-        let op = if is_true(disjunction) { f.text(" | ") } else { f.text(" & ") };
-        f.concat(&[self.reg(left), op, self.reg(right)])
+        let (op, level) = if is_true(disjunction) {
+            (f.text(" | "), GRAPH_LABEL_DISJUNCTION)
+        } else {
+            (f.text(" & "), GRAPH_LABEL_CONJUNCTION)
+        };
+        f.concat(&[operand(left, level, false), op, operand(right, level, true)])
+    }
+
+    /// How strong a label expression binds, atoms bind strongest
+    fn graph_label_expression_level(&self, node: &Node) -> u8 {
+        if node.node_type() != NodeType::OBJECT_SQL_GRAPH_LABEL_EXPRESSION {
+            return GRAPH_LABEL_ATOM;
+        }
+        let [negated, disjunction, right] = attrs!(self.children(node), [
+            K::SQL_GRAPH_LABEL_EXPRESSION_NEGATED,
+            K::SQL_GRAPH_LABEL_EXPRESSION_DISJUNCTION,
+            K::SQL_GRAPH_LABEL_EXPRESSION_RIGHT,
+        ]);
+        if is_true(negated) {
+            GRAPH_LABEL_NEGATION
+        } else if right.is_none() {
+            GRAPH_LABEL_ATOM
+        } else if is_true(disjunction) {
+            GRAPH_LABEL_DISJUNCTION
+        } else {
+            GRAPH_LABEL_CONJUNCTION
+        }
     }
 
     pub(super) fn format_graph_rows(&self, node: &'a Node) -> FmtReg {

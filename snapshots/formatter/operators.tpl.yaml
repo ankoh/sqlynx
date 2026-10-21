@@ -76,3 +76,48 @@ formatter-snapshots:
     input: select row(1, 2), (a, b) from t
     dialects:
       hyper:
+
+  # BETWEEN is asymmetric unless SYMMETRIC is given
+  - name: operator_between_symmetric
+    input: select a between 1 and 2, a between asymmetric 1 and 2, a between symmetric 1 and 2, a not between symmetric 1 and 2, a not between asymmetric 1 and 2 from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  # Quantified comparisons with a subquery
+  - name: operator_subquery_quantifiers
+    input: select * from t where a < all (select 1) and a = any (select 1) and a <> some (select 1)
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  # Quantified LIKE and a qualified operator
+  - name: operator_subquery_like
+    input: select * from t where a::text like any (select 'x') and a operator(pg_catalog.=) any (select 1)
+    dialects:
+      hyper:
+
+  # An expression as the right side of a quantified comparison
+  - name: operator_quantified_expression
+    input: select * from t where a = any (b)
+    dialects:
+      hyper:
+
+  # A schema qualified operator in an expression
+  - name: operator_qualified
+    input: select 1 operator(pg_catalog.+) 2, a operator(pg_catalog.-) b from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  # Type tests
+  - name: operator_type_test
+    input: select a is of (int, text), a is not of (int) from t
+    dialects:
+      hyper:

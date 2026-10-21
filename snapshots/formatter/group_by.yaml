@@ -122,13 +122,10 @@ formatter-snapshots:
         formatted:
           - mode: inline
             expected: |-
-              select * from "Region" where "r_Name" = 'EUROPE' group by ;
+              select * from "Region" where "r_Name" = 'EUROPE' group by
           - mode: compact
             expected: |-
-              select * from "Region" where "r_Name" = 'EUROPE' group by ;
+              select * from "Region" where "r_Name" = 'EUROPE' group by
           - mode: pretty
             expected: |-
-              select *
-              from "Region"
-              where "r_Name" = 'EUROPE'
-              group by ;
+              select * from "Region" where "r_Name" = 'EUROPE' group by

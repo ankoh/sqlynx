@@ -195,14 +195,14 @@ formatter-snapshots:
         formatted:
           - mode: inline
             expected: |-
-              select * from t tablesample bernoulli(10%);
+              select * from t tablesample bernoulli(10 percent);
           - mode: compact
             expected: |-
-              select * from t tablesample bernoulli(10%);
+              select * from t tablesample bernoulli(10 percent);
           - mode: pretty
             expected: |-
               select *
-              from t tablesample bernoulli(10%);
+              from t tablesample bernoulli(10 percent);
 
   - name: sample_system_rows
     input: |-
@@ -229,14 +229,14 @@ formatter-snapshots:
         formatted:
           - mode: inline
             expected: |-
-              select * from t tablesample bernoulli(10%) repeatable (5);
+              select * from t tablesample bernoulli(10 percent) repeatable (5);
           - mode: compact
             expected: |-
-              select * from t tablesample bernoulli(10%) repeatable (5);
+              select * from t tablesample bernoulli(10 percent) repeatable (5);
           - mode: pretty
             expected: |-
               select *
-              from t tablesample bernoulli(10%) repeatable (5);
+              from t tablesample bernoulli(10 percent) repeatable (5);
 
   - name: select_values_rows
     input: |-
@@ -286,3 +286,137 @@ formatter-snapshots:
         validation:
           setup: |-
             create table t(a int);
+
+  - name: select_set_operation_parentheses
+    input: |-
+      select 1 union (select 2 union select 3)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1 union (select 2 union select 3);
+          - mode: compact
+            expected: |-
+              select 1 union (select 2 union select 3);
+          - mode: pretty
+            expected: |-
+              select 1 union (select 2 union select 3);
+
+  - name: select_set_operation_precedence
+    input: |-
+      (select 1 union select 2) intersect select 3
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              (select 1 union select 2) intersect select 3;
+          - mode: compact
+            expected: |-
+              (select 1 union select 2) intersect select 3;
+          - mode: pretty
+            expected: |-
+              (select 1 union select 2) intersect select 3;
+
+  - name: select_set_operation_chain
+    input: |-
+      (select 1 except select 2) except select 3 union (select 4 intersect select 5) union select 6 intersect select 7
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1 except select 2 except select 3 union select 4 intersect select 5 union select 6 intersect select 7;
+          - mode: compact
+            expected: |-
+              select 1 except select 2 except select 3 union select 4 intersect select 5 union select 6 intersect select 7;
+          - mode: pretty
+            expected: |-
+              select 1 except select 2 except select 3 union select 4 intersect select 5 union select 6 intersect select 7;
+
+  - name: select_set_operation_order_limit
+    input: |-
+      (select 1) union (select 2) order by 1 limit 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1 union select 2 order by 1 limit 1;
+          - mode: compact
+            expected: |-
+              select 1 union select 2 order by 1 limit 1;
+          - mode: pretty
+            expected: |-
+              select 1 union select 2
+              order by 1
+              limit 1;
+
+  - name: select_set_operation_operand_clauses
+    input: |-
+      with x as (select 1) (select * from x order by 1 limit 1) union all select 2 order by 1 offset 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              with x as (select 1) (select * from x order by 1 limit 1) union all select 2 order by 1 offset 1;
+          - mode: compact
+            expected: |-
+              with x as (select 1) (select * from x order by 1 limit 1) union all select 2 order by 1 offset 1;
+          - mode: pretty
+            expected: |-
+              with x as (
+                select 1
+              )
+              (
+                select *
+                from x
+                order by 1
+                limit 1
+              )
+              union all
+              select 2
+              order by 1
+              offset 1;
+
+  - name: select_no_targets
+    input: |-
+      select from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select from t;
+          - mode: compact
+            expected: |-
+              select from t;
+          - mode: pretty
+            expected: |-
+              select
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  - name: select_no_targets_quantifier
+    input: |-
+      select all from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select all from t;
+          - mode: compact
+            expected: |-
+              select all from t;
+          - mode: pretty
+            expected: |-
+              select all
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);

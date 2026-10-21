@@ -226,3 +226,21 @@ formatter-snapshots:
       select a from t visualize using markdown (template => '**{{a}}**', dashboard => (row => 0, column => 0, width => 12, height => 2))
     dialects:
       hyper:
+
+  # Empty specs and empty property lists
+  - name: vis_empty_specs
+    input: select * from t visualize using vegalite ()
+    dialects:
+      hyper:
+
+  # Empty umap, table and markdown specs
+  - name: vis_empty_renderer_specs
+    input: select * from t visualize using umap ()
+    dialects:
+      hyper:
+
+  # Empty nested values
+  - name: vis_empty_nested
+    input: select * from t visualize using vegalite (layer => [(), (mark => point)], encoding => (detail => [], x => (field => x, scale => ())))
+    dialects:
+      hyper:

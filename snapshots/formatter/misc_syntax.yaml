@@ -270,3 +270,109 @@ formatter-snapshots:
             expected: |-
               explain (format json)
               select 1;
+
+  - name: misc_subscripts
+    input: |-
+      select a[1], a[1:2], a[:2], a[1:], a[:] from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a[1], a[1:2], a[:2], a[1:], a[:] from t;
+          - mode: compact
+            expected: |-
+              select a[1], a[1:2], a[:2], a[1:], a[:] from t;
+          - mode: pretty
+            expected: |-
+              select a[1], a[1:2], a[:2], a[1:], a[:]
+              from t;
+
+  - name: misc_subquery_field
+    input: |-
+      select (select a from t).foo
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select (select a from t).foo;
+          - mode: compact
+            expected: |-
+              select (select a from t).foo;
+          - mode: pretty
+            expected: |-
+              select (
+                select a
+                from t
+              ).foo;
+
+  - name: misc_row_type_collate
+    input: |-
+      create table u (p row(name text collate "de_DE"))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table u (p row(name text collate "de_DE"));
+          - mode: compact
+            expected: |-
+              create table u (p row(name text collate "de_DE"));
+          - mode: pretty
+            expected: |-
+              create table u (p row(name text collate "de_DE"));
+
+  - name: misc_create_function_no_params
+    input: |-
+      create function foo() returns int
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create function foo() returns integer;
+          - mode: compact
+            expected: |-
+              create function foo() returns integer;
+          - mode: pretty
+            expected: |-
+              create function foo() returns integer;
+
+  - name: misc_tablesample_default_unit
+    input: |-
+      select * from t tablesample bernoulli (10), u tablesample system (10) repeatable (1)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t tablesample bernoulli(10 percent), u tablesample system(10 percent) repeatable (1);
+          - mode: compact
+            expected: |-
+              select * from t tablesample bernoulli(10 percent), u tablesample system(10 percent) repeatable (1);
+          - mode: pretty
+            expected: |-
+              select *
+              from t tablesample bernoulli(10 percent), u tablesample system(10 percent) repeatable (1);
+        validation:
+          setup: |-
+            create table t(a int, b int);
+            create table u(a int);
+
+  - name: misc_tablesample_units
+    input: |-
+      select * from t tablesample bernoulli (10 percent), t tablesample reservoir (10 rows), t tablesample reservoir (10)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t tablesample bernoulli(10 percent), t tablesample reservoir(10 rows), t tablesample reservoir(10 rows);
+          - mode: compact
+            expected: |-
+              select * from t tablesample bernoulli(10 percent), t tablesample reservoir(10 rows), t tablesample reservoir(10 rows);
+          - mode: pretty
+            expected: |-
+              select *
+              from t tablesample bernoulli(10 percent), t tablesample reservoir(10 rows), t tablesample reservoir(10 rows);

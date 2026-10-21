@@ -313,6 +313,27 @@ fn formatting_needs_a_parse_unless_requested() {
 }
 
 #[test]
+fn formatting_copies_statements_with_syntax_errors() {
+    use dashql_buffers::formatting::{FormattingConfigT, FormattingDialect, FormattingMode};
+    let mut config = FormattingConfigT::default();
+    config.dialect = FormattingDialect::HYPER;
+    config.mode = FormattingMode::INLINE;
+    config.max_width = 80;
+    config.indentation_width = 4;
+
+    let catalog = Catalog::new();
+    let mut script = Script::new(&catalog);
+    script.replace_text("select   1; selec   2; select   3");
+    // The broken statement stays as written instead of vanishing, but the script is not fully formatted
+    assert_eq!(script.format(&config, true).unwrap(), "select 1;\n\nselec   2;\n\nselect 3;");
+    assert!(!script.is_fully_formattable(&config, false).unwrap());
+    assert!(script.unformattable_nodes(&config, false).unwrap().is_empty());
+
+    script.replace_text("select   1; select   3");
+    assert!(script.is_fully_formattable(&config, true).unwrap());
+}
+
+#[test]
 fn statistics_describe_the_latest_analysis() {
     let catalog = Catalog::new();
     let mut script = Script::new(&catalog);

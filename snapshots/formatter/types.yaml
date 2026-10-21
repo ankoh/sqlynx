@@ -186,3 +186,75 @@ formatter-snapshots:
                 i timestamp(3),
                 j time(2)
               );
+
+  - name: type_interval_cast
+    input: |-
+      select cast(a as interval), cast(a as interval day to second), cast(a as interval second(3)), a::interval year to month from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as interval), cast(a as interval day to second), cast(a as interval second(3)), a::interval year to month from t;
+          - mode: compact
+            expected: |-
+              select cast(a as interval), cast(a as interval day to second), cast(a as interval second(3)),
+                a::interval year to month
+              from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as interval),
+                cast(a as interval day to second),
+                cast(a as interval second(3)),
+                a::interval year to month
+              from t;
+
+  - name: type_interval_column
+    input: |-
+      create table u (a interval day to second, b interval, c interval hour to minute)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table u (a interval day to second, b interval, c interval hour to minute);
+          - mode: compact
+            expected: |-
+              create table u (a interval day to second, b interval, c interval hour to minute);
+          - mode: pretty
+            expected: |-
+              create table u (a interval day to second, b interval, c interval hour to minute);
+
+  - name: type_array_keyword
+    input: |-
+      select cast(a as text array), cast(a as int array[3]), cast(a as text[]), cast(a as int[][]) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as text[]), cast(a as integer[3]), cast(a as text[]), cast(a as integer[][]) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as text[]), cast(a as integer[3]), cast(a as text[]), cast(a as integer[][]) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as text[]), cast(a as integer[3]), cast(a as text[]), cast(a as integer[][])
+              from t;
+
+  - name: type_bit
+    input: |-
+      select cast(a as bit), cast(a as bit varying), cast(a as bit(3)), cast(a as bit varying(3)) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as bit), cast(a as bit varying), cast(a as bit(3)), cast(a as bit varying(3)) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as bit), cast(a as bit varying), cast(a as bit(3)), cast(a as bit varying(3)) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as bit), cast(a as bit varying), cast(a as bit(3)), cast(a as bit varying(3))
+              from t;

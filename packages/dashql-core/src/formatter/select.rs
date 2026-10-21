@@ -5,7 +5,43 @@ use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::formatting::FormattingMode;
 use dashql_buffers::parser::{CombineModifier, CombineOperation, Node, NodeType};
 
+/// The binding strength of a set operation, INTERSECT binds tighter than UNION and EXCEPT
+fn combine_precedence(operation: CombineOperation) -> u8 {
+    if operation == CombineOperation::INTERSECT {
+        2
+    } else {
+        1
+    }
+}
+
 impl<'a> Formatter<'a> {
+    /// Does an operand of a set operation need parentheses to keep its meaning?
+    ///
+    /// That is the case if it has clauses that would otherwise apply to the whole combination, or if it is a
+    /// set operation that binds weaker than the parent or that is the right operand of an equally strong parent.
+    fn combine_input_needs_parentheses(&self, input: &'a Node, parent: CombineOperation, index: usize) -> bool {
+        if input.node_type() != NodeType::OBJECT_SQL_SELECT {
+            return false;
+        }
+        #[rustfmt::skip]
+        let [order, limit, limit_all, offset, locking, ctes, operation] = attrs!(self.children(input), [
+            K::SQL_SELECT_ORDER,
+            K::SQL_SELECT_LIMIT,
+            K::SQL_SELECT_LIMIT_ALL,
+            K::SQL_SELECT_OFFSET,
+            K::SQL_SELECT_ROW_LOCKING,
+            K::SQL_SELECT_WITH_CTES,
+            K::SQL_COMBINE_OPERATION,
+        ]);
+        if [order, limit, limit_all, offset, locking, ctes].iter().any(Option::is_some) {
+            return true;
+        }
+        let Some(operation) = operation else { return false };
+        let (child, parent) =
+            (combine_precedence(CombineOperation(super::value_u8(operation))), combine_precedence(parent));
+        child < parent || (child == parent && index > 0)
+    }
+
     pub(super) fn format_select(&self, node_id: usize) -> FmtReg {
         let f = &self.fmt;
         let node: &'a Node = &self.ast[node_id];
@@ -65,11 +101,47 @@ impl<'a> Formatter<'a> {
                 if mod_text.is_empty() { f.text(op_text) } else { f.concat(&[f.text(op_text), f.text(mod_text)]) };
             let separator = f.concat(&[f.text(" "), op_reg, f.text(" ")]);
             let break_separator = f.concat(&[f.break_(), op_reg, f.break_()]);
-            let inputs = self.array_regs(combine_input);
+            let mut inputs = self.array_regs(combine_input);
             if inputs.iter().any(|&i| i == 0) {
                 return self.format_unimplemented(node);
             }
+            // The AST does not keep the parentheses of the inputs, add those that the operands need
+            let operation = CombineOperation(super::value_u8(combine_operation));
+            for (i, input) in self.children(combine_input).iter().enumerate() {
+                if self.combine_input_needs_parentheses(input, operation, i) {
+                    inputs[i] = f.parenthesized(inputs[i]);
+                }
+            }
             query = f.join(&inputs, separator, break_separator, Some(FormattingJoinPolicy::BreakAllOrNone), false);
+
+            // ORDER BY, LIMIT, OFFSET and locking apply to the whole combination
+            let mut tail = Vec::with_capacity(4);
+            if let Some(select_order) = select_order {
+                tail.push(f.concat(&[f.text("order by "), self.reg(select_order)]));
+            }
+            if select_limit_all.is_some() {
+                tail.push(f.text("limit all"));
+            } else if let Some(select_limit) = select_limit {
+                let mut body = self.reg(select_limit);
+                if select_limit.node_type() == NodeType::BOOL && select_limit.children_begin_or_value() != 0 {
+                    body = f.text("1");
+                }
+                tail.push(f.concat(&[f.text("limit "), body]));
+            }
+            if let Some(select_offset) = select_offset {
+                tail.push(f.concat(&[f.text("offset "), self.reg(select_offset)]));
+            }
+            if let Some(select_row_locking) = select_row_locking {
+                let body = self.reg(select_row_locking);
+                if body == 0 {
+                    return self.format_unimplemented(node);
+                }
+                tail.push(body);
+            }
+            if !tail.is_empty() {
+                tail.insert(0, query);
+                query = self.space_join(&tail, self.pretty_policy(FormattingJoinPolicy::BreakAllOrNone), false);
+            }
         }
 
         if query == 0 {
@@ -92,7 +164,17 @@ impl<'a> Formatter<'a> {
                 }
                 clauses.push(f.concat(&[f.text("table "), table_reg]));
             }
-            if let Some(select_targets) = select_targets {
+            // A select without targets is valid SQL, `select from t`
+            let has_source = select_values.is_some() || select_table.is_some();
+            if select_targets.is_none_or(|t| t.children_count() == 0) && !has_source {
+                clauses.push(f.text(if select_distinct.is_some() {
+                    "select distinct"
+                } else if select_all.is_some() {
+                    "select all"
+                } else {
+                    "select"
+                }));
+            } else if let Some(select_targets) = select_targets {
                 let body = self.reg(select_targets);
                 match select_distinct.filter(|d| d.node_type() == NodeType::ARRAY) {
                     Some(select_distinct) if select_distinct.children_count() > 0 => {

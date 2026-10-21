@@ -168,3 +168,61 @@ formatter-snapshots:
           - mode: pretty
             expected: |-
               create table t as select 1;
+
+  - name: table_constraint_with_options
+    input: |-
+      create table u (a int, unique (a) with (fillfactor = 70), primary key (a) with (fillfactor = 70))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table u (a integer, unique (a) with (fillfactor = 70), primary key (a) with (fillfactor = 70));
+          - mode: compact
+            expected: |-
+              create table u (a integer, unique (a) with (fillfactor = 70), primary key (a) with (fillfactor = 70));
+          - mode: pretty
+            expected: |-
+              create table u (a integer, unique (a) with (fillfactor = 70), primary key (a) with (fillfactor = 70));
+
+  - name: table_constraint_attributes
+    input: |-
+      create table u (a int, b int, c int, unique (a) not deferrable, unique (b) initially deferred, primary key (c) deferrable initially immediate)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table u (a integer, b integer, c integer, unique (a) not deferrable, unique (b) initially deferred, primary key (c) deferrable initially immediate);
+          - mode: compact
+            expected: |-
+              create table u (
+                a integer, b integer, c integer, unique (a) not deferrable, unique (b) initially deferred,
+                primary key (c) deferrable initially immediate
+              );
+          - mode: pretty
+            expected: |-
+              create table u (
+                a integer,
+                b integer,
+                c integer,
+                unique (a) not deferrable,
+                unique (b) initially deferred,
+                primary key (c) deferrable initially immediate
+              );
+
+  - name: table_constraint_check_attributes
+    input: |-
+      create table u (a int, check (a > 0) not valid, check (a < 10) no inherit)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table u (a integer, check (a > 0) not valid, check (a < 10) no inherit);
+          - mode: compact
+            expected: |-
+              create table u (a integer, check (a > 0) not valid, check (a < 10) no inherit);
+          - mode: pretty
+            expected: |-
+              create table u (a integer, check (a > 0) not valid, check (a < 10) no inherit);

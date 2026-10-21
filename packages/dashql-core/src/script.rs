@@ -409,9 +409,14 @@ impl Script {
         Ok(formatter.unformattable_nodes())
     }
 
-    /// Can formatting represent every node? (`IsFullyFormattable`)
+    /// Can formatting represent every node and does the script parse without errors? (`IsFullyFormattable`)
+    ///
+    /// Statements with syntax errors are copied as written, which is not formatting them.
     pub fn is_fully_formattable(&mut self, config: &FormattingConfigT, parse_if_outdated: bool) -> Result<bool> {
-        Ok(self.unformattable_nodes(config, parse_if_outdated)?.is_empty())
+        let parsed = self.parsed_for_formatting(parse_if_outdated)?;
+        let mut formatter = Formatter::new(parsed);
+        formatter.format_bytes(config);
+        Ok(formatter.is_fully_formatted())
     }
 
     /// The durations of the last scan, parse and analysis in nanoseconds

@@ -64,3 +64,26 @@ formatter-snapshots:
     input: create table t (a smallint, b bigint, c real, d double precision, e boolean, f char(4), g varchar(10), h numeric(5, 2), i timestamp(3), j time(2))
     dialects:
       hyper:
+  # Interval types in casts, a bare interval has no fields
+  - name: type_interval_cast
+    input: select cast(a as interval), cast(a as interval day to second), cast(a as interval second(3)), a::interval year to month from t
+    dialects:
+      hyper:
+
+  # Interval types of columns
+  - name: type_interval_column
+    input: create table u (a interval day to second, b interval, c interval hour to minute)
+    dialects:
+      hyper:
+
+  # The array keyword of a type
+  - name: type_array_keyword
+    input: select cast(a as text array), cast(a as int array[3]), cast(a as text[]), cast(a as int[][]) from t
+    dialects:
+      hyper:
+
+  # Bit types
+  - name: type_bit
+    input: select cast(a as bit), cast(a as bit varying), cast(a as bit(3)), cast(a as bit varying(3)) from t
+    dialects:
+      hyper:
