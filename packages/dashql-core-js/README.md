@@ -27,11 +27,12 @@ import * as buffers from '@ankoh/dashql-core/buffers';
 import type { VariantKind } from '@ankoh/dashql-core';
 ```
 
-Native objects and returned FlatBuffer pointers require explicit `destroy()`.
-Destroy scripts before their catalogs. Borrowed readers and byte views must not
-outlive their owners or be retained across Wasm memory growth; copy or unpack
-results when they need to survive subsequent operations. `resetUnsafe()` is a
-test/reset escape hatch that invalidates all outstanding handles.
+Native objects (catalogs, scripts, sessions, ...) live in Wasm memory and
+require explicit `destroy()`. Destroy scripts before their catalogs. Returned
+FlatBuffer pointers own their bytes as a JavaScript `Uint8Array`, so readers stay
+valid across subsequent operations; `destroy()` only drops the bytes.
+`resetUnsafe()` is a test/reset escape hatch that invalidates all outstanding
+handles.
 
 `DashQL.create` accepts a `wasmBinary` or a precompiled WebAssembly `module` and
 loads the bundled binary otherwise. The shell module re-exports the core
@@ -128,6 +129,7 @@ DashQL is licensed under MPL-2.0, as confirmed by the repository-root `LICENSE`
 and `NOTICE`. Both files are copied unchanged into the package; `NOTICE` is
 the repository-wide third-party notice.
 Source is available at <https://github.com/ankoh/dashql>, including the bindings
-under `packages/dashql-core-js`, native core under `packages/dashql-core`, and
-generated binding schemas under `proto/fb`. Third-party components retain
+under `packages/dashql-core-js`, the Rust core under `packages/dashql-core` and
+`packages/dashql-grammar`, its wasm-bindgen module under `packages/dashql-core-wasm`,
+and generated binding schemas under `proto/fb`. Third-party components retain
 their own licenses.

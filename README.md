@@ -49,9 +49,6 @@ bazel run //packages/dashql-native:mac_package_x86_64
 # Test everything
 bazel test //...
 
-# Generate compile commands for clangd in dashql-core
-bazel run //:refresh_compile_commands
-
 # Many tests are backed by snapshots / fixtures
 # /snapshots/*.tpl.yaml are the input to generate /snapshots/*.yaml
 # Update a snapshot category after intentional changes:
@@ -66,6 +63,8 @@ bazel run //snapshots/visualize:update
 
 # Repin cargo dependencies
 bazel run //scripts:repin_crates
+# Repin the crates of the Rust core (packages/dashql-{grammar,core,snapshots,core-wasm,shell-wasm})
+CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 
 # Fetch test datasets
 bazel build //packages/dashql-data:datasets

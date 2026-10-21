@@ -6,9 +6,9 @@ identifies where the translation is direct, and where information is lost.
 
 ## Forward: VISUALIZE -> Vega-Lite
 
-The analyzer pass (`AnalyzeVisualizationPass`) walks the parsed AST and builds
+The analyzer pass (`packages/dashql-core/src/analyzer/visualization.rs`) walks the parsed AST and builds
 a `VisualizationSpec` struct. The Vega-Lite generator
-(`vegalite_generator.cc`) serializes that struct to JSON.
+(`packages/dashql-core/src/visualize/vegalite_generator.rs`) serializes that struct to JSON.
 
 ### Data source
 
@@ -169,7 +169,7 @@ are not emitted into Vega-Lite JSON.
 
 ## Reverse: Vega-Lite -> VISUALIZE
 
-The reverse parser (`vegalite_parser.cc`) reads a Vega-Lite JSON string and
+The reverse parser (`packages/dashql-core/src/visualize/vegalite_parser.rs`) reads a Vega-Lite JSON string and
 produces a complete query with a trailing `VISUALIZE` clause.
 
 ### Data source
@@ -302,9 +302,9 @@ before each uppercase letter and lowercasing it.
 SQL text
   -> Parser (ext_visualize.y)
   -> AST (OBJECT_VIS_VISUALISE tree)
-  -> Analyzer (AnalyzeVisualizationPass)
+  -> Analyzer (analyzer/visualization.rs)
   -> VisualizationSpec struct
-  -> Generator (vegalite_generator.cc)
+  -> Generator (vegalite_generator.rs)
   -> Vega-Lite JSON string
 ```
 
@@ -312,7 +312,7 @@ SQL text
 
 ```
 Vega-Lite JSON string
-  -> Parser (vegalite_parser.cc, RapidJSON)
+  -> Parser (vegalite_parser.rs, serde_json)
   -> canonical visualization statement string
 ```
 

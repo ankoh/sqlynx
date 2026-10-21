@@ -3,6 +3,10 @@
 The DashQL parser transforms source text into a flat, FlatBuffer-serializable AST.
 It runs in two phases—scanning then parsing—and produces a contiguous array of fixed-size nodes rather than a heap-allocated tree.
 
+It lives in `packages/dashql-grammar`: the scanner in `src/scanner.rs`, the LR driver, parse context and action helpers in `src/parser/`.
+Bison compiles `grammar/rules/*.y` into tables and Rust actions (`//grammar:parser_tables_rs`).
+The parser was ported from the C++ core; some names below still mention the C++ originals.
+
 ## Architecture Overview
 
 ```
@@ -10,10 +14,10 @@ Source text
     │
     ▼
 ┌─────────────────────────────────────────────────────┐
-│ Scanner (Flex)                                      │
-│  - Tokenizes into a ChunkBuffer<symbol_type>        │
+│ Scanner (logos)                                     │
+│  - Tokenizes into ScannedScript::symbols            │
 │  - Resolves identifiers vs keywords                 │
-│  - Performs 1-token lookahead to emit NOT_LA,        │
+│  - Performs 1-token lookahead to emit NOT_LA,       │
 │    NULLS_LA, WITH_LA for LALR(1) compatibility      │
 │  - Tracks line breaks, comments, name registry      │
 └─────────────────────────────────────────────────────┘
@@ -22,12 +26,11 @@ Source text
     ▼
 ┌─────────────────────────────────────────────────────┐
 │ Parser (Bison LALR(1))                              │
-│  - Consumes pre-scanned token buffer via            │
-│    ParseContext::NextSymbol()                        │
+│  - Consumes the pre-scanned token buffer            │
 │  - Grammar actions build nodes using projection     │
-│    helpers (Object, Array, List, Attr, Expr, …)     │
-│  - Nodes are appended to a ChunkBuffer<Node>        │
-│  - Statements are finalized via AddStatement()      │
+│    helpers (object, array, list, attr, expr2, …)    │
+│  - Nodes are appended to a Vec<Node>                │
+│  - Statements are finalized via add_statement()     │
 └─────────────────────────────────────────────────────┘
     │
     │  ParsedScript { nodes: Vec<Node>, statements: Vec<Statement> }
@@ -101,10 +104,10 @@ The node array is partitioned by statement—each statement owns a contiguous sl
 The grammar is modular and assembled at build time by `grammar/assemble_grammar.py`.
 The final `.y` file is composed in this order:
 
-1. **Prologue** (`prologue.y`) — Bison skeleton config, `%locations`, `YYLLOC_DEFAULT`, includes
+1. **Prologue** (`prologue.y`) — Rust skeleton options (`api.rust.*`), the `use` of the action helpers, token declarations
 2. **Keyword token declarations** — generated from `lists/*.list` files
 3. **Precedences** (`precedences.y`) — operator precedence and associativity
-4. **Type declarations** (`rules/*.yh`) — `%type` directives mapping nonterminals to C++ types
+4. **Type declarations** (`rules/*.yh`) — `%type` directives mapping nonterminals to Rust types
 5. **`%%`** — start of rules section
 6. **Keyword identity rules** — generated pass-through rules for keyword categories
 7. **Rule files** (`rules/*.y`) — the actual grammar productions
@@ -127,34 +130,34 @@ The final `.y` file is composed in this order:
 ### Type files (`.yh`)
 
 Each rule file has a companion `.yh` declaring the Bison `%type` for its nonterminals.
-The three semantic value types used are:
+The three main semantic value types (`src/parser/value.rs`) are:
 
-- **`buffers::parser::Node`** — a single materialized node (terminal, object, enum)
-- **`BackedUniquePtr<NodeList>`** — a temporary linked list of nodes (not yet committed to the node array)
-- **`ExpressionVariant`** — either a `Node` or a `BackedUniquePtr<NAryExpression>` (allows flattening chains of AND/OR)
+- **`Node`** — a single materialized node (terminal, object, enum)
+- **`NodeList`** — the id of a temporary list of nodes in the parse context (not yet committed to the node array)
+- **`ExprVariant`** — either a `Node` or the id of an n-ary expression (allows flattening chains of AND/OR)
 
 ## Bison Projections
 
-Grammar actions construct nodes through helpers defined in `parser/grammar/nodes.h` and `ParseContext`.
+Grammar actions construct nodes through helpers defined in `src/parser/actions.rs` and `ParseContext` (`src/parser/context.rs`).
 The term "projection" refers to the pattern of mapping a grammar production into flat AST nodes.
 
 ### Core helpers
 
-```cpp
+```rust
 // Wrap a node with an attribute key
-Attr(AttributeKey key, Node node) → Node
+attr(key: AttributeKey, node: Node) -> Node
 
 // Allocate a temporary working list
-ctx.List({node1, node2, …}) → BackedUniquePtr<NodeList>
+ctx.list(&[node1, node2, …]) -> NodeList
 
 // Materialize a list into a contiguous ARRAY node
-ctx.Array(loc, list) → Node
+ctx.array(loc, list) -> Node
 
 // Materialize attributes into an OBJECT node
-ctx.Object(loc, NodeType, {attr1, attr2, …}) → Node
+ctx.object(loc, node_type, &[attr1, attr2, …]) -> Node
 
-// Concatenate temporary lists (cheap, just pointer manipulation)
-Concat(list1, list2, {extra_attrs…}) → BackedUniquePtr<NodeList>
+// Concatenate temporary lists
+ctx.concat2(list1, &[extra_attrs…]) -> NodeList
 ```
 
 ### Projection patterns
@@ -165,43 +168,44 @@ When a rule maps directly to one AST object:
 
 ```bison
 sql_common_table_expr:
-    sql_name sql_opt_name_list AS LRB sql_preparable_stmt RRB {
-        $$ = ctx.Object(@$, NodeType::OBJECT_SQL_CTE, {
-            Attr(Key::SQL_CTE_NAME, $1),
-            Attr(Key::SQL_CTE_COLUMNS, ctx.Array(@2, std::move($2))),
-            Attr(Key::SQL_CTE_STATEMENT, $5),
-        });
+    sql_name LRB sql_name_list RRB AS LRB sql_preparable_stmt RRB {
+        ctx.object(
+            @$,
+            NodeType::OBJECT_SQL_CTE,
+            &[
+                attr(Key::SQL_CTE_NAME, $1),
+                attr(Key::SQL_CTE_COLUMNS, ctx.array(@3, $3)),
+                attr(Key::SQL_CTE_STATEMENT, $7),
+            ],
+        )
     }
 ```
 
 **Pattern 2: Deferred object construction via lists**
 
-SELECT statements accumulate attributes across multiple productions using `List` and `Concat`, deferring `Object()` to the top:
+SELECT statements accumulate attributes across multiple productions using `list` and `concat2`, deferring `object()` to the top:
 
 ```bison
 sql_simple_select:
-    SELECT sql_opt_all_clause sql_opt_target_list sql_from_clause sql_where_clause … {
-        $$ = ctx.List({
-            Attr(Key::SQL_SELECT_ALL, $2),
-            Attr(Key::SQL_SELECT_TARGETS, ctx.Array(@3, std::move($3))),
-            Attr(Key::SQL_SELECT_FROM, ctx.Array(@4, std::move($4))),
-            Attr(Key::SQL_SELECT_WHERE, $5),
-            …
-        });
+    SELECT sql_opt_all_clause sql_opt_target_list sql_into_clause sql_from_clause sql_where_clause … {
+        ctx.list(
+            &[
+                attr(Key::SQL_SELECT_ALL, $2),
+                attr(Key::SQL_SELECT_TARGETS, ctx.array(@3, $3)),
+                attr(Key::SQL_SELECT_INTO, $4),
+                attr(Key::SQL_SELECT_FROM, ctx.array(@5, $5)),
+                attr(Key::SQL_SELECT_WHERE, $6),
+                …
+            ],
+        )
     }
 
-sql_select_no_parens:
-    sql_select_clause sql_sort_clause {
-        $$ = Concat(std::move($1), {
-            Attr(Key::SQL_SELECT_ORDER, $2),
-        });
-    }
+sql_classical_select_no_parens:
+    sql_select_clause sql_sort_clause { ctx.concat2($1, &[attr(Key::SQL_SELECT_ORDER, $2)]) }
 
 // Final materialization at the top-level dispatch:
 sql_query_statement:
-    sql_select_stmt {
-        $$ = ctx.Object(@$, NodeType::OBJECT_SQL_SELECT, std::move($1));
-    }
+    sql_select_stmt { ctx.object(@$, NodeType::OBJECT_SQL_SELECT, $1) }
 ```
 
 This avoids intermediate object allocations for partial SELECT parse states.
@@ -209,55 +213,51 @@ This avoids intermediate object allocations for partial SELECT parse states.
 **Pattern 3: Expression flattening**
 
 Binary expressions like `a AND b AND c` are represented as a single n-ary node rather than nested binary trees.
-`TryMerge` checks whether adjacent expressions share the same operator and collapses them:
+The expression helpers check whether adjacent expressions share the same operator and collapse them:
 
 ```bison
 sql_a_expr:
-    sql_a_expr AND sql_a_expr {
-        $$ = Expr(ctx, @$, Operator(@2), std::move($1), std::move($3));
-    }
+    sql_a_expr AND sql_a_expr { expr2(ctx, @$, enum_node(@2, ExprFunc::AND), $1, $3) }
 ```
 
-The `Expr()` helper calls `ctx.TryMerge()`. If both operands are already AND-chains, their argument lists are merged into a single `OBJECT_SQL_NARY_EXPRESSION` with one flat args array.
-The intermediate `NAryExpression` is heap-allocated in a pool and only materialized into the node array at the end via `ctx.Expression()`.
+If both operands are already AND-chains, `expr2` merges their argument lists into a single `OBJECT_SQL_NARY_EXPRESSION` with one flat args array.
+The intermediate n-ary expression lives in an arena of the parse context and is only materialized into the node array at the end via `ctx.expression()`.
 
 **Pattern 4: Terminal construction**
 
 Leaf values are constructed inline without touching the node array:
 
-```cpp
-Const(loc, AConstType::INTEGER)       // literal with type tag
-Bool(loc, true)                        // inline boolean
-Enum(loc, ExpressionOperator::NEGATE)  // enum discriminant
-NameFromIdentifier(loc, name_id)       // name referencing the name registry
-Operator(loc)                          // operator marker (text from source)
+```rust
+const_node(loc, AConstType::INTEGER)       // literal with type tag
+bool_node(loc, true)                       // inline boolean
+enum_node(loc, ExpressionOperator::NEGATE) // enum discriminant
+name_from_identifier(loc, name_id)         // name referencing the name registry
+operator_node(loc)                         // operator marker (text from source)
 ```
 
-These return `Node` values that only get committed when passed to `Array()` or `Object()`.
+These return `Node` values that only get committed when passed to `array()` or `object()`.
 
 ## Scanner / Lexer
 
 ### Two-phase tokenization
 
 The scanner runs **completely before parsing begins**.
-All tokens are materialized into `ScannedScript::symbols` (a `ChunkBuffer<Parser::symbol_type>`).
-The parser then iterates this buffer via `ParseContext::NextSymbol()`.
+All tokens are materialized into `ScannedScript::symbols` (a `Vec<Symbol>`).
+The parser then iterates this buffer.
 
 This design enables:
 - The parser can recover from errors without re-scanning
 - Token metadata (types, offsets) is available for syntax highlighting independent of parsing
 - Lookahead disambiguation happens once during scanning
 
-### Flex configuration
+### logos lexers
 
-```
-%option reentrant noyywrap batch caseless prefix="dashql_yy"
-```
+The scanner (`packages/dashql-grammar/src/scanner.rs`) was ported from a flex scanner and keeps its rules and start conditions.
+Every start condition is a `#[derive(Logos)]` enum that matches bytes; the actions (`yyless`, state switches, nested comments) are hand-written around them.
 
 Key characteristics:
-- **Reentrant** — no global state
-- **Case-insensitive** — keywords matched regardless of case
-- **Batch mode** — no interactive I/O
+- **No global state** — a scan is a plain function call (`scan`)
+- **Case-insensitive** — keywords matched regardless of case; the patterns spell out both cases
 
 ### Exclusive states
 
@@ -276,14 +276,14 @@ The scanner uses exclusive states for multi-character tokens:
 
 When the scanner matches an unquoted identifier, it:
 1. Lower-cases the text
-2. Looks it up in the keyword table (`Keyword::Find`)
-3. If found: returns the keyword token with `std::string_view` to the canonical spelling
+2. Looks it up in the keyword table (`Keyword::find`, generated by `//grammar:keywords_rs`)
+3. If found: returns the keyword token with the canonical spelling
 4. If not found: registers the name in `ScannedScript::name_registry` and returns `IDENT` with the name ID
 
 ### Lookahead rewrites
 
 Some tokens require 1-token lookahead to resolve LALR(1) conflicts.
-The scanner's `Scan()` method wraps raw `yylex` calls with a lookahead check:
+The scanner wraps the raw lexer with a lookahead filter (`next_symbol` in `scanner.rs`):
 
 - `NOT` → `NOT_LA` when followed by `BETWEEN`, `IN`, `LIKE`, `ILIKE`, `SIMILAR`
 - `NULLS` → `NULLS_LA` when followed by `FIRST` or `LAST`
@@ -296,25 +296,24 @@ The scanner's `Scan()` method wraps raw `yylex` calls with a lookahead check:
 Locations are represented as `SymbolSpan { offset: uint32, length: uint32 }`.
 
 During **scanning**, offset/length refer to byte positions in the source text.
-During **parsing**, the parser remaps locations to **token indices**—`NextSymbol()` stamps each token with `SymbolSpan(next_token_index, 1)`.
+During **parsing**, the parser remaps locations to **token indices**—each token is stamped with `SymbolSpan(next_token_index, 1)`.
 This means parse-time `@N` locations reference positions in the token stream, not the source text.
 
 The scanner-phase byte locations are preserved in the `ScannerTokens` table (`token_offsets`, `token_lengths`) so downstream consumers can map back to source positions.
 
-### YYLLOC_DEFAULT
+### Default location
 
-Bison's default location merge is overridden in `prologue.y`:
+Bison's default location merge (`YYLLOC_DEFAULT`) is replaced by `default_location` in `src/parser/driver.rs`:
 
-```cpp
-#define YYLLOC_DEFAULT(Cur, Rhs, N) { \
-    if (N) { \
-        uint32_t o = YYRHSLOC(Rhs, 1).offset(); \
-        uint32_t l = YYRHSLOC(Rhs, N).offset() + YYRHSLOC(Rhs, N).length() - o; \
-        (Cur) = SymbolSpan(o, l); \
-    } else { \
-        uint32_t o = YYRHSLOC(Rhs, 0).offset() + YYRHSLOC(Rhs, 0).length(); \
-        (Cur) = SymbolSpan(o, 0); \
-    } \
+```rust
+fn default_location(rhs: &[SymbolSpan], below: SymbolSpan) -> SymbolSpan {
+    match (rhs.first(), rhs.last()) {
+        (Some(first), Some(last)) => SymbolSpan::new(
+            first.offset(),
+            last.offset().wrapping_add(last.length()).wrapping_sub(first.offset()),
+        ),
+        _ => SymbolSpan::new(below.offset().wrapping_add(below.length()), 0),
+    }
 }
 ```
 
@@ -323,31 +322,29 @@ For an empty production, the span is zero-length positioned after the preceding 
 
 ### Manual span merging
 
-When a grammar action needs a span that doesn't match the full production (e.g., just the parenthesized portion), `Loc()` merges arbitrary spans:
+When a grammar action needs a span that doesn't match the full production (e.g., just the parenthesized portion), `loc()` merges arbitrary spans:
 
-```cpp
-Loc({@2, @3, @4})  // span covering symbols 2 through 4
+```rust
+loc(&[@2, @3, @4])  // span covering symbols 2 through 4
 ```
 
 ## Memory Management
 
-### ChunkBuffer
+### Node array
 
-Nodes are stored in a `ChunkBuffer<Node>`—a chunked vector that never invalidates references on growth.
-This is critical because node construction happens incrementally and earlier nodes must remain stable.
+Nodes are stored in a `Vec<Node>` of the parse context and referenced by index, so growth never invalidates them.
 
-### Temporary pools
+### Arenas
 
-Grammar actions use pooled allocators for working structures that are discarded after materialization:
+Semantic values are `Copy`. Working structures that are discarded after materialization live in arenas of the parse context and are referenced by id:
 
-- `NodeList::ListPool` — for `BackedUniquePtr<NodeList>` working lists
-- `NodeList::ListElementPool` — for list elements
-- `TempNodePool<NAryExpression>` — for intermediate n-ary expression chains
+- node lists (`NodeList`)
+- intermediate n-ary expression chains (`ExprVariant::Nary`)
 
-`BackedUniquePtr` is a unique pointer whose memory is backed by a pool. On `Destroy()` the destructor runs (returning memory to the pool). This avoids heap allocation overhead during parsing.
+Consumed lists are recycled, which avoids heap allocations during parsing.
 
 ### Materialization
 
-Working lists (`BackedUniquePtr<NodeList>`) are "materialized" when passed to `ctx.Array()` or `ctx.Object()`.
-Materialization walks the list, appends each non-null node to the `ChunkBuffer`, sets parent pointers, and returns a single `Node` whose `children_begin_or_value` points to the start of the newly appended range.
-After materialization, the temporary list is destroyed back to its pool.
+Working lists (`NodeList`) are "materialized" when passed to `ctx.array()` or `ctx.object()`.
+Materialization walks the list, appends each non-null node to the node array, sets parent pointers, and returns a single `Node` whose `children_begin_or_value` points to the start of the newly appended range.
+After materialization, the list is returned to the arena for reuse.

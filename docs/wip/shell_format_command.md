@@ -47,7 +47,7 @@ Add `packages/dashql-app/src/shell/commands/format.ts`.
 - Resolve without terminal output when the dialog closes or the shell operation is aborted.
 - Register the command in `ShellPage` so it appears automatically in `.help` and command completion.
 
-No C++ shell changes are required because standalone shell commands are registered dynamically in TypeScript.
+No changes to the Rust shell are required because standalone shell commands are registered dynamically in TypeScript.
 
 ### 2. Build the dialog
 

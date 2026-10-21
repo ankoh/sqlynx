@@ -49,7 +49,7 @@ reimplement histogram filter semantics.
 ## Runtime spec augmentation
 
 `injectVegaLiteCrossFilter` creates a runtime copy of the authored Vega-Lite spec. It
-does not modify the analyzed spec, saved `VISUALIZE` syntax, or C++ generator output.
+does not modify the analyzed spec, saved `VISUALIZE` syntax, or core generator output.
 
 The runtime spec receives:
 

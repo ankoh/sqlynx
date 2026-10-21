@@ -1,77 +1,85 @@
 # Rust rewrite of dashql-core
 
-`packages/dashql-core` (C++20) has been rewritten in Rust as a parallel crate set,
-`packages/dashql-core-rs`. The app and `@ankoh/dashql-core` ship the Rust wasm modules. The C++ core
-only builds natively and serves as the differential test oracle until it is deleted; its emscripten
-build and the emsdk toolchain are gone.
+The C++20 core (`packages/dashql-core`) has been rewritten in Rust, and the C++ core is deleted. The Rust
+core is a set of top-level packages; the app and `@ankoh/dashql-core` ship its wasm modules.
+
+| Package | Crate | Content |
+|---|---|---|
+| `packages/dashql-grammar` | `dashql_grammar` | Scanner, keywords, names, parser (tables, actions, LR driver, completion probes), comment blocks |
+| `packages/dashql-core` | `dashql_core` | Script, catalog, analyzer, cursor, completion, formatter, script diff, visualize, compiler, batch, planner, plan view model, sessions, shell |
+| `packages/dashql-snapshots` | `dashql_snapshots` | Snapshot loading and encoders, YAML emitter, snapshotter |
+| `packages/dashql-core-wasm` | `dashql_core_wasm_lib`, `dashql_core_wasm` (cdylib) | wasm-bindgen API shipped by `@ankoh/dashql-core` |
+| `packages/dashql-shell-wasm` | `dashql_shell_wasm` | Shell wasm module (with the core bindings) shipped by the app |
 
 ## Decisions
 
 - **Parser: bison tables, not LALRPOP.**
-  - Bison stays the LALR(1) table compiler. `//grammar/rust:tables.rs.m4` is a bison skeleton that
-    emits the automaton (and, for the Rust rule set, the user actions) as Rust.
+  - Bison stays the LALR(1) table compiler. `grammar/rust/tables.rs.m4` is a bison skeleton that
+    emits the automaton and the Rust user actions of `grammar/rules/*.y`.
   - The LR driver is a hand-written port of the C++ `DriveLALR`.
   - Code completion drives the raw LR tables (state snapshots, LAC expected sets, suffix probes) and
     the grammar resolves its conflicts with a Postgres-style precedence ladder. LALRPOP supports
     neither.
-- **Scanner: logos**, bug-compatible with `grammar/scanner.l`.
+- **Scanner: logos**, bug-compatible with the former flex scanner (`grammar/scanner.l`, deleted).
+  - Every flex start condition is a `logos` lexer that matches bytes like flex.
+  - The actions (`yyless`, `BEGIN`, nested comments, the lookahead filter) are hand-written around them.
 - **JS boundary: wasm-bindgen with a new API.** FlatBuffers stays the payload format, so the generated
   TypeScript readers keep working.
-- **Parse tree: unchanged by default.** Intentional changes follow [ast-changes.md](ast-changes.md) and
-  land on the C++ side first.
-- **Parity first, fixes later.** Known C++ bugs are reproduced and listed in [quirks.md](quirks.md).
+- **Parse tree: unchanged by default.** Intentional changes follow [ast-changes.md](ast-changes.md).
+- **Parity first, fixes later.** Known C++ bugs were reproduced and are listed in [quirks.md](quirks.md).
+  With the C++ core gone, each one can be fixed as an ordinary change with a snapshot update.
 - **Parity of semantics, not of incidental text.** Output that is an artifact of a C++ library (number
   formatting of rapidjson, c4 or `%g`) is not reproduced. The Rust core writes doubles with the shortest
-  round-trip digits, and the differential tests compare such numbers by value
-  (`dashql_snapshots::corpus::canonical_numbers`). For an infinite double the C++ Vega-Lite generator
-  writes no value (invalid JSON); Rust writes `null`.
+  round-trip digits, and the snapshot tests compare numbers by value. For an infinite double the C++
+  Vega-Lite generator wrote no value (invalid JSON); Rust writes `null`.
 - **JSON is standard JSON.** Hyper plans and Vega-Lite specs are read and written with serde_json
   (`preserve_order`), numbers of the script are parsed with `str::parse::<f64>`. rapidjson's dialect
   (comments, NaN, trailing commas, NUL-terminated input, C strings, imprecise numbers, duplicate keys)
-  and the glibc `strtod` and x86 cast behavior are not reproduced; the differential tests compare
-  standard JSON only and skip the classes listed in [quirks.md](quirks.md).
+  and the glibc `strtod` and x86 cast behavior are not reproduced (see [quirks.md](quirks.md)).
 - **Bazel only.**
   - Generated code comes from genrules, never `build.rs`.
-  - Cargo manifests only feed the `@core_crates` crate universe.
+  - Every crate package has its own `Cargo.toml`, and there is no Cargo workspace. The manifests only
+    feed the isolated `@core_crates` crate universe (`MODULE.bazel`, lockfile
+    `bazel/core_crates/Cargo.lock`).
   - Never `cargo build` or `cargo test`.
 
-## Verification layers
+## Verification
 
-Snapshots alone do not prove parity. The port is checked on several levels:
-
-1. **By construction.** Both cores use:
-   - the same bison automaton, checked by `:dashql_grammar_table_parity_test`
-   - the same FlatBuffers enums, checked by `:dashql_buffers_test`
-   - the same keyword lists
-2. **Snapshots.** The Rust tests read `snapshots/**/*.yaml` and compare structurally, including the
+1. **Snapshots.** The Rust tests read `snapshots/**/*.yaml` and compare structurally, including the
    key order of every map; numbers compare by value. The files are generated by the Rust snapshotter
-   (see [Snapshotter](#snapshotter)) and follow the Rust core where it deliberately differs from C++
-   (e.g. doubles are written as `-45.0`). C++ snapshot suites that no longer match are removed
-   (`visualize_tests`); the differential tests cover C++ against Rust.
-3. **Differential oracle.**
-   - `//packages/dashql-core:oracle_ffi` is a C ABI over the C++ core that never throws, linked
-     natively into Rust tests through `:dashql_oracle`. It answers in the snapshot serialization.
-   - Corpus: snapshot inputs, every prefix and cursor position for completion, TPC-H/DS, random
-     sentences derived from the grammar, and fuzzed inputs.
-4. **Ported unit tests**, then the dashql-core-js and app test suites against the Rust wasm.
+   (see [Snapshotter](#snapshotter)).
+2. **Unit tests**, ported from the C++ suites. `:dashql_buffers_test` pins the FlatBuffers enum
+   ordinals the code relies on.
+3. **dashql-core-js and app test suites** against the Rust wasm modules.
+
+Until the C++ core was deleted, a **differential oracle** checked the port against it:
+`oracle_ffi`, a C ABI over the C++ core linked natively into the Rust tests of the `dashql-oracle`
+crate, answered in the snapshot serialization. The `*_differential_test` targets compared both cores
+on snapshot inputs, every prefix and cursor position for completion, TPC-H/DS, random sentences
+derived from the grammar, and fuzzed inputs. `:dashql_grammar_table_parity_test` checked that the C++
+and Rust rule sets described the identical automaton. All of them were deleted with the C++ core; the
+phase results below mention them as history.
 
 ## Layout
 
 | Target | Content |
 |---|---|
-| `//grammar/rust:tables.rs.m4`, `//grammar/rust:defs.bzl` | Bison skeleton and `bison_rust_tables` macro |
-| `//grammar:parser_tables_rs` | The tables of `dashql.y` as Rust (tables only, actions are still C++) |
+| `//grammar:grammar_y` | `dashql.y`, assembled by `grammar/assemble_grammar.py` from the prologue, the keyword lists, the precedences and `grammar/rules/*.{y,yh}` (rules with their Rust actions) |
+| `//grammar/rust:tables.rs.m4`, `grammar/rust/defs.bzl` | Bison skeleton and `bison_rust_tables` macro |
+| `//grammar:parser_tables_rs` | The tables and actions of `dashql.y` as Rust |
+| `//grammar:keywords_rs` | The keyword table of the scanner, generated from the keyword lists |
 | `//proto/fb:dashql_buffers_rs` | `flatc --rust` bindings, bundled into one crate by `proto/fb/bazel/flatbuf_rust_bundle.py`. `plan_view_model_events.fbs` is excluded because Rust does not support vectors of unions. |
-| `//packages/dashql-core-rs:dashql_grammar` | Grammar crate: tables, symbol kinds, symbol names, keywords (`//grammar:keywords_rs`), scanner, comment blocks |
-| `//packages/dashql-core-rs:dashql_snapshots` | Loads snapshot categories as libtest-mimic trials, structural YAML comparison, the snapshot encoders, and a rapidyaml-compatible YAML emitter (`ryml`) |
-| `//packages/dashql-core-rs:snapshotter` | Regenerates `snapshots/**/*.yaml` from the templates, run through `bazel run //snapshots/<category>:update` |
-| `//packages/dashql-core-rs:dashql_oracle` | The C++ core as an oracle (`scan`, `parse`). `bazel run //packages/dashql-core-rs:oracle -- scan "..."` queries it from the shell. |
-| `//packages/dashql-core-rs:core_wasm` | wasm-bindgen module (for now: grammar only, to track the module size) |
+| `//packages/dashql-grammar:dashql_grammar` | Grammar crate (`dashql_grammar_unit_tests`, `dashql_grammar_skeleton_test`) |
+| `//packages/dashql-core:dashql_core` | Core crate (`dashql_core_unit_tests`, ported unit tests, `*_snapshot_test`, `formatter_validation_hyper_test`, `dashql_buffers_test`, `bench_pipeline`, `bench_pipeline_ctes`) |
+| `//packages/dashql-snapshots:dashql_snapshots` | Loads snapshot categories as libtest-mimic trials, structural YAML comparison, the snapshot encoders, and a rapidyaml-compatible YAML emitter (`ryml`). `:parser_snapshot_test` runs the parser snapshots. |
+| `//packages/dashql-snapshots:snapshotter` | Regenerates `snapshots/**/*.yaml` from the templates, run through `bazel run //snapshots/<category>:update` |
+| `//packages/dashql-core-wasm:core_wasm` | Core wasm-bindgen module, `:dashql_core_bindgen` is its JS glue |
+| `//packages/dashql-shell-wasm:shell_wasm` | Shell wasm-bindgen module, `:dashql_shell_bindgen` is its JS glue |
 
 ```bash
-bazel test //packages/dashql-core-rs/...
-bazel build --config=release //packages/dashql-core-rs:core_wasm
-# After editing packages/dashql-core-rs/**/Cargo.toml:
+bazel test //packages/dashql-grammar/... //packages/dashql-core/... //packages/dashql-snapshots/...
+bazel build --config=release //packages/dashql-core-wasm:core_wasm
+# After editing packages/dashql-{grammar,core,snapshots,core-wasm,shell-wasm}/Cargo.toml:
 CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 ```
 
@@ -88,8 +96,26 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | **done** |
 | 7 | ScriptSession, ScriptExecution, Hyper plan view | Session, execution and plan tests; 36 plan snapshots | **done** |
 | 8 | wasm-bindgen API and rewrite of `dashql-core-js/src/api.ts` | core-js, browser and app tests on the Rust wasm; size and speed budgets | **done** |
-| 9 | Switch-over | Release built from Rust; C++ removed after one release cycle | **switched** (C++ kept as oracle) |
+| 9 | Switch-over | Release built from Rust; C++ removed after one release cycle | **done** (C++ core removed) |
 | 10 | Shell (arrow-rs) | Shell tests ported | **done** |
+
+## Phase 9: C++ core removed
+
+The C++ core is deleted, with everything that only existed for it:
+- `packages/dashql-core` (C++20) with its tests, tools and the C++ FlatBuffers codegen
+- the differential oracle: the `dashql-oracle` crate, `oracle_ffi`, all `*_differential_test` targets,
+  `oracle_parser_snapshot_test` and `dashql_grammar_table_parity_test`
+- flex and `grammar/scanner.l`, the C++ (`lalr1.cc`) parser generation
+- the C++ externals (rapidjson, rapidyaml/c4core, ankerl, Arrow C++, md4c, flex), `WORKSPACE` and the
+  hedron `refresh_compile_commands`
+
+The grammar has a single rule set again: `grammar/rules/*.y` contain the Rust actions directly and are
+checked in. `grammar/rust/translate_actions.py` and the `--lang` flag of `assemble_grammar.py` are
+gone. The crates moved from `packages/dashql-core-rs/<crate>` to the top-level packages above, and the
+coverage workflow (`.github/workflows/coverage.yml`) covers the Rust core.
+
+No golden tests replace the deleted differentials. In particular, script signatures
+(`dashql_core::signature`) are not pinned: they need not stay stable across versions.
 
 ## Phase 0 results (2026-10-20)
 
@@ -99,19 +125,21 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
   - `yylast` 69019
   - `i16` for `yytable`/`yycheck`, `i32` for `yypact`
 - It also emits the symbol names and `S_*` symbol kinds.
-- `:dashql_grammar_table_parity_test` checks every table entry, constant and symbol name against the
-  lalr1.cc output.
+- `:dashql_grammar_table_parity_test` checked every table entry, constant and symbol name against the
+  lalr1.cc output (deleted with the C++ parser).
 - The action path works: `:dashql_grammar_skeleton_test` runs a calculator grammar with Rust block
   actions, typed `$n`, `@n`/`@$`, precedence, default actions and errors raised from actions.
 - Why our own skeleton instead of the `rust-bison-skeleton` crate:
   - That crate's m4 files carry bison's GPL header, so we can't vendor them.
   - It brings its own parse loop, but we need the tables for a ported driver.
   - Our skeleton includes only `c-like.m4` from the bison installation at build time.
-- Bison has to run outside the sandbox (`local = 1`), like the existing `//grammar:parser_generated`.
+- Bison has to run outside the sandbox (`local = 1`).
 
 **Oracle and harness**
-- `:oracle_parser_snapshot_test` replays all 506 parser cases through the C++ oracle, and all pass.
-- That covers 18 cases the C++ suite never registers (see [quirks.md](quirks.md)).
+- `:oracle_parser_snapshot_test` (deleted) replayed all 506 parser cases through the C++ oracle, and all
+  passed.
+- That covered 18 cases the C++ parser snapshot suite never registered (`error_recovery.yaml`,
+  `functions.yaml`, `sql_function.yaml`, `tpch_schema.yaml`); `:parser_snapshot_test` runs all cases.
 
 **Baselines** (WSL2, x86_64)
 
@@ -136,11 +164,34 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 ## Phase 1 results
 
 **Scanner**
-- `dashql_grammar::scanner` emulates the flex matching discipline instead of using a generated DFA:
-  - every rule of the current start condition computes its longest match
-  - the longest match wins, and ties go to the earlier rule
-  - line breaks are recorded per match, before `yyless` puts text back
+- `dashql_grammar::scanner` generates its DFAs with `logos` (`=0.16.1`). The rules of every flex start
+  condition are one `#[derive(Logos)]` enum (`Initial`, `Xc`, `XbXh`, `Xq`, `Xd`, `Xbt`). The enums
+  match bytes (`utf8 = false`, byte-string patterns), so `\x80-\xFF` are identifier bytes like in flex.
+- Flex semantics on logos:
+  - **Start conditions:** the scanner keeps the flex state and runs the lexer of the current state for
+    exactly one match. An action can then switch the state or put text back with `yyless`, and the
+    next match starts a fresh lexer at the new position. The `<<EOF>>` rules are handled before
+    matching.
+  - **Longest match:** logos takes the longest match like flex.
+  - **Rule order:** logos breaks ties by priority and rejects equal priorities at compile time, where
+    flex takes the earlier rule. The default priority (2 per byte or class) already ranks `{comment}`,
+    `{xcstart}` and the fixed tokens correctly. Explicit priorities put `{operator}` below the
+    single-character tokens, `{other}` below everything, and `{quotefail}` below `{quotestop}`.
+  - **Rules with the same action** are one variant with several patterns, such as `{xcinside}`,
+    `{op_chars}` and `\*+` in `xc`.
+  - **Trailing context:** `{raw_question_mark}/({ident_cont}|{dquote})` is a single `?` whose action
+    checks the next byte.
+  - **`%option caseless`:** the patterns spell out both cases (`[bB]'`, `[Ee]`). The Hyper obfuscation
+    markers stay case-sensitive.
+- Line breaks are recorded for the whole match before the action runs, so text put back with `yyless`
+  is counted again, like the C++ `YY_USER_ACTION`.
 - The lookahead filter is ported literally.
+- Until 2026-10 the scanner was hand-written: it computed the longest match of every rule of the
+  current start condition and gave ties to the earlier rule. The logos scanner replaced it with no
+  difference in the differential test, also in a run with 2 million fuzz inputs. On TPC-DS q1 it is
+  about 3% slower (`scan_text` 2.25 µs before, 2.33 µs after). `bench_pipeline_ctes` scans at the same
+  speed (1.98 ms for 1000 CTEs before and after). The release `core_wasm` grew by 10.7 kB (2.2 kB
+  gzipped).
 
 **Differential test**
 - `:scanner_differential_test` compares the complete scanner output against the C++ scanner on:
@@ -158,14 +209,14 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 ## Phase 2 results
 
 **Rust rule set**
-- `//grammar:rust_rule_files` translates the actions of `grammar/rules/*.y` into Rust in the build,
-  using `grammar/rust/translate_actions.py`. All 1238 actions translate, and the rules themselves are
-  copied verbatim.
-- `grammar/rules/*.y` therefore stay the single source of the grammar until the C++ core is removed.
-  At that point the translated rules get checked in and the translator is deleted.
-- `assemble_grammar.py --lang rust` derives the Rust prologue (tokens, types) from the C++ one.
-- `:dashql_grammar_table_parity_test` asserts that both rule sets describe the identical automaton.
-  Only `yyrline` (debug line numbers) differs.
+- Until phase 9, `//grammar:rust_rule_files` translated the C++ actions of `grammar/rules/*.y` into
+  Rust in the build, using `grammar/rust/translate_actions.py`. All 1238 actions translated, and the
+  rules themselves were copied verbatim. `assemble_grammar.py --lang rust` derived the Rust prologue
+  (tokens, types) from the C++ one.
+- `:dashql_grammar_table_parity_test` asserted that both rule sets describe the identical automaton.
+  Only `yyrline` (debug line numbers) differed.
+- With the C++ core removed, the translated rules were checked in as `grammar/rules/*.y`, and the
+  translator and `--lang` were deleted.
 
 **Runtime** (`dashql_grammar::parser`)
 - `ParseContext` is ported with interior mutability, so translated actions nest calls in the same
@@ -188,7 +239,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
     tokens, about 85 tokens each)
   - 8000 fuzz inputs
 
-**Performance** (`bazel run -c opt //packages/dashql-core-rs:bench_pipeline`, TPC-DS q1, same
+**Performance** (`bazel run -c opt //packages/dashql-core:bench_pipeline`, TPC-DS q1, same
 machine as the baseline):
 
 | Measure | Rust | C++ |
@@ -290,7 +341,7 @@ remaining per-list allocations.
   ports the completion. Name lookups use per-entry suffix indexes in the case-insensitive order of
   the C++ `btree::multimap`. Candidates are ranked by score, then by name (case-insensitive, then
   byte order), keywords before names that spell the same. C++ leaves such ties to the unstable
-  `std::sort`, so the differential tests compare them in a canonical order (`dashql_snapshots::ties`).
+  `std::sort`, so the differential tests compared them in a canonical order.
 - `:completion_snapshot_test` passes all 161 completion snapshots (including the analysis of the
   catalog and editor scripts).
 - `:completion_differential_test` compares the complete encoding with
@@ -362,16 +413,16 @@ remaining per-list allocations.
   name dictionary, analyzer description and name index bytes measure the Rust data structures.
 - Timings stay 0 on wasm32, because `Instant` panics there.
 
-**Open items**
-- `ANALYSIS_FAILED` is not covered by the session differential: the only known input that fails
-  analysis (a qualified function name) hits an `assert` in the C++ fastbuild oracle.
-- `ScriptCompiler::Compile` (C++) keeps a reference to the parsed script while the `Analyze(false)`
-  it calls can replace it. Not hit, but undefined behavior.
+**Notes**
+- `ANALYSIS_FAILED` was never covered by the session differential: the only known input that fails
+  analysis (a qualified function name) hit an `assert` in the C++ fastbuild oracle.
+- `ScriptCompiler::Compile` (C++) kept a reference to the parsed script while the `Analyze(false)`
+  it called could replace it. Never hit, but undefined behavior.
 
 ## Phase 8–10 results
 
-The app and `@ankoh/dashql-core` run on the Rust core. The C++ core still builds and serves as the
-oracle of the differential tests.
+The app and `@ankoh/dashql-core` run on the Rust core. Until its removal in phase 9, the C++ core only
+built natively and served as the oracle of the differential tests.
 
 - **wasm-bindgen API** (`dashql-core-wasm`, an rlib `:dashql_core_wasm_lib` wrapped by the cdylib
   `:dashql_core_wasm`): `Catalog`, `Script`, `ScriptBatch`, `ScriptSession`, `ScriptExecution`,
@@ -412,7 +463,6 @@ oracle of the differential tests.
 **Open items**
 - The shell module is 1.7 MB larger than the core module, mostly arrow-ipc, arrow-array and
   arrow-cast.
-- Delete the C++ core, flex and the C++ rule set after one release cycle.
 
 **Open items (phase 6)**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format
@@ -426,8 +476,8 @@ The C++ Google Benchmark binaries (`benchmark_pipeline`, `benchmark_pipeline_cte
 ported and deleted, together with the `com_google_benchmark` repository:
 
 ```bash
-bazel run -c opt //packages/dashql-core-rs:bench_pipeline
-bazel run -c opt //packages/dashql-core-rs:bench_pipeline_ctes [-- <filter>]
+bazel run -c opt //packages/dashql-core:bench_pipeline
+bazel run -c opt //packages/dashql-core:bench_pipeline_ctes [-- <filter>]
 ```
 
 - `benchmark_catalog` contained no benchmarks.
@@ -475,14 +525,14 @@ schema. Milliseconds per iteration:
 | 1000 | 577k | 3.80 | 2.90 | 9.08 | 7.84 | 8.55 | 5452 |
 
 - The C++ analysis grows quadratically with the number of CTEs. The Rust analysis stays linear.
-- The Rust scanner was quadratic in the number of string literals: at every closing quote,
-  `whitespace_reach` and `quote_continue` in `dashql-grammar/src/scanner.rs` walked bitmaps over the
-  whole rest of the input (692 ms for 1000 CTEs). The bitmaps now end at the last reachable position,
-  so scanning is linear again (scan Rust column above, measured after the fix).
+- The hand-written Rust scanner was quadratic in the number of string literals: at every closing
+  quote, it walked reachability bitmaps over the whole rest of the input (692 ms for 1000 CTEs). The
+  bitmaps were then cut at the last reachable position (scan Rust column above, measured after the
+  fix). The logos scanner that replaced it matches with DFAs and is linear.
 
 ## Snapshotter
 
-`//packages/dashql-core-rs:snapshotter` replaces the C++ snapshotter (`tools/snapshotter.cc`, deleted).
+`//packages/dashql-snapshots:snapshotter` replaces the C++ snapshotter (`tools/snapshotter.cc`, deleted).
 `bazel run //snapshots/<category>:update` runs it, `bazel run //snapshots:update` updates all categories.
 It takes the same flags: `--source_dir=<repository> [--filter=<category>]`.
 

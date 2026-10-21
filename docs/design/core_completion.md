@@ -1,7 +1,9 @@
 # Core Completion
 
 The completion system provides context-aware suggestions as the user types SQL in the editor.
-It spans two layers: a C++ core that computes and scores candidates, and a TypeScript frontend that renders inline hints and handles keyboard interaction.
+It spans two layers: a Rust core that computes and scores candidates, and a TypeScript frontend that renders inline hints and handles keyboard interaction.
+The core is `packages/dashql-core/src/completion.rs` and `cursor.rs`, with the LR probes in `packages/dashql-grammar/src/parser/probe.rs`.
+It was ported from C++; the names below are those of the C++ original, the Rust functions are their snake_case equivalents (`Completion::compute`, `parse_until_with_snapshot`, ...).
 
 ## Compute pipeline summary
 

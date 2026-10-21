@@ -196,10 +196,10 @@ single-descriptor migration. Verification uses Bazel targets, as required by rep
 ## Main Files
 
 - `proto/fb/dashql/batch.fbs` and `catalog.fbs`: wire contracts.
-- `packages/dashql-core/src/batch.cc`: isolated native processing.
-- `packages/dashql-core/src/catalog_descriptor.cc` and `catalog.cc`: validation and receiver publication.
-- `packages/dashql-app/src/core/batch.ts` and `api.ts`: public API and buffer ownership.
-- `packages/dashql-app/src/core/batch_worker.ts` and `batch_worker_client.ts`: persistent worker transport.
+- `packages/dashql-core/src/batch.rs`: isolated native processing.
+- `packages/dashql-core/src/catalog/descriptor.rs` and `catalog/mod.rs`: validation and receiver publication.
+- `packages/dashql-core-js/src/batch.ts` and `api.ts`: public API and buffer ownership.
+- `packages/dashql-core-js/src/batch_worker.ts` and `batch_worker_client.ts`: persistent worker transport.
 - `packages/dashql-app/src/app/notebook/connections/catalog_batch.ts`: application commit boundary.
 - `packages/dashql-app/src/app/notebook/connections/catalog_loader.tsx`: refresh queue and supersession.
 - `packages/dashql-app/src/app/notebook/persistence/app_state_loader.ts`: startup restoration.

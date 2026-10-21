@@ -260,7 +260,7 @@ Enums: `VisMarkType`, `VisFieldType`, `VisScaleType` (see
 
 ## Feature flag
 
-`VISUALIZE` parsing is gated on `ParseContext::IsVisEnabled()`. When disabled,
+`VISUALIZE` parsing is gated on `ParseContext::is_vis_enabled()`. When disabled,
 the parser emits an error on the `VISUALIZE` token.
 
 ## Design rationale
@@ -284,7 +284,7 @@ inventing a novel clause-based syntax. This has several advantages:
 - Grammar: `grammar/rules/ext_visualize.y` and `.yh`
 - Flatbuffer schema: `proto/fb/dashql/parsed_script.fbs` and
   `parsed_script_enums.fbs`
-- Analyzer: `packages/dashql-core/src/analyzer/analyze_visualization_pass.cc`
-- Vega-Lite generator: `packages/dashql-core/src/visualize/vegalite_generator.cc`
-- Vega-Lite parser: `packages/dashql-core/src/visualize/vegalite_parser.cc`
+- Analyzer: `packages/dashql-core/src/analyzer/visualization.rs`
+- Vega-Lite generator: `packages/dashql-core/src/visualize/vegalite_generator.rs`
+- Vega-Lite parser: `packages/dashql-core/src/visualize/vegalite_parser.rs`
 - Test snapshots: `snapshots/visualize/basic.yaml`

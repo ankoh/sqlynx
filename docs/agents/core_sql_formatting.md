@@ -4,13 +4,12 @@ This guide documents the standard workflow to add or improve SQL formatter behav
 
 ## 1) Implement formatter behavior
 
-1. Update formatter logic in `packages/dashql-core/src/formatter/formatter.cc`.
-2. If needed, add declarations in `packages/dashql-core/include/dashql/formatter/formatter.h`.
-3. Ensure the node is handled in `Formatter::FormatNode(...)` dispatch.
-4. Keep lowercase SQL keywords as the default; honor the configured keyword case without changing identifiers, literals, comments, or current break/indent behavior.
-5. Don't use `ReadTextAtLocation` as escape hatch to copy over the AST node content, instead use a place holder similar to unsupported node types.
-6. Don't format children nodes in parent nodes, let the formatter format children when visiting them and look up the node Reg.
-7. We're scanning from left to right in FormatNodes, so we're guaranteed to have the Regs already computed for children nodes (if we can format them).
+1. Update formatter logic in the Rust core, `packages/dashql-core/src/formatter/`: `mod.rs` holds the dispatch and the shared helpers, the statement formatters live in `select.rs`, `create.rs`, `insert.rs`, `delete.rs`, `explain.rs`, `pgq.rs` and `vis.rs`.
+2. Ensure the node is handled in the `Formatter::format_node` dispatch (`mod.rs`).
+3. Keep lowercase SQL keywords as the default; honor the configured keyword case without changing identifiers, literals, comments, or current break/indent behavior.
+4. Don't use the source text of a node (`text_at`) as escape hatch to copy over the AST node content, instead use a place holder similar to unsupported node types (`format_unimplemented`).
+5. Don't format children nodes in parent nodes, let the formatter format children when visiting them and look up the child's `FmtReg` (`reg`, `reg_or_placeholder`).
+6. The formatter visits the nodes in post-order (the order of the node array), so the regs of the children are already computed (if we can format them).
 
 Example: for `OBJECT_SQL_ORDER`, read attributes like `SQL_ORDER_VALUE`, `SQL_ORDER_DIRECTION`, and `SQL_ORDER_NULLRULE`, then render the order item text used by `order by` clauses.
 
@@ -42,22 +41,22 @@ bazel run //snapshots/formatter:update
 
 This generates/updates `snapshots/formatter/<category>.yaml` from all `.tpl.yaml` files in the formatter snapshot folder.
 
-## 4) Register snapshot suites
+## 4) Snapshot tests
 
-Add your new generated snapshot file to C++ test suite instantiations.
+Neither test needs a registration: both read every `snapshots/formatter/*.yaml`.
 
-### Snapshot equality suite
-File:
-- `packages/dashql-core/test/formatter_snapshot_test_suite.cc`
+### Snapshot equality
+Target:
+- `//packages/dashql-core:formatter_snapshot_test` (`packages/dashql-core/tests/formatter_snapshots.rs`)
 
-Add an `INSTANTIATE_TEST_SUITE_P(...)` entry using:
-- `FormatterSnapshotTest::GetTests("<category>.yaml")`
+Formats the input of every case for every expectation of every dialect that is not skipped. Cases named
+`coverage_*` must also be fully formattable, and their output must scan and parse without errors.
 
 ### Hyper validation
 Target:
-- `//packages/dashql-core-rs:formatter_validation_hyper_test` (`packages/dashql-core-rs/dashql-core/tests/formatter_validation_hyper.rs`)
+- `//packages/dashql-core:formatter_validation_hyper_test` (`packages/dashql-core/tests/formatter_validation_hyper.rs`)
 
-Needs no registration: every case of every formatter snapshot file with a `dialects.hyper.validation` block runs
+Every case of every formatter snapshot file with a `dialects.hyper.validation` block runs
 in a fresh Hyper database. The test executes `validation.setup`, checks that the Rust formatter output equals each
 expectation of the `hyper` dialect, and executes it statement by statement. Hyper is reached through the C ABI
 `//packages/hyper-api:hyper_ffi`.
@@ -67,7 +66,7 @@ This ensures both textual snapshot checks and executable SQL validation are cove
 ## 5) Add a JS API formatting test (recommended)
 
 File:
-- `packages/dashql-app/src/core/api_formatting.test.ts`
+- `packages/dashql-core-js/src/api_formatting.test.ts`
 
 Add at least one focused runtime formatting test that:
 1. Creates a script via API
@@ -82,8 +81,9 @@ This catches integration regressions between core formatter and app-side API/WAS
 Run the full targets used for acceptance:
 
 ```bash
+bazel test //packages/dashql-core:formatter_snapshot_test //packages/dashql-core:formatter_validation_hyper_test
 bazel test //packages/dashql-core:all
-bazel test //packages/dashql-core-rs:formatter_snapshot_test //packages/dashql-core-rs:formatter_validation_hyper_test
+bazel test //packages/dashql-core-js:all
 bazel test //packages/dashql-app:all
 ```
 
@@ -94,12 +94,12 @@ If failures occur:
 
 ## 7) Typical change checklist
 
-- [ ] Formatter logic updated in core (`formatter.cc` / `formatter.h` if needed)
+- [ ] Formatter logic updated in core (`packages/dashql-core/src/formatter/`)
 - [ ] New/updated `.tpl.yaml` tests added
 - [ ] Snapshots regenerated via `//snapshots/formatter:update`
-- [ ] Snapshot suite registration updated
 - [ ] `validation.setup` added for Hyper-validatable cases
 - [ ] JS API formatting test added/updated
 - [ ] `bazel test //packages/dashql-core:all` passes
-- [ ] `//packages/dashql-core-rs:formatter_validation_hyper_test` passes
+- [ ] `//packages/dashql-core:formatter_validation_hyper_test` passes
+- [ ] `bazel test //packages/dashql-core-js:all` passes
 - [ ] `bazel test //packages/dashql-app:all` passes

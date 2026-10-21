@@ -1,14 +1,16 @@
-# Known quirks of the C++ core
+# Quirks inherited from the C++ core
 
-The Rust port reproduces the C++ core **bug for bug** until the switch-over, so that snapshots and the
-differential oracle can demand zero differences. Every behavior that looks wrong but is kept on purpose
-is listed here. After the switch-over, each one is fixed in Rust as an ordinary change with a snapshot
-update.
+The Rust core was ported from the C++ core **bug for bug**, so that the snapshots and the differential
+oracle could demand zero differences. The C++ core and the oracle are deleted, but the Rust core still
+behaves as listed here: every entry looks wrong but was kept on purpose. Entries marked **Not
+reproduced** describe C++ behavior the port dropped; they record where the Rust core differs from the
+former C++ core.
 
-Add an entry when you find another quirk while porting. Each entry names where the behavior lives in
-the C++ core.
+Each quirk can now be fixed as an ordinary change with a snapshot update; remove its entry then. Add an
+entry when you find another inherited quirk. The headings name where the behavior lives in the Rust
+core; C++ function names refer to the original implementation.
 
-## Scanner (`grammar/scanner.l`, `packages/dashql-core/src/parser/scanner.cc`)
+## Scanner (`packages/dashql-grammar/src/scanner.rs`, ported from `grammar/scanner.l`)
 
 - **`1..` scans as FCONST.** The `{decimalfail}` rule returns FCONST for `1`, where Postgres returns
   ICONST.
@@ -38,26 +40,24 @@ the C++ core.
   text.
 - **Zero-length quoted identifiers still return an IDENT**, with an empty name, next to the error.
 
-## Parser (`grammar/`, `packages/dashql-core/src/parser/`)
+## Parser (`grammar/rules/`, `packages/dashql-grammar/src/parser/`)
 
-- **Keyword names carry token indexes as byte spans.** `NameFromKeyword` and `NameFromStringLiteral`
-  register names with `TextSpan(symbol.offset, ...)`, which is a token index stored in a byte-span
-  field. Scanner-registered names carry real byte offsets.
+- **Keyword names carry token indexes as byte spans.** `name_from_keyword` and `name_from_string_literal`
+  (C++ `NameFromKeyword`, `NameFromStringLiteral`) register names with `TextSpan(symbol.offset, ...)`,
+  which is a token index stored in a byte-span field. Scanner-registered names carry real byte offsets.
 - **Lenient incomplete statements.** `SELECT a FROM` and `SELECT * FROM A WHERE` parse without errors,
   because `sql_from_clause: FROM` and `sql_where_clause: WHERE` accept a bare keyword.
 - **`EOF` is part of rules.** The grammar shifts `EOF` inside rules (`ext_dot_trailing: DOT EOF`).
-  Parsing can still finish because `NextSymbol` keeps returning EOF at the end of input.
-- **Stale comment on `CollectExpectedSymbols`** (`parser.cc:93-102`). It describes a
-  "length-1 default reduce" heuristic that the code does not implement.
+  Parsing can still finish because the parser keeps reading EOF at the end of input.
 
 ## FlatBuffers enums (`proto/fb/dashql/parsed_script.fbs`)
 
 - **`NodeType` ordinals are not cleanly ranged.**
   - `ENUM_VIS_ENCODING_CHANNEL`, `ENUM_VIS_MARK_TYPE`, `ENUM_VIS_FIELD_TYPE` and `ENUM_VIS_SCALE_TYPE`
     (114-117) sit above `OBJECT_KEYS_` (41), so the check "`> OBJECT_KEYS_` means object" is wrong
-    for them. `script_diff.cc` special-cases them; other ordinal checks do not.
+    for them. `script_diff` special-cases them; other ordinal checks do not.
   - Many `OBJECT_SQL_*` types come after `VIS_OBJECT_KEYS_` (118).
-  - Pinned by `//packages/dashql-core-rs:dashql_buffers_test`.
+  - Pinned by `//packages/dashql-core:dashql_buffers_test`.
 
 ## Analyzer (`packages/dashql-core/src/analyzer/`)
 
@@ -66,7 +66,7 @@ the C++ core.
   forces `Script::AnalyzeInternal` to rescan before reanalyzing. The Rust analyzed script owns a copy
   of the names (`AnalyzedScript::names`, `name_tags`, `name_objects`) and leaves the scan untouched.
 - **CREATE TABLE columns are sorted with the unstable `std::sort`.** Duplicate column names in tables
-  with more than 16 columns may be ordered differently in C++. Rust sorts stably.
+  with more than 16 columns could be ordered differently in C++. **Not reproduced:** Rust sorts stably.
 - **`AND`/`OR` over constants become binary expressions with function `UNKNOWN`**, because
   `ReadBinaryExpressionFunction` has no mapping for them.
 - **Function calls without arguments are constant but never constant roots.** Only calls with
@@ -77,7 +77,7 @@ the C++ core.
 - **Root scopes iterate like `ankerl::unordered_dense::set`**: in insertion order, and erasing moves
   the last element into the hole. Name resolution visits the roots in that order.
 
-## Completion (`packages/dashql-core/src/analyzer/completion.cc`)
+## Completion (`packages/dashql-core/src/completion.rs`)
 
 - **Candidates are ranked with the unstable `std::sort`.** `TopKHeap` sorts the candidates (score,
   then case-insensitive name) and the catalog objects of a candidate (score only), so ties come out
@@ -99,26 +99,25 @@ the C++ core.
 - **Table refs are promoted through the catalog only.** `PromoteIdentifiersInScope` resolves the
   tables of the scope with `Catalog::ResolveTable`, so tables of the script being edited are only
   promoted once that script is loaded into the catalog.
-- **The snapshot encoder reads the target symbol unconditionally**, which completions inside comments
-  do not have. The oracle reports them as `no-target`.
+- **The C++ snapshot encoder read the target symbol unconditionally**, which completions inside
+  comments do not have. The Rust encoder writes `no-target` for them.
 
 ## Visualize (`packages/dashql-core/src/visualize/`)
 
-**Vega-Lite generator** (`vegalite_generator.cc`)
+**Vega-Lite generator** (`vegalite_generator.rs`)
 - String array elements have their quotes stripped, `''` is not unescaped.
 - Integer literals in arrays are JSON integers if their double value is an integer in the int64 range,
   doubles otherwise.
 - The top-level spec writes `resolve` before `layer`, nested layers `layer` before `resolve`.
 
-**Vega-Lite parser** (`vegalite_parser.cc`)
-- Doubles that are not integral or are at least 1e15 are printed with `%g` (6 significant digits). **Not reproduced:** Rust writes the shortest round-trip digits, the differential test compares at 6 digits.
+**Vega-Lite parser** (`vegalite_parser.rs`)
+- Doubles that are not integral or are at least 1e15 were printed with `%g` (6 significant digits). **Not reproduced:** Rust writes the shortest round-trip digits.
 - `ToSnakeCase("Field")` gives `field`, which then counts as an identifier key.
 - A mark object with only `type` collapses to `mark => type`, an empty bin object becomes `true`.
 - An empty `$sql` does not fall back to `$raw`.
 
-**Markdown** (`markdown.cc` and md4c 0.5.2). **Not reproduced:** the Rust core parses templates with
-pulldown-cmark (see the README), and the differential test compares the documents by meaning. md4c
-behavior that differs:
+**Markdown** (C++: `markdown.cc` and md4c 0.5.2). **Not reproduced:** the Rust core parses templates
+with pulldown-cmark (see the README). md4c behavior that differs:
 - Text nodes are cut at every resolved mark and never merged.
 - `md_text_with_null_replacement` does not advance past a NUL, which also starts the next text node.
 - The empty-list-item check reads the last 8 bytes of the block stream as a block header, so a list
@@ -136,7 +135,7 @@ behavior that differs:
 - An empty ordered list item interrupts a paragraph.
 
 **Not reproduced.** The Rust core reads and writes JSON with serde_json and parses numbers of the
-script with `str::parse::<f64>`. These C++ behaviors are gone; the visualize differential test skips
+script with `str::parse::<f64>`. These C++ behaviors are gone; the visualize differential test skipped
 the inputs that hit them:
 - Text from the script (field names, `$sql`, array strings, stack and resolve values, bounds) was cut
   at the first NUL (`c_str()`), and so were strings of parsed specs (`GetString()`).
@@ -151,9 +150,9 @@ the inputs that hit them:
 
 ## Formatter (`packages/dashql-core/src/formatter/`)
 
-- **Attribute lookup picks different duplicates** (`utils/ast_attributes.h` `LookupAttributes`). With
-  one key it returns the first matching child; with several keys it returns the last match of each.
-  The analyzer relies on the same helper.
+- **Attribute lookup picks different duplicates** (`attrs!` in `dashql_grammar::attributes`, C++
+  `LookupAttributes`). With one key it returns the first matching child; with several keys it returns
+  the last match of each. The analyzer relies on the same helper.
 - **Comment wrapping splits words at byte offsets** (`AppendWrappedCommentParagraph`) and can cut a
   UTF-8 character in half. `Formatter::format_bytes` returns the raw bytes.
 - **Two whitespace sets in comments.** Trimming uses C `isspace` (including `\v`), word splitting
@@ -167,8 +166,8 @@ the inputs that hit them:
 - **Unknown enum values** are unformattable. `GetOperatorPrecedence` has no default case (undefined
   behavior); Rust returns precedence 0, non-associative. `ENUM_VIS_ENCODING_CHANNEL` is always
   unformattable.
-- **Text past the end of the input.** C++ reads into the two padding NUL bytes after the text, Rust
-  stops at the end. No differential input hits a difference.
+- **Text past the end of the input.** C++ read into the two padding NUL bytes after the text, Rust
+  stops at the end. No differential input hit a difference.
 
 ## Plan view model (`packages/dashql-core/src/view/`)
 
@@ -180,7 +179,7 @@ the inputs that hit them:
   `earlyProbes` blocks the `early-probes` fallback, pipeline operator lists keep duplicates, and
   pipeline edge ids count across pipelines.
 
-**Not reproduced.** The Rust core reads plans as standard JSON with serde_json. The C++ core parses
+**Not reproduced.** The Rust core reads plans as standard JSON with serde_json. The C++ core parsed
 them with rapidjson (comments, NaN and infinity, trailing commas, imprecise number parsing):
 - Comments, `NaN`/`Inf`/`Infinity`, trailing commas and input after a NUL byte are parse errors.
   Lone surrogates (`\uDC00`) are parse errors; C++ decoded lone low surrogates into invalid UTF-8.
@@ -191,7 +190,7 @@ them with rapidjson (comments, NaN and infinity, trailing commas, imprecise numb
 - Counts in the runtime statistics that are not unsigned integers are ignored, `sqlpos` entries that
   are not unsigned 32-bit integers are 0. C++ asserted, release builds read the raw number storage.
 
-## Script session (`packages/dashql-core/src/script_session.cc`)
+## Script session (`packages/dashql-core/src/script_session.rs`)
 
 - **Offset projection.** In UTF-8 mode, offsets are projected without checks. In UTF-16 mode, spans
   that are not on a code point boundary are dropped, including keyword names whose byte-span fields
@@ -230,18 +229,11 @@ them with rapidjson (comments, NaN and infinity, trailing commas, imprecise numb
 - **utf8proc 2.4** measures text with the grapheme rules of Unicode 12.1 and the width of the first code
   point of a cluster. Rust measures with `unicode-segmentation` and `unicode-width` and does not
   reproduce this.
-- **Completion limit 0** trips an assertion in the C++ `TopKHeap`.
-- **Up/Down at a CR LF line break** dereferences an empty `std::optional` in C++ (undefined
+- **Completion limit 0** tripped an assertion in the C++ `TopKHeap`.
+- **Up/Down at a CR LF line break** dereferenced an empty `std::optional` in C++ (undefined
   behavior); Rust takes the boundary before it.
 - **Invalid UTF-8 queries.** `StartQuery` returns `INTERNAL_ERROR` "rope input must contain valid
   UTF-8" after allocating a catalog entry id.
-
-## Test infrastructure
-
-- **Unregistered parser snapshots.** The C++ parser snapshot suite
-  (`packages/dashql-core/test/parser_snapshot_test_suite.cc`) never registers `error_recovery.yaml`,
-  `functions.yaml`, `sql_function.yaml` and `tpch_schema.yaml` (18 cases). They are still up to date:
-  `//packages/dashql-core-rs:oracle_parser_snapshot_test` replays all 506 parser cases.
 
 ## Fixed in C++ before porting
 
@@ -265,10 +257,8 @@ order. No TypeScript code read them.
 `Rope::Remove` descended into a leaf that does not contain the end of the text, and the `noexcept`
 `LeafNode::RemoveCharRange` threw "UTF-8 codepoint index exceeds buffer". `ScriptSession::Apply`
 removes an empty range before every insert, so typing at the end of a pure ASCII document of about
-1 KB or more terminated the core. Empty removals are now a no-op (`RopeTest.RemovesEmptyRangeAtEndOfMultiLeafText`).
-Found by `:session_differential_test`.
-
-Hash-table-dependent behavior was also made deterministic:
+1 KB or more terminated the core. Empty removals became a no-op. Found by the session differential
+test.
 
 Behavior that depended on the hash table implementation was made deterministic in the C++ core first,
 because native builds (libstdc++) and wasm builds (libc++) could disagree, and a port cannot reproduce

@@ -25,9 +25,8 @@ Result tables are drawn by `shell::arrow_renderer`, which formats cell values wi
 (one formatter per column): floats with their shortest round-trip digits, temporal values in ISO 8601, binaries in
 hex, nested values as `[1, null, 3]` or `{x: 1, y: a}`. Null cells are empty, numbers and booleans are
 right-aligned. Timestamps with a named time zone are shown in UTC because chrono-tz is not linked, and a column of a
-type that arrow-cast cannot format shows its type name. Values do not print like the C++ shell (Arrow C++
-`Scalar::ToString`), so the differential test compares renders byte for byte only for null, boolean, integer and
-string columns.
+type that arrow-cast cannot format shows its type name. Values do not print like the former C++ shell (Arrow C++
+`Scalar::ToString`), see `docs/rust-port/quirks.md`.
 
 The TypeScript binding lives in `packages/dashql-app/src/shell`. Its root entrypoint exports
 `createDashQLShell({ environment, ... })` and `createDuckDBShellEnvironment(connection)`. The environment returns Arrow IPC
@@ -40,7 +39,7 @@ Build and test through Bazel:
 
 ```bash
 bazel test //packages/dashql-core:shell_api_test //packages/dashql-core:shell_arrow_renderer_test \
-    //packages/dashql-core:shell_prompt_buffer_test //packages/dashql-core:shell_differential_test
+    //packages/dashql-core:shell_prompt_buffer_test
 bazel build //packages/dashql-shell-wasm:shell_wasm
 ```
 
@@ -51,4 +50,4 @@ control character take no columns, and text that is not valid UTF-8 takes one co
 
 The Rust shell is the single source of truth for shell behavior and rendering. New highlighting, completion
 presentation, cursor, redraw, history, and status behavior belongs in the Rust shell code, not in the TypeScript xterm
-host. The C++ shell in `packages/dashql-core/src/shell` only remains as the oracle of `:shell_differential_test`.
+host.

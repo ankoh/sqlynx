@@ -50,9 +50,10 @@ bazel build //...
 | `//packages/dashql-native:mac_package_x86_64` | x86_64 macOS Electron app, DMG, ZIP, and blockmaps |
 | `//packages/dashql-pack:pack` | Publish architecture-specific Electron artifacts and update manifests to R2 |
 | `//packages/dashql-pack:vacuum` | Remove complete expired release versions, including old updater blockmaps |
-| `//packages/dashql-core-rs:core_wasm` | Core Wasm module (Rust, wasm-bindgen) shipped by `dashql-core-js` |
-| `//packages/dashql-core-rs:shell_wasm` | Shell Wasm module (Rust, includes the core bindings) shipped by the app |
-| `//packages/dashql-core:dashql_core` | Core C++ library, kept as the differential oracle of the Rust core |
+| `//packages/dashql-core-wasm:core_wasm` | Core Wasm module (Rust, wasm-bindgen) shipped by `dashql-core-js` |
+| `//packages/dashql-shell-wasm:shell_wasm` | Shell Wasm module (Rust, includes the core bindings) shipped by the app |
+| `//packages/dashql-core:dashql_core` | Core library (Rust): scripts, catalog, analyzer, completion, formatter, visualizations, planner, sessions, shell |
+| `//packages/dashql-grammar:dashql_grammar` | Grammar crate: scanner, parser tables and actions, keywords |
 | `//packages/dashql-core-js:compile` | Core ESM bindings and TypeScript declarations |
 | `//packages/dashql-core-js:npm_package` | Standalone core npm package directory |
 | `//packages/dashql-core-js:npm_tarball` | Core npm archive at `bazel-bin/packages/dashql-core-js/dashql-core.tgz` |
@@ -78,28 +79,26 @@ Use `--config=release` for production artifacts. The default `fastbuild` config 
 
 ```bash
 # Run a specific test
-bazel test //packages/dashql-core:unit_tests
+bazel test //packages/dashql-core:dashql_core_unit_tests
 
 # Run all tests in a package
 bazel test //packages/dashql-core:all
 
 # Run all tests in the repo
 bazel test //...
-
-# Run tests matching a pattern
-bazel test //packages/dashql-core:*_tests
 ```
 
 ### Common Test Targets
 
 | Target | Purpose |
 |--------|---------|
-| `//packages/dashql-core:unit_tests` | C++ unit tests |
-| `//packages/dashql-core:parser_tests` | Parser snapshot tests |
-| `//packages/dashql-core:analyzer_tests` | Analyzer snapshot tests |
-| `//packages/dashql-core:formatter_tests` | Formatter snapshot tests |
-| `//packages/dashql-core-rs:formatter_validation_hyper_test` | Execute the formatted SQL of the formatter snapshots in Hyper |
-| `//packages/dashql-core-rs/...` | Rust core: unit, snapshot and differential tests against the C++ oracle (see `docs/rust-port/README.md`) |
+| `//packages/dashql-grammar:all` | Scanner and parser unit tests, bison skeleton test |
+| `//packages/dashql-core:all` | Core unit tests, the snapshot tests of all categories but the parser, and the Hyper validation |
+| `//packages/dashql-core:dashql_core_unit_tests` | Core unit tests |
+| `//packages/dashql-snapshots:parser_snapshot_test` | Parser snapshot tests |
+| `//packages/dashql-core:analyzer_snapshot_test` | Analyzer snapshot tests |
+| `//packages/dashql-core:formatter_snapshot_test` | Formatter snapshot tests |
+| `//packages/dashql-core:formatter_validation_hyper_test` | Execute the formatted SQL of the formatter snapshots in Hyper |
 | `//packages/dashql-core-js:all` | Core Node unit, assembled-runtime, and tarball consumer tests |
 | `//packages/dashql-core-js/test:all` | Core browser tests in Chromium and Firefox, including browser workers |
 | `//packages/hyper-api:smoke_test` | Native Tableau Hyper API integration test |
@@ -114,10 +113,10 @@ By default, Bazel only shows output for failed tests (configured in `.bazelrc`):
 
 ```bash
 # See all test output
-bazel test --test_output=all //packages/dashql-core:unit_tests
+bazel test --test_output=all //packages/dashql-core:dashql_core_unit_tests
 
 # See output for failed tests only (default)
-bazel test --test_output=errors //packages/dashql-core:unit_tests
+bazel test --test_output=errors //packages/dashql-core:dashql_core_unit_tests
 ```
 
 ### Snapshot Tests
@@ -138,7 +137,7 @@ bazel run //snapshots:update
 ```
 
 These targets regenerate `/snapshots/*.yaml` from `/snapshots/*.tpl.yaml` templates with the Rust core
-(`//packages/dashql-core-rs:snapshotter`).
+(`//packages/dashql-snapshots:snapshotter`).
 
 ## Type Checking
 
@@ -167,14 +166,7 @@ bazel build //packages/dashql-native-napi:addon
 
 ### C++
 
-C++ type checking happens during compilation. For IDE integration with clangd:
-
-```bash
-# Generate compile_commands.json for clangd
-bazel run //:refresh_compile_commands
-```
-
-This creates `compile_commands.json` in the workspace root, which clangd uses for real-time type checking in your editor.
+The only C++ code is the Hyper API binding in `packages/hyper-api`. It is type-checked when it is compiled.
 
 ## Querying Targets
 
@@ -274,14 +266,9 @@ bazel test //packages/dashql-app:test_chromium //packages/dashql-app:test_firefo
 ```bash
 # Build and test (type checking happens automatically)
 bazel test //packages/dashql-native:test
-```
 
-### After Changing C++ Code
-
-```bash
-# Build and run relevant tests
-bazel build //packages/dashql-core:dashql_core
-bazel test //packages/dashql-core:unit_tests
+# The core
+bazel test //packages/dashql-grammar:all //packages/dashql-core:all //packages/dashql-snapshots:all
 ```
 
 ### Core npm Package
@@ -300,7 +287,7 @@ bazel test //packages/dashql-core-js:all //packages/dashql-core-js/test:all
 bazel build --config=release //packages/dashql-core-js:npm_tarball
 ```
 
-The package targets depend directly on `//packages/dashql-core-rs:core_wasm` and its
+The package targets depend directly on `//packages/dashql-core-wasm:core_wasm` and its
 wasm-bindgen glue (`:dashql_core_bindgen`) and build the TypeScript API around them. The release archive is
 `bazel-bin/packages/dashql-core-js/dashql-core.tgz`. Trusted CI waits for the release
 Wasm build and requires that artifact to be available in the remote cache before
@@ -310,9 +297,13 @@ untrusted fastbuild CI run both core JS test target sets.
 
 ### After Changing Parser Grammar
 
+`grammar/rules/*.y` hold the rules with their Rust actions. `//grammar:grammar_y` assembles them into
+`dashql.y`, and `//grammar:parser_tables_rs` compiles it into the tables and actions of `dashql_grammar`.
+
 ```bash
 # Rebuild the parser and update the snapshots
 bazel run //snapshots/parser:update
+bazel test //packages/dashql-grammar:all //packages/dashql-snapshots:parser_snapshot_test
 
 # Verify snapshot changes
 git diff snapshots/parser/
@@ -353,7 +344,15 @@ bazel test //packages/dashql-core:all
 bazel run //scripts:repin_crates
 ```
 
-This updates `Cargo.lock`, `Cargo.Bazel.lock`, and regenerates `defs.bzl` for all Rust dependencies.
+This repins the `@crates` universe of the root `Cargo.toml` workspace.
+
+The core crates (`packages/dashql-grammar`, `dashql-core`, `dashql-snapshots`, `dashql-core-wasm`,
+`dashql-shell-wasm`) are no Cargo workspace. Their manifests feed the isolated `@core_crates` universe
+(`MODULE.bazel`) with the lockfile `bazel/core_crates/Cargo.lock`. After editing one of them:
+
+```bash
+CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
+```
 
 ### Updating Node Dependencies
 

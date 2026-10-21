@@ -20,8 +20,8 @@ This is exactly the problem Mosaic addresses by compiling declarative viz transf
 SQL against DuckDB and pulling back only the small aggregates. DashQL is better positioned
 than Mosaic here: the analyzer **already captures** `aggregate`, `bin`, and `time_unit`
 per encoding channel (`VisEncodingChannel` in
-`packages/dashql-core/include/dashql/analyzer/analyzer_types.h:688-709`) and already emits
-them into the Vega-Lite JSON (`vegalite_generator.cc:571-618`). We just re-route those
+`packages/dashql-core/src/analyzer/types.rs`) and already emits
+them into the Vega-Lite JSON (`packages/dashql-core/src/visualize/vegalite_generator.rs`). We just re-route those
 directives from "JS transform" to "SQL GROUP BY".
 
 The pushdown machinery also already exists — but only for the data-grid histograms/top-K,
@@ -34,8 +34,8 @@ the reduction in the SQL engine (DuckDB/Hyper/Trino) and hands Vega-Lite a small
 pre-aggregated table. The declarative Vega-Lite authoring experience is unchanged; the
 computation moves to where the data lives.
 
-**Scope (agreed):** incremental pushdown compiler, lowering built in the **C++ core**
-(`dashql-core`). No interactive cross-filtering / selection linking in this pass. No
+**Scope (agreed):** incremental pushdown compiler, lowering built in the **Rust core**
+(`packages/dashql-core`). No interactive cross-filtering / selection linking in this pass. No
 adoption of Mosaic as a renderer.
 
 ## Design
@@ -112,19 +112,16 @@ never edits either string.
 
 ## Files to modify
 
-**C++ core (`packages/dashql-core`):**
-- `include/dashql/analyzer/analyzer_types.h` — add `std::string pushdown_sql;` to
-  `VisualizationSpec` (near `vegalite_json`, ~line 785).
-- `src/visualize/` — add a new `vegalite_pushdown.cc` (+ header in
-   `include/dashql/visualize/`) implementing the lowering rule: inspect
+**Rust core (`packages/dashql-core`):**
+- `src/visualize/` — add a new `vegalite_pushdown.rs` implementing the lowering rule: inspect
   `spec.encoding_channels` for group keys vs. measures, read the complete query
   prefix from `spec.source_node_id`, and build the complete CTE-wrapped GROUP BY
   SQL. Mirror the SQL-building idioms in `sqlframe_builder.ts` (quoting, agg formatting).
-- `src/visualize/vegalite_generator.cc` — make `GenerateVegaLiteSpec` pushdown-aware: when
+- `src/visualize/vegalite_generator.rs` — make `generate_vegalite_spec` pushdown-aware: when
   aggregation is lowered, emit channel `field` as the output alias and **omit**
   `aggregate` (and later `bin`). Keep current behavior when no pushdown applies.
-- `src/script.cc:850-906` — in the `Pack` block, when `is_vegalite`, also generate & cache
-  `spec.pushdown_sql`, and `sb.add_pushdown_sql(...)`.
+- `src/pack.rs` — in `pack_visualization`, when the renderer is `vegalite`, also generate
+  the pushdown SQL next to the Vega-Lite JSON and pack it into the `VisualizationSpec` table.
 
 **FlatBuffer schema:**
 - `proto/fb/dashql/analyzed_script.fbs:281-303` — add `pushdown_sql: string;` to the
@@ -139,14 +136,15 @@ never edits either string.
 
 ## Verification
 
-- **C++ snapshot tests** — the natural home. Add cases to
+- **Snapshot tests** — the natural home. Add cases to
   `snapshots/visualize/basic.yaml` (driven by
-  `packages/dashql-core/test/visualize_snapshot_test_suite.cc`) with a new `pushdown_sql`
+  `//packages/dashql-core:visualize_snapshot_test`, encoded by
+  `packages/dashql-snapshots/src/encode/visualize.rs`) with a new `pushdown_sql`
   expectation alongside the existing `vegalite` / `roundtrip` fields. Cover: (a) bar chart
   `sum(y) by x` → GROUP BY + stripped aggregate in spec; (b) multi-dimension group
   (`x` + `color`); (c) `count` with no field → `__count`; (d) no-aggregate spec → **no**
   pushdown emitted (regression guard); (e) top-N with sort+limit. Run via the Bazel test
-  target (per project convention — not `npx`/raw ctest directly).
+  target (per project convention — not `npx`/`cargo` directly).
 - **TS execution test** — cover selection of the complete `pushdown_sql` when
   present and fallback to the unmodified complete query prefix otherwise.
   Include a query with a CTE, join, filter, ordering, and limit to guard against

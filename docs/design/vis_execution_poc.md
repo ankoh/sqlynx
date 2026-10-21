@@ -35,6 +35,10 @@ Key decisions:
 
 ### Core (C++)
 
+The C++ core has since been replaced by the Rust core in `packages/dashql-core`. The counterparts of
+the files below are `src/analyzer/types.rs`, `src/analyzer/visualization.rs`, `src/pack.rs`
+(`pack_visualization`) and `src/visualize/vegalite_generator.rs`.
+
 - `proto/fb/dashql/analyzed_script.fbs` — add a `VisualizationSpec` table
   containing the renderer output, AST/statement ids, and the AST node id for
   the complete input query; add `visualization_specs: [VisualizationSpec]` to

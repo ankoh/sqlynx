@@ -1,11 +1,14 @@
 # Rust Coverage Fix for Bazel 8/9
 
+The coverage workflow (`.github/workflows/coverage.yml`) covers the Rust core: it runs
+`bazel coverage` over `//packages/dashql-core/...`, `//packages/dashql-grammar/...` and
+`//packages/dashql-snapshots/...`, instruments `//packages/dashql-core` and `//packages/dashql-grammar`,
+and uploads Bazel's combined report (`_coverage_report.dat`) to Coveralls.
+
 ## Problem
 
 `bazel coverage` produced an empty tracefile for Rust targets under Bazel 8/9,
 causing `lcov` to abort with empty tracefile errors.
-
-C++ coverage (`dashql-core`) continued to work correctly.
 
 ## Root Cause
 
@@ -114,7 +117,8 @@ exports_files(glob(["*.patch"]))
 
 `--ignore-errors empty,corrupt` was added to the `lcov` merge step in
 `.github/workflows/coverage.yml` so that a legitimately empty tracefile (e.g. a
-target with no instrumented sources) does not abort the workflow.
+target with no instrumented sources) does not abort the workflow. The workflow
+no longer merges tracefiles with `lcov`; it uploads Bazel's combined report directly.
 
 ## Files Changed
 
