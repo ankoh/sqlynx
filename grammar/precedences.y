@@ -40,7 +40,7 @@
  * blame any funny behavior of UNBOUNDED on the SQL standard, though.
  */
 %nonassoc   UNBOUNDED        /* ideally should have same precedence as IDENT */
-%nonassoc   IDENT GENERATED NULL_P PARTITION RANGE ROWS PRECEDING FOLLOWING CUBE ROLLUP VALUES ONE COLUMNS
+%nonassoc   IDENT GENERATED NULL_P PARTITION RANGE ROWS GROUPS PRECEDING FOLLOWING CUBE ROLLUP VALUES ONE COLUMNS
 %left       Op OPERATOR AMPERSAND PIPE EXCLAMATION_MARK /* multi-character ops and user-defined operators */
 %left       PLUS MINUS
 %left       STAR DIVIDE MODULO

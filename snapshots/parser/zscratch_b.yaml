@@ -1,0 +1,340 @@
+parser-snapshots:
+
+  - name: b_union_paren
+    input: |-
+      (select 1) union (select 2) order by 1 limit 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 15
+          description:
+            text: "(select 1).. 1 limit 1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "(select 1).. 1 limit 1"
+            children:
+              - key: SQL_COMBINE_OPERATION
+                type: ENUM_SQL_COMBINE_OPERATION
+                value: UNION
+              - key: SQL_COMBINE_INPUT
+                type: ARRAY
+                text: "(select 1)..(select 2)"
+                children:
+                  - type: OBJECT_SQL_SELECT
+                    text: "(select 1)"
+                    children:
+                      - key: SQL_SELECT_TARGETS
+                        type: ARRAY
+                        text: "1"
+                        children:
+                          - type: OBJECT_SQL_RESULT_TARGET
+                            text: "1"
+                            children:
+                              - key: SQL_RESULT_TARGET_VALUE
+                                type: LITERAL_INTEGER
+                                text: "1"
+                  - type: OBJECT_SQL_SELECT
+                    text: "(select 2)"
+                    children:
+                      - key: SQL_SELECT_TARGETS
+                        type: ARRAY
+                        text: "2"
+                        children:
+                          - type: OBJECT_SQL_RESULT_TARGET
+                            text: "2"
+                            children:
+                              - key: SQL_RESULT_TARGET_VALUE
+                                type: LITERAL_INTEGER
+                                text: "2"
+              - key: SQL_SELECT_LIMIT
+                type: LITERAL_INTEGER
+                text: "1"
+              - key: SQL_SELECT_ORDER
+                type: ARRAY
+                text: "order by 1"
+                children:
+                  - type: OBJECT_SQL_ORDER
+                    text: "1"
+                    children:
+                      - key: SQL_ORDER_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: b_union_nested
+    input: |-
+      select 1 union (select 2 union select 3)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 18
+          description:
+            text: "select 1 u.. select 3)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1 u.. select 3)"
+            children:
+              - key: SQL_COMBINE_OPERATION
+                type: ENUM_SQL_COMBINE_OPERATION
+                value: UNION
+              - key: SQL_COMBINE_INPUT
+                type: ARRAY
+                text: "select 1 u.. select 3)"
+                children:
+                  - type: OBJECT_SQL_SELECT
+                    text: "select 1"
+                    children:
+                      - key: SQL_SELECT_TARGETS
+                        type: ARRAY
+                        text: "1"
+                        children:
+                          - type: OBJECT_SQL_RESULT_TARGET
+                            text: "1"
+                            children:
+                              - key: SQL_RESULT_TARGET_VALUE
+                                type: LITERAL_INTEGER
+                                text: "1"
+                  - type: OBJECT_SQL_SELECT
+                    text: "(select 2 .. select 3)"
+                    children:
+                      - key: SQL_COMBINE_OPERATION
+                        type: ENUM_SQL_COMBINE_OPERATION
+                        value: UNION
+                      - key: SQL_COMBINE_INPUT
+                        type: ARRAY
+                        text: "select 2 u..n select 3"
+                        children:
+                          - type: OBJECT_SQL_SELECT
+                            text: "select 2"
+                            children:
+                              - key: SQL_SELECT_TARGETS
+                                type: ARRAY
+                                text: "2"
+                                children:
+                                  - type: OBJECT_SQL_RESULT_TARGET
+                                    text: "2"
+                                    children:
+                                      - key: SQL_RESULT_TARGET_VALUE
+                                        type: LITERAL_INTEGER
+                                        text: "2"
+                          - type: OBJECT_SQL_SELECT
+                            text: "select 3"
+                            children:
+                              - key: SQL_SELECT_TARGETS
+                                type: ARRAY
+                                text: "3"
+                                children:
+                                  - type: OBJECT_SQL_RESULT_TARGET
+                                    text: "3"
+                                    children:
+                                      - key: SQL_RESULT_TARGET_VALUE
+                                        type: LITERAL_INTEGER
+                                        text: "3"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: b_union_left_paren
+    input: |-
+      (select 1 union select 2) intersect select 3
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 18
+          description:
+            text: "(select 1 ..t select 3"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "(select 1 ..t select 3"
+            children:
+              - key: SQL_COMBINE_OPERATION
+                type: ENUM_SQL_COMBINE_OPERATION
+                value: INTERSECT
+              - key: SQL_COMBINE_INPUT
+                type: ARRAY
+                text: "(select 1 ..t select 3"
+                children:
+                  - type: OBJECT_SQL_SELECT
+                    text: "(select 1 .. select 2)"
+                    children:
+                      - key: SQL_COMBINE_OPERATION
+                        type: ENUM_SQL_COMBINE_OPERATION
+                        value: UNION
+                      - key: SQL_COMBINE_INPUT
+                        type: ARRAY
+                        text: "select 1 u..n select 2"
+                        children:
+                          - type: OBJECT_SQL_SELECT
+                            text: "select 1"
+                            children:
+                              - key: SQL_SELECT_TARGETS
+                                type: ARRAY
+                                text: "1"
+                                children:
+                                  - type: OBJECT_SQL_RESULT_TARGET
+                                    text: "1"
+                                    children:
+                                      - key: SQL_RESULT_TARGET_VALUE
+                                        type: LITERAL_INTEGER
+                                        text: "1"
+                          - type: OBJECT_SQL_SELECT
+                            text: "select 2"
+                            children:
+                              - key: SQL_SELECT_TARGETS
+                                type: ARRAY
+                                text: "2"
+                                children:
+                                  - type: OBJECT_SQL_RESULT_TARGET
+                                    text: "2"
+                                    children:
+                                      - key: SQL_RESULT_TARGET_VALUE
+                                        type: LITERAL_INTEGER
+                                        text: "2"
+                  - type: OBJECT_SQL_SELECT
+                    text: "select 3"
+                    children:
+                      - key: SQL_SELECT_TARGETS
+                        type: ARRAY
+                        text: "3"
+                        children:
+                          - type: OBJECT_SQL_RESULT_TARGET
+                            text: "3"
+                            children:
+                              - key: SQL_RESULT_TARGET_VALUE
+                                type: LITERAL_INTEGER
+                                text: "3"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: b_paren_order
+    input: |-
+      (select 1 order by 1 limit 1) union select 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 15
+          description:
+            text: "(select 1 ..n select 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "(select 1 ..n select 2"
+            children:
+              - key: SQL_COMBINE_OPERATION
+                type: ENUM_SQL_COMBINE_OPERATION
+                value: UNION
+              - key: SQL_COMBINE_INPUT
+                type: ARRAY
+                text: "(select 1 ..n select 2"
+                children:
+                  - type: OBJECT_SQL_SELECT
+                    text: "(select 1 ..1 limit 1)"
+                    children:
+                      - key: SQL_SELECT_TARGETS
+                        type: ARRAY
+                        text: "1"
+                        children:
+                          - type: OBJECT_SQL_RESULT_TARGET
+                            text: "1"
+                            children:
+                              - key: SQL_RESULT_TARGET_VALUE
+                                type: LITERAL_INTEGER
+                                text: "1"
+                      - key: SQL_SELECT_LIMIT
+                        type: LITERAL_INTEGER
+                        text: "1"
+                      - key: SQL_SELECT_ORDER
+                        type: ARRAY
+                        text: "order by 1"
+                        children:
+                          - type: OBJECT_SQL_ORDER
+                            text: "1"
+                            children:
+                              - key: SQL_ORDER_VALUE
+                                type: LITERAL_INTEGER
+                                text: "1"
+                  - type: OBJECT_SQL_SELECT
+                    text: "select 2"
+                    children:
+                      - key: SQL_SELECT_TARGETS
+                        type: ARRAY
+                        text: "2"
+                        children:
+                          - type: OBJECT_SQL_RESULT_TARGET
+                            text: "2"
+                            children:
+                              - key: SQL_RESULT_TARGET_VALUE
+                                type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: b_paren_only
+    input: |-
+      (select 1 order by 1)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 7
+          description:
+            text: "(select 1 ..rder by 1)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "(select 1 ..rder by 1)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+              - key: SQL_SELECT_ORDER
+                type: ARRAY
+                text: "order by 1"
+                children:
+                  - type: OBJECT_SQL_ORDER
+                    text: "1"
+                    children:
+                      - key: SQL_ORDER_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []

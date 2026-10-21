@@ -164,7 +164,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: BETWEEN_SYMMETRIC
+                            value: BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "lo_discoun..en 1 and 3"
@@ -379,7 +379,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: BETWEEN_SYMMETRIC
+                            value: BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "lo_discoun..en 4 and 6"
@@ -402,7 +402,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: BETWEEN_SYMMETRIC
+                            value: BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "lo_quantit.. 26 and 35"
@@ -618,7 +618,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: BETWEEN_SYMMETRIC
+                            value: BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "lo_discoun..en 5 and 7"
@@ -641,7 +641,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: BETWEEN_SYMMETRIC
+                            value: BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "lo_quantit.. 26 and 35"
@@ -1239,7 +1239,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: BETWEEN_SYMMETRIC
+                            value: BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "p_brand1 b..MFGR#2228'"

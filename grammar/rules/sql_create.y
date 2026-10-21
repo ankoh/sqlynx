@@ -436,10 +436,10 @@ sql_table_constraint_attr_list:
     ;
 
 sql_table_constraint_attr_elem:
-    NOT DEFERRABLE        { enum_node(@$, ConstraintAttribute::DEFERRABLE) }
+    NOT DEFERRABLE        { enum_node(@$, ConstraintAttribute::NOT_DEFERRABLE) }
   | DEFERRABLE            { enum_node(@$, ConstraintAttribute::DEFERRABLE) }
-  | INITIALLY IMMEDIATE   { enum_node(@$, ConstraintAttribute::DEFERRABLE) }
-  | INITIALLY DEFERRED    { enum_node(@$, ConstraintAttribute::DEFERRABLE) }
-  | NOT VALID             { enum_node(@$, ConstraintAttribute::DEFERRABLE) }
-  | NO INHERIT            { enum_node(@$, ConstraintAttribute::DEFERRABLE) }
+  | INITIALLY IMMEDIATE   { enum_node(@$, ConstraintAttribute::INITIALLY_IMMEDIATE) }
+  | INITIALLY DEFERRED    { enum_node(@$, ConstraintAttribute::INITIALLY_DEFERRED) }
+  | NOT VALID             { enum_node(@$, ConstraintAttribute::NOT_VALID) }
+  | NO INHERIT            { enum_node(@$, ConstraintAttribute::NO_INHERIT) }
     ;

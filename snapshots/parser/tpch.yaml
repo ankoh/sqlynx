@@ -2775,7 +2775,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: BETWEEN_SYMMETRIC
+                            value: BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "l_discount...06 + 0.01"
@@ -3460,7 +3460,7 @@ parser-snapshots:
                                     children:
                                       - key: SQL_EXPRESSION_OPERATOR
                                         type: ENUM_SQL_EXPRESSION_OPERATOR
-                                        value: BETWEEN_SYMMETRIC
+                                        value: BETWEEN_ASYMMETRIC
                                       - key: SQL_EXPRESSION_ARGS
                                         type: ARRAY
                                         text: "l_shipdate..996-12-31'"
@@ -4246,7 +4246,7 @@ parser-snapshots:
                                     children:
                                       - key: SQL_EXPRESSION_OPERATOR
                                         type: ENUM_SQL_EXPRESSION_OPERATOR
-                                        value: BETWEEN_SYMMETRIC
+                                        value: BETWEEN_ASYMMETRIC
                                       - key: SQL_EXPRESSION_ARGS
                                         type: ARRAY
                                         text: "o_orderdat..996-12-31'"
@@ -9506,7 +9506,7 @@ parser-snapshots:
                                 children:
                                   - key: SQL_EXPRESSION_OPERATOR
                                     type: ENUM_SQL_EXPRESSION_OPERATOR
-                                    value: BETWEEN_SYMMETRIC
+                                    value: BETWEEN_ASYMMETRIC
                                   - key: SQL_EXPRESSION_ARGS
                                     type: ARRAY
                                     text: "p_size bet..en 1 and 5"
@@ -9719,7 +9719,7 @@ parser-snapshots:
                                 children:
                                   - key: SQL_EXPRESSION_OPERATOR
                                     type: ENUM_SQL_EXPRESSION_OPERATOR
-                                    value: BETWEEN_SYMMETRIC
+                                    value: BETWEEN_ASYMMETRIC
                                   - key: SQL_EXPRESSION_ARGS
                                     type: ARRAY
                                     text: "p_size bet..n 1 and 10"
@@ -9932,7 +9932,7 @@ parser-snapshots:
                                 children:
                                   - key: SQL_EXPRESSION_OPERATOR
                                     type: ENUM_SQL_EXPRESSION_OPERATOR
-                                    value: BETWEEN_SYMMETRIC
+                                    value: BETWEEN_ASYMMETRIC
                                   - key: SQL_EXPRESSION_ARGS
                                     type: ARRAY
                                     text: "p_size bet..n 1 and 15"

@@ -580,7 +580,10 @@ sql_values_clause:
 
 sql_from_clause:
     FROM sql_from_list  { $2 }
-  | FROM                { ctx.list(NO_NODES) }
+  | FROM                {
+      ctx.require_table_ref_after_from(@1);
+      ctx.list(NO_NODES)
+  }
   | %empty              { ctx.list(NO_NODES) }
     ;
 
@@ -837,7 +840,8 @@ sql_relation_expr:
 // SET is not an alias.
 
 
-sql_sample_count:
+// A sample count with an explicit unit
+sql_sample_count_explicit:
 	  FCONST MODULO     {
        ctx.list(
            &[
@@ -870,14 +874,6 @@ sql_sample_count:
          ],
      )
  }
-	| ICONST            {
-     ctx.list(
-         &[
-             attr(Key::SQL_SAMPLE_COUNT_VALUE, const_node(@1, AConstType::INTEGER)),
-             attr(Key::SQL_SAMPLE_COUNT_UNIT, enum_node(@1, SampleCountUnit::ROWS)),
-         ],
-     )
- }
 	| ICONST ROWS       {
      ctx.list(
          &[
@@ -897,11 +893,32 @@ sql_opt_sample_func:
   | %empty                              { null() }
 		;
 
+// A sample count, a count without a unit is a number of rows
+sql_sample_count:
+    sql_sample_count_explicit   { $1 }
+  | ICONST            {
+     ctx.list(
+         &[
+             attr(Key::SQL_SAMPLE_COUNT_VALUE, const_node(@1, AConstType::INTEGER)),
+             attr(Key::SQL_SAMPLE_COUNT_UNIT, enum_node(@1, SampleCountUnit::ROWS)),
+         ],
+     )
+ }
+    ;
+
 sql_tablesample_entry:
-	  sql_opt_sample_func LRB sql_sample_count RRB sql_opt_repeatable_clause {
+	  sql_opt_sample_func LRB sql_sample_count_explicit RRB sql_opt_repeatable_clause {
        ctx.push_back($3, attr(Key::SQL_SAMPLE_FUNCTION, $1));
        ctx.push_back($3, attr(Key::SQL_SAMPLE_REPEAT, $5));
        $3
+   }
+	| sql_opt_sample_func LRB ICONST RRB sql_opt_repeatable_clause {
+       // A count without a unit is a percentage for the sampling methods of the SQL standard
+       let unit = ctx.bare_sample_unit(&$1, @3);
+       let list = ctx.list(&[attr(Key::SQL_SAMPLE_COUNT_VALUE, const_node(@3, AConstType::INTEGER)), attr(Key::SQL_SAMPLE_COUNT_UNIT, unit)]);
+       ctx.push_back(list, attr(Key::SQL_SAMPLE_FUNCTION, $1));
+       ctx.push_back(list, attr(Key::SQL_SAMPLE_REPEAT, $5));
+       list
    }
 	| sql_sample_count { $1 }
 	| sql_sample_count LRB sql_col_id RRB {
@@ -1628,7 +1645,8 @@ sql_a_expr:
       expr3(
           ctx,
           @$,
-          enum_node(loc(&[@2, @3]), if $3 { ExprFunc::BETWEEN_ASYMMETRIC } else { ExprFunc::BETWEEN_SYMMETRIC }),
+          // Plain BETWEEN is asymmetric, the SYMMETRIC keyword has its own rule
+          enum_node(loc(&[@2, @3]), ExprFunc::BETWEEN_ASYMMETRIC),
           $1,
           $4,
           $6,
@@ -1638,10 +1656,7 @@ sql_a_expr:
       expr3(
           ctx,
           @$,
-          enum_node(
-              loc(&[@2, @3, @4]),
-              if $4 { ExprFunc::NOT_BETWEEN_ASYMMETRIC } else { ExprFunc::NOT_BETWEEN_SYMMETRIC },
-          ),
+          enum_node(loc(&[@2, @3, @4]), ExprFunc::NOT_BETWEEN_ASYMMETRIC),
           $1,
           $5,
           $7,
@@ -2174,7 +2189,7 @@ sql_window_specification:
     }
     ;
 
-// If we see PARTITION, RANGE, or ROWS as the first token after the LRB
+// If we see PARTITION, RANGE, ROWS, or GROUPS as the first token after the LRB
 // of a window_specification, we want the assumption to be that there is
 // no existing_window_name; but those keywords are unreserved and so could
 // be ColIds.  We fix this by making them have the same precedence as IDENT
@@ -2212,6 +2227,14 @@ sql_opt_frame_clause:
       ctx.list(
           &[
               attr(Key::SQL_WINDOW_FRAME_MODE, enum_node(@1, WindowRangeMode::ROWS)),
+              attr(Key::SQL_WINDOW_FRAME_BOUNDS, ctx.array(@2, $2)),
+          ],
+      )
+  }
+  | GROUPS sql_frame_extent {
+      ctx.list(
+          &[
+              attr(Key::SQL_WINDOW_FRAME_MODE, enum_node(@1, WindowRangeMode::GROUPS)),
               attr(Key::SQL_WINDOW_FRAME_BOUNDS, ctx.array(@2, $2)),
           ],
       )

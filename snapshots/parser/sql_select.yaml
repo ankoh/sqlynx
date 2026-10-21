@@ -5471,7 +5471,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: BETWEEN_SYMMETRIC
+                            value: BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "1 between 0 and 3"
@@ -5565,7 +5565,7 @@ parser-snapshots:
                         children:
                           - key: SQL_EXPRESSION_OPERATOR
                             type: ENUM_SQL_EXPRESSION_OPERATOR
-                            value: NOT_BETWEEN_SYMMETRIC
+                            value: NOT_BETWEEN_ASYMMETRIC
                           - key: SQL_EXPRESSION_ARGS
                             type: ARRAY
                             text: "1 not betw..en 0 and 3"
@@ -9924,7 +9924,7 @@ parser-snapshots:
                     text: "5"
                   - key: SQL_SAMPLE_COUNT_UNIT
                     type: ENUM_SQL_SAMPLE_UNIT_TYPE
-                    value: '?'
+                    value: ROWS
       scanner-errors: []
       parser-errors: []
       line-breaks: []
@@ -9980,7 +9980,7 @@ parser-snapshots:
                     text: "10"
                   - key: SQL_SAMPLE_COUNT_UNIT
                     type: ENUM_SQL_SAMPLE_UNIT_TYPE
-                    value: '?'
+                    value: PERCENT
       scanner-errors: []
       parser-errors: []
       line-breaks: []
@@ -10036,7 +10036,7 @@ parser-snapshots:
                     text: "10"
                   - key: SQL_SAMPLE_COUNT_UNIT
                     type: ENUM_SQL_SAMPLE_UNIT_TYPE
-                    value: '?'
+                    value: PERCENT
                   - key: SQL_SAMPLE_FUNCTION
                     type: NAME
                     text: "bernoulli"
@@ -10095,7 +10095,7 @@ parser-snapshots:
                     text: "50"
                   - key: SQL_SAMPLE_COUNT_UNIT
                     type: ENUM_SQL_SAMPLE_UNIT_TYPE
-                    value: '?'
+                    value: ROWS
                   - key: SQL_SAMPLE_FUNCTION
                     type: NAME
                     text: "reservoir"
@@ -10157,7 +10157,7 @@ parser-snapshots:
                     text: "10"
                   - key: SQL_SAMPLE_COUNT_UNIT
                     type: ENUM_SQL_SAMPLE_UNIT_TYPE
-                    value: '?'
+                    value: PERCENT
                   - key: SQL_SAMPLE_FUNCTION
                     type: NAME
                     text: "system"
@@ -10219,7 +10219,7 @@ parser-snapshots:
                             text: "20"
                           - key: SQL_SAMPLE_COUNT_UNIT
                             type: ENUM_SQL_SAMPLE_UNIT_TYPE
-                            value: '?'
+                            value: PERCENT
                           - key: SQL_SAMPLE_FUNCTION
                             type: NAME
                             text: "RESERVOIR"
@@ -10362,7 +10362,7 @@ parser-snapshots:
                     text: "20"
                   - key: SQL_SAMPLE_COUNT_UNIT
                     type: ENUM_SQL_SAMPLE_UNIT_TYPE
-                    value: '?'
+                    value: PERCENT
                   - key: SQL_SAMPLE_FUNCTION
                     type: NAME
                     text: "RESERVOIR"

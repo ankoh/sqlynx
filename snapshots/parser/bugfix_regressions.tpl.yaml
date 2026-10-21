@@ -1,0 +1,79 @@
+parser-snapshots:
+  # Operator followed by a minus keeps all its characters
+  - name: operator_trailing_minus
+    input: select a>=-1
+  # Equals-greater followed by a minus
+  - name: operator_trailing_minus_arrow
+    input: select f(a=>-1)
+  # Plus followed by a comment
+  - name: operator_trailing_comment
+    input: select 1 +/* c */ 2
+  # A minus comment after an operator
+  - name: operator_trailing_line_comment
+    input: |-
+      select 1 +-- c
+      2
+  # FROM must be followed by a table reference
+  - name: from_without_table_ref
+    input: select * from where a = 1
+  # The incomplete FROM at the end of the input stays lenient
+  - name: from_at_end_of_input
+    input: select * from
+  # Table constraint attributes keep their meaning
+  - name: table_constraint_attributes
+    input: |-
+      create table t (
+        a int,
+        b int,
+        unique (a) not deferrable,
+        unique (b) initially deferred,
+        check (a > 0) not valid,
+        check (b > 0) no inherit,
+        primary key (a) deferrable initially immediate
+      );
+  # GROUPS window frames
+  - name: window_frame_groups
+    input: select sum(a) over (order by b groups between 1 preceding and current row) from t
+  # GROUPS window frame with a single bound
+  - name: window_frame_groups_single_bound
+    input: select sum(a) over (partition by c order by b groups unbounded preceding) from t
+  # groups is still a valid name
+  - name: groups_as_name
+    input: select groups from groups
+  # A sample count without unit of a bernoulli sample is a percentage
+  - name: tablesample_bernoulli_bare
+    input: select * from t tablesample bernoulli (10)
+  # A sample count without unit of a system sample is a percentage
+  - name: tablesample_system_bare_repeatable
+    input: select * from t tablesample system (10) repeatable (5)
+  # A sample count without unit of a reservoir sample is a number of rows
+  - name: tablesample_reservoir_bare
+    input: select * from t tablesample reservoir (10)
+  # Interval types
+  - name: cast_interval_day_to_second
+    input: select cast(a as interval day to second)
+  - name: column_interval_year_to_month
+    input: create table t (a interval year to month);
+  - name: cast_text_array
+    input: select cast(a as text array)
+  # BETWEEN is asymmetric unless SYMMETRIC is written
+  - name: between_plain
+    input: select a between 1 and 2
+  - name: between_asymmetric
+    input: select a between asymmetric 1 and 2
+  - name: between_symmetric
+    input: select a between symmetric 1 and 2
+  - name: not_between_plain
+    input: select a not between 1 and 2
+  - name: not_between_symmetric
+    input: select a not between symmetric 1 and 2
+  - name: aggregate_order_by
+    input: select string_agg(a, ',' order by b) from t
+  - name: treat_as
+    input: select treat(a as int)
+  - name: rows_from_two_functions
+    input: select * from rows from (f(1), g(2))
+  - name: any_subquery
+    input: select * from t where a = any (select b from u)
+  - name: constraint_with_definition
+    input: create table t (a int, unique (a) with (fillfactor = 70));

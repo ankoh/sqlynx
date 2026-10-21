@@ -903,6 +903,12 @@ completion-snapshots:
           location: "gro"
           location-qualified: "gro"
           objects: []
+        - score: 56
+          value: groups
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
+          location: "gro"
+          location-qualified: "gro"
+          objects: []
         - score: 51
           value: aggregate
           candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,SUBSTRING_MATCH,SUFFIX_DEPTH_MANY]
@@ -942,12 +948,6 @@ completion-snapshots:
         - score: 3
           value: set
           candidate-tags: [KEYWORD_C,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
-          location: "gro"
-          location-qualified: "gro"
-          objects: []
-        - score: 1
-          value: abort
-          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,SUFFIX_DEPTH_MANY]
           location: "gro"
           location-qualified: "gro"
           objects: []

@@ -687,17 +687,14 @@ impl<'a> Lexer<'a> {
             nchars -= 1;
         }
         if nchars < yyleng {
-            // The C++ scanner keeps yyleng - nchars characters (Postgres keeps nchars).
-            let kept = yyleng - nchars;
-            self.yyless(&mut loc, kept);
+            self.yyless(&mut loc, nchars);
             if nchars == 1 {
                 if let Some(kind) = special_character(text[0]) {
                     return Symbol::new(kind, loc);
                 }
             }
             if nchars == 2 {
-                let second = if kept >= 2 { text[1] } else { 0 };
-                if let Some(kind) = two_char_operator(text[0], second) {
+                if let Some(kind) = two_char_operator(text[0], text[1]) {
                     return Symbol::new(kind, loc);
                 }
             }
@@ -770,11 +767,16 @@ mod tests {
     }
 
     #[test]
-    fn scans_operators_like_the_cxx_scanner() {
-        // The C++ operator rule keeps yyleng - nchars characters: "+--" yields a 2-byte PLUS.
-        assert_eq!(kinds("+-- foo"), vec![S_PLUS, S_MINUS, S_IDENT, S_YYEOF]);
-        assert_eq!(spans("+-- foo")[0], (0, 2));
+    fn trims_trailing_signs_and_comments_from_operators() {
+        // Like Postgres, the operator keeps the characters before the comment start or trailing sign.
+        assert_eq!(kinds("+-- foo"), vec![S_PLUS, S_YYEOF]);
+        assert_eq!(spans("+-- foo")[0], (0, 1));
         assert_eq!(kinds("=- <=> !="), vec![S_EQUALS, S_MINUS, S_Op, S_NOT_EQUALS, S_YYEOF]);
+        assert_eq!(kinds("a>=-1"), vec![S_IDENT, S_GREATER_EQUALS, S_MINUS, S_ICONST, S_YYEOF]);
+        assert_eq!(spans("a>=-1")[1], (1, 2));
+        assert_eq!(kinds("a=>-1"), vec![S_IDENT, S_EQUALS_GREATER, S_MINUS, S_ICONST, S_YYEOF]);
+        assert_eq!(kinds("1 +/* c */ 2"), vec![S_ICONST, S_PLUS, S_ICONST, S_YYEOF]);
+        assert_eq!(kinds("*/*"), vec![S_STAR, S_YYEOF]);
     }
 
     #[test]

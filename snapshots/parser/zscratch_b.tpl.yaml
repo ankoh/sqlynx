@@ -1,0 +1,11 @@
+parser-snapshots:
+  - name: b_union_paren
+    input: (select 1) union (select 2) order by 1 limit 1
+  - name: b_union_nested
+    input: select 1 union (select 2 union select 3)
+  - name: b_union_left_paren
+    input: (select 1 union select 2) intersect select 3
+  - name: b_paren_order
+    input: (select 1 order by 1 limit 1) union select 2
+  - name: b_paren_only
+    input: (select 1 order by 1)

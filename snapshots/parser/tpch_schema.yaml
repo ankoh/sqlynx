@@ -383,7 +383,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(p_partkey)"
@@ -617,7 +617,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(s_suppkey)"
@@ -784,7 +784,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(ps_partke..s_suppkey)"
@@ -1050,7 +1050,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(c_custkey)"
@@ -1334,7 +1334,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(o_orderkey)"
@@ -1830,7 +1830,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(l_orderke..inenumber)"
@@ -1971,7 +1971,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(n_nationkey)"
@@ -2087,7 +2087,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(r_regionkey)"
@@ -2491,7 +2491,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(p_partkey)"
@@ -2725,7 +2725,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(s_suppkey)"
@@ -2892,7 +2892,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(ps_partke..s_suppkey)"
@@ -3158,7 +3158,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(c_custkey)"
@@ -3442,7 +3442,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(o_orderkey)"
@@ -3938,7 +3938,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(l_orderke..inenumber)"
@@ -4079,7 +4079,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(n_nationkey)"
@@ -4195,7 +4195,7 @@ parser-snapshots:
                     children:
                       - key: SQL_TABLE_CONSTRAINT_TYPE
                         type: ENUM_SQL_TABLE_CONSTRAINT
-                        value: '?'
+                        value: PRIMARY_KEY
                       - key: SQL_TABLE_CONSTRAINT_COLUMNS
                         type: ARRAY
                         text: "(r_regionkey)"

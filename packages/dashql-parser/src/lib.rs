@@ -64,7 +64,7 @@ mod tests {
 
     #[test]
     fn automaton_size() {
-        assert_eq!(tables::YYNTOKENS, 639);
+        assert_eq!(tables::YYNTOKENS, 640);
         assert_eq!(tables::YYPACT.len(), tables::YYNSTATES);
         assert_eq!(tables::YYDEFACT.len(), tables::YYNSTATES);
         assert_eq!(tables::YYSTOS.len(), tables::YYNSTATES);

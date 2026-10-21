@@ -4,7 +4,7 @@ use dashql_buffers::parser::*;
 
 /// The name of the value of an enum node. Like the C++ `getEnumText`, names are looked up by the
 /// value as an index (all these enums are contiguous), except for the sparse JoinType. Enums that
-/// the C++ core does not list are named "?".
+/// are not listed here are named "?".
 pub fn enum_text(node: &Node) -> &'static str {
     let v = node.children_begin_or_value() as usize;
     macro_rules! by_index {
@@ -23,6 +23,9 @@ pub fn enum_text(node: &Node) -> &'static str {
         NodeType::ENUM_SQL_EXTRACT_TARGET => by_index!(ExtractTarget),
         NodeType::ENUM_SQL_GROUP_BY_ITEM_TYPE => by_index!(GroupByItemType),
         NodeType::ENUM_SQL_INTERVAL_TYPE => by_index!(IntervalType),
+        NodeType::ENUM_SQL_KEY_ACTION_COMMAND => by_index!(KeyActionCommand),
+        NodeType::ENUM_SQL_KEY_ACTION_TRIGGER => by_index!(KeyActionTrigger),
+        NodeType::ENUM_SQL_KEY_MATCH => by_index!(KeyMatch),
         NodeType::ENUM_SQL_KNOWN_FUNCTION => by_index!(KnownFunction),
         NodeType::ENUM_SQL_NUMERIC_TYPE => by_index!(NumericType),
         NodeType::ENUM_SQL_ON_COMMIT_OPTION => by_index!(OnCommitOption),
@@ -30,7 +33,9 @@ pub fn enum_text(node: &Node) -> &'static str {
         NodeType::ENUM_SQL_ORDER_NULL_RULE => by_index!(OrderNullRule),
         NodeType::ENUM_SQL_ROW_LOCKING_BLOCK_BEHAVIOR => by_index!(RowLockingBlockBehavior),
         NodeType::ENUM_SQL_ROW_LOCKING_STRENGTH => by_index!(RowLockingStrength),
+        NodeType::ENUM_SQL_SAMPLE_UNIT_TYPE => by_index!(SampleCountUnit),
         NodeType::ENUM_SQL_SUBQUERY_QUANTIFIER => by_index!(SubqueryQuantifier),
+        NodeType::ENUM_SQL_TABLE_CONSTRAINT => by_index!(TableConstraint),
         NodeType::ENUM_SQL_TEMP_TYPE => by_index!(TempType),
         NodeType::ENUM_SQL_TRIM_TARGET => by_index!(TrimDirection),
         NodeType::ENUM_SQL_WINDOW_BOUND_DIRECTION => by_index!(WindowBoundDirection),
@@ -56,7 +61,9 @@ mod tests {
         let loc = SymbolSpan::default();
         assert_eq!(enum_text(&enum_node(loc, ExpressionOperator::AND)), "AND");
         assert_eq!(enum_text(&enum_node(loc, JoinType::OUTER_FULL)), "OUTER_FULL");
-        assert_eq!(enum_text(&enum_node(loc, KeyMatch::FULL)), "?");
+        assert_eq!(enum_text(&enum_node(loc, KeyMatch::FULL)), "FULL");
+        assert_eq!(enum_text(&enum_node(loc, TableConstraint::UNIQUE)), "UNIQUE");
+        assert_eq!(enum_text(&enum_node(loc, SampleCountUnit::PERCENT)), "PERCENT");
         let _ = NO_PARENT;
     }
 }

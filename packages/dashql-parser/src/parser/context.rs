@@ -14,7 +14,7 @@ use super::value::{ExprVariant, NodeList};
 use crate::names::NameRegistry;
 use crate::scanner::Symbol;
 use crate::span::TextSpan;
-use dashql_buffers::parser::{AttributeKey, ExpressionOperator, Node, NodeType, NumericType, StatementType, SymbolSpan};
+use dashql_buffers::parser::{AttributeKey, ExpressionOperator, Node, NodeType, NumericType, SampleCountUnit, StatementType, SymbolSpan};
 
 /// The cell of the parse context state.
 ///
@@ -497,6 +497,26 @@ impl<'a> ParseContext<'a> {
     // -----------------------------------------------------------------------------------------
     // Checks
     // -----------------------------------------------------------------------------------------
+
+    /// The unit of a sample count written without one: the sampling methods of the SQL standard
+    /// (`bernoulli`, `system`) take a percentage, every other sample takes a number of rows
+    pub fn bare_sample_unit(&self, method: &Node, loc: SymbolSpan) -> Node {
+        let is_percentage = method.node_type() == NodeType::NAME && {
+            let state = self.state.borrow();
+            matches!(state.names.get(method.children_begin_or_value()).text.as_str(), "bernoulli" | "system")
+        };
+        let unit = if is_percentage { SampleCountUnit::PERCENT } else { SampleCountUnit::ROWS };
+        Node::new(&loc, NodeType::ENUM_SQL_SAMPLE_UNIT_TYPE, AttributeKey::NONE, NO_PARENT, unit.0 as u32, 0)
+    }
+
+    /// Report a FROM keyword that is not followed by a table reference. The rule stays lenient to
+    /// keep the tree of an unfinished statement, but only the end of the input may follow the keyword.
+    pub fn require_table_ref_after_from(&self, from: SymbolSpan) {
+        let next = (from.offset() + from.length()) as usize;
+        if self.symbols.get(next).is_some_and(|symbol| symbol.kind != crate::symbol_kind::S_YYEOF) {
+            self.error(from, "expected a table reference after FROM");
+        }
+    }
 
     /// Read the precision of a float type
     pub fn read_float_type(&self, bits_loc: SymbolSpan) -> NumericType {

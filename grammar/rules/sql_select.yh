@@ -41,7 +41,7 @@
 %type<NodeList> sql_qualified_name_list;
 %type<NodeList> sql_relation_expr;
 %type<NodeList> sql_rowsfrom_list;
-%type<NodeList> sql_sample_count;
+%type<NodeList> sql_sample_count sql_sample_count_explicit;
 %type<NodeList> sql_select_clause;
 %type<NodeList> sql_classical_select_no_parens;
 %type<NodeList> sql_select_limit;

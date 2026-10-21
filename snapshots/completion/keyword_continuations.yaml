@@ -33,6 +33,12 @@ completion-snapshots:
           location: "gro"
           location-qualified: "gro"
           objects: []
+        - score: 55
+          value: groups
+          candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,PREFIX_MATCH,SUBSTRING_MATCH]
+          location: "gro"
+          location-qualified: "gro"
+          objects: []
         - score: 50
           value: background
           candidate-tags: [KEYWORD_D,EXPECTED_PARSER_SYMBOL,SUBSTRING_MATCH]
@@ -42,12 +48,6 @@ completion-snapshots:
         - score: 50
           value: gro
           candidate-tags: [IDENTITY]
-          location: "gro"
-          location-qualified: "gro"
-          objects: []
-        - score: 4
-          value: where
-          candidate-tags: [KEYWORD_A,EXPECTED_PARSER_SYMBOL]
           location: "gro"
           location-qualified: "gro"
           objects: []

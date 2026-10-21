@@ -1,0 +1,1847 @@
+parser-snapshots:
+
+  - name: operator_trailing_minus
+    input: |-
+      select a>=-1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 13
+          description:
+            text: "select a>=-1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a>=-1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a>=-1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a>=-1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a>=-1"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: GREATER_EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a>=-1"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: OBJECT_SQL_NARY_EXPRESSION
+                                text: "-1"
+                                children:
+                                  - key: SQL_EXPRESSION_OPERATOR
+                                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                                    value: NEGATE
+                                  - key: SQL_EXPRESSION_ARGS
+                                    type: ARRAY
+                                    text: "-1"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: operator_trailing_minus_arrow
+    input: |-
+      select f(a=>-1)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 13
+          description:
+            text: "select f(a=>-1)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select f(a=>-1)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "f(a=>-1)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "f(a=>-1)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "f(a=>-1)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ARRAY
+                            text: "f"
+                            children:
+                              - type: NAME
+                                text: "f"
+                          - key: SQL_FUNCTION_ARGUMENTS
+                            type: ARRAY
+                            text: "a=>-1"
+                            children:
+                              - type: OBJECT_SQL_FUNCTION_ARG
+                                text: "a=>-1"
+                                children:
+                                  - key: SQL_FUNCTION_ARG_NAME
+                                    type: NAME
+                                    text: "a"
+                                  - key: SQL_FUNCTION_ARG_VALUE
+                                    type: OBJECT_SQL_NARY_EXPRESSION
+                                    text: "-1"
+                                    children:
+                                      - key: SQL_EXPRESSION_OPERATOR
+                                        type: ENUM_SQL_EXPRESSION_OPERATOR
+                                        value: NEGATE
+                                      - key: SQL_EXPRESSION_ARGS
+                                        type: ARRAY
+                                        text: "-1"
+                                        children:
+                                          - type: LITERAL_INTEGER
+                                            text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: operator_trailing_comment
+    input: |-
+      select 1 +/* c */ 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 8
+          description:
+            text: "select 1 +/* c */ 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1 +/* c */ 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1 +/* c */ 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1 +/* c */ 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "1 +/* c */ 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: PLUS
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "1 +/* c */ 2"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments:
+        - text: "/* c */"
+      comment-blocks:
+        - type: COMMENT
+          text: "/* c */"
+          comments: [0,1]
+          lines:
+            - "c"
+      comment-warnings: []
+
+  - name: operator_trailing_line_comment
+    input: |-
+      select 1 +-- c
+      2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 8
+          description:
+            text: "select 1 +-- c\n2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1 +-- c\n2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1 +-- c\n2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1 +-- c\n2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "1 +-- c\n2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: PLUS
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "1 +-- c\n2"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [14,15]
+      comments:
+        - text: "-- c"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- c"
+          comments: [0,1]
+          lines:
+            - "c"
+      comment-warnings: []
+
+  - name: from_without_table_ref
+    input: |-
+      select * from where a = 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select * f..here a = 1"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f..here a = 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "a = 1"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: EQUAL
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "a = 1"
+                    children:
+                      - type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+                      - type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors:
+        - message: expected a table reference after FROM
+          text: "from"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: from_at_end_of_input
+    input: |-
+      select * from
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select * from"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * from"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: table_constraint_attributes
+    input: |-
+      create table t (
+        a int,
+        b int,
+        unique (a) not deferrable,
+        unique (b) initially deferred,
+        check (a > 0) not valid,
+        check (b > 0) no inherit,
+        primary key (a) deferrable initially immediate
+      );
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 49
+          description:
+            text: "create tab..mediate\n);"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab..mmediate\n)"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "t"
+                children:
+                  - type: NAME
+                    text: "t"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(\n  a int,..mmediate\n)"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "a int"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "a"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "int"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: ENUM_SQL_NUMERIC_TYPE
+                            value: INT4
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "b int"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "b"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "int"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: ENUM_SQL_NUMERIC_TYPE
+                            value: INT4
+                  - type: OBJECT_SQL_TABLE_CONSTRAINT
+                    text: "unique (a)..deferrable"
+                    children:
+                      - key: SQL_TABLE_CONSTRAINT_TYPE
+                        type: ENUM_SQL_TABLE_CONSTRAINT
+                        value: UNIQUE
+                      - key: SQL_TABLE_CONSTRAINT_COLUMNS
+                        type: ARRAY
+                        text: "(a)"
+                        children:
+                          - type: NAME
+                            text: "a"
+                      - key: SQL_TABLE_CONSTRAINT_ATTRIBUTES
+                        type: ARRAY
+                        text: "not deferrable"
+                        children:
+                          - type: ENUM_SQL_CONSTRAINT_ATTRIBUTE
+                            value: NOT_DEFERRABLE
+                  - type: OBJECT_SQL_TABLE_CONSTRAINT
+                    text: "unique (b)..y deferred"
+                    children:
+                      - key: SQL_TABLE_CONSTRAINT_TYPE
+                        type: ENUM_SQL_TABLE_CONSTRAINT
+                        value: UNIQUE
+                      - key: SQL_TABLE_CONSTRAINT_COLUMNS
+                        type: ARRAY
+                        text: "(b)"
+                        children:
+                          - type: NAME
+                            text: "b"
+                      - key: SQL_TABLE_CONSTRAINT_ATTRIBUTES
+                        type: ARRAY
+                        text: "initially deferred"
+                        children:
+                          - type: ENUM_SQL_CONSTRAINT_ATTRIBUTE
+                            value: INITIALLY_DEFERRED
+                  - type: OBJECT_SQL_TABLE_CONSTRAINT
+                    text: "check (a >.. not valid"
+                    children:
+                      - key: SQL_TABLE_CONSTRAINT_TYPE
+                        type: ENUM_SQL_TABLE_CONSTRAINT
+                        value: CHECK
+                      - key: SQL_TABLE_CONSTRAINT_ARGUMENT
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a > 0"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: GREATER_THAN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a > 0"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "0"
+                  - type: OBJECT_SQL_TABLE_CONSTRAINT
+                    text: "check (b >..no inherit"
+                    children:
+                      - key: SQL_TABLE_CONSTRAINT_TYPE
+                        type: ENUM_SQL_TABLE_CONSTRAINT
+                        value: CHECK
+                      - key: SQL_TABLE_CONSTRAINT_ARGUMENT
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "b > 0"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: GREATER_THAN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "b > 0"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "b"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "b"
+                                    children:
+                                      - type: NAME
+                                        text: "b"
+                              - type: LITERAL_INTEGER
+                                text: "0"
+                  - type: OBJECT_SQL_TABLE_CONSTRAINT
+                    text: "primary ke.. immediate"
+                    children:
+                      - key: SQL_TABLE_CONSTRAINT_TYPE
+                        type: ENUM_SQL_TABLE_CONSTRAINT
+                        value: PRIMARY_KEY
+                      - key: SQL_TABLE_CONSTRAINT_COLUMNS
+                        type: ARRAY
+                        text: "(a)"
+                        children:
+                          - type: NAME
+                            text: "a"
+                      - key: SQL_TABLE_CONSTRAINT_ATTRIBUTES
+                        type: ARRAY
+                        text: "deferrable.. immediate"
+                        children:
+                          - type: ENUM_SQL_CONSTRAINT_ATTRIBUTE
+                            value: DEFERRABLE
+                          - type: ENUM_SQL_CONSTRAINT_ATTRIBUTE
+                            value: INITIALLY_IMMEDIATE
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [16,17]
+        - text: [25,26]
+        - text: [34,35]
+        - text: [63,64]
+        - text: [96,97]
+        - text: [123,124]
+        - text: [151,152]
+        - text: [200,201]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: window_frame_groups
+    input: |-
+      select sum(a) over (order by b groups between 1 preceding and current row) from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 29
+          description:
+            text: "select sum..ow) from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select sum..ow) from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "sum(a) ove..rrent row)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "sum(a) ove..rrent row)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "sum(a) ove..rrent row)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ARRAY
+                            text: "sum"
+                            children:
+                              - type: NAME
+                                text: "sum"
+                          - key: SQL_FUNCTION_ARGUMENTS
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: OBJECT_SQL_FUNCTION_ARG
+                                text: "a"
+                                children:
+                                  - key: SQL_FUNCTION_ARG_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                          - key: SQL_FUNCTION_OVER
+                            type: OBJECT_SQL_WINDOW_FRAME
+                            text: "(order by ..rrent row)"
+                            children:
+                              - key: SQL_WINDOW_FRAME_MODE
+                                type: ENUM_SQL_WINDOW_RANGE_MODE
+                                value: GROUPS
+                              - key: SQL_WINDOW_FRAME_BOUNDS
+                                type: ARRAY
+                                text: "between 1 ..urrent row"
+                                children:
+                                  - type: OBJECT_SQL_WINDOW_BOUND
+                                    text: "1 preceding"
+                                    children:
+                                      - key: SQL_WINDOW_BOUND_MODE
+                                        type: ENUM_SQL_WINDOW_BOUND_MODE
+                                        value: VALUE
+                                      - key: SQL_WINDOW_BOUND_DIRECTION
+                                        type: ENUM_SQL_WINDOW_BOUND_DIRECTION
+                                        value: PRECEDING
+                                      - key: SQL_WINDOW_BOUND_VALUE
+                                        type: LITERAL_INTEGER
+                                        text: "1"
+                                  - type: OBJECT_SQL_WINDOW_BOUND
+                                    text: "current row"
+                                    children:
+                                      - key: SQL_WINDOW_BOUND_MODE
+                                        type: ENUM_SQL_WINDOW_BOUND_MODE
+                                        value: CURRENT_ROW
+                              - key: SQL_WINDOW_FRAME_ORDER
+                                type: ARRAY
+                                text: "order by b"
+                                children:
+                                  - type: OBJECT_SQL_ORDER
+                                    text: "b"
+                                    children:
+                                      - key: SQL_ORDER_VALUE
+                                        type: OBJECT_SQL_COLUMN_REF
+                                        text: "b"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "b"
+                                            children:
+                                              - type: NAME
+                                                text: "b"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: window_frame_groups_single_bound
+    input: |-
+      select sum(a) over (partition by c order by b groups unbounded preceding) from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 30
+          description:
+            text: "select sum..ng) from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select sum..ng) from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "sum(a) ove..preceding)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "sum(a) ove..preceding)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "sum(a) ove..preceding)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ARRAY
+                            text: "sum"
+                            children:
+                              - type: NAME
+                                text: "sum"
+                          - key: SQL_FUNCTION_ARGUMENTS
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: OBJECT_SQL_FUNCTION_ARG
+                                text: "a"
+                                children:
+                                  - key: SQL_FUNCTION_ARG_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                          - key: SQL_FUNCTION_OVER
+                            type: OBJECT_SQL_WINDOW_FRAME
+                            text: "(partition..preceding)"
+                            children:
+                              - key: SQL_WINDOW_FRAME_PARTITION
+                                type: ARRAY
+                                text: "c"
+                                children:
+                                  - type: OBJECT_SQL_COLUMN_REF
+                                    text: "c"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "c"
+                                        children:
+                                          - type: NAME
+                                            text: "c"
+                              - key: SQL_WINDOW_FRAME_MODE
+                                type: ENUM_SQL_WINDOW_RANGE_MODE
+                                value: GROUPS
+                              - key: SQL_WINDOW_FRAME_BOUNDS
+                                type: ARRAY
+                                text: "unbounded preceding"
+                                children:
+                                  - type: OBJECT_SQL_WINDOW_BOUND
+                                    text: "unbounded preceding"
+                                    children:
+                                      - key: SQL_WINDOW_BOUND_MODE
+                                        type: ENUM_SQL_WINDOW_BOUND_MODE
+                                        value: UNBOUNDED
+                                      - key: SQL_WINDOW_BOUND_DIRECTION
+                                        type: ENUM_SQL_WINDOW_BOUND_DIRECTION
+                                        value: PRECEDING
+                              - key: SQL_WINDOW_FRAME_ORDER
+                                type: ARRAY
+                                text: "order by b"
+                                children:
+                                  - type: OBJECT_SQL_ORDER
+                                    text: "b"
+                                    children:
+                                      - key: SQL_ORDER_VALUE
+                                        type: OBJECT_SQL_COLUMN_REF
+                                        text: "b"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "b"
+                                            children:
+                                              - type: NAME
+                                                text: "b"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: groups_as_name
+    input: |-
+      select groups from groups
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 10
+          description:
+            text: "select gro..rom groups"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select gro..rom groups"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "groups"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "groups"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "groups"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "groups"
+                            children:
+                              - type: NAME
+                                text: "groups"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from groups"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "groups"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "groups"
+                        children:
+                          - type: NAME
+                            text: "groups"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: tablesample_bernoulli_bare
+    input: |-
+      select * from t tablesample bernoulli (10)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 12
+          description:
+            text: "select * f..oulli (10)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f..oulli (10)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t tab..oulli (10)"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t tablesam..oulli (10)"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+                      - key: SQL_TABLEREF_SAMPLE
+                        type: OBJECT_SQL_TABLEREF_SAMPLE
+                        text: "tablesampl..oulli (10)"
+                        children:
+                          - key: SQL_SAMPLE_COUNT_VALUE
+                            type: LITERAL_INTEGER
+                            text: "10"
+                          - key: SQL_SAMPLE_COUNT_UNIT
+                            type: ENUM_SQL_SAMPLE_UNIT_TYPE
+                            value: PERCENT
+                          - key: SQL_SAMPLE_FUNCTION
+                            type: NAME
+                            text: "bernoulli"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: tablesample_system_bare_repeatable
+    input: |-
+      select * from t tablesample system (10) repeatable (5)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 13
+          description:
+            text: "select * f..atable (5)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f..atable (5)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t tab..atable (5)"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t tablesam..atable (5)"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+                      - key: SQL_TABLEREF_SAMPLE
+                        type: OBJECT_SQL_TABLEREF_SAMPLE
+                        text: "tablesampl..atable (5)"
+                        children:
+                          - key: SQL_SAMPLE_COUNT_VALUE
+                            type: LITERAL_INTEGER
+                            text: "10"
+                          - key: SQL_SAMPLE_COUNT_UNIT
+                            type: ENUM_SQL_SAMPLE_UNIT_TYPE
+                            value: PERCENT
+                          - key: SQL_SAMPLE_FUNCTION
+                            type: NAME
+                            text: "system"
+                          - key: SQL_SAMPLE_REPEAT
+                            type: LITERAL_INTEGER
+                            text: "5"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: tablesample_reservoir_bare
+    input: |-
+      select * from t tablesample reservoir (10)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 12
+          description:
+            text: "select * f..rvoir (10)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f..rvoir (10)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t tab..rvoir (10)"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t tablesam..rvoir (10)"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+                      - key: SQL_TABLEREF_SAMPLE
+                        type: OBJECT_SQL_TABLEREF_SAMPLE
+                        text: "tablesampl..rvoir (10)"
+                        children:
+                          - key: SQL_SAMPLE_COUNT_VALUE
+                            type: LITERAL_INTEGER
+                            text: "10"
+                          - key: SQL_SAMPLE_COUNT_UNIT
+                            type: ENUM_SQL_SAMPLE_UNIT_TYPE
+                            value: ROWS
+                          - key: SQL_SAMPLE_FUNCTION
+                            type: NAME
+                            text: "reservoir"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: cast_interval_day_to_second
+    input: |-
+      select cast(a as interval day to second)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 12
+          description:
+            text: "select cas..to second)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cas..to second)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "cast(a as ..to second)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "cast(a as ..to second)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "cast(a as ..to second)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CAST
+                          - key: SQL_FUNCTION_CAST_ARGS
+                            type: OBJECT_SQL_FUNCTION_CAST_ARGS
+                            text: "(a as inte..to second)"
+                            children:
+                              - key: SQL_FUNCTION_CAST_VALUE
+                                type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - key: SQL_FUNCTION_CAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "interval d.. to second"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: OBJECT_SQL_INTERVAL_TYPE
+                                    text: "day to second"
+                                    children:
+                                      - key: SQL_INTERVAL_TYPE
+                                        type: ENUM_SQL_INTERVAL_TYPE
+                                        value: DAY_TO_SECOND
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: column_interval_year_to_month
+    input: |-
+      create table t (a interval year to month);
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 9
+          description:
+            text: "create tab..to month);"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab.. to month)"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "t"
+                children:
+                  - type: NAME
+                    text: "t"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(a interva.. to month)"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "a interval..r to month"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "a"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "interval y..r to month"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: OBJECT_SQL_INTERVAL_TYPE
+                            text: "year to month"
+                            children:
+                              - key: SQL_INTERVAL_TYPE
+                                type: ENUM_SQL_INTERVAL_TYPE
+                                value: YEAR_TO_MONTH
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: cast_text_array
+    input: |-
+      select cast(a as text array)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 13
+          description:
+            text: "select cas..ext array)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cas..ext array)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "cast(a as ..ext array)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "cast(a as ..ext array)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "cast(a as ..ext array)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CAST
+                          - key: SQL_FUNCTION_CAST_ARGS
+                            type: OBJECT_SQL_FUNCTION_CAST_ARGS
+                            text: "(a as text array)"
+                            children:
+                              - key: SQL_FUNCTION_CAST_VALUE
+                                type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - key: SQL_FUNCTION_CAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "text array"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: OBJECT_SQL_GENERIC_TYPE
+                                    text: "text"
+                                    children:
+                                      - key: SQL_GENERIC_TYPE_NAME
+                                        type: NAME
+                                        text: "text"
+                                  - key: SQL_TYPENAME_ARRAY
+                                    type: ARRAY
+                                    text: "array"
+                                    children: []
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: between_plain
+    input: |-
+      select a between 1 and 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select a b..en 1 and 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a b..en 1 and 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a between 1 and 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a between 1 and 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a between 1 and 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: BETWEEN_ASYMMETRIC
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a between 1 and 2"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: between_asymmetric
+    input: |-
+      select a between asymmetric 1 and 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select a b..ic 1 and 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a b..ic 1 and 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a between ..ic 1 and 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a between ..ic 1 and 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a between ..ic 1 and 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: BETWEEN_ASYMMETRIC
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a between ..ic 1 and 2"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: between_symmetric
+    input: |-
+      select a between symmetric 1 and 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select a b..ic 1 and 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a b..ic 1 and 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a between ..ic 1 and 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a between ..ic 1 and 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a between ..ic 1 and 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: BETWEEN_SYMMETRIC
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a between ..ic 1 and 2"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: not_between_plain
+    input: |-
+      select a not between 1 and 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select a n..en 1 and 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a n..en 1 and 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a not betw..en 1 and 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a not betw..en 1 and 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a not betw..en 1 and 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: NOT_BETWEEN_ASYMMETRIC
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a not betw..en 1 and 2"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: not_between_symmetric
+    input: |-
+      select a not between symmetric 1 and 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select a n..ic 1 and 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a n..ic 1 and 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a not betw..ic 1 and 2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a not betw..ic 1 and 2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "a not betw..ic 1 and 2"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: NOT_BETWEEN_SYMMETRIC
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "a not betw..ic 1 and 2"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_INTEGER
+                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: aggregate_order_by
+    input: |-
+      select string_agg(a, ',' order by b) from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 22
+          description:
+            text: "select str.. b) from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select str.. b) from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "string_agg..rder by b)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "string_agg..rder by b)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "string_agg..rder by b)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ARRAY
+                            text: "string_agg"
+                            children:
+                              - type: NAME
+                                text: "string_agg"
+                          - key: SQL_FUNCTION_ARGUMENTS
+                            type: ARRAY
+                            text: "a, ','"
+                            children:
+                              - type: OBJECT_SQL_FUNCTION_ARG
+                                text: "a"
+                                children:
+                                  - key: SQL_FUNCTION_ARG_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "a"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "a"
+                                        children:
+                                          - type: NAME
+                                            text: "a"
+                              - type: OBJECT_SQL_FUNCTION_ARG
+                                text: "','"
+                                children:
+                                  - key: SQL_FUNCTION_ARG_VALUE
+                                    type: LITERAL_STRING
+                                    text: "','"
+                          - key: SQL_FUNCTION_ORDER
+                            type: ARRAY
+                            text: "order by b"
+                            children:
+                              - type: OBJECT_SQL_ORDER
+                                text: "b"
+                                children:
+                                  - key: SQL_ORDER_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "b"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "b"
+                                        children:
+                                          - type: NAME
+                                            text: "b"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: treat_as
+    input: |-
+      select treat(a as int)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 11
+          description:
+            text: "select tre..(a as int)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select tre..(a as int)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "treat(a as int)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "treat(a as int)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "treat(a as int)"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: TREAT
+                          - key: SQL_FUNCTION_TREAT_ARGS
+                            type: OBJECT_SQL_FUNCTION_TREAT_ARGS
+                            text: "(a as int)"
+                            children:
+                              - key: SQL_FUNCTION_TREAT_VALUE
+                                type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - key: SQL_FUNCTION_TREAT_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "int"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: ENUM_SQL_NUMERIC_TYPE
+                                    value: INT4
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: rows_from_two_functions
+    input: |-
+      select * from rows from (f(1), g(2))
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 23
+          description:
+            text: "select * f..(1), g(2))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f..(1), g(2))"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from rows ..(1), g(2))"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "rows from ..(1), g(2))"
+                    children:
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_FUNCTION_TABLE
+                        text: "rows from ..(1), g(2))"
+                        children:
+                          - key: SQL_FUNCTION_TABLE_WITH_ORDINALITY
+                            type: BOOL
+                            value: 0
+                          - key: SQL_FUNCTION_TABLE_ROWS_FROM
+                            type: ARRAY
+                            text: "f(1), g(2)"
+                            children:
+                              - type: OBJECT_SQL_ROWSFROM_ITEM
+                                text: "f(1)"
+                                children:
+                                  - key: SQL_ROWSFROM_ITEM_FUNCTION
+                                    type: OBJECT_SQL_FUNCTION_EXPRESSION
+                                    text: "f(1)"
+                                    children:
+                                      - key: SQL_FUNCTION_NAME
+                                        type: ARRAY
+                                        text: "f"
+                                        children:
+                                          - type: NAME
+                                            text: "f"
+                                      - key: SQL_FUNCTION_ARGUMENTS
+                                        type: ARRAY
+                                        text: "1"
+                                        children:
+                                          - type: OBJECT_SQL_FUNCTION_ARG
+                                            text: "1"
+                                            children:
+                                              - key: SQL_FUNCTION_ARG_VALUE
+                                                type: LITERAL_INTEGER
+                                                text: "1"
+                              - type: OBJECT_SQL_ROWSFROM_ITEM
+                                text: "g(2)"
+                                children:
+                                  - key: SQL_ROWSFROM_ITEM_FUNCTION
+                                    type: OBJECT_SQL_FUNCTION_EXPRESSION
+                                    text: "g(2)"
+                                    children:
+                                      - key: SQL_FUNCTION_NAME
+                                        type: ARRAY
+                                        text: "g"
+                                        children:
+                                          - type: NAME
+                                            text: "g"
+                                      - key: SQL_FUNCTION_ARGUMENTS
+                                        type: ARRAY
+                                        text: "2"
+                                        children:
+                                          - type: OBJECT_SQL_FUNCTION_ARG
+                                            text: "2"
+                                            children:
+                                              - key: SQL_FUNCTION_ARG_VALUE
+                                                type: LITERAL_INTEGER
+                                                text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: any_subquery
+    input: |-
+      select * from t where a = any (select b from u)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 25
+          description:
+            text: "select * f.. b from u)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f.. b from u)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_SUBQUERY_EXPRESSION
+                text: "a = any (s.. b from u)"
+                children:
+                  - key: SQL_SUBQUERY_ARG0
+                    type: OBJECT_SQL_COLUMN_REF
+                    text: "a"
+                    children:
+                      - key: SQL_COLUMN_REF_PATH
+                        type: ARRAY
+                        text: "a"
+                        children:
+                          - type: NAME
+                            text: "a"
+                  - key: SQL_SUBQUERY_ARG1
+                    type: OBJECT_SQL_SELECT_EXPRESSION
+                    text: "a = any (s.. b from u)"
+                    children:
+                      - key: SQL_SELECT_EXPRESSION_STATEMENT
+                        type: OBJECT_SQL_SELECT
+                        text: "(select b from u)"
+                        children:
+                          - key: SQL_SELECT_TARGETS
+                            type: ARRAY
+                            text: "b"
+                            children:
+                              - type: OBJECT_SQL_RESULT_TARGET
+                                text: "b"
+                                children:
+                                  - key: SQL_RESULT_TARGET_VALUE
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "b"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "b"
+                                        children:
+                                          - type: NAME
+                                            text: "b"
+                          - key: SQL_SELECT_FROM
+                            type: ARRAY
+                            text: "from u"
+                            children:
+                              - type: OBJECT_SQL_TABLEREF
+                                text: "u"
+                                children:
+                                  - key: SQL_TABLEREF_NAME
+                                    type: ARRAY
+                                    text: "u"
+                                    children:
+                                      - type: NAME
+                                        text: "u"
+                  - key: SQL_SUBQUERY_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: EQUAL
+                  - key: SQL_SUBQUERY_QUANTIFIER
+                    type: ENUM_SQL_SUBQUERY_QUANTIFIER
+                    value: ANY
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: constraint_with_definition
+    input: |-
+      create table t (a int, unique (a) with (fillfactor = 70));
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 16
+          description:
+            text: "create tab..or = 70));"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab..tor = 70))"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "t"
+                children:
+                  - type: NAME
+                    text: "t"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(a int, un..tor = 70))"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "a int"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "a"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "int"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: ENUM_SQL_NUMERIC_TYPE
+                            value: INT4
+                  - type: OBJECT_SQL_TABLE_CONSTRAINT
+                    text: "unique (a)..ctor = 70)"
+                    children:
+                      - key: SQL_TABLE_CONSTRAINT_TYPE
+                        type: ENUM_SQL_TABLE_CONSTRAINT
+                        value: UNIQUE
+                      - key: SQL_TABLE_CONSTRAINT_COLUMNS
+                        type: ARRAY
+                        text: "(a)"
+                        children:
+                          - type: NAME
+                            text: "a"
+                      - key: SQL_TABLE_CONSTRAINT_DEFINITION
+                        type: ARRAY
+                        text: "with (fill..ctor = 70)"
+                        children:
+                          - type: OBJECT_SQL_DEF_ARG
+                            text: "fillfactor = 70"
+                            children:
+                              - key: SQL_DEFINITION_ARG_KEY
+                                type: NAME
+                                text: "fillfactor"
+                              - key: SQL_DEFINITION_ARG_VALUE
+                                type: LITERAL_INTEGER
+                                text: "70"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []

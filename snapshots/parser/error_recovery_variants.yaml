@@ -274,6 +274,8 @@ parser-snapshots:
                         text: "t"
       scanner-errors: []
       parser-errors:
+        - message: expected a table reference after FROM
+          text: "from"
         - message: 'syntax error, unexpected identifier literal'
           text: "frm"
         - message: 'syntax error, unexpected SEMICOLON'
@@ -371,6 +373,8 @@ parser-snapshots:
       statements: []
       scanner-errors: []
       parser-errors:
+        - message: expected a table reference after FROM
+          text: "from"
         - message: 'syntax error, unexpected EOF'
           text: ""
       line-breaks: []

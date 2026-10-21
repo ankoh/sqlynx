@@ -1905,6 +1905,7 @@ planner-snapshots:
       nodes: []
       edges: []
       diagnostics:
+        - message: 'parser: expected a table reference after FROM'
         - message: 'unsupported SQL: parser produced no statements'
 
   - name: MalformedScanner

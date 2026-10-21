@@ -28,9 +28,6 @@ core; C++ function names refer to the original implementation.
   comment mentions dollar quotes. Backslash has no special meaning in `'...'`, and quoted strings
   continue across a newline only for bit and hex strings.
 - **`\r` is not recorded as a line break.**
-- **Operators keep the wrong length after trimming.** The `{operator}` action calls `yyless(yyleng - nchars)`
-  where Postgres calls `yyless(nchars)`. So `+--x` scans as a 2-byte PLUS followed by MINUS, and the
-  comment is lost; `*/*` scans as a 2-byte STAR.
 - **Literals swallow trailing comments.** `{quotestop}` includes trailing `{whitespace}`, comments included,
   and `Read*Literal` only trims spaces and `\n`. `'abc'  -- c` is an 11-byte SCONST, and the comment is
   never recorded.
@@ -45,8 +42,9 @@ core; C++ function names refer to the original implementation.
 - **Keyword names carry token indexes as byte spans.** `name_from_keyword` and `name_from_string_literal`
   (C++ `NameFromKeyword`, `NameFromStringLiteral`) register names with `TextSpan(symbol.offset, ...)`,
   which is a token index stored in a byte-span field. Scanner-registered names carry real byte offsets.
-- **Lenient incomplete statements.** `SELECT a FROM` and `SELECT * FROM A WHERE` parse without errors,
-  because `sql_from_clause: FROM` and `sql_where_clause: WHERE` accept a bare keyword.
+- **Lenient incomplete statements.** `SELECT * FROM A WHERE` parses without an error, because
+  `sql_where_clause: WHERE` accepts a bare keyword. A bare `FROM` keeps the lenient tree, but reports
+  "expected a table reference after FROM" unless the input ends right after it.
 - **`EOF` is part of rules.** The grammar shifts `EOF` inside rules (`ext_dot_trailing: DOT EOF`).
   Parsing can still finish because the parser keeps reading EOF at the end of input.
 
