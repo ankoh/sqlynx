@@ -82,7 +82,7 @@ describe('NativeStorageBackend V2 flat storage', () => {
         await expect(backend.listDataFiles(TEST_NOTEBOOK_ID)).rejects.toThrow('nested data');
     });
     it('migrates the files of the notebook folder once when loading it', async () => {
-        const renaming = new NativeStorageBackend(DIR, [{ from: 'old.sql', to: 'new.sql' }]);
+        const renaming = new NativeStorageBackend(DIR, { fileRenames: [{ from: 'old.sql', to: 'new.sql' }] });
         await renaming.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook());
         fsStore.files.set(`${DIR}/old.sql`, 'content');
         expect(await renaming.loadNotebook(TEST_NOTEBOOK_ID)).toEqual(testNotebook());
@@ -103,5 +103,14 @@ describe('NativeStorageBackend V2 flat storage', () => {
         expect(await backend.loadNotebookFunctions(TEST_NOTEBOOK_ID)).toBe('functions');
         expect(fsStore.files.has(`${DIR}/dashql-relations.sql`)).toBe(false);
         expect(fsStore.files.has(`${DIR}/dashql-functions.sql`)).toBe(false);
+    });
+    it('reads the catalog files of older versions without renaming them when migration is off', async () => {
+        await backend.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook());
+        fsStore.files.set(`${DIR}/dashql-relations.sql`, 'schema');
+        const untouched = new NativeStorageBackend(DIR, { migrateFiles: false });
+        await untouched.loadNotebook(TEST_NOTEBOOK_ID);
+        expect(await untouched.loadNotebookSchema(TEST_NOTEBOOK_ID)).toBe('schema');
+        expect(fsStore.files.has(`${DIR}/dashql-relations.sql`)).toBe(true);
+        expect(fsStore.files.has(`${DIR}/dashql-catalog-relations.sql`)).toBe(false);
     });
 });

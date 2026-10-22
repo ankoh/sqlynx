@@ -29,6 +29,18 @@ export const NOTEBOOK_FILE_RENAMES: readonly NotebookFileRename[] = [
     { from: LEGACY_STORAGE_CATALOG_FUNCTIONS, to: STORAGE_CATALOG_FUNCTIONS },
 ];
 
+/// The current name of a notebook file followed by its names in older versions, newest first.
+/// Readers of folders that are not migrated try them in this order.
+export function notebookFileNames(fileName: string, renames: readonly NotebookFileRename[] = NOTEBOOK_FILE_RENAMES): string[] {
+    const names = [fileName];
+    for (let i = renames.length - 1; i >= 0; --i) {
+        if (names.includes(renames[i].to) && !names.includes(renames[i].from)) {
+            names.push(renames[i].from);
+        }
+    }
+    return names;
+}
+
 /// Bring the files of a notebook folder to the current layout.
 ///
 /// A rename applies only while the old file exists and the new one does not, so the migration is

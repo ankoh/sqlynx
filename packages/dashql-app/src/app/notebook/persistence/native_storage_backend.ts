@@ -1,7 +1,15 @@
 import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
-import { migrateNotebookFiles, NOTEBOOK_FILE_RENAMES, type NotebookFileRename } from './notebook_file_migration.js';
+import { migrateNotebookFiles, notebookFileNames, NOTEBOOK_FILE_RENAMES, type NotebookFileRename } from './notebook_file_migration.js';
+
+/// How a native backend treats the files of older versions
+export interface NativeStorageOptions {
+    /// The renames that bring the notebook folder to the current file layout
+    fileRenames?: readonly NotebookFileRename[];
+    /// Rename the files of older versions when loading the notebook? Off for folders that must stay untouched.
+    migrateFiles?: boolean;
+}
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
 import { exists, join, mkdir, readDir, readFile, readTextFile, remove, rename, stat, writeFile, writeTextFile } from '../../../platform/electron_fs.js';
@@ -25,12 +33,13 @@ export class NativeStorageBackend implements StorageBackend {
     private readonly dir: string;
     /// The renames that bring the notebook folder to the current file layout
     private readonly fileRenames: readonly NotebookFileRename[];
-    /// Were the files of the notebook migrated?
-    private filesMigrated = false;
+    /// Were the files of the notebook migrated? Set from the start if the folder must stay untouched.
+    private filesMigrated: boolean;
 
-    constructor(dir: string, fileRenames: readonly NotebookFileRename[] = NOTEBOOK_FILE_RENAMES) {
+    constructor(dir: string, options: NativeStorageOptions = {}) {
         this.dir = dir;
-        this.fileRenames = fileRenames;
+        this.fileRenames = options.fileRenames ?? NOTEBOOK_FILE_RENAMES;
+        this.filesMigrated = !(options.migrateFiles ?? true);
     }
 
     getBackendType(): StorageBackendType {
@@ -94,6 +103,17 @@ export class NativeStorageBackend implements StorageBackend {
         this.filesMigrated = true;
     }
 
+    /// Read a file of the notebook folder, a folder that is not migrated may still use an older name
+    private async readNotebookFile(fileName: string): Promise<string | null> {
+        for (const name of notebookFileNames(fileName, this.fileRenames)) {
+            const path = await this.abs(name);
+            if (await exists(path)) {
+                return await readTextFile(path);
+            }
+        }
+        return null;
+    }
+
     async loadNotebook(notebookId: string): Promise<NotebookData> {
         await this.migrateNotebookFiles();
         const metaFile = await this.abs(STORAGE_NOTEBOOK_FILE);
@@ -128,11 +148,7 @@ export class NativeStorageBackend implements StorageBackend {
     }
 
     async loadNotebookSchema(_notebookId: string): Promise<string | null> {
-        const schemaFile = await this.abs(STORAGE_CATALOG_RELATIONS);
-        if (!(await exists(schemaFile))) {
-            return null;
-        }
-        return await readTextFile(schemaFile);
+        return await this.readNotebookFile(STORAGE_CATALOG_RELATIONS);
     }
 
     async saveNotebookSchema(_notebookId: string, sql: string): Promise<void> {
@@ -156,11 +172,7 @@ export class NativeStorageBackend implements StorageBackend {
     }
 
     async loadNotebookFunctions(_notebookId: string): Promise<string | null> {
-        const functionsFile = await this.abs(STORAGE_CATALOG_FUNCTIONS);
-        if (!(await exists(functionsFile))) {
-            return null;
-        }
-        return await readTextFile(functionsFile);
+        return await this.readNotebookFile(STORAGE_CATALOG_FUNCTIONS);
     }
 
     async saveNotebookFunctions(_notebookId: string, sql: string): Promise<void> {

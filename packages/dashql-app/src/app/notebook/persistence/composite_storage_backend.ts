@@ -369,7 +369,8 @@ export class CompositeStorageBackend implements NotebookRegistryBackend {
     /// Read and validate a selected native folder without creating or modifying anything in it.
     async prepareNativeNotebook(dir: string): Promise<PreparedNativeNotebook> {
         await this.ensureScope(dir);
-        const native = new NativeStorageBackend(dir);
+        // The files of older versions are read under their old names, they are renamed once the folder is registered
+        const native = new NativeStorageBackend(dir, { migrateFiles: false });
         let notebook: NotebookData;
         try {
             notebook = await native.loadNotebook(dir);

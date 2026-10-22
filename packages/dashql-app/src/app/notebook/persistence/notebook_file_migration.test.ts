@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { migrateNotebookFiles, type NotebookFiles } from './notebook_file_migration.js';
+import { migrateNotebookFiles, notebookFileNames, type NotebookFiles } from './notebook_file_migration.js';
 
 /// An in-memory notebook folder
 function folder(names: string[]): NotebookFiles & { names: Set<string> } {
@@ -35,5 +35,10 @@ describe('notebook file migration', () => {
         const files = folder(['x.sql', 'y.sql']);
         expect(await migrateNotebookFiles(files, renames)).toEqual([]);
         expect([...files.names].sort()).toEqual(['x.sql', 'y.sql']);
+    });
+    it('lists the older names of a file, newest first', () => {
+        expect(notebookFileNames('c.sql', renames)).toEqual(['c.sql', 'b.sql', 'a.sql']);
+        expect(notebookFileNames('other.sql', renames)).toEqual(['other.sql']);
+        expect(notebookFileNames('dashql-catalog-relations.sql')).toEqual(['dashql-catalog-relations.sql', 'dashql-relations.sql']);
     });
 });
