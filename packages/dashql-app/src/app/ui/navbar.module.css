@@ -73,6 +73,24 @@
     fill: inherit;
 }
 
+/* The svg of a wordmark has its baseline at the bottom edge, which is where flex baseline alignment puts it */
+.brand_mark {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+}
+
+.brand_tagline {
+    font-family: var(--font_family);
+    font-size: var(--font_size_small);
+    font-weight: 400;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0.4;
+    position: relative;
+    top: -3px;
+}
+
 .brand_identity {
     grid-row: 1;
     grid-column: 1;
@@ -192,7 +210,8 @@
 }
 
 @media (max-width: 900px) {
-    .tab_button_text {
+    .tab_button_text,
+    .brand_tagline {
         display: none;
     }
 }

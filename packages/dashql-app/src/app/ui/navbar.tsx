@@ -103,6 +103,20 @@ const VersionButton = (_props: {}) => {
 /// The height of a wordmark in the navbar, a bit smaller than square logos to match the cap height of text
 const WORDMARK_HEIGHT = 16;
 
+/// The brand mark followed by the tagline of the flavor, sharing the baseline
+const BrandMark = (props: { children: React.ReactNode }) => {
+    const tagline = useAppFlavor().tagline;
+    if (tagline == null) {
+        return <>{props.children}</>;
+    }
+    return (
+        <span className={styles.brand_mark}>
+            {props.children}
+            <span className={styles.brand_tagline}>{tagline}</span>
+        </span>
+    );
+};
+
 const BrandLogo = () => {
     const flavor = useAppFlavor();
     const route = useRouteContext();
@@ -117,7 +131,9 @@ const BrandLogo = () => {
 
     return (
         <button type="button" className={styles.brand_logo} aria-label="Open session workbench" onClick={openWorkbench}>
-            <FlavorLogo height={flavor.logo.wordmark ? WORDMARK_HEIGHT : 24} ariaHidden />
+            <BrandMark>
+                <FlavorLogo height={flavor.logo.wordmark ? WORDMARK_HEIGHT : 24} ariaHidden />
+            </BrandMark>
         </button>
     );
 };
@@ -127,10 +143,10 @@ const BrandIdentity = () => {
     return (
         <div className={styles.brand_identity} data-electron-drag-region>
             {flavor.logo.wordmark
-                ? <FlavorLogo height={WORDMARK_HEIGHT} ariaHidden />
+                ? <BrandMark><FlavorLogo height={WORDMARK_HEIGHT} ariaHidden /></BrandMark>
                 : <>
                     <FlavorLogo height={24} ariaHidden />
-                    <span>{flavor.displayName}</span>
+                    <BrandMark><span>{flavor.displayName}</span></BrandMark>
                 </>}
         </div>
     );

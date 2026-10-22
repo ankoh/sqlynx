@@ -26,6 +26,8 @@ export interface AppFlavor {
     displayName: string;
     /// The logo
     logo: AppFlavorLogo;
+    /// The tagline shown in smaller type next to the logo, null shows none
+    tagline: string | null;
     /// The favicon replacing the static favicons of the html entry pages, null keeps them
     favicon: URL | null;
     /// The features
@@ -39,6 +41,7 @@ export const DASHQL_FLAVOR: AppFlavor = {
     id: 'dashql',
     displayName: 'DashQL',
     logo: { symbol: 'dashql', aspectRatio: 1, wordmark: false },
+    tagline: null,
     favicon: null,
     features: {
         sessionArchiveExport: true,
@@ -50,6 +53,7 @@ export const SIDB_FLAVOR: AppFlavor = {
     id: 'sidb',
     displayName: 'SIDB',
     logo: { symbol: 'sidb', aspectRatio: 2231 / 688, wordmark: true },
+    tagline: 'powered by Hyper',
     favicon: new URL('../../../static/favicons/sidb/favicon.svg?no-inline', import.meta.url),
     features: {
         sessionArchiveExport: false,
