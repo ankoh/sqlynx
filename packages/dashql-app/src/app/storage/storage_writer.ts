@@ -1,15 +1,15 @@
 import * as Immutable from 'immutable';
 import * as dashql from '@ankoh/dashql-core';
 
-import { Logger, stringifyError } from '../../../platform/logger/logger.js';
-import { VariantKind } from '../../../utils/index.js';
-import { SessionScripts } from '../scripts/session_scripts.js';
-import { AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
-import type { SessionSettings } from '../scripts/session_settings.js';
+import { Logger, stringifyError } from '../../platform/logger/logger.js';
+import { VariantKind } from '../../utils/index.js';
+import { SessionScripts } from '../session/scripts/session_scripts.js';
+import { AttachedDatabaseState } from '../session/connections/attached_database_state.js';
+import { createDefaultConnectionParamsForConnector } from '../session/connections/connection_params.js';
+import type { SessionSettings } from '../session/scripts/session_settings.js';
 import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, ConnectionEntry, ConnectionParams, SessionRegistryBackend } from './storage_backend.js';
 import { STORAGE_SCRIPTS_FOLDER, STORAGE_SESSION_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CONNECTIONS_FOLDER, isSessionRegistryBackend } from './storage_backend.js';
-import { SESSION_FORMAT_VERSION } from '../../../migration/versions.js';
+import { SESSION_FORMAT_VERSION } from '../../migration/versions.js';
 
 const LOG_CTX = 'storage_writer';
 

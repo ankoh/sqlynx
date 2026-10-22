@@ -4,7 +4,7 @@ import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptDa
 import { Dispatch } from '../../../utils/variant.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
 import { CONNECTOR_TYPES, ConnectorType } from '../connections/connector_info.js';
-import { useStorageWriter } from '../persistence/storage_provider.js';
+import { useStorageWriter } from '../../storage/storage_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import {
     REPLACE_SESSION_SCRIPTS,
@@ -12,7 +12,7 @@ import {
     groupSessionFunctionWrites,
     groupSessionWrites,
     WRITE_SESSION_FUNCTION_SCRIPT,
-} from "../persistence/storage_writer.js";
+} from "../../storage/storage_writer.js";
 
 const LOG_CTX = 'session_scripts_registry';
 

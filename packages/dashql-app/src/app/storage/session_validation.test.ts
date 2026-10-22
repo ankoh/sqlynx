@@ -6,7 +6,7 @@ import {
     SessionValidationError,
 } from './session_validation.js';
 import type { SessionData, SessionEntry } from './storage_backend.js';
-import { ConnectorType } from '../connections/connector_info.js';
+import { ConnectorType } from '../session/connections/connector_info.js';
 
 const UUID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
 const DATABASE_ID = '11111111-2222-3333-4444-555555555555';

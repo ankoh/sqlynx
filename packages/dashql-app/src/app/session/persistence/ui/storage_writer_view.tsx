@@ -10,8 +10,8 @@ import { AnchoredOverlay } from '../../../../ui/foundations/anchored_overlay.js'
 import { OverlaySize } from '../../../../ui/foundations/overlay.js';
 import { AnchorAlignment, AnchorSide } from '../../../../ui/foundations/anchored_position.js';
 import { JsonView } from '../../../../ui/json/json_view.js';
-import { useStorageWriter } from '../storage_provider.js';
-import { StorageWriteKey, StorageWriterStatistics, StorageWriteStatisticsMap, storageWriteKeyBelongsToSession, storageWriteKeyWithinSession } from '../storage_writer.js';
+import { useStorageWriter } from '../../../storage/storage_provider.js';
+import { StorageWriteKey, StorageWriterStatistics, StorageWriteStatisticsMap, storageWriteKeyBelongsToSession, storageWriteKeyWithinSession } from '../../../storage/storage_writer.js';
 import { formatBytes, formatMilliseconds } from '../../../../utils/format.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';
 import { useKeyEvents } from '../../../../utils/key_events.js';

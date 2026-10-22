@@ -32,7 +32,7 @@ import { PromptDemoPage } from './ui/demos/prompt_demo.js';
 import { QueryExecutorProvider } from './session/connections/query_executor.js';
 import { RouterReset } from './router/router_reset.js';
 import { SalesforceConnector } from './session/connections/salesforce/salesforce_connector.js';
-import { StorageProvider } from './session/persistence/storage_provider.js';
+import { StorageProvider } from './storage/storage_provider.js';
 import { TrinoConnector } from './session/connections/trino/trino_connector.js';
 import { ToolsPage } from './ui/tools/tools_page.js';
 import { UIExperimentPage } from './ui/demos/ui_demo.js';

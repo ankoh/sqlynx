@@ -42,7 +42,7 @@ import { reduceQueryAction } from './query_execution_state.js';
 import { reduceTrinoConnectorState, TrinoConnectorAction } from './trino/trino_connection_state.js';
 import { computeConnectionSignatureFromDetails, computeNewConnectionSignatureFromDetails, ConnectionStateDetailsVariant, createConnectionStateDetails } from './connection_state_details.js';
 import { ConnectionSignatureMap, ConnectionSignatureState, newConnectionSignature } from './connection_signature.js';
-import { StorageWriter } from '../persistence/storage_writer.js';
+import { StorageWriter } from '../../storage/storage_writer.js';
 import { Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { invalidateCatalogBatch, publishCatalogBatchSync, type CatalogBatchEntry } from './catalog_batch.js';
 import { connectionParamsEqual, connectionParamsWithoutDraftRows, getConnectionInfoFromParams, getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';

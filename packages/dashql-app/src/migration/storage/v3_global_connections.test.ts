@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { planConnectionMigration, type MigratingSession } from './v3_global_connections.js';
-import { testSession } from '../../app/session/persistence/session_test_backend.js';
-import type { ConnectionParams } from '../../app/session/persistence/storage_backend.js';
+import { testSession } from '../../app/storage/session_test_backend.js';
+import type { ConnectionParams } from '../../app/storage/storage_backend.js';
 
 const SESSION_A = '11111111-0000-4000-8000-00000000000a';
 const SESSION_B = '11111111-0000-4000-8000-00000000000b';

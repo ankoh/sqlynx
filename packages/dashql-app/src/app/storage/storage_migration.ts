@@ -1,4 +1,4 @@
-import type { Logger } from '../../../platform/logger/logger.js';
+import type { Logger } from '../../platform/logger/logger.js';
 import type { StorageBackend } from './storage_backend.js';
 import { rebaseSessionAttachmentPaths } from './session_bundle.js';
 

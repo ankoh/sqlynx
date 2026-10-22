@@ -2,8 +2,8 @@ import JSZip from 'jszip';
 import { describe, expect, it, vi } from 'vitest';
 
 import { importSessionFromZip, readSessionBundleFromZip } from './session_import.js';
-import { STORAGE_SESSION_FILE } from './storage_backend.js';
-import { SessionTestBackend, TEST_SESSION_ID, testSession } from './session_test_backend.js';
+import { STORAGE_SESSION_FILE } from '../../storage/storage_backend.js';
+import { SessionTestBackend, TEST_SESSION_ID, testSession } from '../../storage/session_test_backend.js';
 
 async function zip(files: Record<string, string>): Promise<Blob> {
     const archive = new JSZip();

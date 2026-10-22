@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { TestLogger } from '../../../platform/logger/test_logger.js';
+import { TestLogger } from '../../platform/logger/test_logger.js';
 import { CompositeStorageBackend } from './composite_storage_backend.js';
 import { NativeStorageBackend } from './native_storage_backend.js';
 import { OPFSStorageBackend } from './opfs_storage_backend.js';

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { HttpClient, HttpFetchResult } from '../../../platform/http/http_client.js';
 import { readSessionBundleFromHttp } from './http_session_bundle.js';
-import { testSession } from './session_test_backend.js';
+import { testSession } from '../../storage/session_test_backend.js';
 
 const URL = new globalThis.URL('https://example.com/session/dashql-session.json');
 

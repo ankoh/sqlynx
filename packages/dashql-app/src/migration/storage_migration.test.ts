@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { Logger } from '../platform/logger/logger.js';
 import { OPFSDirectoryMock } from '../tests/opfs_mock.js';
-import { fsStore, makeFsMock, resetFsStore } from '../app/session/persistence/test_fs_mock.js';
+import { fsStore, makeFsMock, resetFsStore } from '../app/storage/test_fs_mock.js';
 import { migrateStorage, STORAGE_MIGRATION_STEPS } from './storage_migration.js';
 import { SESSION_FORMAT_VERSION, STORAGE_VERSION } from './versions.js';
 

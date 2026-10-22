@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { TestLogger } from '../../../platform/logger/test_logger.js';
+import { TestLogger } from '../../platform/logger/test_logger.js';
 import { cloneSession, copySession, verifySession } from './storage_migration.js';
 import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from './session_test_backend.js';
 

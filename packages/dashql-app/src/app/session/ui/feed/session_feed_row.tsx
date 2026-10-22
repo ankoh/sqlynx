@@ -19,7 +19,7 @@ import { ExecuteConnectionGuard } from '../session_connection_attention.js';
 import type { ConnectorType } from '../../connections/connector_info.js';
 import { QueryExecutionStatus, queryIsDone } from '../../connections/query_execution_state.js';
 import { computeQueryCacheKeyForConnection, useCancelQuery, useQueryState } from '../../connections/query_executor.js';
-import type { StorageReader } from '../../persistence/storage_provider.js';
+import type { StorageReader } from '../../../storage/storage_provider.js';
 import { compileSessionQuery, getSelectedScriptRefs, type SessionScripts, type ScriptData } from '../../scripts/session_scripts.js';
 import { scriptDisplayName } from '../../scripts/script_types.js';
 import { deriveEntryStatus, EntryStatusKind } from '../entry_status_model.js';

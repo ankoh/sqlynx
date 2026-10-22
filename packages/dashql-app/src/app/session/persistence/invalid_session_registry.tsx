@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { InvalidSession } from './session_validation.js';
+import type { InvalidSession } from '../../storage/session_validation.js';
 
 interface InvalidSessionRegistryValue {
     invalidSessions: ReadonlyMap<string, InvalidSession>;

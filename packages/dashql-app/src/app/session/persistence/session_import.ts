@@ -1,13 +1,13 @@
 import JSZip from 'jszip';
 
-import type { ScriptData, StorageBackend } from './storage_backend.js';
+import type { ScriptData, StorageBackend } from '../../storage/storage_backend.js';
 import {
     STORAGE_ATTACHMENTS_FOLDER,
     validateDataFileName,
     STORAGE_SCRIPTS_FOLDER,
-} from './storage_backend.js';
-import type { SessionBundle, SessionBundleWriteOptions } from './session_bundle.js';
-import { readSessionBundleHead, writeSessionBundle } from './session_bundle.js';
+} from '../../storage/storage_backend.js';
+import type { SessionBundle, SessionBundleWriteOptions } from '../../storage/session_bundle.js';
+import { readSessionBundleHead, writeSessionBundle } from '../../storage/session_bundle.js';
 import { MemoryFolder } from '../../../migration/migration_folder.js';
 
 export interface SessionZipImportOptions extends SessionBundleWriteOptions { }

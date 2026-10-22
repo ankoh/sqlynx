@@ -10,9 +10,9 @@ import { Logger } from '../../../platform/logger/logger.js';
 import { ConnectorType } from '../connections/connector_info.js';
 import { destroyRestoredSession, restoreAppState } from './app_state_loader.js';
 import { destroySessionScripts } from '../scripts/session_scripts.js';
-import type { StorageBackend } from './storage_backend.js';
-import { StorageBackendType } from './storage_backend.js';
-import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from './session_test_backend.js';
+import type { StorageBackend } from '../../storage/storage_backend.js';
+import { StorageBackendType } from '../../storage/storage_backend.js';
+import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from '../../storage/session_test_backend.js';
 
 declare const DASHQL_PRECOMPILED: Promise<Uint8Array>;
 

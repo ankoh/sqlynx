@@ -1,7 +1,7 @@
 import { connectionParamsShareEqual, type ConnectionParams } from '../connections/connection_params.js';
 import type { AttachedDatabaseRole } from '../connections/attached_database_registry.js';
-import type { ConnectionEntry, SessionData } from './storage_backend.js';
-import { dedupeAttachedDatabases } from './storage_writer.js';
+import type { ConnectionEntry, SessionData } from '../../storage/storage_backend.js';
+import { dedupeAttachedDatabases } from '../../storage/storage_writer.js';
 
 /// A connection that a session brings along
 export interface ImportedConnectionRef {

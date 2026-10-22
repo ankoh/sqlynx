@@ -1,6 +1,6 @@
 import type { SessionData, SessionEntry } from './storage_backend.js';
-import { getConnectorInfoForParams, ConnectorType } from '../connections/connector_info.js';
-import { SESSION_FORMAT_VERSION } from '../../../migration/versions.js';
+import { getConnectorInfoForParams, ConnectorType } from '../session/connections/connector_info.js';
+import { SESSION_FORMAT_VERSION } from '../../migration/versions.js';
 
 /// A syntactically valid UUID (any version), e.g. the output of `crypto.randomUUID()`.
 ///

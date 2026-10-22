@@ -1,12 +1,12 @@
 import type { Logger } from '../../../platform/logger/logger.js';
-import type { SessionLocation } from './session_locator.js';
+import type { SessionLocation } from '../../storage/session_locator.js';
 import {
     StorageBackendType,
     STORAGE_ATTACHMENTS_FOLDER,
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_CATALOG_FUNCTIONS,
     STORAGE_CATALOG_RELATIONS,
-} from './storage_backend.js';
+} from '../../storage/storage_backend.js';
 
 const LOG_CTX = 'native_session_sync';
 const WATCH_DEBOUNCE_MS = 200;

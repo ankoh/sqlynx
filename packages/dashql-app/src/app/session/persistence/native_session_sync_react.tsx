@@ -7,17 +7,17 @@ import { sessionScriptsMatchStorageSnapshot, replaceSessionScriptsFromStorage } 
 import { isNativePlatform } from '../../../platform/native_globals.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
-import { useStorage } from './storage_provider.js';
+import { useStorage } from '../../storage/storage_provider.js';
 import { getAppFlavor } from '../../flavor/flavor_resolution.js';
 import { NativeSessionSyncService, nativeSessionWatchForLocation } from './native_session_sync.js';
 import type { SessionScriptsStorageSnapshot, SessionScripts } from '../scripts/session_scripts.js';
 import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { DEBOUNCE_DURATION_SESSION_WRITE, groupConnectionFileWrites, WRITE_CONNECTION_FILE, type StorageWriter } from './storage_writer.js';
+import { DEBOUNCE_DURATION_SESSION_WRITE, groupConnectionFileWrites, WRITE_CONNECTION_FILE, type StorageWriter } from '../../storage/storage_writer.js';
 import {
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_CATALOG_FUNCTIONS,
     STORAGE_CATALOG_RELATIONS,
-} from './storage_backend.js';
+} from '../../storage/storage_backend.js';
 
 const LOG_CTX = 'native_session_sync';
 

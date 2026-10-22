@@ -4,11 +4,9 @@ import { type StorageBackend, StorageBackendType } from './storage_backend.js';
 import { OPFSStorageBackend } from './opfs_storage_backend.js';
 import { CompositeStorageBackend } from './composite_storage_backend.js';
 import { type SessionLocation } from './session_locator.js';
-import { useLogger } from '../../../platform/logger/logger_provider.js';
-import { stringifyError } from '../../../platform/logger/logger.js';
-import { migrateStorage } from '../../../migration/storage_migration.js';
-import type { DashQL } from '@ankoh/dashql-core';
-import { restoreAppState, type RestoredAppState, type AppStateRestorationProgress } from './app_state_loader.js';
+import { useLogger } from '../../platform/logger/logger_provider.js';
+import { stringifyError } from '../../platform/logger/logger.js';
+import { migrateStorage } from '../../migration/storage_migration.js';
 
 // Storage context for the writer
 const StorageWriterContext = React.createContext<StorageWriter | null>(null);
@@ -16,7 +14,6 @@ const StorageWriterContext = React.createContext<StorageWriter | null>(null);
 // Storage context for reading
 export interface StorageReader {
     backend: StorageBackend;
-    restoreAppState(core: DashQL, progressConsumer: (progress: AppStateRestorationProgress) => void): Promise<RestoredAppState>;
     waitForInitialRestore(): Promise<void>;
     /// The physical location of a session's files (used by the UI for a display path).
     getSessionLocation(sessionId: string): SessionLocation;
@@ -84,9 +81,6 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({ backend: provi
 
         return {
             backend,
-            async restoreAppState(core: DashQL, progressConsumer: (progress: AppStateRestorationProgress) => void): Promise<RestoredAppState> {
-                return restoreAppState(core, backend, logger, progressConsumer);
-            },
             async waitForInitialRestore(): Promise<void> {
                 // Nothing to wait for in current implementation
                 return Promise.resolve();

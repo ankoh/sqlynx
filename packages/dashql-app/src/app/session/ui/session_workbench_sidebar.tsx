@@ -73,25 +73,25 @@ import { useCatalogLoaderQueue } from '../connections/catalog_loader.js';
 import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status_indicator.js';
 import { observeSize } from '../../../ui/foundations/size_observer.js';
 import { VerticalScrollShadows } from '../../../ui/foundations/vertical_scroll_shadows.js';
-import { displayPath } from '../persistence/session_locator.js';
-import { StorageBackendType } from '../persistence/storage_backend.js';
+import { displayPath } from '../../storage/session_locator.js';
+import { StorageBackendType } from '../../storage/storage_backend.js';
 import { SessionStorageOverlay } from '../persistence/ui/session_storage_overlay.js';
-import { useStorageReader, useStorageWriter } from '../persistence/storage_provider.js';
-import { CompositeStorageBackend } from '../persistence/composite_storage_backend.js';
+import { useStorageReader, useStorageWriter } from '../../storage/storage_provider.js';
+import { CompositeStorageBackend } from '../../storage/composite_storage_backend.js';
 import { readSessionBundleFromBrowserFolder } from '../persistence/browser_session_folder.js';
-import { cloneSession } from '../persistence/storage_migration.js';
+import { cloneSession } from '../../storage/storage_migration.js';
 import {
     mergeRestoredSessionIntoConnections,
     mergeRestoredSessionIntoScripts,
     restoreSingleSession,
 } from '../persistence/app_state_loader.js';
 import { useSessionImport } from '../persistence/session_import_provider.js';
-import { describeSessionValidationError } from '../persistence/session_validation.js';
+import { describeSessionValidationError } from '../../storage/session_validation.js';
 import { useInvalidSessionRegistry } from '../persistence/invalid_session_registry.js';
 import {
     groupSessionManifestWrites,
     WRITE_SESSION_MANIFEST,
-} from '../persistence/storage_writer.js';
+} from '../../storage/storage_writer.js';
 import type { SessionScripts } from '../scripts/session_scripts.js';
 import {
     useSessionScriptsDeletion,

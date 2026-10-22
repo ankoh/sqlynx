@@ -21,9 +21,9 @@ import { encodeConnectionAsProto } from './connection_export.js';
 import { cancelConnectionSetup, registerConnectionSetup } from './connection_setup_cancellation.js';
 import { buildPageStateFromParams } from './ui/trino_connection_settings.js';
 import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
-import { StorageProvider, useStorageWriter } from '../persistence/storage_provider.js';
-import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID } from '../persistence/session_test_backend.js';
-import type { StorageWriter } from '../persistence/storage_writer.js';
+import { StorageProvider, useStorageWriter } from '../../storage/storage_provider.js';
+import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID } from '../../storage/session_test_backend.js';
+import type { StorageWriter } from '../../storage/storage_writer.js';
 import type { Logger } from '../../../platform/logger/logger.js';
 
 /// The draft of the test connection in the app manifest

@@ -6,14 +6,14 @@ import type { RowComponentProps } from 'react-window';
 import { XIcon, TrashIcon, SyncIcon } from '../../../../ui/foundations/symbol_icon.js';
 
 import { ButtonVariant, ButtonSize, IconButton } from '../../../../ui/foundations/button.js';
-import { CacheFileStat } from '../query_result_cache_eviction.js';
+import { CacheFileStat } from '../../../storage/query_result_cache_eviction.js';
 import { cacheFileHash, clearQueryResultCache, markDeletedQueryResults } from '../query_result_cache_clear.js';
 import { useDynamicAttachedDatabaseDispatch } from '../../connections/attached_database_registry.js';
 import { formatBytes } from '../../../../utils/format.js';
 import { formatRelativeTime } from '../../../../utils/time_format.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
-import { useStorageReader } from '../storage_provider.js';
+import { useStorageReader } from '../../../storage/storage_provider.js';
 import { VerticalScrollShadows } from '../../../../ui/foundations/vertical_scroll_shadows.js';
 import { ToggleSwitch } from '../../../../ui/foundations/toggle_switch.js';
 import { useSessionScripts } from '../../scripts/session_scripts_registry.js';

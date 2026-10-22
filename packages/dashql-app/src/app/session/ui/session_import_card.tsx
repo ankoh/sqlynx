@@ -7,7 +7,7 @@ import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status
 import { AlertIcon, XIcon } from '../../../ui/foundations/symbol_icon.js';
 import { ParticleFlowBackground } from '../../../ui/particle_flow/particle_flow_background.js';
 import { formatBytes } from '../../../utils/format.js';
-import type { SessionBundle } from '../persistence/session_bundle.js';
+import type { SessionBundle } from '../../storage/session_bundle.js';
 import { CompactNavBar } from '../../ui/navbar.js';
 import { useAppFlavor } from '../../flavor/flavor_provider.js';
 import type { HttpSessionLoadProgress, HttpSessionLoadResult } from '../persistence/http_session_bundle.js';

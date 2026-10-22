@@ -15,14 +15,15 @@ import { AppLoadingProgress } from './app_loading_progress.js';
 import { ProgressCounter } from '../../utils/progress.js';
 import { canShowSession, loadApp, selectStartupSession, shouldFinishInitialNavigation } from './app_loading_logic.js';
 import { useAppConfig, useAppReconfigure } from '../config/app_config.js';
-import { useStorage } from '../session/persistence/storage_provider.js';
-import { groupSessionManifestWrites, WRITE_SESSION_MANIFEST } from '../session/persistence/storage_writer.js';
+import { useStorage } from '../storage/storage_provider.js';
+import { groupSessionManifestWrites, WRITE_SESSION_MANIFEST } from '../storage/storage_writer.js';
 import { useSessionScriptsRegistrySetter } from '../session/scripts/session_scripts_registry.js';
 import { useEmbeddedDatabaseSetup } from '../../platform/database/embedded_database_provider.js';
-import { InvalidSession } from '../session/persistence/session_validation.js';
+import { InvalidSession } from '../storage/session_validation.js';
 import { AppHost, getAppHost } from '../../platform/native_globals.js';
 import { readSessionBundleFromZip } from '../session/persistence/session_import.js';
 import { useSessionImport } from '../session/persistence/session_import_provider.js';
+import { restoreAppState } from '../session/persistence/app_state_loader.js';
 import { useHttpClient } from '../../platform/http/http_client_provider.js';
 import {
     readSessionBundleFromHttp,
@@ -321,7 +322,9 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
             traced.info("Loading application state and sessions", {}, "app_loader");
             const loaded = await trackInitialization(
                 "Application state",
-                loadApp(traced, core, storageReader, setConnReg, setSessionScriptsRegistry, setLoadingProgress),
+                loadApp(traced, core, {
+                    restoreAppState: (core, progressConsumer) => restoreAppState(core, storageReader.backend, logger, progressConsumer),
+                }, setConnReg, setSessionScriptsRegistry, setLoadingProgress),
             );
 
             // Surface any sessions that were refused a load in the selector. This is just an

@@ -1,14 +1,14 @@
 import * as dashql from '@ankoh/dashql-core';
 
 import { TracedLogger } from '../../platform/logger/logger.js';
-import { StorageReader } from '../session/persistence/storage_provider.js';
+import type { AppStateRestorationProgress, RestoredAppState } from '../session/persistence/app_state_loader.js';
 import { AppLoadingProgress, AppLoadingProgressConsumer } from './app_loading_progress.js';
 import { SetAttachedDatabaseRegistryAction } from '../session/connections/attached_database_registry.js';
 import type { AttachedDatabaseState } from '../session/connections/attached_database_state.js';
 import { Dispatch } from '../../utils/variant.js';
 import { SetSessionScriptsRegistryAction } from '../session/scripts/session_scripts_registry.js';
 import { ProgressCounter } from '../../utils/progress.js';
-import { InvalidSession } from '../session/persistence/session_validation.js';
+import { InvalidSession } from '../storage/session_validation.js';
 import { AppLoadingStatus } from '../router/app_loading_status.js';
 import type { RouteContext } from '../router/router.js';
 
@@ -37,8 +37,14 @@ export async function shouldFinishInitialNavigation(initialInlineSetup: Promise<
     return initialInlineSetup == null || !await initialInlineSetup;
 }
 
+/// Restores the persisted app state
+export interface AppStateRestorer {
+    /// Restore the connections and sessions
+    restoreAppState(core: dashql.DashQL, progressConsumer: (progress: AppStateRestorationProgress) => void): Promise<RestoredAppState>;
+}
+
 /// Main logic to setup the application
-export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage: StorageReader, resetConnections: Dispatch<SetAttachedDatabaseRegistryAction>, resetSessionScripts: Dispatch<SetSessionScriptsRegistryAction>, consumer: AppLoadingProgressConsumer) {
+export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage: AppStateRestorer, resetConnections: Dispatch<SetAttachedDatabaseRegistryAction>, resetSessionScripts: Dispatch<SetSessionScriptsRegistryAction>, consumer: AppLoadingProgressConsumer) {
     const traced = logger.childSpan();
     traced.info("Loading application", {}, "app_loading");
     const appLoadStartTime = performance.now();

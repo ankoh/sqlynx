@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { useStorageWriter } from '../persistence/storage_provider.js';
+import { useStorageWriter } from '../../storage/storage_provider.js';
 import {
     groupConnectionEntryWrites,
     groupSessionConnectionCopyWrites,
     PATCH_SESSION_CONNECTION,
     WRITE_CONNECTION_ENTRY,
     type StorageWriteResult,
-} from '../persistence/storage_writer.js';
+} from '../../storage/storage_writer.js';
 import { COMMIT_CONNECTION_PARAMS } from './attached_database_state.js';
 import {
     findSessionsForAttachedDatabase,

@@ -5,8 +5,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { Logger } from '../../../platform/logger/logger.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../connections/connector_info.js';
-import { SessionTestBackend } from '../persistence/session_test_backend.js';
-import { StorageWriter, WRITE_SESSION_PROPERTIES, type StorageWriteTaskVariant } from '../persistence/storage_writer.js';
+import { SessionTestBackend } from '../../storage/session_test_backend.js';
+import { StorageWriter, WRITE_SESSION_PROPERTIES, type StorageWriteTaskVariant } from '../../storage/storage_writer.js';
 import {
     ANALYZE_OUTDATED_SCRIPT,
     compileSessionQuery,

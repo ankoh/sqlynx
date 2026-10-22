@@ -3,7 +3,7 @@ import * as detailStyles from './script_details.module.css';
 
 import { AttachedDatabaseState } from '../connections/attached_database_state.js';
 import { CatalogScriptCard } from './catalog_script_card.js';
-import { STORAGE_CATALOG_FUNCTIONS } from '../persistence/storage_backend.js';
+import { STORAGE_CATALOG_FUNCTIONS } from '../../storage/storage_backend.js';
 
 export interface CatalogFunctionsViewProps {
     connection: AttachedDatabaseState;

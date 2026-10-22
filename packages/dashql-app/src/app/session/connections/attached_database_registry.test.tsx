@@ -26,9 +26,9 @@ import {
 import { ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import { CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
-import { StorageProvider, useStorageWriter } from '../persistence/storage_provider.js';
-import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from '../persistence/session_test_backend.js';
-import type { StorageWriter } from '../persistence/storage_writer.js';
+import { StorageProvider, useStorageWriter } from '../../storage/storage_provider.js';
+import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from '../../storage/session_test_backend.js';
+import type { StorageWriter } from '../../storage/storage_writer.js';
 
 function database(databaseId: string, health: ConnectionHealth): AttachedDatabaseState {
     return { databaseId, connectionHealth: health } as AttachedDatabaseState;

@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SessionBundle } from '../persistence/session_bundle.js';
+import type { SessionBundle } from '../../storage/session_bundle.js';
 import { SessionImportCard, type SessionImportCardDependencies } from './session_import_card.js';
 
 const FILE_BUNDLE: SessionBundle = {

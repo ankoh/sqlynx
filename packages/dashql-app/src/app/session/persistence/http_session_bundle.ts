@@ -5,7 +5,7 @@ import type {
     SessionIndexData,
     SessionIndexScript,
     ScriptData,
-} from './storage_backend.js';
+} from '../../storage/storage_backend.js';
 import {
     STORAGE_SESSION_FILE,
     STORAGE_ATTACHMENTS_FOLDER,
@@ -13,9 +13,9 @@ import {
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_CATALOG_FUNCTIONS,
     STORAGE_CATALOG_RELATIONS,
-} from './storage_backend.js';
-import type { SessionBundle } from './session_bundle.js';
-import { describeSessionValidationError, validateSessionData } from './session_validation.js';
+} from '../../storage/storage_backend.js';
+import type { SessionBundle } from '../../storage/session_bundle.js';
+import { describeSessionValidationError, validateSessionData } from '../../storage/session_validation.js';
 
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_INDEX_BYTES = 1024 * 1024;

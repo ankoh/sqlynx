@@ -3,7 +3,7 @@ import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './qu
 import { serializeSessionIndex } from './session_index.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
-import { exists, join, mkdir, readDir, readFile, readTextFile, remove, rename, stat, writeFile, writeTextFile } from '../../../platform/electron_fs.js';
+import { exists, join, mkdir, readDir, readFile, readTextFile, remove, rename, stat, writeFile, writeTextFile } from '../../platform/electron_fs.js';
 
 /// The name of the session-level .gitignore that excludes the cache folder from version control.
 const GITIGNORE_FILE = '.gitignore';

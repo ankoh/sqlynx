@@ -7,8 +7,8 @@ import {
     connectionRefsChanged,
     planConnectionImport,
 } from './session_connection_import.js';
-import { testSession } from './session_test_backend.js';
-import type { ConnectionEntry, ConnectionParams } from './storage_backend.js';
+import { testSession } from '../../storage/session_test_backend.js';
+import type { ConnectionEntry, ConnectionParams } from '../../storage/storage_backend.js';
 
 const KNOWN = 'aaaaaaaa-0000-4000-8000-00000000000a';
 const OTHER = 'aaaaaaaa-0000-4000-8000-00000000000b';

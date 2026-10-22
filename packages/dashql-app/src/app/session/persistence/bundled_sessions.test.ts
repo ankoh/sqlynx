@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { BUNDLED_SESSIONS } from './bundled_sessions.js';
-import type { SessionData, SessionIndexData } from './storage_backend.js';
-import { validateSessionData } from './session_validation.js';
+import type { SessionData, SessionIndexData } from '../../storage/storage_backend.js';
+import { validateSessionData } from '../../storage/session_validation.js';
 
 describe('bundled V2 sessions', () => {
     it.each(BUNDLED_SESSIONS)('$name has a valid manifest and an exact flat script index', async session => {

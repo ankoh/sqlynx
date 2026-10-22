@@ -20,7 +20,7 @@ import { useComputationDispatch } from '../../../compute/computation_registry.js
 import { analyzeTable } from '../../../compute/computation_logic.js';
 import { DELETE_COMPUTATION } from '../../../compute/computation_state.js';
 import { useComputeDatabase } from '../../../compute/compute_connection_provider.js';
-import { useStorageReader } from '../persistence/storage_provider.js';
+import { useStorageReader } from '../../storage/storage_provider.js';
 import { createSessionQueryResultCache } from '../persistence/session_query_result_cache.js';
 import type { CachedQueryResult } from '../../../query/query_result_cache.js';
 import { getConnectionParamsFromStateDetails, createConnectionParamsSignature } from './connection_params.js';

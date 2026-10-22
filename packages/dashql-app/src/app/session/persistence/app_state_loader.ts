@@ -9,11 +9,11 @@ import { addSessionScriptsForConnection, type SessionScriptsRegistry } from '../
 import { createEmptyScriptData, destroySessionScripts, replaceScriptSessionText } from '../scripts/session_scripts.js';
 import { decodeConnectionFromProto, restoreAttachedDatabaseState } from '../connections/connection_import.js';
 import { CONNECTOR_TYPES, ConnectorType, type ConnectorInfo } from '../connections/connector_info.js';
-import type { StorageBackend, SessionEntry, SessionData, SessionRegistryBackend, ConnectionEntry } from './storage_backend.js';
-import { StorageBackendType, STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, isSessionRegistryBackend } from './storage_backend.js';
+import type { StorageBackend, SessionEntry, SessionData, SessionRegistryBackend, ConnectionEntry } from '../../storage/storage_backend.js';
+import { StorageBackendType, STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, isSessionRegistryBackend } from '../../storage/storage_backend.js';
 import { connectionParamsEqual } from '../connections/connection_params.js';
-import { dedupeAttachedDatabases, patchSessionConnection, upsertConnectionEntry } from './storage_writer.js';
-import { validateSessionData, describeInvalidSession, isValidUuid, SessionValidationError, type InvalidSession } from './session_validation.js';
+import { dedupeAttachedDatabases, patchSessionConnection, upsertConnectionEntry } from '../../storage/storage_writer.js';
+import { validateSessionData, describeInvalidSession, isValidUuid, SessionValidationError, type InvalidSession } from '../../storage/session_validation.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../connections/catalog_update_state.js';
 import { beginCatalogBatch, invalidateCatalogBatch, publishCatalogBatch, type BatchProcessor, type CatalogBatchEntry } from '../connections/catalog_batch.js';
 import { readSessionSettings, type SessionSettings } from '../scripts/session_settings.js';

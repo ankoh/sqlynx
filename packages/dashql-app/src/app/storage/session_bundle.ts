@@ -1,8 +1,8 @@
 import type { DashQL, FlatBufferPtr, buffers } from '@ankoh/dashql-core';
 import type { DataFileData, SessionData, ScriptData, StorageBackend } from './storage_backend.js';
 import { STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, STORAGE_SESSION_FILE, StorageBackendType, validateDataFileName } from './storage_backend.js';
-import type { MigrationFolder } from '../../../migration/migration_folder.js';
-import { migrateSessionFolder, SessionMigrationResult } from '../../../migration/session_migration.js';
+import type { MigrationFolder } from '../../migration/migration_folder.js';
+import { migrateSessionFolder, SessionMigrationResult } from '../../migration/session_migration.js';
 import {
     describeSessionValidationError,
     isValidUuid,

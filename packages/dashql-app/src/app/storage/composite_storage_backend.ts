@@ -25,9 +25,9 @@ import {
     writeSessionBundle,
     type SessionBundle,
 } from './session_bundle.js';
-import type { Logger } from '../../../platform/logger/logger.js';
-import { NativeFolder, OverlayFolder } from '../../../migration/migration_folder.js';
-import { migrateSessionFolder } from '../../../migration/session_migration.js';
+import type { Logger } from '../../platform/logger/logger.js';
+import { NativeFolder, OverlayFolder } from '../../migration/migration_folder.js';
+import { migrateSessionFolder } from '../../migration/session_migration.js';
 
 const LOG_CTX = 'composite_storage_backend';
 

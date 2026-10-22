@@ -1,6 +1,6 @@
 import type { Logger } from '../platform/logger/logger.js';
 import { stringifyError } from '../platform/logger/logger.js';
-import { OPFS_MANIFEST_LOCK } from '../app/session/persistence/opfs_storage_backend.js';
+import { OPFS_MANIFEST_LOCK } from '../app/storage/opfs_storage_backend.js';
 import { listSessionFolders, readManifestJson, writeManifestJson } from './storage_root.js';
 import { migrateSessionFolder, SessionMigrationResult } from './session_migration.js';
 import { notebooksToSessions } from './storage/v2_notebooks_to_sessions.js';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Logger } from '../../../platform/logger/logger.js';
+import { Logger } from '../../platform/logger/logger.js';
 import { SessionTestBackend } from './session_test_backend.js';
 import {
     DELETE_SCRIPT,
@@ -20,9 +20,9 @@ import {
     groupSessionManifestWrites,
     storageWriteChainKey,
 } from './storage_writer.js';
-import { ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../connections/connector_info.js';
-import { ConnectionHealth, ConnectionStatus, DISCARD_CONNECTION_DRAFT, SET_CONNECTION_DRAFT, reduceAttachedDatabaseState, type AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { CONNECTOR_INFOS } from '../connections/connector_info.js';
+import { ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../session/connections/connector_info.js';
+import { ConnectionHealth, ConnectionStatus, DISCARD_CONNECTION_DRAFT, SET_CONNECTION_DRAFT, reduceAttachedDatabaseState, type AttachedDatabaseState } from '../session/connections/attached_database_state.js';
+import { CONNECTOR_INFOS } from '../session/connections/connector_info.js';
 import { testSession, TEST_DATABASE_ID, TEST_SESSION_ID } from './session_test_backend.js';
 
 class NullLogger extends Logger {

@@ -1,9 +1,9 @@
 import { stringifyError } from '../../platform/logger/logger.js';
 import { connectionParamsEqual, connectionParamsKey, connectionParamsWithoutDraftRows } from '../../app/session/connections/connection_params.js';
 import type { AttachedDatabaseRole } from '../../app/session/connections/attached_database_registry.js';
-import type { ConnectionEntry, ConnectionParams, SessionData } from '../../app/session/persistence/storage_backend.js';
-import { dedupeAttachedDatabases } from '../../app/session/persistence/storage_writer.js';
-import { isValidUuid } from '../../app/session/persistence/session_validation.js';
+import type { ConnectionEntry, ConnectionParams, SessionData } from '../../app/storage/storage_backend.js';
+import { dedupeAttachedDatabases } from '../../app/storage/storage_writer.js';
+import { isValidUuid } from '../../app/storage/session_validation.js';
 import type { MigrationFolder } from '../migration_folder.js';
 import { migrateSessionFolder } from '../session_migration.js';
 import type { StorageMigrationStep } from '../storage_migration.js';

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { WatchEvent } from './native_session_sync.js';
 
 import { isSessionContentWatchEvent, nativeSessionWatchForLocation } from './native_session_sync.js';
-import { StorageBackendType } from './storage_backend.js';
+import { StorageBackendType } from '../../storage/storage_backend.js';
 
 const DIR = '/tmp/dashql-session';
 

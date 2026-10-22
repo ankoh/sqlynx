@@ -29,7 +29,7 @@ import { type ModifySessionScripts } from '../../scripts/session_scripts_registr
 import { type KeyEventHandler, useKeyEvents } from '../../../../utils/key_events.js';
 import { TabKey as DetailsTabKey } from '../script_details.js';
 import { runSessionScript } from '../rerun_query.js';
-import { useStorageReader } from '../../persistence/storage_provider.js';
+import { useStorageReader } from '../../../storage/storage_provider.js';
 import { VerticalScrollShadows } from '../../../../ui/foundations/vertical_scroll_shadows.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';
@@ -37,7 +37,7 @@ import { useSessionFeedLayout } from './session_feed_layout.js';
 import { ScriptFeedRow, type ScriptFeedRowProps } from './session_feed_row.js';
 import { getKeywordCase } from '../script_format.js';
 import { reorderFeedEntries } from './session_feed_drag.js';
-import type { DataFile } from '../../persistence/storage_backend.js';
+import type { DataFile } from '../../../storage/storage_backend.js';
 import { stringifyError } from '../../../../platform/logger/logger.js';
 import { SessionDataCard } from './session_data_card.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundations/button.js';

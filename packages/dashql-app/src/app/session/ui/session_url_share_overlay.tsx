@@ -16,7 +16,7 @@ import { sleep } from '../../../utils/sleep.js';
 import { resolveSessionAttachedDatabases, useAttachedDatabaseState, useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
 import { useRouteContext } from '../../router/router.js';
 import { useSessionScripts } from '../scripts/session_scripts_registry.js';
-import { useStorageReader } from '../persistence/storage_provider.js';
+import { useStorageReader } from '../../storage/storage_provider.js';
 
 const COPY_CHECKMARK_DURATION_MS = 1000;
 

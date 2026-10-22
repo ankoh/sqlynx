@@ -9,7 +9,7 @@ import { CATALOG_UPDATE_CANCELLED, CATALOG_UPDATE_FAILED, CATALOG_UPDATE_SUCCEED
 import { reduceCatalogAction } from './catalog_update_state.js';
 import { CatalogResolver, HYPER_CONNECTOR } from './connector_info.js';
 import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
-import type { StorageWriter } from '../persistence/storage_writer.js';
+import type { StorageWriter } from '../../storage/storage_writer.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 

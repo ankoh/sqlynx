@@ -17,7 +17,7 @@ import { QUERY_PROGRESS_UPDATED, QUERY_RECEIVED_BATCH } from '../../../query/que
 import { Dispatch } from '../../../utils/variant.js';
 import { CONNECTOR_TYPES } from './connector_info.js';
 import { ConnectionSignatureMap } from './connection_signature.js';
-import { useStorageWriter } from '../persistence/storage_provider.js';
+import { useStorageWriter } from '../../storage/storage_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 
 const LOG_CTX = 'attached_database_registry';
@@ -37,8 +37,8 @@ import {
     PATCH_SESSION_CONNECTION,
     DELETE_CONNECTION_ENTRY,
     type StorageWriter,
-} from '../persistence/storage_writer.js';
-import { STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, type ConnectionEntry } from '../persistence/storage_backend.js';
+} from '../../storage/storage_writer.js';
+import { STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, type ConnectionEntry } from '../../storage/storage_backend.js';
 import { connectionParamsEqual, type ConnectionParams } from './connection_params.js';
 
 /// Drafts are written to the app manifest only, edits arrive with every keystroke

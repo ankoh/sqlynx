@@ -18,7 +18,7 @@ import {
     StorageWriter,
     WRITE_SESSION_PROPERTIES,
     WRITE_SCRIPT,
-} from '../persistence/storage_writer.js';
+} from '../../storage/storage_writer.js';
 import type { SessionScriptsInput } from './session_scripts_registry.js';
 import type { SessionSettings } from './session_settings.js';
 import { Logger, LoggerLike, LoggableException, stringifyError } from '../../../platform/logger/logger.js';

@@ -8,7 +8,7 @@ import { Button, ButtonVariant } from '../../ui/foundations/button.js';
 import { CONFIRM_FINISHED_SETUP, useRouteContext, useRouterNavigate } from '../router/router.js';
 import { getStatusFromProgressCounter, IndicatorStatus, StatusIndicator } from '../../ui/foundations/status_indicator.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
-import { useStorageReader } from '../session/persistence/storage_provider.js';
+import { useStorageReader } from '../storage/storage_provider.js';
 import { AppLoadingProgress } from '../loading/app_loading_progress.js';
 import { ParticleFlowBackground } from '../../ui/particle_flow/particle_flow_background.js';
 import { CompactNavBar } from './navbar.js';

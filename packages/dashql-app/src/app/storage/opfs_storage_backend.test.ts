@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OPFSStorageBackend } from './opfs_storage_backend.js';
 import { STORAGE_MANIFEST_FILE } from './storage_backend.js';
-import { STORAGE_VERSION } from '../../../migration/versions.js';
+import { STORAGE_VERSION } from '../../migration/versions.js';
 import { TEST_SESSION_ID, testSession } from './session_test_backend.js';
-import { OPFSDirectoryMock } from '../../../tests/opfs_mock.js';
+import { OPFSDirectoryMock } from '../../tests/opfs_mock.js';
 
 describe('OPFSStorageBackend V2 flat storage', () => {
     let backend: OPFSStorageBackend;

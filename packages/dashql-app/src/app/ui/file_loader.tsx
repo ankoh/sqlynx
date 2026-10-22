@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { PlatformFile } from '../../platform/file/file.js';
-import type { SessionBundle } from '../session/persistence/session_bundle.js';
+import type { SessionBundle } from '../storage/session_bundle.js';
 import { readSessionBundleFromZip } from '../session/persistence/session_import.js';
 import { useSessionImport } from '../session/persistence/session_import_provider.js';
 import { SessionImportCard, type SessionImportCardDependencies } from '../session/ui/session_import_card.js';

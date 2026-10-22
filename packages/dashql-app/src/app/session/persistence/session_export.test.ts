@@ -10,8 +10,8 @@ import {
     SessionLinkTarget,
 } from './session_export.js';
 import { importSessionFromZip } from './session_import.js';
-import { sessionBundlesEqual } from './session_bundle.js';
-import { SessionTestBackend, TEST_SESSION_ID, testSession } from './session_test_backend.js';
+import { sessionBundlesEqual } from '../../storage/session_bundle.js';
+import { SessionTestBackend, TEST_SESSION_ID, testSession } from '../../storage/session_test_backend.js';
 
 describe('V2 session export', () => {
     it('compares data bytes independently of typed-array JSON serialization', () => {

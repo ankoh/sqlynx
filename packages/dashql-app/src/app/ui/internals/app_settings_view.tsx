@@ -10,7 +10,7 @@ import { AppConfig, useAppConfig, useAppReconfigure } from '../../config/app_con
 import { CONFIRM_FINISHED_SETUP, useRouteContext, useRouterNavigate } from '../../router/router.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { LogLevel } from '../../../platform/logger/log_buffer.js';
-import { useStorageReader } from '../../session/persistence/storage_provider.js';
+import { useStorageReader } from '../../storage/storage_provider.js';
 
 export function AppSettings(props: { onClose: () => void; }) {
     const config = useAppConfig();

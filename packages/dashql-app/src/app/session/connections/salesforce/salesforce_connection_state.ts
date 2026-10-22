@@ -25,7 +25,7 @@ import { Hasher } from '../../../../utils/hash.js';
 import { ConnectionSignatureMap, updateConnectionSignature } from '../connection_signature.js';
 import { DefaultHasher } from '../../../../utils/hash_default.js';
 import { dateToTimestamp } from "../proto_helper.js";
-import { StorageWriter } from "../../persistence/storage_writer.js";
+import { StorageWriter } from "../../../storage/storage_writer.js";
 
 /// The Salesforce connection state
 export interface SalesforceConnectionStateDetails {

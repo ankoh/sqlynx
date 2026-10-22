@@ -2,8 +2,8 @@ import type * as app_manifest from '@ankoh/dashql-jsonschema/app_manifest.js';
 import type * as app_session from '@ankoh/dashql-jsonschema/app_session.js';
 
 import type { CacheFileStat } from './query_result_cache_eviction.js';
-import type { CachedQueryResult } from '../../../query/query_result_cache.js';
-export type { CachedQueryResult } from '../../../query/query_result_cache.js';
+import type { CachedQueryResult } from '../../query/query_result_cache.js';
+export type { CachedQueryResult } from '../../query/query_result_cache.js';
 
 // Storage file and folder naming conventions
 export const STORAGE_MANIFEST_FILE = 'dashql-manifest.json';

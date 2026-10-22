@@ -1,4 +1,4 @@
-import { StorageWriter } from '../persistence/storage_writer.js';
+import { StorageWriter } from '../../storage/storage_writer.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,

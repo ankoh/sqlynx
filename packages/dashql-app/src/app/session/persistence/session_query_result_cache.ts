@@ -1,5 +1,5 @@
 import type { QueryResultCache } from '../../../query/query_result_cache.js';
-import type { StorageBackend } from './storage_backend.js';
+import type { StorageBackend } from '../../storage/storage_backend.js';
 
 export function createSessionQueryResultCache(
     backend: StorageBackend,
