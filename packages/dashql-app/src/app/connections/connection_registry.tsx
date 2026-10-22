@@ -39,7 +39,7 @@ import {
     type StorageWriter,
 } from '../storage/storage_writer.js';
 import { STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, type AttachedDatabase, type ConnectionEntry } from '../storage/storage_backend.js';
-import { connectionParamsEqual, type ConnectionParams } from './connection_params.js';
+import { connectionCatalogIsDurable, connectionParamsEqual, type ConnectionParams } from './connection_params.js';
 
 /// Drafts are written to the app manifest only, edits arrive with every keystroke
 export const DEBOUNCE_DURATION_CONNECTION_DRAFT_WRITE = 250;
@@ -442,26 +442,32 @@ export function useConnectionDispatch(): DynamicConnectionDispatch {
                 }
                 // The catalog of the connection is written into the app storage, sessions that use the
                 // connection as main database keep a copy to stay self-contained.
+                // The relations of a connection whose database doesn't outlive the app are never written.
                 const mainOf = findSessionsWithMainDatabase(reg, connectionId);
+                const durable = connectionCatalogIsDurable(next.params);
                 if (action.type === CATALOG_UPDATE_SUCCEEDED || action.type === CATALOG_UPDATE_PARTIALLY_SUCCEEDED) {
                     const relationsSql = next.catalogRelationScript.toString();
                     const functionsSql = next.catalogFunctionScript.toString();
-                    void storageWriter.write(
-                        groupConnectionFileWrites(connectionId, STORAGE_CATALOG_RELATIONS),
-                        { type: WRITE_CONNECTION_FILE, value: [connectionId, STORAGE_CATALOG_RELATIONS, relationsSql] },
-                        DEBOUNCE_DURATION_SESSION_WRITE,
-                    );
+                    if (durable) {
+                        void storageWriter.write(
+                            groupConnectionFileWrites(connectionId, STORAGE_CATALOG_RELATIONS),
+                            { type: WRITE_CONNECTION_FILE, value: [connectionId, STORAGE_CATALOG_RELATIONS, relationsSql] },
+                            DEBOUNCE_DURATION_SESSION_WRITE,
+                        );
+                    }
                     void storageWriter.write(
                         groupConnectionFileWrites(connectionId, STORAGE_CATALOG_FUNCTIONS),
                         { type: WRITE_CONNECTION_FILE, value: [connectionId, STORAGE_CATALOG_FUNCTIONS, functionsSql] },
                         DEBOUNCE_DURATION_SESSION_WRITE,
                     );
                     for (const sessionId of mainOf) {
-                        void storageWriter.write(
-                            groupSessionSchemaWrites(sessionId),
-                            { type: WRITE_SESSION_CATALOG_SCRIPT, value: [sessionId, next.catalogRelationScript] },
-                            DEBOUNCE_DURATION_SESSION_WRITE,
-                        );
+                        if (durable) {
+                            void storageWriter.write(
+                                groupSessionSchemaWrites(sessionId),
+                                { type: WRITE_SESSION_CATALOG_SCRIPT, value: [sessionId, next.catalogRelationScript] },
+                                DEBOUNCE_DURATION_SESSION_WRITE,
+                            );
+                        }
                         void storageWriter.write(
                             groupSessionFunctionWrites(sessionId),
                             { type: WRITE_SESSION_FUNCTION_SCRIPT, value: [sessionId, next.catalogFunctionScript] },
@@ -470,7 +476,7 @@ export function useConnectionDispatch(): DynamicConnectionDispatch {
                     }
                 }
                 // Executed statements record catalog changes, a refresh clears them
-                if (next.catalogChangesSql !== prev.catalogChangesSql) {
+                if (durable && next.catalogChangesSql !== prev.catalogChangesSql) {
                     void storageWriter.write(
                         groupConnectionFileWrites(connectionId, STORAGE_CATALOG_CHANGES),
                         { type: WRITE_CONNECTION_FILE, value: [connectionId, STORAGE_CATALOG_CHANGES, next.catalogChangesSql] },

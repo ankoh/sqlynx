@@ -11,7 +11,7 @@ import { decodeConnectionFromProto, restoreConnectionState } from '../../connect
 import { CONNECTOR_TYPES, ConnectorType, type ConnectorInfo } from '../../connections/connector_info.js';
 import type { StorageBackend, SessionEntry, SessionData, SessionRegistryBackend, ConnectionEntry } from '../../storage/storage_backend.js';
 import { StorageBackendType, STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, isSessionRegistryBackend } from '../../storage/storage_backend.js';
-import { connectionParamsEqual } from '../../connections/connection_params.js';
+import { connectionCatalogIsDurable, connectionParamsEqual } from '../../connections/connection_params.js';
 import { patchSessionConnection, upsertConnectionEntry } from '../../storage/storage_writer.js';
 import { validateSessionData, describeInvalidSession, isValidUuid, SessionValidationError, type InvalidSession } from '../../storage/session_validation.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../connections/catalog_update_state.js';
@@ -194,16 +194,22 @@ function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Log
 }
 
 /// Restore the catalog of a connection from its persisted SQL.
-/// Returns true if there was a catalog to restore.
+/// The relations and changes of a connection whose database doesn't outlive the app describe a
+/// database that is gone, they are dropped. Such a catalog is described by a refresh on connect.
+/// Returns the restored texts, null if there was no catalog to restore.
 async function restoreConnectionCatalog(
     ctx: RestoreContext,
     connectionState: ConnectionState,
     load: () => Promise<CatalogTexts>,
     logContext: Record<string, string>,
-): Promise<boolean> {
+): Promise<CatalogTexts | null> {
     const validate = beginCatalogBatch(connectionState.catalog);
-    const { relations, functions, changes } = await load();
+    const loaded = await load();
     validate();
+    const durable = connectionCatalogIsDurable(connectionState.params);
+    const relations = durable ? loaded.relations : null;
+    const functions = loaded.functions;
+    const changes = durable ? loaded.changes : null;
     const { catalog, catalogRelationScript, catalogFunctionScript } = connectionState;
     const catalogScripts: CatalogBatchEntry[] = [];
     if (relations && relations.trim().length > 0) {
@@ -216,13 +222,16 @@ async function restoreConnectionCatalog(
     }
     if (catalogScripts.length > 0) {
         await publishCatalogBatch(ctx.core, catalog, catalogScripts, { processor: ctx.processor }, validate);
-        connectionState.catalogUpdates.restoredAt = new Date();
+        // A restored catalog is kept until an explicit refresh, only restored relations make it one
+        if (durable) {
+            connectionState.catalogUpdates.restoredAt = new Date();
+        }
     }
     const hasChanges = changes != null && changes.trim().length > 0;
     if (hasChanges) {
         restoreCatalogChanges(connectionState, changes, ctx.logger, logContext);
     }
-    return catalogScripts.length > 0 || hasChanges;
+    return catalogScripts.length > 0 || hasChanges ? { relations, functions, changes } : null;
 }
 
 /// Restore a connection of the app manifest
@@ -245,16 +254,29 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
 
     const registry = ctx.registry!;
     try {
+        let stored: CatalogTexts = { relations: null, functions: null, changes: null };
         const restored = await restoreConnectionCatalog(ctx, state, async () => {
             const [relations, functions, changes] = await Promise.all([
                 registry.loadConnectionFile(entry.id, STORAGE_CATALOG_RELATIONS),
                 registry.loadConnectionFile(entry.id, STORAGE_CATALOG_FUNCTIONS),
                 registry.loadConnectionFile(entry.id, STORAGE_CATALOG_CHANGES),
             ]);
-            return { relations, functions, changes };
+            stored = { relations, functions, changes };
+            return stored;
         }, { connectionId: entry.id });
-        if (restored) {
+        if (restored != null) {
             ctx.catalogsRestored.add(entry.id);
+        }
+        // Clear the dropped relations and changes that older versions of the app wrote
+        if (!connectionCatalogIsDurable(state.params)) {
+            for (const [fileName, text] of [
+                [STORAGE_CATALOG_RELATIONS, stored.relations],
+                [STORAGE_CATALOG_CHANGES, stored.changes],
+            ] as const) {
+                if (text != null && text.length > 0) {
+                    ctx.pendingWrites.connectionFiles.push({ connectionId: entry.id, fileName, text: '' });
+                }
+            }
         }
     } catch (error) {
         // Catalog restoration is non-critical - the connection is still usable
@@ -368,7 +390,6 @@ async function restoreSessionEntry(
         restoreCatalogs.addSucceeded();
     } else {
         try {
-            let texts: CatalogTexts = { relations: null, functions: null, changes: null };
             logger.info("Loading catalog scripts", { sessionId }, LOG_CTX);
             const restored = await restoreConnectionCatalog(ctx, connectionState, async () => {
                 const [relations, functions, changes] = await Promise.all([
@@ -376,15 +397,14 @@ async function restoreSessionEntry(
                     backend.loadSessionFunctions(sessionId),
                     backend.loadSessionCatalogChanges(sessionId),
                 ]);
-                texts = { relations, functions, changes };
-                return texts;
+                return { relations, functions, changes };
             }, { sessionId });
-            if (restored) {
+            if (restored != null) {
                 ctx.catalogsRestored.add(connectionId);
                 for (const [fileName, text] of [
-                    [STORAGE_CATALOG_RELATIONS, texts.relations],
-                    [STORAGE_CATALOG_FUNCTIONS, texts.functions],
-                    [STORAGE_CATALOG_CHANGES, texts.changes],
+                    [STORAGE_CATALOG_RELATIONS, restored.relations],
+                    [STORAGE_CATALOG_FUNCTIONS, restored.functions],
+                    [STORAGE_CATALOG_CHANGES, restored.changes],
                 ] as const) {
                     if (text != null) ctx.pendingWrites.connectionFiles.push({ connectionId, fileName, text });
                 }

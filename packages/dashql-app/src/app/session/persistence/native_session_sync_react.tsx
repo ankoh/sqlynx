@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { connectionRefCount, useConnectionRegistry, type ConnectionRegistry } from '../../connections/connection_registry.js';
 import { catalogFileMatchesStorage, connectionCatalogMatchesStorage, replaceConnectionCatalogFromStorage } from '../../connections/connection_state.js';
+import { connectionCatalogIsDurable } from '../../connections/connection_params.js';
 import { useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { sessionScriptsMatchStorageSnapshot, replaceSessionScriptsFromStorage } from '../scripts/session_scripts.js';
 import { isNativePlatform } from '../../../platform/native_globals.js';
@@ -24,10 +25,12 @@ const LOG_CTX = 'native_session_sync';
 /// The main connection of a session whose catalog the session's files may replace.
 /// The catalog files of a session are a copy of its connection's catalog. A connection that several
 /// sessions share keeps its catalog, an edited copy in one folder must not replace it for all of them.
+/// The catalog of a connection whose database doesn't outlive the app is described by its refreshes, not the files.
 function reloadableCatalogConnection(registry: ConnectionRegistry, sessionId: string): ConnectionState | null {
     const connectionId = registry.attachedDatabasesBySession.get(sessionId)?.mainDatabaseId;
     if (connectionId == null || connectionRefCount(registry, connectionId) > 1) return null;
-    return registry.connections.get(connectionId) ?? null;
+    const connection = registry.connections.get(connectionId) ?? null;
+    return connection != null && connectionCatalogIsDurable(connection.params) ? connection : null;
 }
 
 interface SessionReloadDecision {

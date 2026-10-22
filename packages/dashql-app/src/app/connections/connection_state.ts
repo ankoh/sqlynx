@@ -555,6 +555,10 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
 
 /// Apply the catalog changes of executed statements to the relation descriptor and record them as SQL.
 /// The changes are qualified with the default database and schema of the connection.
+///
+/// Known limitation: the changes don't distinguish temporary relations. A `CREATE TEMP TABLE` is
+/// recorded and persisted like any other relation, so it outlives the database session it belongs to
+/// and is restored with the catalog after a reconnect.
 function applyCatalogChanges(state: ConnectionState, changes: dashql.buffers.catalog.CatalogChangeT[], logger: Logger): ConnectionState {
     if (changes.length === 0) return state;
     try {

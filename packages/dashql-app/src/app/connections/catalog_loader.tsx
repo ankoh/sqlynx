@@ -5,6 +5,7 @@ import { CatalogUpdateTaskState, CatalogUpdateTaskStatus, CatalogUpdateVariant }
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
 import { CatalogResolver, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
+    ConnectionHealth,
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
     CATALOG_UPDATE_PARTIALLY_SUCCEEDED,
@@ -17,6 +18,7 @@ import { useLogger } from '../../platform/logger/logger_provider.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
 import { updateInformationSchemaCatalog } from './catalog_query_information_schema.js';
 import { updateHyperCatalog } from './hyper/hyper_catalog_update.js';
+import { connectionCatalogIsDurable } from './connection_params.js';
 
 const LOG_CTX = 'catalog_loader';
 
@@ -287,6 +289,24 @@ export function CatalogLoaderProvider(props: CatalogLoaderProviderProps) {
     const enqueue = React.useCallback<RefreshCatalogFn>((connectionId: string, force: boolean) => {
         setQueueState(s => ({ queue: new Map(s.queue).set(connectionId, force || s.queue.get(connectionId) === true) }));
     }, []);
+
+    // The catalog of a connection whose database doesn't outlive the app is not restored from
+    // storage, it is described by a refresh whenever the connection comes online.
+    const onlineRef = React.useRef(new Set<string>());
+    React.useEffect(() => {
+        const online = onlineRef.current;
+        for (const [connectionId, conn] of connMap) {
+            if (conn.connectionHealth !== ConnectionHealth.ONLINE) {
+                online.delete(connectionId);
+            } else if (!online.has(connectionId)) {
+                online.add(connectionId);
+                if (!connectionCatalogIsDurable(conn.params)) enqueue(connectionId, false);
+            }
+        }
+        for (const connectionId of [...online]) {
+            if (!connMap.has(connectionId)) online.delete(connectionId);
+        }
+    }, [connReg, connMap, enqueue]);
 
     // Subscribe the queue
     const updatesInProgress = React.useRef<Set<string> | null>(null);

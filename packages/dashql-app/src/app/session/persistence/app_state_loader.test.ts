@@ -235,7 +235,7 @@ describe('real-core startup catalog restoration', () => {
     it('applies the persisted catalog changes on top of the restored relations', async () => {
         const backend = new SessionTestBackend();
         backend.sessions.set(TEST_SESSION_ID, testSession({
-            mainDatabase: { databaseId: TEST_DATABASE_ID, params: { hyper: { protocol: 'WASM' } } as any },
+            mainDatabase: { databaseId: TEST_DATABASE_ID, params: { hyper: { protocol: 'V3_HTTP', endpoint: 'http://hyper.example' } } as any },
         }));
         const schema = 'CREATE TABLE "hyper"."public"."dropped"(id integer); CREATE TABLE "hyper"."public"."kept"(id integer);';
         const changesSql = dql.appendCatalogChangesSql('', [
@@ -253,6 +253,58 @@ describe('real-core startup catalog restoration', () => {
             .unpackAndDestroy() as dashql.buffers.catalog.CatalogEntriesT;
         const tables = entries.entries.flatMap(entry => entry.schemas.flatMap(schema => schema.tables.map(table => table.tableName)));
         expect(tables.sort()).toEqual(['created', 'kept']);
+    });
+
+    it('drops the persisted relations and changes of an embedded database seeded from a session', async () => {
+        const backend = new SessionTestBackend();
+        backend.sessions.set(TEST_SESSION_ID, testSession({
+            mainDatabase: { databaseId: TEST_DATABASE_ID, params: { hyper: { protocol: 'WASM' } } as any },
+        }));
+        const functions = 'CREATE FUNCTION "hyper"."public"."kept_function"(value integer) RETURNS bigint;';
+        backend.schemas.set(TEST_SESSION_ID, 'CREATE TABLE "hyper"."public"."gone"(id integer);');
+        backend.catalogChanges.set(TEST_SESSION_ID, dql.appendCatalogChangesSql('', [
+            new dashql.buffers.catalog.CatalogChangeT(dashql.buffers.catalog.CatalogChangeType.CREATE_RELATION, 'hyper', 'public', 'created', ['a']),
+        ]));
+        backend.functions.set(TEST_SESSION_ID, functions);
+        const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
+        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
+        const main = restored.connectionStates.get(TEST_DATABASE_ID)!;
+
+        expect(main.catalog.createSnapshot().read().catalogReader.tablesLength()).toBe(0);
+        expect(main.catalogChangesSql).toBe('');
+        expect(main.catalogFunctionScript.toString()).toBe(functions);
+        // The catalog is refreshed on connect instead
+        expect(main.catalogUpdates.restoredAt).toBeNull();
+        // Only the functions seed the files of the connection
+        expect([...backend.connectionFiles.keys()]).toEqual([`${TEST_DATABASE_ID}/dashql-catalog-functions.sql`]);
+        destroyRestoredSession({ sessionId: TEST_SESSION_ID, databases: [main],
+            mapping: restored.attachedDatabasesBySession.get(TEST_SESSION_ID)!, sessionScripts: restored.sessionScripts.get(TEST_SESSION_ID)! });
+    });
+
+    it('drops and clears the persisted relations and changes of an embedded connection', async () => {
+        const backend = new SessionTestBackend();
+        const params = { hyper: { protocol: 'WASM' } } as any;
+        backend.connections = [{ id: TEST_DATABASE_ID, params }];
+        backend.sessions.set(TEST_SESSION_ID, testSession({ mainDatabase: { databaseId: TEST_DATABASE_ID, params } }));
+        const functions = 'CREATE FUNCTION "hyper"."public"."kept_function"(value integer) RETURNS bigint;';
+        backend.connectionFiles.set(`${TEST_DATABASE_ID}/dashql-catalog-relations.sql`, 'CREATE TABLE "hyper"."public"."gone"(id integer);');
+        backend.connectionFiles.set(`${TEST_DATABASE_ID}/dashql-catalog-changes.sql`, dql.appendCatalogChangesSql('', [
+            new dashql.buffers.catalog.CatalogChangeT(dashql.buffers.catalog.CatalogChangeType.CREATE_RELATION, 'hyper', 'public', 'created', ['a']),
+        ]));
+        backend.connectionFiles.set(`${TEST_DATABASE_ID}/dashql-catalog-functions.sql`, functions);
+        const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
+        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
+        const main = restored.connectionStates.get(TEST_DATABASE_ID)!;
+
+        expect(main.catalog.createSnapshot().read().catalogReader.tablesLength()).toBe(0);
+        expect(main.catalogChangesSql).toBe('');
+        expect(main.catalogFunctionScript.toString()).toBe(functions);
+        expect(main.catalogUpdates.restoredAt).toBeNull();
+        expect(backend.connectionFiles.get(`${TEST_DATABASE_ID}/dashql-catalog-relations.sql`)).toBe('');
+        expect(backend.connectionFiles.get(`${TEST_DATABASE_ID}/dashql-catalog-changes.sql`)).toBe('');
+        expect(backend.connectionFiles.get(`${TEST_DATABASE_ID}/dashql-catalog-functions.sql`)).toBe(functions);
+        destroyRestoredSession({ sessionId: TEST_SESSION_ID, databases: [main],
+            mapping: restored.attachedDatabasesBySession.get(TEST_SESSION_ID)!, sessionScripts: restored.sessionScripts.get(TEST_SESSION_ID)! });
     });
 
     it('routes restored relations/functions to the main catalog using receiver source identities and retains persisted SQL', async () => {

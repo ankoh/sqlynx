@@ -129,6 +129,7 @@ describe('catalog refresh persistence', () => {
         const connection = {
             connectionId: TEST_DATABASE_ID,
             active: true,
+            params: { salesforce: { instanceUrl: 'https://example.my.salesforce.com' } },
             connectionSignature: { signatureString: 'salesforce' },
             connectorInfo: { connectorType: ConnectorType.SALESFORCE_DATA_CLOUD },
             details: { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: { proto: { setupParams: { instanceUrl: 'https://example.my.salesforce.com' } } } },
@@ -197,6 +198,66 @@ describe('catalog refresh persistence', () => {
         }
     });
 
+    it('saves only the functions when the embedded database refreshes', async () => {
+        const backend = new SessionTestBackend();
+        backend.sessions.set(TEST_SESSION_ID, testSession());
+        const functionsSQL = 'CREATE FUNCTION test() AS 1;';
+        const task = {
+            taskId: 3, taskVariant: CatalogUpdateVariant.FULL_CATALOG_REFRESH,
+            status: CatalogUpdateTaskStatus.STARTED, cancellation: new AbortController(),
+            queries: [], error: null, startedAt: new Date(), finishedAt: null, lastUpdateAt: new Date(),
+        };
+        const embedded = {
+            connectionId: TEST_DATABASE_ID, active: true,
+            params: { hyper: { protocol: 'WASM' } },
+            connectionSignature: { signatureString: 'embedded' },
+            connectorInfo: { connectorType: ConnectorType.HYPER },
+            details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } },
+            catalogRelationScript: { toString: () => 'CREATE TABLE "hyper"."public"."gone" (id INT);' },
+            catalogFunctionScript: { toString: () => functionsSQL },
+            catalogChangesSql: '-- Catalog changes of executed statements\n\nDROP TABLE "hyper"."public"."gone";\n',
+            catalogUpdates: {
+                tasksRunning: new Map([[3, task]]), tasksFinished: new Map(), currentFullRefresh: 3,
+                lastFullRefresh: null, restoredAt: null,
+            },
+        } as unknown as ConnectionState;
+        let dispatch!: DynamicConnectionDispatch;
+        let writer!: StorageWriter;
+        let setRegistry!: React.Dispatch<React.SetStateAction<ConnectionRegistry>>;
+        function Harness() {
+            [, setRegistry] = useConnectionRegistry();
+            [, dispatch] = useDynamicConnectionDispatch();
+            writer = useStorageWriter();
+            return null;
+        }
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        try {
+            await act(async () => root.render(React.createElement(LoggerProvider, null,
+                React.createElement(StorageProvider, { backend },
+                    React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness)),
+                ),
+            )));
+            act(() => setRegistry(reg => {
+                reg.connections.set(TEST_DATABASE_ID, embedded);
+                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
+                return { ...reg };
+            }));
+            // The refresh clears the recorded catalog changes as well
+            act(() => dispatch(TEST_DATABASE_ID, { type: CATALOG_UPDATE_SUCCEEDED, value: [3] }));
+            await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
+            expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([`${TEST_SESSION_ID}/dashql-catalog-functions.sql`]);
+            await writer.flush();
+            expect(backend.functions.get(TEST_SESSION_ID)).toBe(functionsSQL);
+            expect(backend.schemas.has(TEST_SESSION_ID)).toBe(false);
+            expect(backend.catalogChanges.has(TEST_SESSION_ID)).toBe(false);
+            expect([...backend.connectionFiles.keys()]).toEqual([`${TEST_DATABASE_ID}/dashql-catalog-functions.sql`]);
+        } finally {
+            act(() => root.unmount());
+            container.remove();
+        }
+    });
+
     it('does not overwrite main catalog files when an attached database refreshes', async () => {
         const backend = new SessionTestBackend();
         backend.sessions.set(TEST_SESSION_ID, testSession());
@@ -210,6 +271,7 @@ describe('catalog refresh persistence', () => {
         };
         const attached = {
             connectionId: attachedId, active: true,
+            params: { salesforce: {} },
             connectionSignature: { signatureString: 'attached' },
             connectorInfo: { connectorType: ConnectorType.SALESFORCE_DATA_CLOUD },
             details: { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: { proto: { setupParams: {} } } },

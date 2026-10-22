@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CatalogLoaderProvider, useCatalogLoaderQueue, type CatalogLoaderDependencies } from './catalog_loader.js';
 import { type ConnectionRegistry, type DynamicConnectionDispatch } from './connection_registry.js';
-import { CATALOG_UPDATE_CANCELLED, CATALOG_UPDATE_FAILED, CATALOG_UPDATE_SUCCEEDED, type ConnectionState, type CatalogAction } from './connection_state.js';
+import { CATALOG_UPDATE_CANCELLED, CATALOG_UPDATE_FAILED, CATALOG_UPDATE_SUCCEEDED, ConnectionHealth, type ConnectionState, type CatalogAction } from './connection_state.js';
 import { reduceCatalogAction } from './catalog_update_state.js';
 import { CatalogResolver, HYPER_CONNECTOR } from './connector_info.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
@@ -184,5 +184,37 @@ describe('CatalogLoaderProvider queue', () => {
         expect(updates[1].signal.aborted).toBe(false);
         await settleUpdate(() => updates[1].resolve());
         expect(scriptsDispatch).toHaveBeenCalledTimes(2);
+    });
+    it('refreshes the catalog of an embedded database whenever it comes online', async () => {
+        const connection = registry.connections.get('database')!;
+        registry.connections.set('database', { ...connection, params: { hyper: { protocol: 'WASM' } }, connectionHealth: ConnectionHealth.ONLINE } as ConnectionState);
+        // The request is enqueued by an effect, its update starts with a later render
+        await render();
+        await vi.waitFor(() => expect(updateHyperCatalog).toHaveBeenCalledTimes(1));
+        await settleUpdate(() => updates[0].resolve());
+        registry = { ...registry };
+        await render();
+        expect(updateHyperCatalog).toHaveBeenCalledTimes(1);
+
+        // A reconnect describes the database again
+        const online = registry.connections.get('database')!;
+        registry.connections.set('database', { ...online, connectionHealth: ConnectionHealth.CONNECTING });
+        registry = { ...registry };
+        await render();
+        registry.connections.set('database', {
+            ...online,
+            catalogUpdates: { ...online.catalogUpdates, lastFullRefresh: null },
+        });
+        registry = { ...registry };
+        await render();
+        await vi.waitFor(() => expect(updateHyperCatalog).toHaveBeenCalledTimes(2));
+    });
+
+    it('keeps the catalog of a durable connection when it comes online', async () => {
+        const connection = registry.connections.get('database')!;
+        registry.connections.set('database', { ...connection, params: { hyper: { protocol: 'V3_HTTP', endpoint: 'http://hyper.example' } }, connectionHealth: ConnectionHealth.ONLINE } as ConnectionState);
+        await render();
+        await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
+        expect(updateHyperCatalog).not.toHaveBeenCalled();
     });
 });

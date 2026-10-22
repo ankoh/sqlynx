@@ -51,6 +51,14 @@ export function connectionParamsShareEqual(left: ConnectionParams, right: Connec
     return connectionParamsEqual(sanitizeConnectionParamsForSharing(left, false), sanitizeConnectionParamsForSharing(right, false));
 }
 
+/// Do the relations of a connection outlive the app?
+/// The embedded HyperDB-WASM database is created anew with every page load, so its relations and the
+/// catalog changes of executed statements are neither persisted nor restored. Its functions are the
+/// builtins of Hyper and stay persisted.
+export function connectionCatalogIsDurable(params: ConnectionParams): boolean {
+    return !('hyper' in params && params.hyper.protocol === 'WASM');
+}
+
 export function getConnectionInfoFromParams(params: ConnectionParams) {
     if ('trino' in params) return CONNECTOR_INFOS[ConnectorType.TRINO];
     if ('hyper' in params) return CONNECTOR_INFOS[ConnectorType.HYPER];
