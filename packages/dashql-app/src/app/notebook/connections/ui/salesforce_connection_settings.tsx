@@ -4,7 +4,8 @@ import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
 import { KeyIcon, PersonIcon } from '../../../../ui/foundations/symbol_icon.js';
 
-import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useAttachedDatabaseById, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
 import { ConnectionHealth, ConnectionStatus } from '../attached_database_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useQueryExecutor } from '../query_executor.js';
@@ -23,7 +24,6 @@ import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_
 import { isNativePlatform } from '../../../../platform/native_globals.js';
 import { ConnectionStateDetailsVariant } from '../connection_state_details.js';
 import type { DetailedError } from '../connection_types.js';
-import { useAnyConnectionNotebookScripts } from './connection_notebook_scripts.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { collectSalesforceAuthInfo } from '../salesforce/salesforce_api_client.js';
 import { cancelConnectionSetup, registerConnectionSetup } from '../connection_setup_cancellation.js';
@@ -137,7 +137,6 @@ export interface SalesforceConnectionAliasField {
 
 interface SalesforceConnectionSettingsPageProps {
     connectionState: ReturnType<typeof useAttachedDatabaseById>[0];
-    notebookScripts: ReturnType<typeof useAnyConnectionNotebookScripts>;
     hyperProtocol: connection.HyperProtocol;
     protocols?: connection.HyperProtocol[];
     wrongPlatform: boolean;
@@ -180,7 +179,6 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                 setupConnection={props.setupConnection}
                 cancelSetup={props.cancelSetup}
                 resetSetup={props.resetSetup}
-                notebookScripts={props.notebookScripts}
                 protocol={props.hyperProtocol}
                 protocols={props.protocols ?? ["V3_GRPC", "V3_HTTP"]}
                 onProtocolChange={props.setHyperProtocol}
@@ -320,10 +318,9 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     const queryExecutor = useQueryExecutor();
 
     // Resolve connection state
-    const [registry] = useAttachedDatabaseRegistry();
-    const notebookId = props.databaseId == null ? null : findNotebookForAttachedDatabase(registry, props.databaseId);
     const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
-    const connectionNotebookScripts = useAnyConnectionNotebookScripts(notebookId);
+    const saveBeforeConnect = useSaveBeforeConnect(props.databaseId);
+    const { saving } = useConnectionSave(props.databaseId);
     const salesforceConnection = getSalesforceConnectionDetails(connectionState);
     const editableParams = connectionState?.paramsDraft ?? connectionState?.params;
     const salesforceParams = editableParams && 'salesforce' in editableParams ? editableParams.salesforce : undefined;
@@ -388,6 +385,9 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         }
         if (!validationSucceeded || !sfSetup) return;
 
+        // Connections are set up with saved settings, unsaved edits are saved first
+        if (!await saveBeforeConnect()) return;
+
         const controller = new AbortController();
         const unregister = connectionState == null ? () => {} : registerConnectionSetup(connectionState.databaseId, controller);
         try {
@@ -418,7 +418,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         }
     };
 
-    let freezeInput = false;
+    // Saving writes the settings into every notebook that uses the connection
+    let freezeInput = saving;
     switch (connectionState?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
@@ -442,7 +443,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     return (
         <SalesforceConnectionSettingsPage
             connectionState={connectionState}
-            notebookScripts={connectionNotebookScripts}
             hyperProtocol={hyperProtocol}
             wrongPlatform={wrongPlatform}
             freezeInput={freezeInput}

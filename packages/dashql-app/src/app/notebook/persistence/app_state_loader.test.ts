@@ -9,6 +9,7 @@ import type { DashQL } from '@ankoh/dashql-core';
 import { Logger } from '../../../platform/logger/logger.js';
 import { ConnectorType } from '../connections/connector_info.js';
 import { destroyRestoredNotebook, restoreAppState } from './app_state_loader.js';
+import { destroyNotebookScripts } from '../scripts/notebook_scripts.js';
 import type { StorageBackend } from './storage_backend.js';
 import { StorageBackendType } from './storage_backend.js';
 import { NotebookTestBackend, TEST_DATABASE_ID, TEST_NOTEBOOK_ID, testNotebook } from './notebook_test_backend.js';
@@ -300,5 +301,75 @@ describe('real-core startup catalog restoration', () => {
         query.destroy();
         destroyRestoredNotebook({ notebookId: TEST_NOTEBOOK_ID, databases: [main, attached],
             mapping: restored.attachedDatabasesByNotebook.get(TEST_NOTEBOOK_ID)!, notebookScripts: notebook });
+    });
+});
+
+describe('global connections', () => {
+    const OTHER_NOTEBOOK_ID = '22222222-3333-4444-8555-666666666666';
+    const OTHER_DATABASE_ID = 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff';
+    const trino = (endpoint: string) => ({ trino: { endpoint, auth: { authType: 'AUTH_BASIC' } } }) as any;
+    let dql: dashql.DashQL;
+    beforeAll(async () => {
+        dql = await dashql.DashQL.create({ wasmBinary: await DASHQL_PRECOMPILED });
+    });
+    afterEach(() => {
+        vi.restoreAllMocks();
+        dql.resetUnsafe();
+    });
+    function seed(backend: NotebookTestBackend, notebookId: string, databaseId: string, params: object, paramsDraft?: object) {
+        backend.notebooks.set(notebookId, testNotebook({
+            notebookId,
+            mainDatabase: { databaseId, params, ...(paramsDraft ? { paramsDraft } : {}) } as any,
+        }));
+    }
+
+    it('migrates equal connections into one shared connection', async () => {
+        const backend = new NotebookTestBackend();
+        seed(backend, TEST_NOTEBOOK_ID, TEST_DATABASE_ID, trino('https://trino'));
+        seed(backend, OTHER_NOTEBOOK_ID, OTHER_DATABASE_ID, trino('https://trino'), trino('https://draft'));
+        backend.schemas.set(TEST_NOTEBOOK_ID, 'CREATE TABLE db.public.shared(id integer);');
+        const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
+        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
+
+        expect([...restored.connectionStates.keys()]).toEqual([TEST_DATABASE_ID]);
+        const connection = restored.connectionStates.get(TEST_DATABASE_ID)!;
+        expect(connection.paramsDraft).toEqual(trino('https://draft'));
+        expect(restored.attachedDatabasesByNotebook.get(OTHER_NOTEBOOK_ID)!.mainDatabaseId).toBe(TEST_DATABASE_ID);
+        expect(restored.notebookScripts.get(OTHER_NOTEBOOK_ID)!.connectionCatalog).toBe(connection.catalog);
+        expect(restored.notebookScriptsByConnection.get(TEST_DATABASE_ID)).toEqual([TEST_NOTEBOOK_ID, OTHER_NOTEBOOK_ID]);
+        expect(connection.catalogRelationScript.toString()).toBe('CREATE TABLE db.public.shared(id integer);');
+        // The app manifest owns the connection, the notebooks keep copies without drafts
+        expect(backend.connections).toMatchObject([{ id: TEST_DATABASE_ID, aliases: [OTHER_DATABASE_ID], paramsDraft: trino('https://draft') }]);
+        expect(backend.notebooks.get(OTHER_NOTEBOOK_ID)!.mainDatabase).toEqual({ databaseId: TEST_DATABASE_ID, params: trino('https://trino') });
+        for (const notebook of restored.notebookScripts.values()) destroyNotebookScripts(notebook);
+    });
+
+    it('lets the app manifest win over stale notebook copies and resolves aliases', async () => {
+        const backend = new NotebookTestBackend();
+        backend.connections = [{ id: TEST_DATABASE_ID, params: trino('https://saved'), aliases: [OTHER_DATABASE_ID] }];
+        seed(backend, TEST_NOTEBOOK_ID, TEST_DATABASE_ID, trino('https://stale'));
+        seed(backend, OTHER_NOTEBOOK_ID, OTHER_DATABASE_ID, trino('https://stale'));
+        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {});
+
+        expect([...restored.connectionStates.keys()]).toEqual([TEST_DATABASE_ID]);
+        expect(restored.connectionStates.get(TEST_DATABASE_ID)!.params).toEqual(trino('https://saved'));
+        for (const notebookId of [TEST_NOTEBOOK_ID, OTHER_NOTEBOOK_ID]) {
+            expect(backend.notebooks.get(notebookId)!.mainDatabase).toEqual({ databaseId: TEST_DATABASE_ID, params: trino('https://saved') });
+        }
+        for (const notebook of restored.notebookScripts.values()) destroyNotebookScripts(notebook);
+    });
+
+    it('registers connections that only a notebook knows', async () => {
+        const backend = new NotebookTestBackend();
+        backend.connections = [];
+        seed(backend, TEST_NOTEBOOK_ID, TEST_DATABASE_ID, trino('https://unknown'));
+        backend.schemas.set(TEST_NOTEBOOK_ID, 'CREATE TABLE db.public.seeded(id integer);');
+        const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
+        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
+
+        expect(restored.connectionStates.get(TEST_DATABASE_ID)!.params).toEqual(trino('https://unknown'));
+        expect(backend.connections).toMatchObject([{ id: TEST_DATABASE_ID, params: trino('https://unknown') }]);
+        expect(backend.connectionFiles.get(`${TEST_DATABASE_ID}/dashql-catalog-relations.sql`)).toBe('CREATE TABLE db.public.seeded(id integer);');
+        for (const notebook of restored.notebookScripts.values()) destroyNotebookScripts(notebook);
     });
 });

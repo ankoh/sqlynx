@@ -21,6 +21,8 @@ export const STORAGE_CACHE_EXTENSION = '.arrow';
 /// `.arrow` files are authoritative, so a missing marker just falls back to the payload's own mtime.
 export const STORAGE_CACHE_ACCESS_SUFFIX = '.last_access';
 export const STORAGE_SHELL_FOLDER = 'dashql-shell';
+/// The folder that holds the files of the connections, e.g. `connections/<uuid>/…`
+export const STORAGE_CONNECTIONS_FOLDER = 'connections';
 
 /// The relations of the catalog, as the last catalog refresh described them
 export const STORAGE_CATALOG_RELATIONS = 'dashql-catalog-relations.sql';
@@ -66,6 +68,7 @@ export function validateDataFileName(name: string): void {
 export type NotebookEntry = app_manifest.NotebookEntry;
 export type StorageManifest = app_manifest.StorageManifest;
 export type AppSettings = app_manifest.AppSettings;
+export type ConnectionEntry = app_manifest.ConnectionEntry;
 export type NotebookData = app_notebook.NotebookData;
 export type NotebookMetadata = app_notebook.NotebookMetadata;
 export type AttachedDatabase = app_notebook.AttachedDatabase;
@@ -194,6 +197,25 @@ export interface NotebookRegistryBackend extends StorageBackend {
     reorderNotebooks(orderedIds: string[]): Promise<void>;
     /// Delete a notebook's files only, leaving the registry entry intact.
     deleteNotebookFiles(notebookId: string): Promise<void>;
+
+    /// Load the whole manifest. A manifest without connections was written before connections were
+    /// global, the `connections` field is then left absent.
+    loadManifest(): Promise<StorageManifest>;
+    /// Update the connections of the manifest exclusively.
+    /// The update receives the current connections (undefined if the manifest has none yet) and
+    /// returns the new connections, or null when nothing changed.
+    updateConnections(update: (connections: ConnectionEntry[] | undefined) => ConnectionEntry[] | null): Promise<void>;
+    /// Load a file of a connection (e.g. its catalog relations), null if it doesn't exist
+    loadConnectionFile(connectionId: string, fileName: string): Promise<string | null>;
+    /// Save a file of a connection
+    saveConnectionFile(connectionId: string, fileName: string, text: string): Promise<void>;
+    /// Delete all files of a connection
+    deleteConnectionFiles(connectionId: string): Promise<void>;
+}
+
+/// Does a backend own the notebook registry?
+export function isNotebookRegistryBackend(backend: StorageBackend): backend is NotebookRegistryBackend {
+    return typeof (backend as Partial<NotebookRegistryBackend>).updateConnections === 'function';
 }
 
 // Script data represents a single SQL script

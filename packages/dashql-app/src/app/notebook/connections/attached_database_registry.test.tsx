@@ -2,6 +2,9 @@ import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
+import { CONNECTOR_INFOS } from './connector_info.js';
+import { DELETE_ATTACHED_DATABASE, SET_CONNECTION_DRAFT } from './attached_database_state.js';
+import { ConnectionPersistenceProvider, useConnectionSave, type ConnectionSaveResult } from './connection_persistence.js';
 
 import {
     CATALOG_UPDATE_PARTIALLY_SUCCEEDED,
@@ -185,6 +188,9 @@ describe('catalog refresh persistence', () => {
             expect(backend.functions.get(TEST_NOTEBOOK_ID)).toBe(functionsSQL);
             expect(backend.catalogChanges.get(TEST_NOTEBOOK_ID)).toBe(catalogChangesSql === '' ? undefined : '');
             expect(backend.calls).not.toContain(`manifest:${TEST_NOTEBOOK_ID}`);
+            // The connection owns the catalog, the notebook keeps a copy
+            expect(backend.connectionFiles.get(`${TEST_DATABASE_ID}/dashql-catalog-relations.sql`)).toBe(schemaSQL);
+            expect(backend.connectionFiles.get(`${TEST_DATABASE_ID}/dashql-catalog-functions.sql`)).toBe(functionsSQL);
         } finally {
             act(() => root.unmount());
             container.remove();
@@ -243,6 +249,127 @@ describe('catalog refresh persistence', () => {
         } finally {
             act(() => root.unmount());
             container.remove();
+        }
+    });
+});
+
+describe('shared connection persistence', () => {
+    const OTHER_NOTEBOOK_ID = '22222222-3333-4444-8555-666666666666';
+    const MISSING_NOTEBOOK_ID = '33333333-4444-4555-8666-777777777777';
+    const trino = (endpoint: string) => ({ trino: { endpoint, catalogName: '', auth: { authType: 'AUTH_BASIC' } } }) as any;
+
+    /// Dispatch to the connection and let the batched registry update apply
+    async function dispatchAndSettle(harness: { dispatch: DynamicAttachedDatabaseDispatch }, action: Parameters<DynamicAttachedDatabaseDispatch>[1]) {
+        await act(async () => {
+            harness.dispatch(TEST_DATABASE_ID, action);
+            await new Promise<void>(resolve => setTimeout(resolve, 0));
+        });
+    }
+
+    async function render(notebookIds: string[]) {
+        const backend = new NotebookTestBackend();
+        for (const notebookId of [TEST_NOTEBOOK_ID, OTHER_NOTEBOOK_ID]) {
+            backend.notebooks.set(notebookId, testNotebook({ notebookId, mainDatabase: { databaseId: TEST_DATABASE_ID, params: trino('https://old') } }));
+        }
+        const connection = {
+            databaseId: TEST_DATABASE_ID,
+            active: true,
+            params: trino('https://old'),
+            connectionHealth: ConnectionHealth.NOT_STARTED,
+            connectionSignature: { signatureString: 'trino', signatures: new Map() },
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
+            catalogChangesSql: '',
+        } as unknown as AttachedDatabaseState;
+        const harness = {} as {
+            registry: AttachedDatabaseRegistry;
+            dispatch: DynamicAttachedDatabaseDispatch;
+            writer: StorageWriter;
+            save: () => Promise<ConnectionSaveResult | null>;
+        };
+        let setRegistry!: React.Dispatch<React.SetStateAction<AttachedDatabaseRegistry>>;
+        function Harness() {
+            [harness.registry, setRegistry] = useAttachedDatabaseRegistry();
+            [, harness.dispatch] = useDynamicAttachedDatabaseDispatch();
+            harness.writer = useStorageWriter();
+            harness.save = useConnectionSave(TEST_DATABASE_ID).save;
+            return null;
+        }
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        await act(async () => root.render(React.createElement(LoggerProvider, null,
+            React.createElement(StorageProvider, { backend },
+                React.createElement(AttachedDatabaseRegistryProvider, null,
+                    React.createElement(ConnectionPersistenceProvider, null, React.createElement(Harness)),
+                ),
+            ),
+        )));
+        await act(async () => setRegistry(reg => {
+            reg.attachedDatabases.set(TEST_DATABASE_ID, connection);
+            for (const notebookId of notebookIds) {
+                reg.attachedDatabasesByNotebook.set(notebookId, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
+            }
+            return { ...reg };
+        }));
+        return { backend, harness, unmount: () => { act(() => root.unmount()); container.remove(); } };
+    }
+
+    it('keeps drafts in the app manifest and saves them into every notebook', async () => {
+        const { backend, harness, unmount } = await render([TEST_NOTEBOOK_ID, OTHER_NOTEBOOK_ID]);
+        try {
+            await dispatchAndSettle(harness, { type: SET_CONNECTION_DRAFT, value: trino('https://new') });
+            await harness.writer.flush();
+            expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params: trino('https://old'), paramsDraft: trino('https://new') }]);
+            expect(backend.calls.filter(call => call.startsWith('manifest:'))).toEqual([]);
+
+            let result!: ConnectionSaveResult | null;
+            await act(async () => {
+                result = await harness.save();
+                await new Promise<void>(resolve => setTimeout(resolve, 0));
+            });
+            expect(result!.manifest).toEqual({ status: 'written' });
+            expect(result!.notebooks.map(n => [n.notebookId, n.result.status])).toEqual([
+                [TEST_NOTEBOOK_ID, 'written'],
+                [OTHER_NOTEBOOK_ID, 'written'],
+            ]);
+            expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params: trino('https://new') }]);
+            for (const notebookId of [TEST_NOTEBOOK_ID, OTHER_NOTEBOOK_ID]) {
+                expect(backend.notebooks.get(notebookId)!.mainDatabase).toEqual({ databaseId: TEST_DATABASE_ID, params: trino('https://new') });
+            }
+            const saved = harness.registry.attachedDatabases.get(TEST_DATABASE_ID)!;
+            expect(saved.params).toEqual(trino('https://new'));
+            expect(saved.paramsDraft).toBeUndefined();
+        } finally {
+            unmount();
+        }
+    });
+
+    it('reports notebooks whose copies could not be written', async () => {
+        const { backend, harness, unmount } = await render([TEST_NOTEBOOK_ID, MISSING_NOTEBOOK_ID]);
+        try {
+            await dispatchAndSettle(harness, { type: SET_CONNECTION_DRAFT, value: trino('https://new') });
+            let result!: ConnectionSaveResult | null;
+            await act(async () => {
+                result = await harness.save();
+                await new Promise<void>(resolve => setTimeout(resolve, 0));
+            });
+            expect(result!.manifest.status).toBe('written');
+            expect(result!.notebooks.map(n => [n.notebookId, n.result.status])).toEqual([
+                [TEST_NOTEBOOK_ID, 'written'],
+                [MISSING_NOTEBOOK_ID, 'failed'],
+            ]);
+            expect(backend.notebooks.has(MISSING_NOTEBOOK_ID)).toBe(false);
+        } finally {
+            unmount();
+        }
+    });
+
+    it('refuses to delete connections that notebooks use', async () => {
+        const { harness, unmount } = await render([TEST_NOTEBOOK_ID]);
+        try {
+            await dispatchAndSettle(harness, { type: DELETE_ATTACHED_DATABASE, value: null });
+            expect(harness.registry.attachedDatabases.has(TEST_DATABASE_ID)).toBe(true);
+        } finally {
+            unmount();
         }
     });
 });

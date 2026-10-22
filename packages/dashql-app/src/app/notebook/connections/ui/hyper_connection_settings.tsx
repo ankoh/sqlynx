@@ -18,12 +18,12 @@ import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { useHyperGrpcClient, useHyperHttpClient } from '../hyper/hyperdb_grpc_client_provider.js';
 import { flattenKeyValueList, KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../../../ui/foundations/keyvalue_list.js';
 import { Dispatch } from '../../../../utils/variant.js';
-import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useAttachedDatabaseById, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
 import { ConnectionHealth } from '../attached_database_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useHyperSetup } from '../hyper/hyper_connection_setup.js';
 import { useQueryExecutor } from '../query_executor.js';
-import { useAnyConnectionNotebookScripts } from './connection_notebook_scripts.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../connector_info.js';
 import { isNativePlatform } from '../../../../platform/native_globals.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
@@ -118,10 +118,9 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
     const connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER];
 
     // Wire up the page state
-    const [registry] = useAttachedDatabaseRegistry();
-    const notebookId = props.databaseId == null ? null : findNotebookForAttachedDatabase(registry, props.databaseId);
     const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
-    const connectionNotebookScripts = useAnyConnectionNotebookScripts(notebookId);
+    const saveBeforeConnect = useSaveBeforeConnect(props.databaseId);
+    const { saving } = useConnectionSave(props.databaseId);
 
     const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
         params => buildHyperConnectionPageState(params && 'hyper' in params ? params.hyper as connection.HyperConnectionParams : undefined),
@@ -194,6 +193,9 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
             return;
         }
 
+        // Connections are set up with saved settings, unsaved edits are saved first
+        if (!await saveBeforeConnect()) return;
+
         const controller = new AbortController();
         const unregister = registerConnectionSetup(connectionState.databaseId, controller);
         try {
@@ -230,7 +232,8 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
     };
 
     // Get the action button
-    let freezeInput = false;
+    // Saving writes the settings into every notebook that uses the connection
+    let freezeInput = saving;
     switch (connectionState?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.CANCELLED:
@@ -252,7 +255,6 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
                 setupConnection={setupConnection}
                 cancelSetup={cancelSetup}
                 resetSetup={resetSetup}
-                notebookScripts={connectionNotebookScripts}
                 protocol={protocol}
                 protocols={protocols}
                 onProtocolChange={setProtocol}

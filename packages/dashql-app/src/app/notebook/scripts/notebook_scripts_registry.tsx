@@ -24,8 +24,8 @@ const LOG_CTX = 'notebook_scripts_registry';
 export interface NotebookScriptsRegistry {
     /// The scripts map (notebookId -> NotebookScripts)
     notebookScriptsMap: Map<string, NotebookScripts>;
-    /// The index to find scripts associated with a connection (connectionId -> notebookId)
-    notebookScriptsByConnection: Map<string, string>;
+    /// The index to find the scripts of notebooks that analyze with a connection (connectionId -> notebookIds)
+    notebookScriptsByConnection: Map<string, string[]>;
     /// The index to find scripts associated with a connection type (arrays of notebookIds)
     notebookScriptsByConnectionType: string[][];
 }
@@ -83,7 +83,7 @@ export function useNotebookScriptsAllocator(): NotebookScriptsAllocator {
                 scripts.notebookMetadata.originalFileName = `${scripts.connectorInfo.names.fileShort}`;
             }
 
-            reg.notebookScriptsByConnection.set(state.databaseId, notebookId);
+            addNotebookScriptsForConnection(reg, state.databaseId, notebookId);
             reg.notebookScriptsByConnectionType[state.connectorInfo.connectorType].push(notebookId);
             reg.notebookScriptsMap.set(notebookId, scripts);
             return { ...reg };
@@ -101,6 +101,24 @@ export function useNotebookScriptsAllocator(): NotebookScriptsAllocator {
     }, [setReg, storage]);
 }
 
+/// Record that a notebook analyzes its scripts with a connection (mutates the registry)
+export function addNotebookScriptsForConnection(reg: NotebookScriptsRegistry, connectionId: string, notebookId: string): void {
+    const notebooks = reg.notebookScriptsByConnection.get(connectionId) ?? [];
+    if (!notebooks.includes(notebookId)) {
+        reg.notebookScriptsByConnection.set(connectionId, [...notebooks, notebookId]);
+    }
+}
+
+/// Drop a notebook from the scripts of a connection (mutates the registry)
+export function removeNotebookScriptsForConnection(reg: NotebookScriptsRegistry, connectionId: string, notebookId: string): void {
+    const notebooks = (reg.notebookScriptsByConnection.get(connectionId) ?? []).filter(id => id !== notebookId);
+    if (notebooks.length === 0) {
+        reg.notebookScriptsByConnection.delete(connectionId);
+    } else {
+        reg.notebookScriptsByConnection.set(connectionId, notebooks);
+    }
+}
+
 /// Remove a notebook from all three registry indices.
 ///
 /// Pure and idempotent (a missing entry is a no-op), so it is safe to run inside a React state
@@ -111,7 +129,7 @@ export function removeNotebookScriptsFromRegistry(reg: NotebookScriptsRegistry, 
     const entry = reg.notebookScriptsMap.get(notebookId);
     if (!entry) return reg;
     reg.notebookScriptsMap.delete(notebookId);
-    reg.notebookScriptsByConnection.delete(entry.databaseId);
+    removeNotebookScriptsForConnection(reg, entry.databaseId, notebookId);
     const connectorType = entry.connectorInfo.connectorType;
     reg.notebookScriptsByConnectionType[connectorType] =
         reg.notebookScriptsByConnectionType[connectorType].filter(id => id !== notebookId);
@@ -248,8 +266,8 @@ export function useConnectionScriptsDispatch(): ModifyConnectionNotebookScripts 
         setRegistry((reg: NotebookScriptsRegistry) => {
             let changed = false;
             for (const { conn, action } of actions) {
-                const notebookId = reg.notebookScriptsByConnection.get(conn);
-                if (notebookId) {
+                // Every notebook that analyzes with the connection receives the action
+                for (const notebookId of reg.notebookScriptsByConnection.get(conn) ?? []) {
                     const prev = reg.notebookScriptsMap.get(notebookId);
                     if (prev) {
                         const next = reduceNotebookScripts(prev, action, storage, logger, true);

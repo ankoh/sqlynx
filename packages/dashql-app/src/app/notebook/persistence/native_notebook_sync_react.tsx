@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
+import { connectionRefCount, useAttachedDatabaseRegistry, type AttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
 import { catalogFileMatchesStorage, attachedDatabaseCatalogMatchesStorage, replaceAttachedDatabaseCatalogFromStorage } from '../connections/attached_database_state.js';
 import { useNotebookScriptsRegistry } from '../scripts/notebook_scripts_registry.js';
 import { notebookScriptsMatchStorageSnapshot, replaceNotebookScriptsFromStorage } from '../scripts/notebook_scripts.js';
@@ -12,7 +12,7 @@ import { getAppFlavor } from '../../flavor/flavor_resolution.js';
 import { NativeNotebookSyncService, nativeNotebookWatchForLocation } from './native_notebook_sync.js';
 import type { NotebookScriptsStorageSnapshot, NotebookScripts } from '../scripts/notebook_scripts.js';
 import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
-import type { StorageWriter } from './storage_writer.js';
+import { DEBOUNCE_DURATION_NOTEBOOK_WRITE, groupConnectionFileWrites, WRITE_CONNECTION_FILE, type StorageWriter } from './storage_writer.js';
 import {
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_CATALOG_FUNCTIONS,
@@ -20,6 +20,15 @@ import {
 } from './storage_backend.js';
 
 const LOG_CTX = 'native_notebook_sync';
+
+/// The main connection of a notebook whose catalog the notebook's files may replace.
+/// The catalog files of a notebook are a copy of its connection's catalog. A connection that several
+/// notebooks share keeps its catalog, an edited copy in one folder must not replace it for all of them.
+function reloadableCatalogConnection(registry: AttachedDatabaseRegistry, notebookId: string): AttachedDatabaseState | null {
+    const connectionId = registry.attachedDatabasesByNotebook.get(notebookId)?.mainDatabaseId;
+    if (connectionId == null || connectionRefCount(registry, connectionId) > 1) return null;
+    return registry.attachedDatabases.get(connectionId) ?? null;
+}
 
 interface NotebookReloadDecision {
     reload: boolean;
@@ -53,9 +62,9 @@ function snapshotMatchesCompletedWrite(
 ): boolean {
     const diskFiles = new Map<string, string | null>();
     const memoryFiles = new Map<string, string | null>();
-    diskFiles.set(`${notebookId}/${STORAGE_CATALOG_RELATIONS}`, schema);
-    diskFiles.set(`${notebookId}/${STORAGE_CATALOG_FUNCTIONS}`, functions);
     if (connection) {
+        diskFiles.set(`${notebookId}/${STORAGE_CATALOG_RELATIONS}`, schema);
+        diskFiles.set(`${notebookId}/${STORAGE_CATALOG_FUNCTIONS}`, functions);
         memoryFiles.set(`${notebookId}/${STORAGE_CATALOG_RELATIONS}`, catalogFileMatchesStorage(connection.catalogRelationScript, null)
             ? null
             : connection.catalogRelationScript.toString());
@@ -119,12 +128,10 @@ export const NativeNotebookSync: React.FC = () => {
                 reader.backend.loadScripts(notebookId),
             ]);
             const snapshot: NotebookScriptsStorageSnapshot = { scripts };
-            const mapping = connectionRegistryRef.current.attachedDatabasesByNotebook.get(notebookId);
-            const connectionId = mapping?.mainDatabaseId;
-            const connection = connectionId == null ? null : connectionRegistryRef.current.attachedDatabases.get(connectionId);
+            const connection = reloadableCatalogConnection(connectionRegistryRef.current, notebookId);
             const currentNotebookScripts = notebookScriptsRegistryRef.current.notebookScriptsMap.get(notebookId);
             const notebookUnchanged = currentNotebookScripts != null && notebookScriptsMatchStorageSnapshot(currentNotebookScripts, snapshot);
-            const catalogUnchanged = connection != null && attachedDatabaseCatalogMatchesStorage(connection, schema, functions);
+            const catalogUnchanged = connection == null || attachedDatabaseCatalogMatchesStorage(connection, schema, functions);
             if (notebookUnchanged && catalogUnchanged) {
                 return;
             }
@@ -162,15 +169,25 @@ export const NativeNotebookSync: React.FC = () => {
                 writer.cancelPendingWritesForNotebook(notebookId, isReloadedKey);
             }
             await reader.backend.regenerateNotebookIndex?.(notebookId);
-            const latestMapping = connectionRegistryRef.current.attachedDatabasesByNotebook.get(notebookId);
-            const latestConnectionId = latestMapping?.mainDatabaseId;
-            const latestConnection = latestConnectionId == null ? null : connectionRegistryRef.current.attachedDatabases.get(latestConnectionId);
+            const latestConnection = reloadableCatalogConnection(connectionRegistryRef.current, notebookId);
             const latestNotebookScripts = notebookScriptsRegistryRef.current.notebookScriptsMap.get(notebookId);
             const catalogChanged = latestConnection != null
                 ? replaceAttachedDatabaseCatalogFromStorage(latestConnection, schema, functions)
                 : false;
             if (catalogChanged) {
                 setAttachedDatabaseRegistry(registry => ({ ...registry }));
+                // The catalog of the connection follows its only notebook
+                const connectionId = latestConnection!.databaseId;
+                for (const [fileName, script] of [
+                    [STORAGE_CATALOG_RELATIONS, latestConnection!.catalogRelationScript],
+                    [STORAGE_CATALOG_FUNCTIONS, latestConnection!.catalogFunctionScript],
+                ] as const) {
+                    void writer.write(
+                        groupConnectionFileWrites(connectionId, fileName),
+                        { type: WRITE_CONNECTION_FILE, value: [connectionId, fileName, script.toString()] },
+                        DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+                    );
+                }
             }
             if (latestNotebookScripts) {
                 const reloadedNotebookScripts = replaceNotebookScriptsFromStorage(latestNotebookScripts, snapshot, logger, catalogChanged);

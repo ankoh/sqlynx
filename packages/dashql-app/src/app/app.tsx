@@ -9,6 +9,7 @@ import { CatalogLoaderProvider } from './notebook/connections/catalog_loader.js'
 import { ComputationRegistry } from '../compute/computation_registry.js';
 import { ComputationScheduler } from '../compute/computation_scheduler.js';
 import { AttachedDatabaseRegistry } from './notebook/connections/attached_database_registry.js';
+import { ConnectionPersistenceProvider } from './notebook/connections/connection_persistence.js';
 import { ComputeConnectionProvider } from '../compute/compute_connection_provider.js';
 import { DashQLCoreProvider } from './providers/core_provider.js';
 import { FileDownloaderProvider } from '../platform/file/file_downloader_provider.js';
@@ -63,33 +64,35 @@ applyFlavorToDocument(APP_FLAVOR);
 // - CatalogLoaderProvider requires NotebookScriptsRegistryProvider to mark connection scripts as outdated.
 const NotebookProviders = (props: { children: React.ReactElement }) => (
     <AttachedDatabaseRegistry>
-        <SalesforceConnector>
-            <HyperConnector>
-                <TrinoConnector>
-                    <ComputationRegistry>
-                        <NotebookComputeQueryExecutionProvider>
-                            <ComputationScheduler />
-                            <QueryExecutorProvider>
-                                <NotebookScriptsRegistryProvider>
-                                    <NotebookExecutionProvider>
-                                        <NativeNotebookSync />
-                                        <CatalogLoaderProvider>
-                                            <NotebookImportProvider>
-                                                <NotebookCommands>
-                                                    <AppLoader>
-                                                        {props.children}
-                                                    </AppLoader>
-                                                </NotebookCommands>
-                                            </NotebookImportProvider>
-                                        </CatalogLoaderProvider>
-                                    </NotebookExecutionProvider>
-                                </NotebookScriptsRegistryProvider>
-                            </QueryExecutorProvider>
-                        </NotebookComputeQueryExecutionProvider>
-                    </ComputationRegistry>
-                </TrinoConnector>
-            </HyperConnector>
-        </SalesforceConnector>
+        <ConnectionPersistenceProvider>
+            <SalesforceConnector>
+                <HyperConnector>
+                    <TrinoConnector>
+                        <ComputationRegistry>
+                            <NotebookComputeQueryExecutionProvider>
+                                <ComputationScheduler />
+                                <QueryExecutorProvider>
+                                    <NotebookScriptsRegistryProvider>
+                                        <NotebookExecutionProvider>
+                                            <NativeNotebookSync />
+                                            <CatalogLoaderProvider>
+                                                <NotebookImportProvider>
+                                                    <NotebookCommands>
+                                                        <AppLoader>
+                                                            {props.children}
+                                                        </AppLoader>
+                                                    </NotebookCommands>
+                                                </NotebookImportProvider>
+                                            </CatalogLoaderProvider>
+                                        </NotebookExecutionProvider>
+                                    </NotebookScriptsRegistryProvider>
+                                </QueryExecutorProvider>
+                            </NotebookComputeQueryExecutionProvider>
+                        </ComputationRegistry>
+                    </TrinoConnector>
+                </HyperConnector>
+            </SalesforceConnector>
+        </ConnectionPersistenceProvider>
     </AttachedDatabaseRegistry>
 );
 

@@ -11,6 +11,7 @@ import {
     reduceAttachedDatabaseState,
     SET_CONNECTION_DRAFT,
     DISCARD_CONNECTION_DRAFT,
+    COMMIT_CONNECTION_PARAMS,
 } from './attached_database_state.js';
 import { QUERY_PROGRESS_UPDATED, QUERY_RECEIVED_BATCH } from '../../../query/query_execution_state.js';
 import { Dispatch } from '../../../utils/variant.js';
@@ -18,20 +19,36 @@ import { CONNECTOR_TYPES } from './connector_info.js';
 import { ConnectionSignatureMap } from './connection_signature.js';
 import { useStorageWriter } from '../persistence/storage_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
+
+const LOG_CTX = 'attached_database_registry';
 import {
     DEBOUNCE_DURATION_NOTEBOOK_WRITE,
     groupNotebookFunctionWrites,
-    groupNotebookConnectionWrites,
     groupNotebookSchemaWrites,
     WRITE_NOTEBOOK_CATALOG_SCRIPT,
     WRITE_NOTEBOOK_FUNCTION_SCRIPT,
     WRITE_NOTEBOOK_CATALOG_CHANGES,
     groupNotebookCatalogChangesWrites,
-    WRITE_NOTEBOOK_MANIFEST,
+    groupConnectionEntryWrites,
+    groupConnectionFileWrites,
+    groupNotebookConnectionCopyWrites,
+    WRITE_CONNECTION_ENTRY,
+    WRITE_CONNECTION_FILE,
+    PATCH_NOTEBOOK_CONNECTION,
+    DELETE_CONNECTION_ENTRY,
+    type StorageWriter,
 } from '../persistence/storage_writer.js';
+import { STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, type ConnectionEntry } from '../persistence/storage_backend.js';
 import { connectionParamsEqual, type ConnectionParams } from './connection_params.js';
 
+/// Drafts are written to the app manifest only, edits arrive with every keystroke
+export const DEBOUNCE_DURATION_CONNECTION_DRAFT_WRITE = 250;
+
 /// The connection registry
+///
+/// Connections (attached database states) are entities of their own, keyed by the global connection
+/// id. Notebooks reference them as their main database or as attached databases, several notebooks
+/// may reference the same connection and then share its channel, catalog and queries.
 ///
 /// Note that we're deliberately not using immutable maps for the connections here.
 /// Following the same reasoning as with the notebook registry, we don't have code that
@@ -79,16 +96,103 @@ export function resolveNotebookExecutionDatabase(
     return registry.attachedDatabases.get(mapping.mainDatabaseId) ?? null;
 }
 
-export function findNotebookForAttachedDatabase(registry: AttachedDatabaseRegistry, databaseId: string): string | null {
+/// Find the notebooks that reference a connection, in registration order
+export function findNotebooksForAttachedDatabase(registry: AttachedDatabaseRegistry, databaseId: string): string[] {
+    const notebooks: string[] = [];
     for (const [notebookId, mapping] of registry.attachedDatabasesByNotebook) {
-        if (mapping.mainDatabaseId === databaseId || mapping.attachedDatabaseIds.includes(databaseId)) return notebookId;
+        if (mapping.mainDatabaseId === databaseId || mapping.attachedDatabaseIds.includes(databaseId)) notebooks.push(notebookId);
     }
-    return null;
+    return notebooks;
 }
 
+/// Find the notebooks that use a connection as their main database
+export function findNotebooksWithMainDatabase(registry: AttachedDatabaseRegistry, databaseId: string): string[] {
+    const notebooks: string[] = [];
+    for (const [notebookId, mapping] of registry.attachedDatabasesByNotebook) {
+        if (mapping.mainDatabaseId === databaseId) notebooks.push(notebookId);
+    }
+    return notebooks;
+}
+
+/// The number of notebooks that reference a connection
+export function connectionRefCount(registry: AttachedDatabaseRegistry, databaseId: string): number {
+    return findNotebooksForAttachedDatabase(registry, databaseId).length;
+}
+
+/// Register a connection in the registry indices (mutates the registry)
+export function registerAttachedDatabase(registry: AttachedDatabaseRegistry, database: AttachedDatabaseState): void {
+    registry.attachedDatabases.set(database.databaseId, database);
+    const byType = registry.attachedDatabasesByType[database.connectorInfo.connectorType];
+    if (!byType.includes(database.databaseId)) byType.push(database.databaseId);
+    registry.attachedDatabasesBySignature.set(database.connectionSignature.signatureString, database.databaseId);
+}
+
+/// Let a notebook reference a connection (mutates the registry)
+export function attachDatabaseToNotebook(registry: AttachedDatabaseRegistry, notebookId: string, databaseId: string, role: AttachedDatabaseRole): void {
+    const current = registry.attachedDatabasesByNotebook.get(notebookId);
+    if (role === 'main') {
+        registry.attachedDatabasesByNotebook.set(notebookId, {
+            mainDatabaseId: databaseId,
+            attachedDatabaseIds: (current?.attachedDatabaseIds ?? []).filter(id => id !== databaseId),
+        });
+    } else {
+        if (current == null) throw new Error(`cannot attach a database before the main database for notebook ${notebookId}`);
+        if (current.mainDatabaseId === databaseId || current.attachedDatabaseIds.includes(databaseId)) return;
+        registry.attachedDatabasesByNotebook.set(notebookId, {
+            ...current,
+            attachedDatabaseIds: [...current.attachedDatabaseIds, databaseId],
+        });
+    }
+}
+
+/// Drop the references of a notebook, the connections stay registered (mutates the registry)
+export function detachNotebook(registry: AttachedDatabaseRegistry, notebookId: string): void {
+    registry.attachedDatabasesByNotebook.delete(notebookId);
+}
+
+/// The queries a notebook issued on a connection, active ones first
+export function findNotebookQueries(database: AttachedDatabaseState, notebookId: string, includeFinished: boolean = true): number[] {
+    const active = database.queriesActiveOrdered.filter(queryId => database.queriesActive.get(queryId)?.queryMetadata.notebookId === notebookId);
+    if (!includeFinished) return active;
+    const finished = database.queriesFinishedOrdered.filter(queryId => database.queriesFinished.get(queryId)?.queryMetadata.notebookId === notebookId);
+    return [...active, ...finished];
+}
+
+/// Build the manifest entry of a connection
+export function connectionEntryFromState(database: AttachedDatabaseState): ConnectionEntry {
+    return {
+        id: database.databaseId,
+        params: database.params,
+        ...(database.paramsDraft == null ? {} : { paramsDraft: database.paramsDraft }),
+    };
+}
+
+/// Did the saved params change?
+export function didConnectionParamsChange(prev: AttachedDatabaseState, next: AttachedDatabaseState): boolean {
+    return !connectionParamsEqual(prev.params, next.params);
+}
+
+/// Did the persisted connection entry change?
 export function didPersistedConnectionChange(prev: AttachedDatabaseState, next: AttachedDatabaseState): boolean {
     if (!prev.active && next.active) return true;
-    return !connectionParamsEqual(prev.params, next.params) || !connectionParamsEqual(prev.paramsDraft, next.paramsDraft);
+    return didConnectionParamsChange(prev, next) || !connectionParamsEqual(prev.paramsDraft, next.paramsDraft);
+}
+
+/// Write the saved params of a connection into the app manifest and into every notebook that
+/// references it. The writes are debounced and not awaited, Save awaits them explicitly.
+export function scheduleConnectionParamsWrites(registry: AttachedDatabaseRegistry, database: AttachedDatabaseState, storageWriter: StorageWriter): void {
+    void storageWriter.write(
+        groupConnectionEntryWrites(database.databaseId),
+        { type: WRITE_CONNECTION_ENTRY, value: connectionEntryFromState(database) },
+        DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+    );
+    for (const notebookId of findNotebooksForAttachedDatabase(registry, database.databaseId)) {
+        void storageWriter.write(
+            groupNotebookConnectionCopyWrites(notebookId, database.databaseId),
+            { type: PATCH_NOTEBOOK_CONNECTION, value: [notebookId, database.databaseId, database.params] },
+            DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+        );
+    }
 }
 
 export type SetAttachedDatabaseRegistryAction = React.SetStateAction<AttachedDatabaseRegistry>;
@@ -171,33 +275,65 @@ export function useAttachedDatabaseRegistrySetter(): Dispatch<SetAttachedDatabas
     return React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!;
 }
 
+/// Allocate a new connection and let a notebook reference it
 export function useAttachedDatabaseStateAllocator(): AttachedDatabaseAllocator {
-    const setReg = React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!;
+    const allocateConnection = useConnectionAllocator();
+    const attachConnection = useAttachConnection();
     return React.useCallback((notebookId: string, state: AttachedDatabaseStateWithoutId, role: AttachedDatabaseRole = 'main') => {
-        const databaseId = crypto.randomUUID();
-        const database: AttachedDatabaseState = { ...state, databaseId };
-        setReg((reg) => {
-            reg.attachedDatabases.set(databaseId, database);
-            const current = reg.attachedDatabasesByNotebook.get(notebookId);
-            if (role === 'main') {
-                reg.attachedDatabasesByNotebook.set(notebookId, {
-                    mainDatabaseId: databaseId,
-                    attachedDatabaseIds: current?.attachedDatabaseIds ?? [],
-                });
-            } else {
-                if (current == null) throw new Error(`cannot attach a database before the main database for notebook ${notebookId}`);
-                reg.attachedDatabasesByNotebook.set(notebookId, {
-                    ...current,
-                    attachedDatabaseIds: [...current.attachedDatabaseIds, databaseId],
-                });
-            }
-            reg.attachedDatabasesByType[state.connectorInfo.connectorType].push(databaseId);
-            reg.attachedDatabasesBySignature.set(state.connectionSignature.signatureString, databaseId);
-            return { ...reg };
-        });
+        const database = allocateConnection(state);
+        attachConnection(notebookId, database.databaseId, role);
         // The caller writes newly committed notebooks. Subsequent edits and successful setups
         // persist through the dispatch boundary, including drafts before the first connection.
         return database;
+    }, [allocateConnection, attachConnection]);
+}
+
+export type ConnectionAllocator = (state: AttachedDatabaseStateWithoutId, connectionId?: string) => AttachedDatabaseState;
+
+/// Allocate a new connection that no notebook references yet.
+/// Active connections are written into the app manifest right away.
+export function useConnectionAllocator(): ConnectionAllocator {
+    const setReg = React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!;
+    const storageWriter = useStorageWriter();
+    return React.useCallback((state: AttachedDatabaseStateWithoutId, connectionId?: string) => {
+        const databaseId = connectionId ?? crypto.randomUUID();
+        const database: AttachedDatabaseState = { ...state, databaseId };
+        setReg((reg) => {
+            registerAttachedDatabase(reg, database);
+            return { ...reg };
+        });
+        if (database.active) {
+            void storageWriter.write(
+                groupConnectionEntryWrites(databaseId),
+                { type: WRITE_CONNECTION_ENTRY, value: { ...connectionEntryFromState(database), createdAt: new Date().toISOString() } },
+            );
+        }
+        return database;
+    }, [setReg, storageWriter]);
+}
+
+export type ConnectionAttacher = (notebookId: string, connectionId: string, role?: AttachedDatabaseRole) => void;
+
+/// Let a notebook reference an existing connection
+export function useAttachConnection(): ConnectionAttacher {
+    const setReg = React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!;
+    return React.useCallback((notebookId: string, connectionId: string, role: AttachedDatabaseRole = 'main') => {
+        setReg((reg) => {
+            attachDatabaseToNotebook(reg, notebookId, connectionId, role);
+            return { ...reg };
+        });
+    }, [setReg]);
+}
+
+/// Drop the references of a notebook, the connections stay registered
+export function useNotebookDetacher(): (notebookId: string) => void {
+    const setReg = React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!;
+    return React.useCallback((notebookId: string) => {
+        setReg((reg) => {
+            if (!reg.attachedDatabasesByNotebook.has(notebookId)) return reg;
+            detachNotebook(reg, notebookId);
+            return { ...reg };
+        });
     }, [setReg]);
 }
 
@@ -243,65 +379,104 @@ export function useAttachedDatabaseDispatch(): DynamicAttachedDatabaseDispatch {
                 }
                 const connectionSignature = prev.connectionSignature.signatureString;
                 const connectorType = prev.connectorInfo.connectorType;
+                const notebookIds = findNotebooksForAttachedDatabase(reg, databaseId);
+
+                // Connections outlive the notebooks that reference them, but a referenced connection
+                // must neither be deleted nor change its type underneath other notebooks.
+                if (action.type == DELETE_ATTACHED_DATABASE && notebookIds.length > 0) {
+                    logger.warn('refusing to delete a connection that notebooks reference', {
+                        databaseId,
+                        notebooks: notebookIds.join(','),
+                    }, LOG_CTX);
+                    continue;
+                }
+                if (action.type == SWITCH_CONNECTOR_TYPE && notebookIds.length > 1) {
+                    logger.warn('refusing to switch the type of a shared connection', { databaseId }, LOG_CTX);
+                    continue;
+                }
                 const next = reduceAttachedDatabaseState(prev, action, storageWriter, logger);
-                const notebookId = findNotebookForAttachedDatabase(reg, databaseId);
 
                 if (action.type == DELETE_ATTACHED_DATABASE) {
                     reg.attachedDatabasesBySignature.delete(connectionSignature);
                     reg.attachedDatabasesByType[connectorType] = reg.attachedDatabasesByType[connectorType].filter(id => id != databaseId);
-                    for (const [notebookId, mapping] of reg.attachedDatabasesByNotebook) {
-                        if (mapping.mainDatabaseId === databaseId) {
-                            reg.attachedDatabasesByNotebook.delete(notebookId);
-                        } else if (mapping.attachedDatabaseIds.includes(databaseId)) {
-                            reg.attachedDatabasesByNotebook.set(notebookId, {
-                                ...mapping,
-                                attachedDatabaseIds: mapping.attachedDatabaseIds.filter(id => id !== databaseId),
-                            });
-                        }
-                    }
                     reg.attachedDatabases.delete(databaseId);
-                } else {
-                    reg.attachedDatabases.set(databaseId, next);
-                    // Update type index when connector type changes
-                    if (action.type == SWITCH_CONNECTOR_TYPE && next.connectorInfo.connectorType !== connectorType) {
-                        reg.attachedDatabasesByType[connectorType] = reg.attachedDatabasesByType[connectorType].filter(id => id != databaseId);
-                        reg.attachedDatabasesByType[next.connectorInfo.connectorType].push(databaseId);
-                        // Update signature
-                        reg.attachedDatabasesBySignature.delete(connectionSignature);
-                        reg.attachedDatabasesBySignature.set(next.connectionSignature.signatureString, databaseId);
+                    if (prev.active) {
+                        void storageWriter.write(groupConnectionEntryWrites(databaseId), { type: DELETE_CONNECTION_ENTRY, value: databaseId });
                     }
-                    if (notebookId != null) {
-                        if (didPersistedConnectionChange(prev, next)) {
-                            void storageWriter.write(
-                                groupNotebookConnectionWrites(notebookId),
-                                {
-                                    type: WRITE_NOTEBOOK_MANIFEST,
-                                    value: [notebookId, mappingMainDatabaseId(reg, notebookId), notebookAttachedDatabaseStates(reg, notebookId)],
-                                },
-                                DEBOUNCE_DURATION_NOTEBOOK_WRITE,
-                            );
-                        }
-                        if (next.active && databaseId === mappingMainDatabaseId(reg, notebookId)
-                            && (action.type === CATALOG_UPDATE_SUCCEEDED || action.type === CATALOG_UPDATE_PARTIALLY_SUCCEEDED)) {
-                            void storageWriter.write(
-                                groupNotebookSchemaWrites(notebookId),
-                                { type: WRITE_NOTEBOOK_CATALOG_SCRIPT, value: [notebookId, next.catalogRelationScript] },
-                                DEBOUNCE_DURATION_NOTEBOOK_WRITE,
-                            );
-                            void storageWriter.write(
-                                groupNotebookFunctionWrites(notebookId),
-                                { type: WRITE_NOTEBOOK_FUNCTION_SCRIPT, value: [notebookId, next.catalogFunctionScript] },
-                                DEBOUNCE_DURATION_NOTEBOOK_WRITE,
-                            );
-                        }
-                        // Executed statements record catalog changes, a refresh clears them
-                        if (next.active && databaseId === mappingMainDatabaseId(reg, notebookId) && next.catalogChangesSql !== prev.catalogChangesSql) {
-                            void storageWriter.write(
-                                groupNotebookCatalogChangesWrites(notebookId),
-                                { type: WRITE_NOTEBOOK_CATALOG_CHANGES, value: [notebookId, next.catalogChangesSql] },
-                                DEBOUNCE_DURATION_NOTEBOOK_WRITE,
-                            );
-                        }
+                    continue;
+                }
+                reg.attachedDatabases.set(databaseId, next);
+                // Update type index when connector type changes
+                if (action.type == SWITCH_CONNECTOR_TYPE && next.connectorInfo.connectorType !== connectorType) {
+                    reg.attachedDatabasesByType[connectorType] = reg.attachedDatabasesByType[connectorType].filter(id => id != databaseId);
+                    reg.attachedDatabasesByType[next.connectorInfo.connectorType].push(databaseId);
+                    // Update signature
+                    reg.attachedDatabasesBySignature.delete(connectionSignature);
+                    reg.attachedDatabasesBySignature.set(next.connectionSignature.signatureString, databaseId);
+                }
+                // Only connections that notebooks reference or that were activated are persisted.
+                // Saving writes the committed params by itself and awaits the writes.
+                if (notebookIds.length === 0 && !next.active) {
+                    continue;
+                }
+                if (action.type !== COMMIT_CONNECTION_PARAMS) {
+                    if (didConnectionParamsChange(prev, next) || (!prev.active && next.active)) {
+                        // Saved params are replicated into every notebook that references the connection
+                        scheduleConnectionParamsWrites(reg, next, storageWriter);
+                    } else if (didPersistedConnectionChange(prev, next)) {
+                        // Drafts only live in the app manifest
+                        void storageWriter.write(
+                            groupConnectionEntryWrites(databaseId),
+                            { type: WRITE_CONNECTION_ENTRY, value: connectionEntryFromState(next) },
+                            DEBOUNCE_DURATION_CONNECTION_DRAFT_WRITE,
+                        );
+                    }
+                }
+                if (!next.active) {
+                    continue;
+                }
+                // The catalog of the connection is written into the app storage, notebooks that use the
+                // connection as main database keep a copy to stay self-contained.
+                const mainOf = findNotebooksWithMainDatabase(reg, databaseId);
+                if (action.type === CATALOG_UPDATE_SUCCEEDED || action.type === CATALOG_UPDATE_PARTIALLY_SUCCEEDED) {
+                    const relationsSql = next.catalogRelationScript.toString();
+                    const functionsSql = next.catalogFunctionScript.toString();
+                    void storageWriter.write(
+                        groupConnectionFileWrites(databaseId, STORAGE_CATALOG_RELATIONS),
+                        { type: WRITE_CONNECTION_FILE, value: [databaseId, STORAGE_CATALOG_RELATIONS, relationsSql] },
+                        DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+                    );
+                    void storageWriter.write(
+                        groupConnectionFileWrites(databaseId, STORAGE_CATALOG_FUNCTIONS),
+                        { type: WRITE_CONNECTION_FILE, value: [databaseId, STORAGE_CATALOG_FUNCTIONS, functionsSql] },
+                        DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+                    );
+                    for (const notebookId of mainOf) {
+                        void storageWriter.write(
+                            groupNotebookSchemaWrites(notebookId),
+                            { type: WRITE_NOTEBOOK_CATALOG_SCRIPT, value: [notebookId, next.catalogRelationScript] },
+                            DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+                        );
+                        void storageWriter.write(
+                            groupNotebookFunctionWrites(notebookId),
+                            { type: WRITE_NOTEBOOK_FUNCTION_SCRIPT, value: [notebookId, next.catalogFunctionScript] },
+                            DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+                        );
+                    }
+                }
+                // Executed statements record catalog changes, a refresh clears them
+                if (next.catalogChangesSql !== prev.catalogChangesSql) {
+                    void storageWriter.write(
+                        groupConnectionFileWrites(databaseId, STORAGE_CATALOG_CHANGES),
+                        { type: WRITE_CONNECTION_FILE, value: [databaseId, STORAGE_CATALOG_CHANGES, next.catalogChangesSql] },
+                        DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+                    );
+                    for (const notebookId of mainOf) {
+                        void storageWriter.write(
+                            groupNotebookCatalogChangesWrites(notebookId),
+                            { type: WRITE_NOTEBOOK_CATALOG_CHANGES, value: [notebookId, next.catalogChangesSql] },
+                            DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+                        );
                     }
                 }
             }
@@ -337,22 +512,6 @@ export function useAttachedDatabaseDispatch(): DynamicAttachedDatabaseDispatch {
     }, [flushPendingActions]);
 
     return dispatch;
-}
-
-function notebookAttachedDatabaseStates(registry: AttachedDatabaseRegistry, notebookId: string): AttachedDatabaseState[] {
-    const mapping = registry.attachedDatabasesByNotebook.get(notebookId);
-    if (mapping == null) return [];
-    const databases = [
-        registry.attachedDatabases.get(mapping.mainDatabaseId),
-        ...mapping.attachedDatabaseIds.map(databaseId => registry.attachedDatabases.get(databaseId)),
-    ];
-    return databases.filter((database): database is AttachedDatabaseState => database != null);
-}
-
-function mappingMainDatabaseId(registry: AttachedDatabaseRegistry, notebookId: string): string {
-    const mapping = registry.attachedDatabasesByNotebook.get(notebookId);
-    if (mapping == null) throw new Error(`no attached databases registered for notebook ${notebookId}`);
-    return mapping.mainDatabaseId;
 }
 
 export function useAttachedDatabaseState(notebookId: string | null): [AttachedDatabaseState | null, AttachedDatabaseDispatch] {

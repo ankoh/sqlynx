@@ -25,7 +25,7 @@ describe('notebook shell environment', () => {
             return [7, Promise.resolve(arrow.tableFromArrays({ value: [42] }))];
         });
         const cancel = vi.fn();
-        const environment = createNotebookShellEnvironment('connection-7', execute, cancel);
+        const environment = createNotebookShellEnvironment('notebook', 'connection-7', execute, cancel);
 
         const result = vi.fn();
         const bytes = await environment.executeQuery('SELECT 42', undefined, progress, result);
@@ -40,7 +40,7 @@ describe('notebook shell environment', () => {
             args.onTiming?.('Results', 12.5);
             return [7, Promise.resolve(arrow.tableFromArrays({ value: [42] }))];
         });
-        const environment = createNotebookShellEnvironment('connection-7', execute, vi.fn());
+        const environment = createNotebookShellEnvironment('notebook', 'connection-7', execute, vi.fn());
         const onTiming = vi.fn();
 
         await environment.executeQuery('SELECT 42', undefined, undefined, undefined, onTiming);
@@ -54,7 +54,7 @@ describe('notebook shell environment', () => {
         const execute = vi.fn<QueryExecutor>(() => [7, Promise.resolve(arrow.tableFromArrays({
             value: Array.from({ length: rowCount }, (_, index) => index),
         }))]);
-        const environment = createNotebookShellEnvironment('notebook-1', execute, vi.fn());
+        const environment = createNotebookShellEnvironment('notebook', 'notebook-1', execute, vi.fn());
         const result = vi.fn();
 
         const bytes = await environment.executeQuery('SELECT value', undefined, undefined, result);
@@ -71,6 +71,7 @@ describe('notebook shell environment', () => {
         });
         const execute = vi.fn<QueryExecutor>(() => [7, Promise.resolve(table)]);
         const environment = createNotebookShellEnvironment(
+            'notebook',
             'notebook-1',
             execute,
             vi.fn(),
@@ -92,7 +93,7 @@ describe('notebook shell environment', () => {
     it('opens a 1x1 plan candidate in auto mode even when it fits in the terminal', async () => {
         const plan = '{"operator":"executiontarget","operatorId":1}';
         const execute = vi.fn<QueryExecutor>(() => [7, Promise.resolve(arrow.tableFromArrays({ value: [plan] }))]);
-        const environment = createNotebookShellEnvironment('notebook-1', execute, vi.fn(), () => 'auto', () => 1000);
+        const environment = createNotebookShellEnvironment('notebook', 'notebook-1', execute, vi.fn(), () => 'auto', () => 1000);
         const result = vi.fn();
 
         const bytes = await environment.executeQuery('SELECT plan', undefined, undefined, result);
@@ -104,7 +105,7 @@ describe('notebook shell environment', () => {
     it('honors forced UI, terminal, and off output modes', async () => {
         let mode: ShellOutputMode = 'ui';
         const execute = vi.fn<QueryExecutor>(() => [7, Promise.resolve(arrow.tableFromArrays({ value: [42] }))]);
-        const environment = createNotebookShellEnvironment('notebook-1', execute, vi.fn(), () => mode);
+        const environment = createNotebookShellEnvironment('notebook', 'notebook-1', execute, vi.fn(), () => mode);
         const result = vi.fn();
 
         expect(arrow.tableFromIPC(await environment.executeQuery('SELECT 42', undefined, undefined, result)).numCols).toBe(0);
@@ -123,7 +124,7 @@ describe('notebook shell environment', () => {
 
     it('does not open a result UI for successful statements without columns', async () => {
         const execute = vi.fn<QueryExecutor>(() => [7, Promise.resolve(arrow.tableFromArrays({}))]);
-        const environment = createNotebookShellEnvironment('notebook-1', execute, vi.fn(), () => 'ui');
+        const environment = createNotebookShellEnvironment('notebook', 'notebook-1', execute, vi.fn(), () => 'ui');
         const result = vi.fn();
 
         const bytes = await environment.executeQuery('CREATE TABLE foo(a INT)', undefined, undefined, result);
@@ -152,7 +153,7 @@ describe('notebook shell environment', () => {
             resolveExecution = resolve;
         })]);
         const cancel = vi.fn();
-        const environment = createNotebookShellEnvironment('connection-7', execute, cancel);
+        const environment = createNotebookShellEnvironment('notebook', 'connection-7', execute, cancel);
         const abort = new AbortController();
         const execution = environment.executeQuery('SELECT 42', abort.signal);
 

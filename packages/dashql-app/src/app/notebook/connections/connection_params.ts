@@ -33,11 +33,22 @@ export function connectionParamsWithoutDraftRows(params: ConnectionParams): Conn
     return params;
 }
 
-export function connectionParamsEqual(left: ConnectionParams | undefined, right: ConnectionParams | undefined): boolean {
-    const encode = (params: ConnectionParams | undefined) => JSON.stringify(params, (_key, value) =>
+/// A canonical encoding of connection params that doesn't depend on the order of object keys
+export function connectionParamsKey(params: ConnectionParams | undefined): string {
+    return JSON.stringify(params, (_key, value) =>
         value != null && typeof value === 'object' && !Array.isArray(value)
-            ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))) : value);
-    return encode(left) === encode(right);
+            ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))) : value) ?? '';
+}
+
+export function connectionParamsEqual(left: ConnectionParams | undefined, right: ConnectionParams | undefined): boolean {
+    return connectionParamsKey(left) === connectionParamsKey(right);
+}
+
+/// Do two params describe the same connection, ignoring everything that sharing strips?
+/// Shared notebooks carry sanitized params without secrets and login hints, they still describe the
+/// connection a local notebook uses with the full params.
+export function connectionParamsShareEqual(left: ConnectionParams, right: ConnectionParams): boolean {
+    return connectionParamsEqual(sanitizeConnectionParamsForSharing(left, false), sanitizeConnectionParamsForSharing(right, false));
 }
 
 export function getConnectionInfoFromParams(params: ConnectionParams) {

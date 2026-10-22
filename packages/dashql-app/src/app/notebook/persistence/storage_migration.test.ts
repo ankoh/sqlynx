@@ -37,7 +37,7 @@ describe('V2 storage migration', () => {
         expect(await verifyNotebook(TEST_NOTEBOOK_ID, source, target)).toBe(true);
     });
 
-    it('clones under a new UUID and rolls back a failed clone', async () => {
+    it('clones under a new UUID sharing the connections and rolls back a failed clone', async () => {
         const source = new NotebookTestBackend();
         await seed(source);
         await source.saveScript(TEST_NOTEBOOK_ID, '03_attachment.sql',
@@ -47,7 +47,7 @@ describe('V2 storage migration', () => {
         await cloneNotebook(TEST_NOTEBOOK_ID, source, target, cloneId, new TestLogger());
         const cloned = await target.loadNotebook(cloneId);
         expect(cloned).toMatchObject({ notebookId: cloneId, name: 'V2 Notebook (copy)' });
-        expect(cloned.mainDatabase.databaseId).not.toBe(TEST_DATABASE_ID);
+        expect(cloned.mainDatabase.databaseId).toBe(TEST_DATABASE_ID);
         expect(await target.loadScripts(cloneId)).toHaveLength(3);
         expect((await target.loadScript(cloneId, '03_attachment.sql')).sql).toContain(
             `/mnt/fs/notebooks/${cloneId}/attachments/payload.bin`);

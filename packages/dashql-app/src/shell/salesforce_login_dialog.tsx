@@ -334,7 +334,6 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
             >
                 <SalesforceConnectionSettingsPage
                     connectionState={null}
-                    notebookScripts={null}
                     hyperProtocol="V3_HTTP"
                     protocols={[]}
                     wrongPlatform={false}

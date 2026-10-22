@@ -10,7 +10,6 @@ import { Button, ButtonVariant, IconButton } from '../../../../ui/foundations/bu
 import { ConnectionHealth, AttachedDatabaseState } from '../attached_database_state.js';
 import { ConnectorInfo } from '../connector_info.js';
 import { IndicatorStatus, StatusIndicator } from '../../../../ui/foundations/status_indicator.js';
-import { NotebookScripts } from '../../scripts/notebook_scripts.js';
 import { SegmentedControl } from '../../../../ui/foundations/segmented_control.js';
 import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connection_settings.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
@@ -24,7 +23,6 @@ interface Props {
     setupConnection?: () => void;
     cancelSetup?: () => void;
     resetSetup?: () => void;
-    notebookScripts: NotebookScripts | null;
     protocol?: connection.HyperProtocol;
     protocols?: connection.HyperProtocol[];
     onProtocolChange?: (protocol: connection.HyperProtocol) => void;

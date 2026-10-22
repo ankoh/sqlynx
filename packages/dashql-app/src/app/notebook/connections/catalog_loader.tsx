@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { findNotebookForAttachedDatabase, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
+import { useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
 import { CatalogResolver, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
@@ -68,6 +68,25 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement; de
     const connMap = connReg.attachedDatabases;
     const connScriptsDispatch = dependencies.useConnectionScriptsDispatch();
 
+    // Executed statements change the catalog of a connection. Every notebook that analyzes its
+    // scripts with the connection may reference the changed relations, so they are re-analyzed.
+    // A refresh clears the changes and announces the new catalog by itself.
+    const catalogChangesRef = React.useRef(new Map<string, string>());
+    React.useEffect(() => {
+        const seen = catalogChangesRef.current;
+        for (const [connectionId, conn] of connMap) {
+            const prev = seen.get(connectionId);
+            if (prev === conn.catalogChangesSql) continue;
+            seen.set(connectionId, conn.catalogChangesSql);
+            if (prev !== undefined && conn.catalogChangesSql) {
+                connScriptsDispatch(connectionId, { type: CATALOG_DID_UPDATE, value: null });
+            }
+        }
+        for (const connectionId of [...seen.keys()]) {
+            if (!connMap.has(connectionId)) seen.delete(connectionId);
+        }
+    }, [connReg, connMap, connScriptsDispatch]);
+
     // Execute a query with pre-allocated query id
     const updateImpl = React.useCallback(async (connectionId: string, _args: CatalogLoaderArgs, updateId: number): Promise<void> => {
         // Each catalog update gets its own trace so failures don't borrow
@@ -79,13 +98,12 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement; de
             traced.warn("Failed to resolve connection", { connectionId }, LOG_CTX);
             throw new Error(`couldn't find a connection with id ${connectionId}`);
         }
-        const notebookId = findNotebookForAttachedDatabase(connReg, connectionId);
         if (!executor) {
-            traced.warn("Query executor not configured", { notebookId }, LOG_CTX);
+            traced.warn("Query executor not configured", { connectionId }, LOG_CTX);
             throw new Error(`couldn't find trino executor`);
         }
 
-        traced.debug("Updating catalog", { notebookId }, LOG_CTX);
+        traced.debug("Updating catalog", { connectionId }, LOG_CTX);
 
         // Accept the query and clear the request
         const abortController = new AbortController();
@@ -112,7 +130,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement; de
         const heartbeat = setInterval(() => {
             const elapsedMs = performance.now() - updateStartMs;
             traced.info("Catalog update in progress", {
-                notebookId,
+                connectionId,
                 "updateId": updateId.toString(),
                 "elapsedMs": elapsedMs.toFixed(0),
             }, LOG_CTX);
@@ -177,7 +195,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement; de
                             .map(failure => `${failure.database}: ${failure.error.message}`)
                             .join('; '));
                         traced.warn('Partially updated Hyper catalog', {
-                            notebookId,
+                            connectionId,
                             updated: result.updatedDatabases.join(', '),
                             failed: result.failures.map(failure => failure.database).join(', '),
                         }, LOG_CTX);
@@ -208,7 +226,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement; de
                 case CatalogResolver.SQL_SCRIPT:
                     break;
             }
-            traced.debug("Updated catalog", { notebookId }, LOG_CTX);
+            traced.debug("Updated catalog", { connectionId }, LOG_CTX);
 
             // Mark the update successful
             if (partialError == null) {
@@ -230,13 +248,13 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement; de
 
         } catch (e: any) {
             if (e?.name === 'AbortError') {
-                traced.info("Cancelled catalog update", { notebookId, "error": e?.message ?? String(e) }, LOG_CTX);
+                traced.info("Cancelled catalog update", { connectionId, "error": e?.message ?? String(e) }, LOG_CTX);
                 connDispatch(connectionId, {
                     type: CATALOG_UPDATE_CANCELLED,
                     value: [updateId, e],
                 });
             } else {
-                traced.error("Failed to update catalog", { notebookId, "error": e?.message ?? String(e) }, LOG_CTX);
+                traced.error("Failed to update catalog", { connectionId, "error": e?.message ?? String(e) }, LOG_CTX);
                 connDispatch(connectionId, {
                     type: CATALOG_UPDATE_FAILED,
                     value: [updateId, e],
@@ -246,7 +264,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement; de
             clearInterval(heartbeat);
             const totalMs = performance.now() - updateStartMs;
             traced.info("Finished catalog update", {
-                notebookId,
+                connectionId,
                 "updateId": updateId.toString(),
                 "durationMs": totalMs.toFixed(0),
             }, LOG_CTX);

@@ -13,14 +13,14 @@ import { Dispatch } from '../../../../utils/variant.js';
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../../../ui/foundations/keyvalue_list.js';
 import { TextField, VALIDATION_WARNING } from '../../../../ui/foundations/text_field.js';
 import { classNames } from '../../../../utils/classnames.js';
-import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useAttachedDatabaseById, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { useQueryExecutor } from '../query_executor.js';
 import { performHealthCheck } from '../health_check.js';
 import { useTrinoSetup } from '../trino/trino_connector.js';
 import { CONNECTOR_INFOS, ConnectorType, requiresSwitchingToNative, TRINO_CONNECTOR } from '../connector_info.js';
 import { UpdateValueList, ValueListBuilder } from '../../../../ui/foundations/value_list.js';
-import { useAnyConnectionNotebookScripts } from './connection_notebook_scripts.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { SegmentedControl } from '../../../../ui/foundations/segmented_control.js';
 import { LoggableException, stringifyError } from '../../../../platform/logger/logger.js';
@@ -77,10 +77,9 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
     const wrongPlatform = requiresSwitchingToNative(connectorInfo);
 
     // Resolve connection state
-    const [registry] = useAttachedDatabaseRegistry();
-    const notebookId = props.databaseId == null ? null : findNotebookForAttachedDatabase(registry, props.databaseId);
     const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
-    const connectionNotebookScripts = useAnyConnectionNotebookScripts(notebookId);
+    const saveBeforeConnect = useSaveBeforeConnect(props.databaseId);
+    const { saving } = useConnectionSave(props.databaseId);
 
     const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
         params => buildPageStateFromParams(params && 'trino' in params ? params.trino as connection.TrinoConnectionParams : undefined),
@@ -270,6 +269,9 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
             return;
         }
 
+        // Connections are set up with saved settings, unsaved edits are saved first
+        if (!await saveBeforeConnect()) return;
+
         const controller = new AbortController();
         const unregister = registerConnectionSetup(connectionState.databaseId, controller);
         try {
@@ -312,7 +314,8 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
 
     // Get the action button
     let connectButton: React.ReactElement = <div />;
-    let freezeInput = false;
+    // Saving writes the settings into every notebook that uses the connection
+    let freezeInput = saving;
     switch (connectionState?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
@@ -336,7 +339,6 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
                 setupConnection={setupConnection}
                 cancelSetup={cancelSetup}
                 resetSetup={resetSetup}
-                notebookScripts={connectionNotebookScripts}
                 onClose={props.onClose}
                 headerActions={props.headerActions}
             />

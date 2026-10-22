@@ -12,8 +12,13 @@ import {
     WRITE_NOTEBOOK_MANIFEST,
     WRITE_SCRIPT,
     WRITE_NOTEBOOK_PROPERTIES,
-    groupNotebookConnectionWrites,
+    WRITE_CONNECTION_ENTRY,
+    PATCH_NOTEBOOK_CONNECTION,
+    NotebookUnavailableError,
+    groupConnectionEntryWrites,
+    groupNotebookConnectionCopyWrites,
     groupNotebookManifestWrites,
+    storageWriteChainKey,
 } from './storage_writer.js';
 import { ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../connections/connector_info.js';
 import { ConnectionHealth, ConnectionStatus, DISCARD_CONNECTION_DRAFT, SET_CONNECTION_DRAFT, reduceAttachedDatabaseState, type AttachedDatabaseState } from '../connections/attached_database_state.js';
@@ -26,13 +31,36 @@ class NullLogger extends Logger {
 }
 
 describe('V2 storage writer flat mutations', () => {
-    it.each(['name-first', 'connection-first'])('retains rename and draft/discard in separate debounced tasks (%s)', async order => {
+    it.each(['name-first', 'connection-first'])('retains rename and connection copy in separate debounced tasks (%s)', async order => {
+        const backend = new NotebookTestBackend();
+        const writer = new StorageWriter(new NullLogger(), backend);
+        const params = { trino: { endpoint: 'committed', catalogName: '', auth: { authType: 'AUTH_BASIC' as const } } };
+        await backend.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook({ mainDatabase: { databaseId: TEST_DATABASE_ID, params } }));
+        for (const endpoint of ['saved', 'saved again']) {
+            const saved = { trino: { ...params.trino, endpoint } };
+            const name = `renamed before ${endpoint}`;
+            const rename = () => writer.write(groupNotebookManifestWrites(TEST_NOTEBOOK_ID), {
+                type: WRITE_NOTEBOOK_PROPERTIES, value: [TEST_NOTEBOOK_ID, { name, settings: { cacheQueryResults: true } }],
+            }, 10_000);
+            const connection = () => writer.write(groupNotebookConnectionCopyWrites(TEST_NOTEBOOK_ID, TEST_DATABASE_ID), {
+                type: PATCH_NOTEBOOK_CONNECTION, value: [TEST_NOTEBOOK_ID, TEST_DATABASE_ID, saved],
+            }, 10_000);
+            const tasks = order === 'name-first' ? [rename(), connection()] : [connection(), rename()];
+            expect(writer.getPendingKeysForNotebook(TEST_NOTEBOOK_ID)).toHaveLength(2);
+            await writer.flush();
+            await expect(Promise.all(tasks)).resolves.toEqual([true, true]);
+            const notebook = await backend.loadNotebook(TEST_NOTEBOOK_ID);
+            expect(notebook.name).toBe(name);
+            expect(notebook.settings).toEqual({ cacheQueryResults: true });
+            expect(notebook.mainDatabase).toEqual({ databaseId: TEST_DATABASE_ID, params: saved });
+        }
+    });
+    it('writes drafts into the app manifest and never into notebooks', async () => {
         const backend = new NotebookTestBackend();
         const logger = new NullLogger();
         const writer = new StorageWriter(logger, backend);
         const params = { trino: { endpoint: 'committed', catalogName: '', auth: { authType: 'AUTH_BASIC' as const } } };
         const paramsDraft = { trino: { ...params.trino, endpoint: 'unfinished' } };
-        await backend.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook({ mainDatabase: { databaseId: TEST_DATABASE_ID, params } }));
         let state = {
             databaseId: TEST_DATABASE_ID, params,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
@@ -43,25 +71,15 @@ describe('V2 storage writer flat mutations', () => {
             state = reduceAttachedDatabaseState(state, discard
                 ? { type: DISCARD_CONNECTION_DRAFT, value: null }
                 : { type: SET_CONNECTION_DRAFT, value: paramsDraft }, writer, logger);
-            const name = discard ? 'renamed during discard' : 'renamed during edit';
-            const rename = () => writer.write(groupNotebookManifestWrites(TEST_NOTEBOOK_ID), {
-                type: WRITE_NOTEBOOK_PROPERTIES, value: [TEST_NOTEBOOK_ID, { name, settings: { cacheQueryResults: true } }],
-            }, 10_000);
-            const connection = () => writer.write(groupNotebookConnectionWrites(TEST_NOTEBOOK_ID), {
-                type: WRITE_NOTEBOOK_MANIFEST, value: [TEST_NOTEBOOK_ID, TEST_DATABASE_ID, [state]],
-            }, 10_000);
-            const tasks = order === 'name-first' ? [rename(), connection()] : [connection(), rename()];
-            expect(writer.getPendingKeysForNotebook(TEST_NOTEBOOK_ID)).toHaveLength(2);
-            await writer.flush();
-            await expect(Promise.all(tasks)).resolves.toEqual([true, true]);
-            const saved = await backend.loadNotebook(TEST_NOTEBOOK_ID);
-            expect(saved.name).toBe(name);
-            expect(saved.settings).toEqual({ cacheQueryResults: true });
-            expect(saved.mainDatabase.params).toEqual(params);
-            expect(saved.mainDatabase.paramsDraft).toEqual(discard ? undefined : paramsDraft);
+            await writer.write(groupConnectionEntryWrites(TEST_DATABASE_ID), {
+                type: WRITE_CONNECTION_ENTRY,
+                value: { id: TEST_DATABASE_ID, params: state.params, ...(state.paramsDraft ? { paramsDraft: state.paramsDraft } : {}) },
+            });
+            expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params, ...(discard ? {} : { paramsDraft }) }]);
         }
+        expect(backend.notebooks.size).toBe(0);
     });
-    it('persists only committed and draft settings, not attempted params or OAuth runtime state', async () => {
+    it('persists only committed settings, not drafts, attempted params or OAuth runtime state', async () => {
         const backend = new NotebookTestBackend();
         const writer = new StorageWriter(new NullLogger(), backend);
         const notebookId = '11111111-2222-4333-8444-555555555555';
@@ -77,10 +95,8 @@ describe('V2 storage writer flat mutations', () => {
         } as unknown as AttachedDatabaseState;
         await writer.write(notebookId, { type: WRITE_NOTEBOOK_MANIFEST, value: [notebookId, databaseId, [state]] });
         const saved = await backend.loadNotebook(notebookId);
-        expect(saved.mainDatabase).toEqual({ databaseId, params: state.params, paramsDraft: state.paramsDraft });
+        expect(saved.mainDatabase).toEqual({ databaseId, params: state.params });
         expect(JSON.stringify(saved)).not.toContain('runtime-secret');
-        await writer.write(notebookId, { type: WRITE_NOTEBOOK_MANIFEST, value: [notebookId, databaseId, [{ ...state, paramsDraft: undefined }]] });
-        expect((await backend.loadNotebook(notebookId)).mainDatabase.paramsDraft).toBeUndefined();
     });
     it('round-trips local and remote attached databases with an explicit main database', async () => {
         const backend = new NotebookTestBackend();
@@ -170,5 +186,83 @@ describe('V2 storage writer flat mutations', () => {
             `delete:${id}/02_old.sql`,
             `write:${id}/03_new.sql=SELECT 3`,
         ]);
+    });
+});
+
+describe('storage writer outcomes', () => {
+    it('chains global keys per entity and notebook keys per notebook', () => {
+        expect(storageWriteChainKey(`${TEST_NOTEBOOK_ID}/scripts/01.sql`)).toBe(TEST_NOTEBOOK_ID);
+        expect(storageWriteChainKey(groupNotebookConnectionCopyWrites(TEST_NOTEBOOK_ID, TEST_DATABASE_ID))).toBe(TEST_NOTEBOOK_ID);
+        expect(storageWriteChainKey(groupConnectionEntryWrites(TEST_DATABASE_ID))).toBe('@manifest');
+        expect(storageWriteChainKey(`@connections/${TEST_DATABASE_ID}/dashql-catalog-relations.sql`)).toBe(`@connections/${TEST_DATABASE_ID}`);
+    });
+
+    it('writes durably without debouncing and defers while paused', async () => {
+        const backend = new NotebookTestBackend();
+        const writer = new StorageWriter(new NullLogger(), backend);
+        const params = (endpoint: string) => ({ trino: { endpoint } }) as any;
+        const debounced = writer.write(groupConnectionEntryWrites(TEST_DATABASE_ID), {
+            type: WRITE_CONNECTION_ENTRY, value: { id: TEST_DATABASE_ID, params: params('draft') },
+        }, 10_000);
+        await expect(writer.writeDurable(groupConnectionEntryWrites(TEST_DATABASE_ID), {
+            type: WRITE_CONNECTION_ENTRY, value: { id: TEST_DATABASE_ID, params: params('saved') },
+        })).resolves.toEqual({ status: 'written' });
+        await expect(debounced).resolves.toBe(false);
+        expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params: params('saved') }]);
+
+        writer.pause();
+        await expect(writer.writeDurable(groupConnectionEntryWrites(TEST_DATABASE_ID), {
+            type: WRITE_CONNECTION_ENTRY, value: { id: TEST_DATABASE_ID, params: params('paused') },
+        })).resolves.toEqual({ status: 'deferred' });
+        expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params: params('saved') }]);
+        writer.resume();
+        await writer.flush();
+        expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params: params('paused') }]);
+    });
+
+    it('reports failed writes and never recreates a missing notebook', async () => {
+        const backend = new NotebookTestBackend();
+        const writer = new StorageWriter(new NullLogger(), backend);
+        const result = await writer.writeDurable(groupNotebookConnectionCopyWrites(TEST_NOTEBOOK_ID, TEST_DATABASE_ID), {
+            type: PATCH_NOTEBOOK_CONNECTION, value: [TEST_NOTEBOOK_ID, TEST_DATABASE_ID, { trino: { endpoint: 'x' } } as any],
+        });
+        expect(result.status).toBe('failed');
+        expect(result.status === 'failed' && result.error).toBeInstanceOf(NotebookUnavailableError);
+        expect(backend.notebooks.size).toBe(0);
+    });
+
+    it('patches the copies of a connection and resolves aliases', async () => {
+        const backend = new NotebookTestBackend();
+        const writer = new StorageWriter(new NullLogger(), backend);
+        const alias = 'ffffffff-eeee-4ddd-8ccc-bbbbbbbbbbbb';
+        const old = { trino: { endpoint: 'old' } } as any;
+        const next = { trino: { endpoint: 'new' } } as any;
+        await backend.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook({
+            mainDatabase: { databaseId: TEST_DATABASE_ID, params: old, paramsDraft: old },
+            attachedDatabases: [{ databaseId: alias, params: old }],
+        }));
+        backend.calls.length = 0;
+        const result = await writer.writeDurable(groupNotebookConnectionCopyWrites(TEST_NOTEBOOK_ID, TEST_DATABASE_ID), {
+            type: PATCH_NOTEBOOK_CONNECTION, value: [TEST_NOTEBOOK_ID, TEST_DATABASE_ID, next, [alias]],
+        });
+        expect(result).toEqual({ status: 'written' });
+        const notebook = await backend.loadNotebook(TEST_NOTEBOOK_ID);
+        expect(notebook.mainDatabase).toEqual({ databaseId: TEST_DATABASE_ID, params: next });
+        expect(notebook.attachedDatabases).toEqual([]);
+        // An up-to-date copy is not written again
+        await writer.writeDurable(groupNotebookConnectionCopyWrites(TEST_NOTEBOOK_ID, TEST_DATABASE_ID), {
+            type: PATCH_NOTEBOOK_CONNECTION, value: [TEST_NOTEBOOK_ID, TEST_DATABASE_ID, next],
+        });
+        expect(backend.calls).toEqual([`manifest:${TEST_NOTEBOOK_ID}`]);
+    });
+
+    it('keeps the creation time and aliases of connection entries', async () => {
+        const backend = new NotebookTestBackend();
+        const writer = new StorageWriter(new NullLogger(), backend);
+        backend.connections = [{ id: TEST_DATABASE_ID, params: { trino: { endpoint: 'a' } } as any, aliases: ['x'], createdAt: '2026-01-01T00:00:00.000Z' }];
+        await writer.writeDurable(groupConnectionEntryWrites(TEST_DATABASE_ID), {
+            type: WRITE_CONNECTION_ENTRY, value: { id: TEST_DATABASE_ID, params: { trino: { endpoint: 'b' } } as any },
+        });
+        expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params: { trino: { endpoint: 'b' } }, aliases: ['x'], createdAt: '2026-01-01T00:00:00.000Z' }]);
     });
 });

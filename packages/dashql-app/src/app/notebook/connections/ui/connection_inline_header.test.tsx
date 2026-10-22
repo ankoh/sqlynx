@@ -38,7 +38,6 @@ describe('ConnectionInlineHeader', () => {
                     connection={connection}
                     wrongPlatform={false}
                     setupConnection={() => {}}
-                    notebookScripts={null}
                     embedded
                 />
             </LoggerProvider>,
@@ -65,7 +64,6 @@ describe('ConnectionInlineHeader', () => {
                     connection={connection}
                     wrongPlatform={false}
                     setupConnection={() => {}}
-                    notebookScripts={null}
                 />
             </LoggerProvider>,
         ));
@@ -83,7 +81,6 @@ describe('ConnectionInlineHeader', () => {
                     connection={null}
                     wrongPlatform={false}
                     setupConnection={() => {}}
-                    notebookScripts={null}
                     connectorNameAction={<button type="button">History</button>}
                 />
             </LoggerProvider>,
@@ -103,7 +100,6 @@ describe('ConnectionInlineHeader', () => {
                     connector={CONNECTOR_INFOS[ConnectorType.HYPER]}
                     connection={null}
                     wrongPlatform={false}
-                    notebookScripts={null}
                     headerActions={<button aria-label="Discard Changes" />}
                     onClose={() => { closed = true; }}
                 />

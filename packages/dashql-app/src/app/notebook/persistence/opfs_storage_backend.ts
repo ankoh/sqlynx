@@ -1,4 +1,4 @@
-import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
+import { type NotebookRegistryBackend, type ConnectionEntry, STORAGE_CONNECTIONS_FOLDER, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
 import { migrateNotebookFiles, NOTEBOOK_FILE_RENAMES, type NotebookFileRename } from './notebook_file_migration.js';
@@ -12,12 +12,17 @@ import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, valida
 /// (their files live on disk, managed by `NativeStorageBackend`).
 ///
 /// Every per-notebook method is keyed by the bare notebook UUID.
+/// The name of the web lock that guards the manifest
+const OPFS_MANIFEST_LOCK = 'dashql-manifest';
+
 export class OPFSStorageBackend implements NotebookRegistryBackend {
     private rootHandle: FileSystemDirectoryHandle | null = null;
     /// The renames that bring a notebook folder to the current file layout
     private readonly fileRenames: readonly NotebookFileRename[];
     /// The notebooks whose files were migrated by this backend
     private readonly migratedNotebooks = new Set<string>();
+    /// The latest manifest mutation, every read-modify-write of the manifest chains onto it
+    private manifestChain: Promise<void> = Promise.resolve();
 
     constructor(fileRenames: readonly NotebookFileRename[] = NOTEBOOK_FILE_RENAMES) {
         this.fileRenames = fileRenames;
@@ -37,22 +42,50 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
     /// registry so an existing installation can start cleanly. Keep app settings, but do not import
     /// or delete any old session data.
     private async resetObsoleteManifest(root: FileSystemDirectoryHandle): Promise<void> {
-        try {
-            const indexFile = await root.getFileHandle(STORAGE_MANIFEST_FILE, { create: false });
-            const file = await indexFile.getFile();
-            const manifest = JSON.parse(await file.text());
-            if (!Array.isArray(manifest?.notebooks) && Array.isArray(manifest?.sessions)) {
-                const reset: StorageManifest = { notebooks: [] };
-                if (manifest.appSettings != null) {
-                    reset.appSettings = manifest.appSettings;
+        await this.withManifestLock(async () => {
+            try {
+                const indexFile = await root.getFileHandle(STORAGE_MANIFEST_FILE, { create: false });
+                const file = await indexFile.getFile();
+                const manifest = JSON.parse(await file.text());
+                if (!Array.isArray(manifest?.notebooks) && Array.isArray(manifest?.sessions)) {
+                    const reset: StorageManifest = { notebooks: [] };
+                    if (manifest.appSettings != null) {
+                        reset.appSettings = manifest.appSettings;
+                    }
+                    await this.writeManifest(root, reset);
                 }
-                await this.writeManifest(root, reset);
+            } catch (error) {
+                if ((error as any).name !== 'NotFoundError') {
+                    throw error;
+                }
             }
-        } catch (error) {
-            if ((error as any).name !== 'NotFoundError') {
-                throw error;
+        });
+    }
+
+    /// Run a manifest operation exclusively.
+    ///
+    /// Every write of the manifest is a read-modify-write, so concurrent writers (notebook registry
+    /// updates, app settings, connections) would otherwise lose each other's updates. The chain
+    /// serializes the writers of this backend, the web lock serializes them across tabs that share
+    /// the same OPFS root.
+    private withManifestLock<T>(fn: () => Promise<T>): Promise<T> {
+        const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+        const run = locks != null ? () => locks.request(OPFS_MANIFEST_LOCK, fn) : fn;
+        const result = this.manifestChain.then(run, run);
+        this.manifestChain = result.then(() => { }, () => { });
+        return result;
+    }
+
+    /// Mutate the manifest exclusively. The mutation returns false when nothing changed.
+    private mutateManifest(fn: (manifest: StorageManifest) => boolean | void): Promise<void> {
+        return this.withManifestLock(async () => {
+            const root = this.ensureInitialized();
+            const manifest = await this.readManifest(root);
+            if (fn(manifest) === false) {
+                return;
             }
-        }
+            await this.writeManifest(root, manifest);
+        });
     }
 
     private ensureInitialized(): FileSystemDirectoryHandle {
@@ -632,17 +665,13 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
         // Step 1: Clear the manifest (reset notebooks to empty array) FIRST.
         // This ensures the app won't try to restore notebooks even if directory cleanup fails.
         try {
-            const emptyManifest: StorageManifest = { notebooks: [] };
-            const manifestFile = await root.getFileHandle(STORAGE_MANIFEST_FILE, { create: true });
-            const writable = await manifestFile.createWritable();
-            await writable.write(JSON.stringify(emptyManifest, null, 2));
-            await writable.close();
+            await this.withManifestLock(() => this.writeManifest(root, { notebooks: [] }));
         } catch (error) {
             console.warn('Failed to clear manifest:', error);
         }
 
         // Step 2: Delete app-owned data folders while leaving unrelated origin storage untouched.
-        for (const folder of [STORAGE_NOTEBOOKS_FOLDER, STORAGE_SHELL_FOLDER]) {
+        for (const folder of [STORAGE_NOTEBOOKS_FOLDER, STORAGE_CONNECTIONS_FOLDER, STORAGE_SHELL_FOLDER]) {
             try {
                 await root.removeEntry(folder, { recursive: true });
             } catch (error) {
@@ -670,10 +699,60 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
     }
 
     async saveAppSettings(settings: AppSettings): Promise<void> {
+        await this.mutateManifest(manifest => {
+            manifest.appSettings = settings;
+        });
+    }
+
+    async loadManifest(): Promise<StorageManifest> {
         const root = this.ensureInitialized();
-        const manifest = await this.readManifest(root);
-        manifest.appSettings = settings;
-        await this.writeManifest(root, manifest);
+        return await this.withManifestLock(() => this.readManifest(root));
+    }
+
+    async updateConnections(update: (connections: ConnectionEntry[] | undefined) => ConnectionEntry[] | null): Promise<void> {
+        await this.mutateManifest(manifest => {
+            const next = update(manifest.connections);
+            if (next == null) {
+                return false;
+            }
+            manifest.connections = next;
+            return true;
+        });
+    }
+
+    /// The folder of a connection's files, e.g. "connections/<uuid>"
+    private connectionRelPath(connectionId: string): string {
+        return `${STORAGE_CONNECTIONS_FOLDER}/${connectionId}`;
+    }
+
+    async loadConnectionFile(connectionId: string, fileName: string): Promise<string | null> {
+        try {
+            const dir = await this.getNotebookDir(this.connectionRelPath(connectionId), false);
+            const handle = await dir.getFileHandle(fileName, { create: false });
+            return await (await handle.getFile()).text();
+        } catch {
+            return null;
+        }
+    }
+
+    async saveConnectionFile(connectionId: string, fileName: string, text: string): Promise<void> {
+        const dir = await this.getNotebookDir(this.connectionRelPath(connectionId), true);
+        const handle = await dir.getFileHandle(fileName, { create: true });
+        const writable = await handle.createWritable();
+        await writable.write(text);
+        await writable.close();
+    }
+
+    async deleteConnectionFiles(connectionId: string): Promise<void> {
+        const root = this.ensureInitialized();
+        try {
+            const connections = await root.getDirectoryHandle(STORAGE_CONNECTIONS_FOLDER, { create: false });
+            await connections.removeEntry(connectionId, { recursive: true });
+        } catch (error) {
+            if ((error as any).name !== 'NotFoundError') {
+                throw error;
+            }
+        }
     }
 
     private async readManifest(root: FileSystemDirectoryHandle): Promise<StorageManifest> {
@@ -707,25 +786,21 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
     /// drag-and-drop via `reorderNotebooks`), so we deliberately preserve it: a new notebook appends to
     /// the end and an existing one is updated in place. We never re-sort.
     async upsertNotebookEntry(entry: NotebookEntry): Promise<void> {
-        const root = this.ensureInitialized();
-        const manifest = await this.readManifest(root);
-
-        const existingIndex = manifest.notebooks.findIndex(s => s.path === entry.path);
-        if (existingIndex < 0) {
-            manifest.notebooks.push(entry);
-        } else {
-            manifest.notebooks[existingIndex] = entry;
-        }
-
-        await this.writeManifest(root, manifest);
+        await this.mutateManifest(manifest => {
+            const existingIndex = manifest.notebooks.findIndex(s => s.path === entry.path);
+            if (existingIndex < 0) {
+                manifest.notebooks.push(entry);
+            } else {
+                manifest.notebooks[existingIndex] = entry;
+            }
+        });
     }
 
     /// Remove a notebook's registry entry (matched by UUID), without touching files.
     async removeNotebookEntry(notebookId: string): Promise<void> {
-        const root = this.ensureInitialized();
-        const manifest = await this.readManifest(root);
-        manifest.notebooks = manifest.notebooks.filter(s => s.path !== notebookId);
-        await this.writeManifest(root, manifest);
+        await this.mutateManifest(manifest => {
+            manifest.notebooks = manifest.notebooks.filter(s => s.path !== notebookId);
+        });
     }
 
     /// Reorder the registry entries to match `orderedIds` (a permutation of the existing notebook
@@ -733,9 +808,12 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
     /// in the manifest is ignored, and any manifest entry missing from `orderedIds` is appended at the
     /// end in its current relative order (so a stale/racing id list can never drop a notebook).
     async reorderNotebooks(orderedIds: string[]): Promise<void> {
-        const root = this.ensureInitialized();
-        const manifest = await this.readManifest(root);
+        await this.mutateManifest(manifest => {
+            this.reorderManifestNotebooks(manifest, orderedIds);
+        });
+    }
 
+    private reorderManifestNotebooks(manifest: StorageManifest, orderedIds: string[]): void {
         const byId = new Map(manifest.notebooks.map(s => [s.path, s]));
         const reordered: NotebookEntry[] = [];
         const taken = new Set<string>();
@@ -754,7 +832,6 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
         }
 
         manifest.notebooks = reordered;
-        await this.writeManifest(root, manifest);
     }
 
     private async getNotebookDir(

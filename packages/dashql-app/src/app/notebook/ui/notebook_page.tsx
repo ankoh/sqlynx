@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as styles from './notebook_page.module.css';
 
-import { useNotebookScriptsRegistry, useNotebookScripts } from '../scripts/notebook_scripts_registry.js';
+import { useNotebookScripts } from '../scripts/notebook_scripts_registry.js';
 import { useAttachedDatabaseState } from '../connections/attached_database_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
-import { useRouteContext, useRouterNavigate, NOTEBOOK_PATH } from '../../router/router.js';
+import { useRouteContext } from '../../router/router.js';
 
 import { NotebookFeedPage } from './feed/notebook_feed_page.js';
 import { NotebookViewMode, useNotebookViewMode } from '../scripts/notebook_commands.js';
@@ -14,24 +14,20 @@ const NotebookShellPage = React.lazy(() => import('../shell/notebook_shell_page.
 const LOG_CTX = 'notebook_page';
 
 export interface NotebookPageDependencies {
-    useNotebookScriptsRegistry: typeof useNotebookScriptsRegistry;
     useNotebookScripts: typeof useNotebookScripts;
     useAttachedDatabaseState: typeof useAttachedDatabaseState;
     useLogger: typeof useLogger;
     useRouteContext: typeof useRouteContext;
-    useRouterNavigate: typeof useRouterNavigate;
     useNotebookViewMode: typeof useNotebookViewMode;
     NotebookFeedPage: typeof NotebookFeedPage;
     NotebookShellPage: typeof NotebookShellPage;
 }
 
 const DEFAULT_DEPENDENCIES: NotebookPageDependencies = {
-    useNotebookScriptsRegistry,
     useNotebookScripts,
     useAttachedDatabaseState,
     useLogger,
     useRouteContext,
-    useRouterNavigate,
     useNotebookViewMode,
     NotebookFeedPage,
     NotebookShellPage,
@@ -44,9 +40,7 @@ interface Props {
 export const NotebookPage: React.FC<Props> = (props: Props) => {
     const dependencies = props.dependencies ?? DEFAULT_DEPENDENCIES;
     const route = dependencies.useRouteContext();
-    const navigate = dependencies.useRouterNavigate();
     const logger = dependencies.useLogger();
-    const notebookScriptsRegistry = dependencies.useNotebookScriptsRegistry()[0];
     const [notebookScripts, modifyNotebookScripts] = dependencies.useNotebookScripts(route.notebookId ?? null);
     const [conn] = dependencies.useAttachedDatabaseState(notebookScripts?.notebookId ?? null);
     const { mode: notebookMode } = dependencies.useNotebookViewMode();
@@ -54,17 +48,7 @@ export const NotebookPage: React.FC<Props> = (props: Props) => {
 
     React.useEffect(() => {
         if (route.notebookId === null) {
-            if (route.notebookId !== null) {
-                const notebookId = notebookScriptsRegistry.notebookScriptsByConnection.get(route.notebookId);
-                if (notebookId) {
-                    navigate({
-                        type: NOTEBOOK_PATH,
-                        value: notebookId
-                    });
-                }
-            } else {
-                logger.warn('missing notebook id', {}, LOG_CTX);
-            }
+            logger.warn('missing notebook id', {}, LOG_CTX);
         }
     }, [route.notebookId]);
 

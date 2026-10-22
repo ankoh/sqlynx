@@ -49,11 +49,18 @@ import {
     DELETE_ATTACHED_DATABASE,
 } from '../connections/attached_database_state.js';
 import {
+    connectionRefCount,
+    detachNotebook,
+    findNotebookQueries,
+    findNotebooksForAttachedDatabase,
     resolveNotebookAttachedDatabases,
+    useAttachConnection,
     useAttachedDatabaseRegistry,
+    useConnectionAllocator,
     useNotebookAttachedDatabases,
     useAttachedDatabaseStateAllocator,
     useDynamicAttachedDatabaseDispatch,
+    type AttachedDatabaseRegistry,
 } from '../connections/attached_database_registry.js';
 import {
     createDefaultHyperWasmAttachedDatabaseState,
@@ -163,6 +170,8 @@ export interface NotebookWorkbenchSidebarDependencies {
     useNotebookScriptsRegistry: typeof useNotebookScriptsRegistry;
     useAttachedDatabaseRegistry: typeof useAttachedDatabaseRegistry;
     useAttachedDatabaseStateAllocator: typeof useAttachedDatabaseStateAllocator;
+    useConnectionAllocator: typeof useConnectionAllocator;
+    useAttachConnection: typeof useAttachConnection;
     useNotebookScriptsSetup: typeof useNotebookScriptsSetup;
     useNotebookScriptsDeletion: typeof useNotebookScriptsDeletion;
     useComputationDispatch: typeof useComputationDispatch;
@@ -190,6 +199,8 @@ const DEFAULT_NOTEBOOK_WORKBENCH_SIDEBAR_DEPENDENCIES: NotebookWorkbenchSidebarD
     useNotebookScriptsRegistry,
     useAttachedDatabaseRegistry,
     useAttachedDatabaseStateAllocator,
+    useConnectionAllocator,
+    useAttachConnection,
     useNotebookScriptsSetup,
     useNotebookScriptsDeletion,
     useComputationDispatch,
@@ -356,6 +367,16 @@ interface AttachedDatabaseTreeRowProps {
     expanded: ReadonlySet<string>;
     onToggle: (key: string) => void;
     onOpenSettings: (databaseId: string, anchor: HTMLButtonElement) => void;
+    describeUsage?: (databaseId: string) => ConnectionUsage;
+    onDelete?: (databaseId: string) => void;
+}
+
+/// How notebooks use a connection
+export interface ConnectionUsage {
+    /// The number of notebooks that use the connection
+    notebookCount: number;
+    /// Does the current notebook use the connection?
+    usedHere: boolean;
 }
 
 export function attachedDatabaseTreeRowHeight(index: number, props: AttachedDatabaseTreeRowProps): number {
@@ -370,6 +391,7 @@ const AttachedDatabaseTreeRow = (props: RowComponentProps<AttachedDatabaseTreeRo
     if (row.type === 'attached-database') {
         const expanded = props.expanded.has(row.key);
         const label = attachedDatabaseLabel(row.database);
+        const usage = props.describeUsage?.(row.database.databaseId) ?? null;
         return (
             <div
                 style={props.style}
@@ -391,11 +413,21 @@ const AttachedDatabaseTreeRow = (props: RowComponentProps<AttachedDatabaseTreeRo
                         </svg>
                     )}
                 >
+                    {usage != null && !usage.usedHere && (
+                        <span
+                            className={styles.catalog_node_kind}
+                            title={`Used by ${usage.notebookCount} ${usage.notebookCount === 1 ? 'notebook' : 'notebooks'}`}
+                        >
+                            {usage.notebookCount === 0 ? 'unused' : usage.notebookCount}
+                        </span>
+                    )}
                     <AttachedDatabaseRefreshButton database={row.database} label={label} />
                     <AttachedDatabaseRowMenu
                         database={row.database}
                         label={label}
                         onOpenSettings={anchor => props.onOpenSettings(row.database.databaseId, anchor)}
+                        onDelete={props.onDelete == null || usage == null ? undefined : () => props.onDelete!(row.database.databaseId)}
+                        notebookCount={usage?.notebookCount}
                     />
                 </AttachedDatabaseTreeEntry>
             </div>
@@ -423,6 +455,12 @@ const AttachedDatabaseTreeRow = (props: RowComponentProps<AttachedDatabaseTreeRo
 interface AttachedDatabaseTreeProps {
     databases: AttachedDatabaseState[];
     onOpenSettings: (databaseId: string, anchor: HTMLButtonElement) => void;
+    /// Describe how notebooks use a connection
+    describeUsage?: (databaseId: string) => ConnectionUsage;
+    /// Delete a connection that no notebook uses
+    onDelete?: (databaseId: string) => void;
+    /// Is a connection expanded initially?
+    initiallyExpanded?: (database: AttachedDatabaseState, databaseCount: number) => boolean;
 }
 
 const attachedDatabaseKey = (databaseId: string) => `attached-database:${databaseId}`;
@@ -436,7 +474,7 @@ function useShallowStableArray<T>(values: T[]): T[] {
     return ref.current;
 }
 
-export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ databases, onOpenSettings }) => {
+export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ databases, onOpenSettings, describeUsage, onDelete, initiallyExpanded = isAttachedDatabaseInitiallyExpanded }) => {
     // The database states change with every query event while the catalogs rarely change.
     // A catalog caches its snapshot until it is modified (which destroys the snapshot), so the snapshot identity
     // tells us when the trees must be rebuilt. Never keep a reader of a snapshot that is no longer current.
@@ -453,7 +491,7 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
     const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(() => {
         const initial = new Set<string>();
         catalogTrees.forEach((tree, i) => {
-            if (!isAttachedDatabaseInitiallyExpanded(databases[i], databases.length)) return;
+            if (!initiallyExpanded(databases[i], databases.length)) return;
             initial.add(attachedDatabaseKey(tree.databaseId));
             for (const root of tree.roots) initial.add(root.key);
         });
@@ -469,7 +507,7 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
             }));
             catalogTrees.forEach((tree, i) => {
                 if (knownDatabaseIds.current.has(tree.databaseId)) return;
-                if (isAttachedDatabaseInitiallyExpanded(databases[i], databases.length)) {
+                if (initiallyExpanded(databases[i], databases.length)) {
                     next.add(attachedDatabaseKey(tree.databaseId));
                     for (const root of tree.roots) next.add(root.key);
                 }
@@ -508,9 +546,11 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
         expanded,
         onToggle: toggle,
         onOpenSettings,
-    }), [expanded, onOpenSettings, rows, toggle]);
+        describeUsage,
+        onDelete,
+    }), [describeUsage, expanded, onDelete, onOpenSettings, rows, toggle]);
     return (
-        <div ref={containerRef} className={styles.database_list} aria-label="Attached databases and catalogs">
+        <div ref={containerRef} className={styles.database_list} aria-label="Connections and catalogs">
             <List
                 listRef={listRef}
                 style={{ width: size?.width ?? 200, height: size?.height ?? 200 }}
@@ -526,6 +566,27 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
 
 export function attachedDatabaseDisplayOrder(attached: NonNullable<ReturnType<typeof resolveNotebookAttachedDatabases>>): AttachedDatabaseState[] {
     return [attached.main, ...attached.attached];
+}
+
+/// The connections shown next to the notebooks.
+/// The connections of the current notebook come first, followed by the connections of other
+/// notebooks and connections that no notebook uses. Connections of internal hosts (e.g. the shell),
+/// which are referenced by no notebook of the scripts registry, are not shown.
+export function listedConnections(
+    registry: Pick<AttachedDatabaseRegistry, 'attachedDatabases' | 'attachedDatabasesByNotebook'>,
+    notebookIds: ReadonlySet<string>,
+    currentNotebookConnections: readonly AttachedDatabaseState[],
+): AttachedDatabaseState[] {
+    const listed = [...currentNotebookConnections];
+    const seen = new Set(listed.map(database => database.databaseId));
+    for (const [databaseId, database] of registry.attachedDatabases) {
+        if (seen.has(databaseId)) continue;
+        const notebooks = findNotebooksForAttachedDatabase(registry as AttachedDatabaseRegistry, databaseId);
+        if (notebooks.length === 0 ? database.active : notebooks.some(notebookId => notebookIds.has(notebookId))) {
+            listed.push(database);
+        }
+    }
+    return listed;
 }
 
 export function isAttachedDatabaseInitiallyExpanded(database: AttachedDatabaseState, databaseCount: number): boolean {
@@ -646,6 +707,10 @@ interface AttachedDatabaseRowMenuProps {
     database: AttachedDatabaseState;
     label: string;
     onOpenSettings: (anchor: HTMLButtonElement) => void;
+    /// Delete the connection, only possible if no notebook uses it
+    onDelete?: () => void;
+    /// The number of notebooks that use the connection
+    notebookCount?: number;
     dependencies?: AttachedDatabaseRefreshDependencies;
 }
 
@@ -657,7 +722,7 @@ const DEFAULT_ATTACHED_DATABASE_REFRESH_DEPENDENCIES: AttachedDatabaseRefreshDep
     useCatalogLoaderQueue,
 };
 
-export const AttachedDatabaseRowMenu: React.FC<AttachedDatabaseRowMenuProps> = ({ database, label, onOpenSettings, dependencies = DEFAULT_ATTACHED_DATABASE_REFRESH_DEPENDENCIES }) => {
+export const AttachedDatabaseRowMenu: React.FC<AttachedDatabaseRowMenuProps> = ({ database, label, onOpenSettings, onDelete, notebookCount = 0, dependencies = DEFAULT_ATTACHED_DATABASE_REFRESH_DEPENDENCIES }) => {
     const [open, setOpen] = React.useState(false);
     const triggerRef = React.useRef<HTMLButtonElement>(null);
     const refreshCatalog = dependencies.useCatalogLoaderQueue();
@@ -716,6 +781,21 @@ export const AttachedDatabaseRowMenu: React.FC<AttachedDatabaseRowMenuProps> = (
                         </ActionList.Leading>
                         <ActionList.ItemText>Refresh</ActionList.ItemText>
                     </ActionList.ListItem>
+                    {/* The list takes elements only, the fragment wraps the optional item */}
+                    <>{onDelete && (
+                        <ActionList.ListItem
+                            className={actionMenuStyles.delete_action}
+                            disabled={notebookCount > 0}
+                            title={notebookCount > 0 ? `Used by ${notebookCount} ${notebookCount === 1 ? 'notebook' : 'notebooks'}` : undefined}
+                            onClick={() => {
+                                setOpen(false);
+                                onDelete();
+                            }}
+                        >
+                            <ActionList.Leading><TrashIcon size={16} /></ActionList.Leading>
+                            <ActionList.ItemText>Delete</ActionList.ItemText>
+                        </ActionList.ListItem>
+                    )}</>
                 </ActionList.List>
             </div>
         </AnchoredOverlay>
@@ -825,6 +905,8 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
     const [scriptsRegistry, setScriptsRegistry] = dependencies.useNotebookScriptsRegistry();
     const [, setDatabaseRegistry] = dependencies.useAttachedDatabaseRegistry();
     const allocateDatabase = dependencies.useAttachedDatabaseStateAllocator();
+    const allocateConnection = dependencies.useConnectionAllocator();
+    const attachConnection = dependencies.useAttachConnection();
     const setupNotebookScripts = dependencies.useNotebookScriptsSetup();
     const deleteNotebookScripts = dependencies.useNotebookScriptsDeletion();
     const computationDispatch = dependencies.useComputationDispatch();
@@ -842,6 +924,8 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
     );
     const [connectionOverlayDatabaseId, setConnectionOverlayDatabaseId] = React.useState<string | null>(null);
     const [createOpen, setCreateOpen] = React.useState(false);
+    const [createConnectionOpen, setCreateConnectionOpen] = React.useState(false);
+    const createConnectionButtonRef = React.useRef<HTMLButtonElement>(null);
     const createButtonRef = React.useRef<HTMLButtonElement>(null);
     const connectionSettingsAnchorRef = React.useRef<HTMLButtonElement>(null);
     const folderButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -910,7 +994,19 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
         };
     }), [invalidNotebooks, storageReader]);
     const notebookCount = notebooks.length + invalidItems.length;
-    const attachedDatabaseCount = attachedDatabaseRows.length;
+    const connectionRows = React.useMemo(
+        () => listedConnections(databaseRegistry, new Set(scriptsRegistry.notebookScriptsMap.keys()), attachedDatabaseRows),
+        [databaseRegistry, scriptsRegistry, attachedDatabaseRows],
+    );
+    const connectionCount = connectionRows.length;
+    const describeUsage = React.useCallback((databaseId: string): ConnectionUsage => ({
+        notebookCount: connectionRefCount(databaseRegistry, databaseId),
+        usedHere: attachedDatabaseRows.some(database => database.databaseId === databaseId),
+    }), [attachedDatabaseRows, databaseRegistry]);
+    const initiallyExpanded = React.useCallback((database: AttachedDatabaseState, _count: number) => (
+        attachedDatabaseRows.includes(database)
+        && isAttachedDatabaseInitiallyExpanded(database, attachedDatabaseRows.length)
+    ), [attachedDatabaseRows]);
 
     const dndSensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -934,6 +1030,38 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
             return next;
         });
     }, [logger, storageReader.backend]);
+
+    /// Create a notebook that uses an existing connection
+    const createNotebookWithConnection = React.useCallback((database: AttachedDatabaseState) => {
+        setCreateOpen(false);
+        const notebookId = crypto.randomUUID();
+        attachConnection(notebookId, database.databaseId);
+        setupNotebookScripts(notebookId, database);
+        void storageWriter.write(
+            groupNotebookManifestWrites(notebookId),
+            { type: WRITE_NOTEBOOK_MANIFEST, value: [notebookId, database.databaseId, [database]] },
+        );
+        navigate({ type: SELECT_NOTEBOOK, value: notebookId });
+        props.closeAfterSelection?.();
+    }, [attachConnection, navigate, props.closeAfterSelection, setupNotebookScripts, storageWriter]);
+
+    /// Create a connection that no notebook uses yet and open its settings
+    const createConnection = React.useCallback((connector: ConnectorType) => {
+        setCreateConnectionOpen(false);
+        const params = createDefaultConnectionParamsForConnector(CONNECTOR_INFOS[connector]);
+        const initialDatabase = dependencies.createConnectionStateFromParams(props.notebookScripts.instance, params, databaseRegistry.attachedDatabasesBySignature);
+        const database = allocateConnection({ ...initialDatabase, active: true });
+        connectionSettingsAnchorRef.current = createConnectionButtonRef.current;
+        setConnectionOverlayDatabaseId(database.databaseId);
+    }, [allocateConnection, databaseRegistry.attachedDatabasesBySignature, dependencies, props.notebookScripts.instance]);
+
+    /// Delete a connection that no notebook uses
+    const deleteConnection = React.useCallback((databaseId: string) => {
+        const database = databaseRegistry.attachedDatabases.get(databaseId);
+        if (database == null || connectionRefCount(databaseRegistry, databaseId) > 0) return;
+        if (!window.confirm(`Delete the connection "${attachedDatabaseLabel(database)}"?`)) return;
+        databaseDispatch(databaseId, { type: DELETE_ATTACHED_DATABASE, value: null });
+    }, [databaseDispatch, databaseRegistry]);
 
     const createNotebook = React.useCallback((connector: ConnectorType) => {
         setCreateOpen(false);
@@ -970,7 +1098,7 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
                 storageWriter.backend,
                 logger,
                 newNotebookId,
-                databaseRegistry.attachedDatabasesBySignature,
+                databaseRegistry,
             );
             setDatabaseRegistry(registry => mergeRestoredNotebookIntoConnections(registry, restored));
             setScriptsRegistry(registry => mergeRestoredNotebookIntoScripts(registry, restored));
@@ -980,7 +1108,7 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
                 error: String(error),
             }, 'notebook_workbench');
         }
-    }, [databaseRegistry.attachedDatabasesBySignature, logger, setDatabaseRegistry, setScriptsRegistry, setupCore, storageReader.backend, storageWriter.backend]);
+    }, [databaseRegistry, logger, setDatabaseRegistry, setScriptsRegistry, setupCore, storageReader.backend, storageWriter.backend]);
 
     const openNotebookFolder = React.useCallback(async () => {
         if (!(storageReader.backend instanceof CompositeStorageBackend)) return;
@@ -1030,22 +1158,27 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
             return;
         }
         deleteNotebookScripts(item.notebookId);
+        // Connections outlive the notebooks that reference them, only the notebook's own
+        // computations are dropped.
         const mapping = databaseRegistry.attachedDatabasesByNotebook.get(item.notebookId);
         for (const databaseId of mapping == null ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds]) {
-            if (databaseId == null) continue;
             const database = databaseRegistry.attachedDatabases.get(databaseId);
             if (database == null) continue;
-            for (const queryId of [...database.queriesActiveOrdered, ...database.queriesFinishedOrdered]) {
+            for (const queryId of findNotebookQueries(database, item.notebookId)) {
                 computationDispatch({ type: DELETE_COMPUTATION, value: [queryId] });
             }
-            databaseDispatch(databaseId, { type: DELETE_ATTACHED_DATABASE, value: null });
         }
+        setDatabaseRegistry(registry => {
+            if (!registry.attachedDatabasesByNotebook.has(item.notebookId)) return registry;
+            detachNotebook(registry, item.notebookId);
+            return { ...registry };
+        });
 
         if (item.notebookId === props.notebookScripts.notebookId) {
             const next = notebooks.find(notebook => notebook.notebookId !== item.notebookId);
             if (next != null) navigate({ type: OPEN_NOTEBOOK, value: next.notebookId });
         }
-    }, [computationDispatch, databaseDispatch, databaseRegistry, deleteNotebookScripts, navigate, notebooks, props.notebookScripts.notebookId, storageWriter.backend]);
+    }, [computationDispatch, databaseRegistry, deleteNotebookScripts, navigate, notebooks, props.notebookScripts.notebookId, setDatabaseRegistry, storageWriter.backend]);
 
     const openNotebook = React.useCallback((item: NotebookItem) => {
         navigate({ type: SELECT_NOTEBOOK, value: item.notebookId });
@@ -1117,7 +1250,24 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
                         >
                             <div className={actionMenuStyles.menu} role="dialog" aria-label="Choose notebook connector">
                                 <ActionList.List aria-label="Notebook connector">
-                                    {([ConnectorType.HYPER, ConnectorType.TRINO, ConnectorType.SALESFORCE_DATA_CLOUD] as const).map(connector => (
+                                    {/* The list takes elements only, the fragment wraps the optional group */}
+                                    <>{connectionRows.length > 0 && (
+                                        <>
+                                            <ActionList.GroupHeading>Existing connection</ActionList.GroupHeading>
+                                            {connectionRows.map(database => (
+                                                <ActionList.ListItem key={database.databaseId} onClick={() => createNotebookWithConnection(database)}>
+                                                    <ActionList.Leading>
+                                                        <svg width="16px" height="16px" aria-hidden="true">
+                                                            <use xlinkHref={`${symbols}#${database.connectorInfo.icons.colored}`} />
+                                                        </svg>
+                                                    </ActionList.Leading>
+                                                    <ActionList.ItemText>{attachedDatabaseLabel(database)}</ActionList.ItemText>
+                                                </ActionList.ListItem>
+                                            ))}
+                                            <ActionList.GroupHeading>New connection</ActionList.GroupHeading>
+                                        </>
+                                    )}</>
+                                    <>{([ConnectorType.HYPER, ConnectorType.TRINO, ConnectorType.SALESFORCE_DATA_CLOUD] as const).map(connector => (
                                         <ActionList.ListItem key={connector} onClick={() => createNotebook(connector)}>
                                             <ActionList.Leading>
                                                 <svg width="16px" height="16px" aria-hidden="true">
@@ -1126,7 +1276,7 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
                                             </ActionList.Leading>
                                             <ActionList.ItemText>{CONNECTOR_INFOS[connector].names.displayShort}</ActionList.ItemText>
                                         </ActionList.ListItem>
-                                    ))}
+                                    ))}</>
                                 </ActionList.List>
                             </div>
                         </AnchoredOverlay>
@@ -1167,26 +1317,52 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
             <section className={classNames(styles.section, styles.database_section)} aria-labelledby="workbench-databases-heading">
                 <header className={styles.section_header}>
                     <div className={styles.section_title}>
-                        <h2 id="workbench-databases-heading" className={styles.section_heading}>Attached Databases</h2>
+                        <h2 id="workbench-databases-heading" className={styles.section_heading}>Connections</h2>
                         <span
                             className={styles.section_count}
-                            aria-label={`${attachedDatabaseCount} attached ${attachedDatabaseCount === 1 ? 'database' : 'databases'}`}
+                            aria-label={`${connectionCount} ${connectionCount === 1 ? 'connection' : 'connections'}`}
                         >
-                            {attachedDatabaseCount}
+                            {connectionCount}
                         </span>
                     </div>
-                    <IconButton
-                        size={ButtonSize.Small}
-                        variant={ButtonVariant.Invisible}
-                        aria-label="Attach database (not available yet)"
-                        disabled
+                    <AnchoredOverlay
+                        open={createConnectionOpen}
+                        onOpen={() => setCreateConnectionOpen(true)}
+                        onClose={() => setCreateConnectionOpen(false)}
+                        anchorRef={createConnectionButtonRef}
+                        returnFocusRef={createConnectionButtonRef}
+                        side={AnchorSide.OutsideBottom}
+                        align={AnchorAlignment.End}
+                        renderAnchor={anchorProps => <IconButton
+                            {...anchorProps}
+                            ref={createConnectionButtonRef}
+                            size={ButtonSize.Small}
+                            variant={ButtonVariant.Invisible}
+                            aria-label="Create connection"
+                        ><PlusIcon size={14} /></IconButton>}
                     >
-                        <PlusIcon size={14} />
-                    </IconButton>
+                        <div className={actionMenuStyles.menu} role="dialog" aria-label="Choose connection connector">
+                            <ActionList.List aria-label="Connection connector">
+                                {([ConnectorType.HYPER, ConnectorType.TRINO, ConnectorType.SALESFORCE_DATA_CLOUD] as const).map(connector => (
+                                    <ActionList.ListItem key={connector} onClick={() => createConnection(connector)}>
+                                        <ActionList.Leading>
+                                            <svg width="16px" height="16px" aria-hidden="true">
+                                                <use xlinkHref={`${symbols}#${CONNECTOR_INFOS[connector].icons.colored}`} />
+                                            </svg>
+                                        </ActionList.Leading>
+                                        <ActionList.ItemText>{CONNECTOR_INFOS[connector].names.displayShort}</ActionList.ItemText>
+                                    </ActionList.ListItem>
+                                ))}
+                            </ActionList.List>
+                        </div>
+                    </AnchoredOverlay>
                 </header>
                 <div className={styles.database_body} data-electron-drag-region="false">
-                    {attached && <AttachedDatabaseTree
-                        databases={attachedDatabaseRows}
+                    {connectionRows.length > 0 && <AttachedDatabaseTree
+                        databases={connectionRows}
+                        describeUsage={describeUsage}
+                        onDelete={deleteConnection}
+                        initiallyExpanded={initiallyExpanded}
                         onOpenSettings={(databaseId, anchor) => {
                             connectionSettingsAnchorRef.current = anchor;
                             setConnectionOverlayDatabaseId(databaseId);

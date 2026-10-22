@@ -11,6 +11,7 @@ import {
 const EMPTY_RESULT_IPC = arrow.tableToIPC(arrow.tableFromArrays({}), 'file');
 
 export function createNotebookShellEnvironment(
+    notebookId: string,
     connectionId: string,
     executeQuery: QueryExecutor,
     cancelQuery: CancelQuery,
@@ -39,6 +40,7 @@ export function createNotebookShellEnvironment(
                     description: null,
                     issuer: 'DashQL Shell',
                     userProvided: true,
+                    notebookId,
                 },
             });
             const abort = () => cancelQuery(connectionId, queryId);

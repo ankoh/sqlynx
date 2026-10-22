@@ -1,6 +1,6 @@
 import type { Logger } from '../../../platform/logger/logger.js';
 import type { StorageBackend } from './storage_backend.js';
-import { regenerateNotebookDatabaseIds, rebaseNotebookAttachmentPaths } from './notebook_bundle.js';
+import { rebaseNotebookAttachmentPaths } from './notebook_bundle.js';
 
 const LOG_CTX = 'storage_migration';
 
@@ -68,7 +68,7 @@ export async function copyNotebook(
 /// Clone a notebook into `target` under a new UUID (always used for OPFS duplicates).
 ///
 /// Rewrites `notebookId`, drops the display-only `notebookPath`, and suffixes a named notebook
-/// with " (copy)". Query result cache is not copied. On any write failure the new notebook is
+/// with " (copy)". The clone references the same connections. Query result cache is not copied. On any write failure the new notebook is
 /// deleted so a half-written clone cannot linger in the registry.
 export async function cloneNotebook(
     sourceNotebookId: string,
@@ -79,10 +79,11 @@ export async function cloneNotebook(
 ): Promise<MigrationResult> {
     let fileCount = 0;
     try {
-        const notebookData = regenerateNotebookDatabaseIds({
+        // The copy shares the connections of its source
+        const notebookData = {
             ...(await source.loadNotebook(sourceNotebookId)),
             notebookId: newNotebookId,
-        });
+        };
         delete notebookData.notebookPath;
         const trimmedName = notebookData.name?.trim();
         if (trimmedName) {

@@ -7,8 +7,8 @@ import { NotebookScripts } from '../scripts/notebook_scripts.js';
 import { AttachedDatabaseState } from '../connections/attached_database_state.js';
 import { createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
 import type { NotebookSettings } from '../scripts/notebook_settings.js';
-import type { StorageBackend, NotebookData, NotebookMetadata as StorageNotebookMetadata } from './storage_backend.js';
-import { STORAGE_SCRIPTS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES } from './storage_backend.js';
+import type { StorageBackend, NotebookData, NotebookMetadata as StorageNotebookMetadata, ConnectionEntry, ConnectionParams, NotebookRegistryBackend } from './storage_backend.js';
+import { STORAGE_SCRIPTS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CONNECTIONS_FOLDER, isNotebookRegistryBackend } from './storage_backend.js';
 
 const LOG_CTX = 'storage_writer';
 
@@ -73,6 +73,10 @@ export const WRITE_NOTEBOOK_CATALOG_SCRIPT = Symbol('WRITE_NOTEBOOK_CATALOG_SCRI
 export const WRITE_NOTEBOOK_FUNCTION_SCRIPT = Symbol('WRITE_NOTEBOOK_FUNCTION_SCRIPT');
 export const WRITE_NOTEBOOK_CATALOG_CHANGES = Symbol('WRITE_NOTEBOOK_CATALOG_CHANGES');
 export const REPLACE_NOTEBOOK_SCRIPTS = Symbol('REPLACE_NOTEBOOK_SCRIPTS');
+export const WRITE_CONNECTION_ENTRY = Symbol('WRITE_CONNECTION_ENTRY');
+export const DELETE_CONNECTION_ENTRY = Symbol('DELETE_CONNECTION_ENTRY');
+export const WRITE_CONNECTION_FILE = Symbol('WRITE_CONNECTION_FILE');
+export const PATCH_NOTEBOOK_CONNECTION = Symbol('PATCH_NOTEBOOK_CONNECTION');
 export const WRITE_SCRIPT = Symbol('WRITE_SCRIPT');
 export const DELETE_NOTEBOOK = Symbol('DELETE_NOTEBOOK');
 export const DELETE_SCRIPT = Symbol('DELETE_SCRIPT');
@@ -85,6 +89,10 @@ export type StorageWriteTaskVariant =
     | VariantKind<typeof WRITE_NOTEBOOK_FUNCTION_SCRIPT, [string, dashql.DashQLScript]>
     | VariantKind<typeof WRITE_NOTEBOOK_CATALOG_CHANGES, [string, string]>
     | VariantKind<typeof REPLACE_NOTEBOOK_SCRIPTS, NotebookScripts>
+    | VariantKind<typeof WRITE_CONNECTION_ENTRY, ConnectionEntry>
+    | VariantKind<typeof DELETE_CONNECTION_ENTRY, string>
+    | VariantKind<typeof WRITE_CONNECTION_FILE, [string, string, string]>
+    | VariantKind<typeof PATCH_NOTEBOOK_CONNECTION, [string, string, ConnectionParams] | [string, string, ConnectionParams, string[]]>
     | VariantKind<typeof WRITE_SCRIPT, [string, string, string]>
     | VariantKind<typeof DELETE_NOTEBOOK, string>
     | VariantKind<typeof DELETE_SCRIPT, [string, string]>
@@ -98,12 +106,17 @@ export type StorageWriteKey = string;
 /// file's write row). Keying both on the file also means a scheduled-but-not-yet-flushed manifest
 /// write coalesces onto the same statistics row as its completion.
 export const groupNotebookManifestWrites = (notebookId: string) => `${notebookId}/${STORAGE_NOTEBOOK_FILE}`;
-/// Connection updates and name updates must not coalesce, but both serialize per notebook.
-export const groupNotebookConnectionWrites = (notebookId: string) => `${notebookId}/${STORAGE_NOTEBOOK_FILE}:connections`;
 export const groupNotebookSchemaWrites = (notebookId: string) => `${notebookId}/${STORAGE_CATALOG_RELATIONS}`;
 export const groupNotebookFunctionWrites = (notebookId: string) => `${notebookId}/${STORAGE_CATALOG_FUNCTIONS}`;
 export const groupNotebookCatalogChangesWrites = (notebookId: string) => `${notebookId}/${STORAGE_CATALOG_CHANGES}`;
 export const groupNotebookWrites = (notebookId: string) => `${notebookId}/${STORAGE_SCRIPTS_FOLDER}`;
+/// The connection entries are written into the app manifest, one key per connection.
+export const groupConnectionEntryWrites = (connectionId: string) => `@manifest/${STORAGE_CONNECTIONS_FOLDER}/${connectionId}`;
+/// The files of a connection, e.g. its catalog relations
+export const groupConnectionFileWrites = (connectionId: string, fileName: string) => `@${STORAGE_CONNECTIONS_FOLDER}/${connectionId}/${fileName}`;
+/// The copy of a connection's params in a notebook. Copies of different connections must not
+/// coalesce, but they serialize with every other write of the notebook.
+export const groupNotebookConnectionCopyWrites = (notebookId: string, connectionId: string) => `${notebookId}/${STORAGE_NOTEBOOK_FILE}:connection/${connectionId}`;
 export const groupScriptWrites = (notebookId: string, fileName: string) =>
     `${notebookId}/${STORAGE_SCRIPTS_FOLDER}/${fileName}`;
 export const groupScriptDeletes = (notebookId: string, scriptName: string) =>
@@ -137,11 +150,35 @@ export function storageWriteKeyWithinNotebook(key: StorageWriteKey, notebookId: 
     return key === notebookId ? '' : key.slice(notebookId.length + 1);
 }
 
+/// The outcome of a scheduled write
+export type StorageWriteResult =
+    /// The task was executed (a task may still skip writing content that is already persisted)
+    | { status: 'written' }
+    /// A newer task with the same key replaced the task before it was executed
+    | { status: 'superseded' }
+    /// The task was discarded before it was executed
+    | { status: 'cancelled' }
+    /// The writer or the notebook is paused, the task stays pending and is executed on resume
+    | { status: 'deferred' }
+    /// Executing the task failed
+    | { status: 'failed'; error: unknown };
+
+/// The chain key of a write key, tasks with the same chain key are executed one after another.
+/// Notebook keys chain per notebook (`<notebookId>/…`), so mutations and their index rebuilds cannot
+/// overlap. Global keys start with `@` and chain per entity (`@manifest/…`, `@connections/<id>/…`).
+export function storageWriteChainKey(key: StorageWriteKey): string {
+    const parts = key.split('/');
+    if (key.startsWith('@connections/') && parts.length > 1) {
+        return `${parts[0]}/${parts[1]}`;
+    }
+    return parts[0];
+}
+
 interface AsyncStorageWriteTask {
     /// The latest task
     latestTask: StorageWriteTaskVariant;
-    /// Resolve the latest task
-    resolveLatestTask: (ok: boolean) => void;
+    /// Resolve the caller of the latest task
+    resolveLatestTask: (result: StorageWriteResult) => void;
     /// The time when this task was first scheduled
     scheduledAt: Date;
     /// The debounce duration in milliseconds
@@ -166,6 +203,61 @@ export interface StorageWriterStatistics {
 export type StorageWriteStatisticsMap = Immutable.Map<StorageWriteKey, StorageWriterStatistics>;
 export type StorageWriteStatisticsSubscriber = (stats: StorageWriteStatisticsMap) => void;
 
+/// A notebook whose files are not available, e.g. a native folder that was moved or deleted
+export class NotebookUnavailableError extends Error {
+    /// The notebook id
+    readonly notebookId: string;
+
+    constructor(notebookId: string, cause: unknown) {
+        super(`notebook ${notebookId} is not available: ${stringifyError(cause)}`);
+        this.name = 'NotebookUnavailableError';
+        this.notebookId = notebookId;
+    }
+}
+
+/// Replace the copies of a connection's params in a notebook.
+/// References of aliases (connections that were consolidated into this one) are rewritten to the
+/// connection id. Returns null when the notebook doesn't reference the connection or the copies are
+/// up to date.
+export function patchNotebookConnection(notebook: NotebookData, connectionId: string, params: ConnectionParams, aliases: readonly string[] = []): NotebookData | null {
+    const patch = (database: NotebookData['mainDatabase']): NotebookData['mainDatabase'] =>
+        database.databaseId === connectionId || aliases.includes(database.databaseId) ? { databaseId: connectionId, params } : database;
+    const mainDatabase = patch(notebook.mainDatabase);
+    const next: NotebookData = {
+        ...notebook,
+        mainDatabase,
+        attachedDatabases: dedupeAttachedDatabases(mainDatabase.databaseId, notebook.attachedDatabases.map(patch)),
+    };
+    return notebookManifestEquals(notebook, next) ? null : next;
+}
+
+/// Drop attached databases that reference the main database or an earlier attached database.
+/// Consolidated connections can turn distinct references into the same one.
+export function dedupeAttachedDatabases<T extends { databaseId: string }>(mainDatabaseId: string, attached: T[]): T[] {
+    const seen = new Set([mainDatabaseId]);
+    return attached.filter(database => {
+        if (seen.has(database.databaseId)) return false;
+        seen.add(database.databaseId);
+        return true;
+    });
+}
+
+/// Insert or replace a connection entry, keeping its creation time and aliases
+export function upsertConnectionEntry(connections: ConnectionEntry[] | undefined, entry: ConnectionEntry): ConnectionEntry[] | null {
+    const entries = connections ?? [];
+    const index = entries.findIndex(e => e.id === entry.id);
+    const prev = index >= 0 ? entries[index] : null;
+    const next: ConnectionEntry = {
+        ...entry,
+        ...(entry.aliases == null && prev?.aliases != null ? { aliases: prev.aliases } : {}),
+        ...(entry.createdAt == null && prev?.createdAt != null ? { createdAt: prev.createdAt } : {}),
+    };
+    if (prev != null && jsonDeepEqual(JSON.parse(JSON.stringify(prev)), JSON.parse(JSON.stringify(next)))) {
+        return null;
+    }
+    return index >= 0 ? entries.map((e, i) => (i === index ? next : e)) : [...entries, next];
+}
+
 export class StorageWriter {
     /// The logger
     logger: Logger;
@@ -183,8 +275,8 @@ export class StorageWriter {
     pausedNotebooks: Set<string>;
     /// The executions that are currently in flight (used by flush() to await completion).
     inFlight: Set<Promise<void>>;
-    /// Latest execution per notebook, so mutations and their index rebuilds cannot overlap.
-    notebookExecutions: Map<string, Promise<void>>;
+    /// Latest execution per chain key, so mutations and their index rebuilds cannot overlap.
+    chainExecutions: Map<string, Promise<void>>;
     /// Last content known to have been persisted by this writer, keyed by storage-relative path.
     completedFileContents: Map<string, string | null>;
     /// Monotonic scheduled-write generation per key, used to revalidate destructive prompts.
@@ -200,7 +292,7 @@ export class StorageWriter {
         this.paused = false;
         this.pausedNotebooks = new Set();
         this.inFlight = new Set();
-        this.notebookExecutions = new Map();
+        this.chainExecutions = new Map();
         this.completedFileContents = new Map();
         this.writeKeyGenerations = new Map();
         this.nextWriteGeneration = 1;
@@ -291,7 +383,7 @@ export class StorageWriter {
             }
             clearTimeout(task.timer);
             this.pendingTasks.delete(key);
-            task.resolveLatestTask(false);
+            task.resolveLatestTask({ status: 'cancelled' });
         }
     }
 
@@ -324,7 +416,37 @@ export class StorageWriter {
         this.statisticsSubscribers.delete(listener);
     }
 
+    /// Schedule a debounced write, resolves true when the task was executed.
+    /// A newer write with the same key replaces a pending task and resolves its caller with false.
     public async write(key: string, task: StorageWriteTaskVariant, debounceFor: number = 0): Promise<boolean> {
+        const result = await this.schedule(key, task, debounceFor);
+        return result.status === 'written';
+    }
+
+    /// Write without debouncing and wait until the content is persisted.
+    ///
+    /// The task replaces any pending task with the same key and is executed right away, chained after
+    /// running tasks of the same chain key. A paused writer or notebook resolves with `deferred` and
+    /// keeps the task pending, it is executed on resume.
+    public writeDurable(key: string, task: StorageWriteTaskVariant): Promise<StorageWriteResult> {
+        const result = this.schedule(key, task, 0);
+        const pending = this.pendingTasks.get(key)!;
+        clearTimeout(pending.timer);
+        if (this.isPausedKey(key)) {
+            pending.resolveLatestTask({ status: 'deferred' });
+            pending.resolveLatestTask = () => { };
+        } else {
+            void this.processTask(key);
+        }
+        return result;
+    }
+
+    /// Is a key held by a paused writer or a paused notebook?
+    protected isPausedKey(key: string): boolean {
+        return this.paused || [...this.pausedNotebooks].some(notebookId => storageWriteKeyBelongsToNotebook(key, notebookId));
+    }
+
+    protected schedule(key: string, task: StorageWriteTaskVariant, debounceFor: number): Promise<StorageWriteResult> {
         this.writeKeyGenerations.set(key, this.nextWriteGeneration++);
         // Is there a previous task with the same key?
         const prevTask = this.pendingTasks.get(key);
@@ -333,7 +455,7 @@ export class StorageWriter {
         let timer: ReturnType<typeof setTimeout>;
         if (prevTask) {
             // Tell the former write call that the task was not executed
-            prevTask.resolveLatestTask(false);
+            prevTask.resolveLatestTask({ status: 'superseded' });
             // Overwrite the task
             scheduledAt = prevTask.scheduledAt;
             debounceDurationMs = prevTask.debounceDurationMs;
@@ -342,8 +464,8 @@ export class StorageWriter {
             scheduledAt = new Date();
             timer = setTimeout(() => this.processTask(key), debounceFor);
         }
-        let resolveTask: ((ok: boolean) => void) | null = null;
-        let taskPromise = new Promise<boolean>(r => { resolveTask = r; });
+        let resolveTask: ((result: StorageWriteResult) => void) | null = null;
+        const result = new Promise<StorageWriteResult>(resolve => { resolveTask = resolve; });
 
         // Overwrite any previous task with the same key
         this.pendingTasks.set(key, {
@@ -354,7 +476,7 @@ export class StorageWriter {
             timer,
         });
         this.registerScheduledWrite(key);
-        return await taskPromise;
+        return result;
     }
 
     protected async processTask(key: string, force: boolean = false) {
@@ -363,35 +485,35 @@ export class StorageWriter {
             return;
         }
         // If a timer fires while paused, leave the task pending - it'll be re-armed on resume().
-        if (!force && (this.paused || [...this.pausedNotebooks].some(notebookId => storageWriteKeyBelongsToNotebook(key, notebookId)))) {
+        if (!force && this.isPausedKey(key)) {
             return;
         }
         this.pendingTasks.delete(key);
-        const notebookId = key.split('/')[0];
-        const previousExecution = this.notebookExecutions.get(notebookId);
+        const chainKey = storageWriteChainKey(key);
+        const previousExecution = this.chainExecutions.get(chainKey);
         const execution = (async () => {
             if (previousExecution) {
                 await previousExecution;
             }
             try {
                 await this.executeTask(key, task.latestTask);
-                task.resolveLatestTask(true);
+                task.resolveLatestTask({ status: 'written' });
             } catch (e: any) {
                 this.logger.error("executing write task failed", {
                     key: key,
                     error: stringifyError(e)
                 })
-                task.resolveLatestTask(false);
+                task.resolveLatestTask({ status: 'failed', error: e });
             }
         })();
-        this.notebookExecutions.set(notebookId, execution);
+        this.chainExecutions.set(chainKey, execution);
         this.inFlight.add(execution);
         try {
             await execution;
         } finally {
             this.inFlight.delete(execution);
-            if (this.notebookExecutions.get(notebookId) === execution) {
-                this.notebookExecutions.delete(notebookId);
+            if (this.chainExecutions.get(chainKey) === execution) {
+                this.chainExecutions.delete(chainKey);
             }
         }
     }
@@ -433,6 +555,14 @@ export class StorageWriter {
         this.updateStatistics(stats);
     }
 
+    /// The backend as notebook registry, connection writes need one
+    protected requireRegistry(): NotebookRegistryBackend {
+        if (!isNotebookRegistryBackend(this.backend)) {
+            throw new Error('the storage backend does not own a notebook registry');
+        }
+        return this.backend;
+    }
+
     protected async executeTask(key: string, task: StorageWriteTaskVariant) {
         switch (task.type) {
             case WRITE_NOTEBOOK_MANIFEST: {
@@ -442,12 +572,12 @@ export class StorageWriter {
                     notebookId,
                 }, LOG_CTX);
 
-                // Extract connection params
+                // Extract connection params, drafts are kept in the app manifest only
                 const persistedDatabases: Array<NotebookData['attachedDatabases'][number]> = [];
                 for (const database of databases) {
                     const params = database.params;
                     if (params == null) continue;
-                    persistedDatabases.push({ databaseId: database.databaseId, params, ...(database.paramsDraft == null ? {} : { paramsDraft: database.paramsDraft }) });
+                    persistedDatabases.push({ databaseId: database.databaseId, params });
                 }
                 const mainDatabase = persistedDatabases.find(database => database.databaseId === mainDatabaseId);
                 if (mainDatabase == null) {
@@ -640,6 +770,55 @@ export class StorageWriter {
                 this.registerWrite(`${notebookId}/dashql-notebook.json`, JSON.stringify(connData).length, notebookTimeAfter.getTime() - notebookTimeBefore.getTime());
                 this.completedFileContents.set(`${notebookId}/dashql-notebook.json`, JSON.stringify(connData, null, 2));
 
+                break;
+            }
+            case WRITE_CONNECTION_ENTRY: {
+                const entry = task.value;
+                const registry = this.requireRegistry();
+                const timeBefore = new Date();
+                await registry.updateConnections(connections => upsertConnectionEntry(connections, entry));
+                this.registerWrite(key, JSON.stringify(entry).length, new Date().getTime() - timeBefore.getTime());
+                break;
+            }
+            case DELETE_CONNECTION_ENTRY: {
+                const connectionId = task.value;
+                const registry = this.requireRegistry();
+                this.logger.info("Deleting connection", { key, connectionId }, LOG_CTX);
+                await registry.updateConnections(connections => {
+                    if (connections == null || !connections.some(e => e.id === connectionId)) return null;
+                    return connections.filter(e => e.id !== connectionId);
+                });
+                await registry.deleteConnectionFiles(connectionId);
+                break;
+            }
+            case WRITE_CONNECTION_FILE: {
+                const [connectionId, fileName, text] = task.value;
+                const registry = this.requireRegistry();
+                const timeBefore = new Date();
+                await registry.saveConnectionFile(connectionId, fileName, text);
+                const actualPath = `@${STORAGE_CONNECTIONS_FOLDER}/${connectionId}/${fileName}`;
+                this.registerWrite(actualPath, text.length, new Date().getTime() - timeBefore.getTime());
+                this.completedFileContents.set(actualPath, text);
+                break;
+            }
+            case PATCH_NOTEBOOK_CONNECTION: {
+                const [notebookId, connectionId, params, aliases] = task.value;
+                // The copy is only patched into an existing notebook file. A missing file must not be
+                // recreated, a moved native folder would otherwise silently come back as a new one.
+                let existing: NotebookData;
+                try {
+                    existing = await this.backend.loadNotebook(notebookId);
+                } catch (e: any) {
+                    throw new NotebookUnavailableError(notebookId, e);
+                }
+                const next = patchNotebookConnection(existing, connectionId, params, aliases);
+                if (next == null) break;
+                this.logger.info("Writing connection copy", { key, notebookId, connectionId }, LOG_CTX);
+                const timeBefore = new Date();
+                await this.backend.saveNotebookManifest(notebookId, next);
+                const actualPath = `${notebookId}/${STORAGE_NOTEBOOK_FILE}`;
+                this.registerWrite(actualPath, JSON.stringify(next).length, new Date().getTime() - timeBefore.getTime());
+                this.completedFileContents.set(actualPath, JSON.stringify(next, null, 2));
                 break;
             }
             case WRITE_SCRIPT: {

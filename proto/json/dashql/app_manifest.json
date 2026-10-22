@@ -15,11 +15,50 @@
     "appSettings": {
       "$ref": "#/definitions/AppSettings",
       "description": "Persisted app-level settings"
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ConnectionEntry"
+      },
+      "description": "The connections, the source of truth for the connection settings that notebooks replicate. Absent in manifests written before connections were global, an empty array means there are no connections."
     }
   },
   "required": ["notebooks"],
   "additionalProperties": false,
   "definitions": {
+    "ConnectionEntry": {
+      "type": "object",
+      "description": "A connection that notebooks reference by its id",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The connection identifier (UUID), notebooks reference the connection with it"
+        },
+        "params": {
+          "$ref": "connection.json#/definitions/ConnectionParams",
+          "description": "The saved connection parameters, every notebook referencing the connection stores a copy"
+        },
+        "paramsDraft": {
+          "$ref": "connection.json#/definitions/ConnectionParams",
+          "description": "Unsaved edits of the connection parameters, including incomplete or invalid settings. Never replicated into notebooks."
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Identifiers of connections that were consolidated into this one. Notebooks referencing an alias are resolved to this connection."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the connection was created"
+        }
+      },
+      "required": ["id", "params"],
+      "additionalProperties": false
+    },
     "NotebookEntry": {
       "type": "object",
       "description": "Manifest entry for a notebook",

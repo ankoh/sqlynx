@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connections/connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../connections/connector_info.js';
 import { NotebookSetupStatus } from '../../router/notebook_setup_status.js';
 import { SELECT_NOTEBOOK } from '../../router/router.js';
 import { NotebookWorkbenchSidebar, type NotebookWorkbenchSidebarDependencies } from './notebook_workbench_sidebar.js';
@@ -20,6 +20,8 @@ const state = {
     createConnectionStateFromParams: vi.fn(),
     deleteNotebook: vi.fn(),
     allocateDatabase: vi.fn(),
+    allocateConnection: vi.fn(),
+    attachConnection: vi.fn(),
     local: null as AttachedDatabaseState | null,
     overlayProps: null as { databaseId: string | null; headerTitle?: string; isOpen: boolean; onClose: () => void; onConnected?: (database: AttachedDatabaseState) => void } | null,
     shareProps: null as { isOpen: boolean; notebookId?: string } | null,
@@ -44,6 +46,8 @@ const dependencies = {
         attachedDatabasesBySignature: new Map(),
     }, state.dispatchDatabase],
     useAttachedDatabaseStateAllocator: () => state.allocateDatabase,
+    useConnectionAllocator: () => state.allocateConnection,
+    useAttachConnection: () => state.attachConnection,
     ConnectionSettingsOverlay: (props: typeof state.overlayProps) => {
         state.overlayProps = props;
         return props?.isOpen ? <button onClick={() => props.onConnected?.(state.local!)}>Complete setup</button> : null;
@@ -81,6 +85,16 @@ const dependencies = {
     createConnectionStateFromParams: (...args: unknown[]) => state.createConnectionStateFromParams(...args),
 } as unknown as NotebookWorkbenchSidebarDependencies;
 
+/// The catalog of a connection without relations
+const EMPTY_CATALOG = {
+    catalog: {
+        createSnapshot: () => ({
+            read: () => ({ catalogReader: { databasesLength: () => 0 } }),
+        }),
+    },
+    catalogUpdates: { currentFullRefresh: null, tasksRunning: new Map() },
+};
+
 describe('NotebookWorkbenchSidebar notebook creation', () => {
     let container: HTMLDivElement;
     let root: Root;
@@ -106,9 +120,13 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
         state.local = { databaseId: 'local-database' } as AttachedDatabaseState;
         state.local = {
             databaseId: 'local-database',
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
             details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } },
-        } as AttachedDatabaseState;
+            ...EMPTY_CATALOG,
+        } as unknown as AttachedDatabaseState;
         state.allocateDatabase.mockReset().mockReturnValue(state.local);
+        state.allocateConnection.mockReset();
+        state.attachConnection.mockReset();
         vi.spyOn(crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000001');
         act(() => root.render(<NotebookWorkbenchSidebar notebookScripts={{
             notebookId: 'current-notebook',
@@ -128,7 +146,7 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
         });
     }
 
-    it('shows notebook and attached database counts', () => {
+    it('shows notebook and connection counts', () => {
         const main = {
             ...state.local!,
             connectorInfo: { icons: { colored: 'database' } },
@@ -159,7 +177,7 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
         } as any} dependencies={dependencies} />));
 
         expect(container.querySelector('[aria-label="1 notebook"]')?.textContent).toBe('1');
-        expect(container.querySelector('[aria-label="2 attached databases"]')?.textContent).toBe('2');
+        expect(container.querySelector('[aria-label="2 connections"]')?.textContent).toBe('2');
     });
 
     it('keeps ordinary settings open for an online database without a completion callback', () => {
@@ -239,12 +257,13 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
         const database = {
             databaseId: 'salesforce-database',
             connectionHealth,
-            connectorInfo: { icons: { colored: 'salesforce' } },
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD],
             details: {
                 type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                 value: { proto: { setupParams: {} } },
             },
-        } as AttachedDatabaseState;
+            ...EMPTY_CATALOG,
+        } as unknown as AttachedDatabaseState;
         state.attachedDatabases.set(database.databaseId, database);
         state.attachedDatabasesByNotebook.set('salesforce-notebook', {
             mainDatabaseId: database.databaseId,
@@ -329,5 +348,33 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
             fileName: 'Current notebook',
         });
         expect(document.querySelector('[data-testid="file-save-overlay"]')).not.toBeNull();
+    });
+
+    it('lists the connections of other notebooks and creates notebooks with them', () => {
+        const other = { ...state.local!, databaseId: 'trino-database', connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
+            details: { type: TRINO_CONNECTOR, value: { proto: { setupParams: {} } } } } as unknown as AttachedDatabaseState;
+        state.attachedDatabases.set(state.local!.databaseId, state.local!);
+        state.attachedDatabases.set(other.databaseId, other);
+        state.attachedDatabasesByNotebook.set('current-notebook', { mainDatabaseId: state.local!.databaseId, attachedDatabaseIds: [] });
+        state.attachedDatabasesByNotebook.set('trino-notebook', { mainDatabaseId: other.databaseId, attachedDatabaseIds: [] });
+        state.attachedDatabasesByNotebook.set('shell', { mainDatabaseId: 'shell', attachedDatabaseIds: [] });
+        state.attachedDatabases.set('shell', { ...other, databaseId: 'shell' } as AttachedDatabaseState);
+        for (const notebookId of ['current-notebook', 'trino-notebook']) {
+            state.notebookScriptsMap.set(notebookId, { notebookId, name: notebookId, notebookMetadata: {} });
+        }
+        state.notebookAttachedDatabases = { main: state.local!, attached: [] };
+        act(() => root.render(<NotebookWorkbenchSidebar notebookScripts={{
+            notebookId: 'current-notebook', instance: {},
+        } as any} dependencies={dependencies} />));
+
+        // The shell connection is not referenced by a notebook of the registry
+        expect(container.querySelector('[aria-label="2 connections"]')?.textContent).toBe('2');
+        click('Create notebook');
+        const existing = Array.from(document.querySelectorAll('button')).find(button => button.textContent?.includes('Trino'))!;
+        act(() => existing.click());
+        expect(state.allocateDatabase).not.toHaveBeenCalled();
+        expect(state.attachConnection).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'trino-database');
+        expect(state.setupNotebookScripts).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', other);
+        expect(state.navigate).toHaveBeenCalledWith({ type: SELECT_NOTEBOOK, value: '00000000-0000-4000-8000-000000000001' });
     });
 });

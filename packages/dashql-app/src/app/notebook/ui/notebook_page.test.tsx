@@ -15,12 +15,10 @@ const state = {
 
 const dependencies = {
     useNotebookViewMode: () => ({ mode: state.mode }),
-    useNotebookScriptsRegistry: () => [{ notebookScriptsByConnection: new Map() }],
     useNotebookScripts: () => [{ notebookId: 'notebook', name: 'Notebook' }, vi.fn()],
     useAttachedDatabaseState: () => [null],
     useLogger: () => ({ warn: vi.fn() }),
     useRouteContext: () => ({ notebookId: 'notebook' }),
-    useRouterNavigate: () => vi.fn(),
     NotebookFeedPage: ({ active }: { active: boolean }) => {
         React.useEffect(() => {
             state.feedMounts += 1;

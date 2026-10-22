@@ -4,6 +4,7 @@ import { TracedLogger } from '../../platform/logger/logger.js';
 import { StorageReader } from '../notebook/persistence/storage_provider.js';
 import { AppLoadingProgress, AppLoadingProgressConsumer } from './app_loading_progress.js';
 import { SetAttachedDatabaseRegistryAction } from '../notebook/connections/attached_database_registry.js';
+import type { AttachedDatabaseState } from '../notebook/connections/attached_database_state.js';
 import { Dispatch } from '../../utils/variant.js';
 import { SetNotebookScriptsRegistryAction } from '../notebook/scripts/notebook_scripts_registry.js';
 import { ProgressCounter } from '../../utils/progress.js';
@@ -22,6 +23,8 @@ export interface AppLoadingResult {
     invalidNotebooks: Map<string, InvalidNotebook>;
     /// Valid restored notebooks in persisted manifest order.
     restoredNotebookIds: string[];
+    /// The restored connections
+    restoredConnections: Map<string, AttachedDatabaseState>;
 }
 
 export function selectStartupNotebook(
@@ -95,5 +98,6 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
     return {
         invalidNotebooks: state.invalidNotebooks,
         restoredNotebookIds: [...state.notebookScripts.keys()],
+        restoredConnections: state.connectionStates,
     };
 }

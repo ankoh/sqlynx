@@ -236,6 +236,7 @@ export const HEALTH_CHECK_SUCCEEDED = Symbol('HEALTH_CHECK_SUCCEEDED');
 export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
 export const SET_CONNECTION_DRAFT = Symbol('SET_CONNECTION_DRAFT');
 export const DISCARD_CONNECTION_DRAFT = Symbol('DISCARD_CONNECTION_DRAFT');
+export const COMMIT_CONNECTION_PARAMS = Symbol('COMMIT_CONNECTION_PARAMS');
 
 export type CatalogAction =
     | VariantKind<typeof SET_CATALOG_SCRIPT, dashql.DashQLScript>
@@ -252,6 +253,7 @@ export type CatalogAction =
 export type AttachedDatabaseAction =
     | VariantKind<typeof SET_CONNECTION_DRAFT, ConnectionParams>
     | VariantKind<typeof DISCARD_CONNECTION_DRAFT, null>
+    | VariantKind<typeof COMMIT_CONNECTION_PARAMS, ConnectionParams>
     | VariantKind<typeof DELETE_ATTACHED_DATABASE, null>
     | VariantKind<typeof RESET_ATTACHED_DATABASE, null>
     | VariantKind<typeof SWITCH_CONNECTOR_TYPE, ConnectorType>
@@ -270,6 +272,15 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
             const paramsDraft = structuredClone(action.value);
             if (connectionParamsEqual(state.paramsDraft, paramsDraft)) return state;
             return { ...state, paramsDraft };
+        }
+        // COMMIT_CONNECTION_PARAMS makes saved params the params of the connection.
+        // The draft is cleared unless it changed while saving.
+        case COMMIT_CONNECTION_PARAMS: {
+            const params = connectionParamsWithoutDraftRows(structuredClone(action.value));
+            const draftSaved = state.paramsDraft == null
+                || connectionParamsEqual(connectionParamsWithoutDraftRows(state.paramsDraft), params);
+            if (connectionParamsEqual(state.params, params) && (state.paramsDraft == null || !draftSaved)) return state;
+            return { ...state, params, paramsDraft: draftSaved ? undefined : state.paramsDraft };
         }
         case DISCARD_CONNECTION_DRAFT: {
             if (state.connectionHealth === ConnectionHealth.CONNECTING) return state;

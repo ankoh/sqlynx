@@ -19,3 +19,27 @@
 .overlay_container :global(.split_body) {
     overflow-y: auto;
 }
+
+.footer {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px 8px 20px;
+    border-top: 1px solid var(--border_color_primary);
+    font-size: 0.8rem;
+}
+
+.footer_notice {
+    color: var(--base_color_neutral_6);
+}
+
+.footer_error {
+    color: var(--base_color_red_6);
+}
+
+.footer_list {
+    margin: 4px 0 0 0;
+    padding-left: 16px;
+}

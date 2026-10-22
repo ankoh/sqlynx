@@ -1,0 +1,24 @@
+.connection {
+    margin: 0 0 12px;
+    padding: 8px 12px 10px;
+    border: 1px solid var(--border_color_primary);
+    border-radius: var(--border_radius);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.connection_label {
+    padding: 0 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}

@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { NotebookScriptsRegistry, removeNotebookScriptsFromRegistry } from './notebook_scripts_registry.js';
+import { NotebookScriptsRegistry, addNotebookScriptsForConnection, removeNotebookScriptsFromRegistry } from './notebook_scripts_registry.js';
 import { NotebookScripts } from './notebook_scripts.js';
 import { ConnectorType } from '../connections/connector_info.js';
 
 // removeNotebookScriptsFromRegistry only reads notebookScriptsMap and entry.connectorInfo.connectorType, so a
 // tiny stand-in NotebookScripts is enough — no Wasm needed.
-function scripts(notebookId: string, connectorType: ConnectorType): NotebookScripts {
-    return { notebookId, databaseId: `connection-${notebookId}`, connectorInfo: { connectorType } } as unknown as NotebookScripts;
+function scripts(notebookId: string, connectorType: ConnectorType, databaseId: string = `connection-${notebookId}`): NotebookScripts {
+    return { notebookId, databaseId, connectorInfo: { connectorType } } as unknown as NotebookScripts;
 }
 
 function registry(entries: Array<[string, ConnectorType]>): NotebookScriptsRegistry {
@@ -17,7 +17,7 @@ function registry(entries: Array<[string, ConnectorType]>): NotebookScriptsRegis
     };
     for (const [notebookId, connectorType] of entries) {
         reg.notebookScriptsMap.set(notebookId, scripts(notebookId, connectorType));
-        reg.notebookScriptsByConnection.set(`connection-${notebookId}`, notebookId);
+        addNotebookScriptsForConnection(reg, `connection-${notebookId}`, notebookId);
         reg.notebookScriptsByConnectionType[connectorType].push(notebookId);
     }
     return reg;
@@ -39,7 +39,7 @@ describe('removeNotebookScriptsFromRegistry', () => {
 
         expect(next.notebookScriptsMap.has('a')).toBe(false);
         expect(next.notebookScriptsMap.has('b')).toBe(true);
-        expect(next.notebookScriptsByConnection.get('connection-b')).toBe('b');
+        expect(next.notebookScriptsByConnection.get('connection-b')).toEqual(['b']);
         expect(next.notebookScriptsByConnectionType[ConnectorType.HYPER]).toEqual(['b']);
     });
 
@@ -57,5 +57,19 @@ describe('removeNotebookScriptsFromRegistry', () => {
 
         expect(next).toBe(reg);
         expect(next.notebookScriptsMap.has('a')).toBe(true);
+    });
+
+    it('keeps the other notebooks of a shared connection', () => {
+        const reg = registry([]);
+        for (const notebookId of ['a', 'b']) {
+            reg.notebookScriptsMap.set(notebookId, scripts(notebookId, ConnectorType.TRINO, 'shared'));
+            addNotebookScriptsForConnection(reg, 'shared', notebookId);
+            reg.notebookScriptsByConnectionType[ConnectorType.TRINO].push(notebookId);
+        }
+        expect(reg.notebookScriptsByConnection.get('shared')).toEqual(['a', 'b']);
+        const next = removeNotebookScriptsFromRegistry(reg, 'a');
+        expect(next.notebookScriptsByConnection.get('shared')).toEqual(['b']);
+        const last = removeNotebookScriptsFromRegistry(next, 'b');
+        expect(last.notebookScriptsByConnection.has('shared')).toBe(false);
     });
 });

@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { AppLoadingStatus } from '../router/app_loading_status.js';
 import { OPEN_LINK_NOTEBOOK, SELECT_NOTEBOOK, useRouteContext, useRouterNavigate } from '../router/router.js';
-import { resolveNotebookExecutionDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator } from '../notebook/connections/attached_database_registry.js';
+import { resolveNotebookExecutionDatabase, useAttachConnection, useAttachedDatabaseDispatch, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator } from '../notebook/connections/attached_database_registry.js';
+import { isHyperWasmAttachedDatabase } from '../notebook/ui/attached_database_label.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
@@ -69,6 +70,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const setupNotebookScripts = useNotebookScriptsSetup();
     const [storageReader, storageWriter] = useStorage();
     const allocateAttachedDatabase = useAttachedDatabaseStateAllocator();
+    const attachConnection = useAttachConnection();
     const [connReg, setConnReg] = useAttachedDatabaseRegistry();
     const dispatchDatabase = useAttachedDatabaseDispatch();
     const setNotebookScriptsRegistry = useNotebookScriptsRegistrySetter();
@@ -216,6 +218,8 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
             ? notebookImport.importPortableBundleWithChoice(result.bundle, 'create-new')
             : notebookImport.importPortableBundleWithChoice(result.bundle, choice);
         void importPromise.then(notebookId => {
+            // The user cancelled the import while choosing connections
+            if (notebookId == null) return;
             logger.info('Imported shared notebook', {
                 sourceNotebookId: result.bundle.notebook.notebookId,
                 notebookId,
@@ -345,7 +349,10 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
                 let notebookId = selectStartupNotebook(loaded.restoredNotebookIds);
                 if (notebookId == null) {
                     notebookId = crypto.randomUUID();
-                    const database = allocateAttachedDatabase(
+                    // The embedded engine is a single database, a known embedded connection is reused
+                    const embedded = [...loaded.restoredConnections.values()].find(isHyperWasmAttachedDatabase);
+                    if (embedded != null) attachConnection(notebookId, embedded.databaseId);
+                    const database = embedded ?? allocateAttachedDatabase(
                         notebookId,
                         { ...createDefaultHyperWasmAttachedDatabaseState(core, connReg.attachedDatabasesBySignature), active: true },
                     );

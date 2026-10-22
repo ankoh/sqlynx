@@ -234,7 +234,7 @@ export async function runNotebookExecution(args: {
                 query: String(node.sql ?? ''), cacheable: false, throwOnError: true, abortSignal: signal,
                 analyzeResults: output, publishResults: output, replaceComputationId: output ? previousQueryId : undefined,
                 projection: output ? projectionForVisualizeQuery(visualization) : undefined, onResultsReady: release,
-                metadata: { queryType: QueryType.USER_PROVIDED, title: null, description: null, issuer: null, userProvided: true },
+                metadata: { queryType: QueryType.USER_PROVIDED, title: null, description: null, issuer: null, userProvided: true, notebookId },
             });
             activeExecutions.set(queryId, execution);
             args.modifyNotebookScripts({ type: REGISTER_QUERY, value: [script.scriptKey, queryId] });

@@ -26,6 +26,11 @@ import { NotebookTestBackend, TEST_DATABASE_ID, TEST_NOTEBOOK_ID } from '../pers
 import type { StorageWriter } from '../persistence/storage_writer.js';
 import type { Logger } from '../../../platform/logger/logger.js';
 
+/// The draft of the test connection in the app manifest
+function globalDraft(backend: NotebookTestBackend): ConnectionParams | undefined {
+    return backend.connections?.find(entry => entry.id === TEST_DATABASE_ID)?.paramsDraft;
+}
+
 function database(type: ConnectorType): AttachedDatabaseState {
     const connectorInfo = CONNECTOR_INFOS[type];
     const params = createDefaultConnectionParamsForConnector(connectorInfo);
@@ -138,7 +143,7 @@ describe('durable connection drafts', () => {
         expect(state.active).toBe(true);
     });
 
-    it.each([false, true])('saves invalid edits with active=%s and does not resurrect a discarded draft', async active => {
+    it.each([false, true])('saves invalid edits with active=%s into the app manifest and does not resurrect a discarded draft', async active => {
         const backend = new NotebookTestBackend();
         let setRegistry!: ReturnType<typeof useAttachedDatabaseRegistry>[1];
         let edit!: React.Dispatch<React.SetStateAction<string>>;
@@ -167,15 +172,19 @@ describe('durable connection drafts', () => {
             expect(current.active).toBe(active);
             expect(value).toBe('not a URL');
             await writer.flush();
-            expect((await backend.loadNotebook(TEST_NOTEBOOK_ID)).mainDatabase.paramsDraft).toEqual(edited(current.params, 'not a URL'));
+            expect(globalDraft(backend)).toEqual(edited(current.params, 'not a URL'));
+            // Drafts are never replicated into the notebook
+            expect(backend.notebooks.has(TEST_NOTEBOOK_ID)).toBe(false);
             await act(async () => edit('newer unfinished value'));
             await act(async () => dispatch({ type: DISCARD_CONNECTION_DRAFT, value: null }));
             await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
             expect(value).toBe('');
             await writer.flush();
-            expect((await backend.loadNotebook(TEST_NOTEBOOK_ID)).mainDatabase.paramsDraft).toBeUndefined();
+            expect(globalDraft(backend)).toBeUndefined();
+            expect(backend.connections?.map(entry => entry.id)).toEqual([TEST_DATABASE_ID]);
             await act(async () => { await Promise.resolve(); });
             expect(writer.getPendingKeysForNotebook(TEST_NOTEBOOK_ID)).toEqual([]);
+            expect(writer.pendingTasks.size).toBe(0);
             expect(current.connectionHealth).toBe(ConnectionHealth.NOT_STARTED);
         } finally {
             act(() => root.unmount());
@@ -212,12 +221,12 @@ describe('durable connection drafts', () => {
             expect(form.gRPCMetadata).toEqual(rows);
             expect(form.endpoint).toBe('invalid');
             await writer.flush();
-            const persisted = JSON.parse(JSON.stringify(await backend.loadNotebook(TEST_NOTEBOOK_ID)));
-            expect(buildHyperConnectionPageState(persisted.mainDatabase.paramsDraft.hyper).gRPCMetadata).toEqual(rows);
-            expect(buildHyperConnectionPageState(persisted.mainDatabase.paramsDraft.hyper).endpoint).toBe('invalid');
+            const persisted = JSON.parse(JSON.stringify(globalDraft(backend)));
+            expect(buildHyperConnectionPageState(persisted.hyper).gRPCMetadata).toEqual(rows);
+            expect(buildHyperConnectionPageState(persisted.hyper).endpoint).toBe('invalid');
             await act(async () => setRegistry(reg => {
                 const current = reg.attachedDatabases.get(TEST_DATABASE_ID)!;
-                reg.attachedDatabases.set(TEST_DATABASE_ID, { ...current, paramsDraft: persisted.mainDatabase.paramsDraft });
+                reg.attachedDatabases.set(TEST_DATABASE_ID, { ...current, paramsDraft: persisted });
                 return { ...reg };
             }));
             expect(form.gRPCMetadata).toEqual(rows);
@@ -227,7 +236,7 @@ describe('durable connection drafts', () => {
             expect(form.gRPCMetadata).toEqual([]);
             expect(form.endpoint).toBe('');
             await writer.flush();
-            expect((await backend.loadNotebook(TEST_NOTEBOOK_ID)).mainDatabase.paramsDraft).toBeUndefined();
+            expect(globalDraft(backend)).toBeUndefined();
         } finally {
             act(() => root.unmount());
         }

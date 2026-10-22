@@ -66,19 +66,19 @@
   "definitions": {
     "AttachedDatabase": {
       "type": "object",
-      "description": "A persisted database attached to the notebook",
+      "description": "A connection referenced by the notebook",
       "properties": {
         "databaseId": {
           "type": "string",
-          "description": "Stable database/connection identifier (UUID)"
+          "description": "The identifier (UUID) of the referenced connection in the connections of the app manifest"
         },
         "params": {
           "$ref": "connection.json#/definitions/ConnectionParams",
-          "description": "Last successfully connected parameters, or initial defaults before the first connection"
+          "description": "A copy of the saved connection parameters. The app manifest is the source of truth, the copy keeps the notebook folder self-contained."
         },
         "paramsDraft": {
           "$ref": "connection.json#/definitions/ConnectionParams",
-          "description": "Optional local editable parameters, including incomplete or invalid settings. Not shared or exported."
+          "description": "Legacy unsaved edits, only read when migrating to global connections. Drafts are kept in the app manifest."
         }
       },
       "required": ["databaseId", "params"],

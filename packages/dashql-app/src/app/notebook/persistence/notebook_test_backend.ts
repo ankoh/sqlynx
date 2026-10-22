@@ -1,11 +1,13 @@
 import type {
     AppSettings,
+    ConnectionEntry,
     DataFile,
     CachedQueryResult,
     NotebookData,
     NotebookEntry,
     ScriptData,
     StorageBackend,
+    StorageManifest,
 } from './storage_backend.js';
 import { StorageBackendType, validateDataFileName } from './storage_backend.js';
 import type { CacheFileStat } from './query_result_cache_eviction.js';
@@ -19,6 +21,10 @@ export class NotebookTestBackend implements StorageBackend {
     readonly data = new Map<string, Map<string, Uint8Array>>();
     readonly calls: string[] = [];
     appSettings: AppSettings | null = null;
+    /// The connections of the manifest, undefined before the connections were migrated
+    connections: ConnectionEntry[] | undefined = undefined;
+    /// The files of the connections, keyed by `<connectionId>/<fileName>`
+    readonly connectionFiles = new Map<string, string>();
 
     constructor(private readonly type = StorageBackendType.OPFS) {}
 
@@ -26,6 +32,32 @@ export class NotebookTestBackend implements StorageBackend {
     async listNotebooks(): Promise<NotebookEntry[]> { return [...this.notebooks.keys()].map(path => ({ path })); }
     async loadAppSettings(): Promise<AppSettings | null> { return this.appSettings; }
     async saveAppSettings(settings: AppSettings): Promise<void> { this.appSettings = settings; }
+    async loadManifest(): Promise<StorageManifest> {
+        return {
+            notebooks: await this.listNotebooks(),
+            ...(this.appSettings ? { appSettings: this.appSettings } : {}),
+            ...(this.connections ? { connections: structuredClone(this.connections) } : {}),
+        };
+    }
+    async updateConnections(update: (connections: ConnectionEntry[] | undefined) => ConnectionEntry[] | null): Promise<void> {
+        const next = update(this.connections ? structuredClone(this.connections) : undefined);
+        if (next != null) {
+            this.calls.push('connections');
+            this.connections = next;
+        }
+    }
+    async loadConnectionFile(connectionId: string, fileName: string): Promise<string | null> {
+        return this.connectionFiles.get(`${connectionId}/${fileName}`) ?? null;
+    }
+    async saveConnectionFile(connectionId: string, fileName: string, text: string): Promise<void> {
+        this.calls.push(`connection-file:${connectionId}/${fileName}`);
+        this.connectionFiles.set(`${connectionId}/${fileName}`, text);
+    }
+    async deleteConnectionFiles(connectionId: string): Promise<void> {
+        for (const key of [...this.connectionFiles.keys()]) {
+            if (key.startsWith(`${connectionId}/`)) this.connectionFiles.delete(key);
+        }
+    }
     async loadNotebook(notebookId: string): Promise<NotebookData> {
         const notebook = this.notebooks.get(notebookId);
         if (!notebook) throw new Error(`No notebook ${notebookId}`);

@@ -8,6 +8,8 @@ import {
     type NotebookEntry,
     type AppSettings,
     type CachedQueryResult,
+    type ConnectionEntry,
+    type StorageManifest,
     StorageBackendType,
     STORAGE_MANIFEST_FILE,
     STORAGE_NOTEBOOK_FILE,
@@ -140,6 +142,21 @@ export class CompositeStorageBackend implements NotebookRegistryBackend {
     }
     saveAppSettings(settings: AppSettings): Promise<void> {
         return this.opfs.saveAppSettings(settings);
+    }
+    loadManifest(): Promise<StorageManifest> {
+        return this.opfs.loadManifest();
+    }
+    updateConnections(update: (connections: ConnectionEntry[] | undefined) => ConnectionEntry[] | null): Promise<void> {
+        return this.opfs.updateConnections(update);
+    }
+    loadConnectionFile(connectionId: string, fileName: string): Promise<string | null> {
+        return this.opfs.loadConnectionFile(connectionId, fileName);
+    }
+    saveConnectionFile(connectionId: string, fileName: string, text: string): Promise<void> {
+        return this.opfs.saveConnectionFile(connectionId, fileName, text);
+    }
+    deleteConnectionFiles(connectionId: string): Promise<void> {
+        return this.opfs.deleteConnectionFiles(connectionId);
     }
 
     async upsertNotebookEntry(entry: NotebookEntry): Promise<void> {

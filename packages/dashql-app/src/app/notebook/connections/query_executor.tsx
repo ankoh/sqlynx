@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as React from 'react';
 
-import { findNotebookForAttachedDatabase, resolveNotebookExecutionDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
+import { resolveNotebookExecutionDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
 import { APPLY_CATALOG_CHANGES } from './attached_database_state.js';
 import {
     createQueryResponseStreamMetrics,
@@ -134,10 +134,10 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             traced.error("Connection not configured", { connectionId, "query": queryId.toString() }, LOG_CTX);
             throw new Error(`Couldn't find a connection with id ${connectionId}`);
         }
-        const notebookId = findNotebookForAttachedDatabase(connStore.current, connectionId);
-        if (notebookId == null) {
-            throw new Error(`Couldn't find a notebook for database ${connectionId}`);
-        }
+        // Results are cached per notebook, queries without a notebook are never cached
+        const queryNotebookId = args.metadata.notebookId ?? null;
+        // Log contexts carry strings
+        const notebookId = queryNotebookId ?? '';
         const queryTracker = createConnectionQueryExecutionTracker(connectionId, connDispatch);
         const execution = await executeTrackedQuery({
             query: args.query,
@@ -196,9 +196,9 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 if (args.cacheable && args.cacheSignature) {
                     cacheHash = await computeQueryCacheKeyForConnection(conn.details, args.cacheSignature);
                 }
-                const resultCache = cacheHash == null
+                const resultCache = cacheHash == null || queryNotebookId == null
                     ? null
-                    : createNotebookQueryResultCache(storageReader.backend, notebookId);
+                    : createNotebookQueryResultCache(storageReader.backend, queryNotebookId);
 
                 if (args.scriptExecution != null) {
                     try {
