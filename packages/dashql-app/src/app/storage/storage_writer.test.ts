@@ -21,7 +21,7 @@ import {
     storageWriteChainKey,
 } from './storage_writer.js';
 import { ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../connections/connector_info.js';
-import { ConnectionHealth, ConnectionStatus, DISCARD_CONNECTION_DRAFT, SET_CONNECTION_DRAFT, reduceAttachedDatabaseState, type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { ConnectionHealth, ConnectionStatus, DISCARD_CONNECTION_DRAFT, SET_CONNECTION_DRAFT, reduceConnectionState, type ConnectionState } from '../connections/connection_state.js';
 import { CONNECTOR_INFOS } from '../connections/connector_info.js';
 import { testSession, TEST_DATABASE_ID, TEST_SESSION_ID } from './session_test_backend.js';
 
@@ -62,13 +62,13 @@ describe('V2 storage writer flat mutations', () => {
         const params = { trino: { endpoint: 'committed', catalogName: '', auth: { authType: 'AUTH_BASIC' as const } } };
         const paramsDraft = { trino: { ...params.trino, endpoint: 'unfinished' } };
         let state = {
-            databaseId: TEST_DATABASE_ID, params,
+            connectionId: TEST_DATABASE_ID, params,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
             connectionHealth: ConnectionHealth.NOT_STARTED, connectionStatus: ConnectionStatus.NOT_STARTED,
             details: { type: TRINO_CONNECTOR, value: { proto: { setupParams: params.trino, setupTimings: {} } } },
-        } as AttachedDatabaseState;
+        } as ConnectionState;
         for (const discard of [false, true]) {
-            state = reduceAttachedDatabaseState(state, discard
+            state = reduceConnectionState(state, discard
                 ? { type: DISCARD_CONNECTION_DRAFT, value: null }
                 : { type: SET_CONNECTION_DRAFT, value: paramsDraft }, writer, logger);
             await writer.write(groupConnectionEntryWrites(TEST_DATABASE_ID), {
@@ -85,14 +85,14 @@ describe('V2 storage writer flat mutations', () => {
         const sessionId = '11111111-2222-4333-8444-555555555555';
         const databaseId = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
         const state = {
-            databaseId,
+            connectionId: databaseId,
             params: { trino: { endpoint: 'committed' } },
             paramsDraft: { trino: { endpoint: '' } },
             details: { type: TRINO_CONNECTOR, value: { proto: {
                 setupParams: { endpoint: 'attempted' },
                 oauthState: { accessToken: { accessToken: 'runtime-secret' } },
             } } },
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
         await writer.write(sessionId, { type: WRITE_SESSION_MANIFEST, value: [sessionId, databaseId, [state]] });
         const saved = await backend.loadSession(sessionId);
         expect(saved.mainDatabase).toEqual({ databaseId, params: state.params });
@@ -103,13 +103,13 @@ describe('V2 storage writer flat mutations', () => {
         const writer = new StorageWriter(new NullLogger(), backend);
         const sessionId = '11111111-2222-4333-8444-555555555555';
         const state = (databaseId: string, connectorType: ConnectorType, setupParams: object) => ({
-            databaseId,
+            connectionId: databaseId,
             connectorInfo: { connectorType },
             params: connectorType === ConnectorType.HYPER ? { hyper: setupParams } : { trino: setupParams },
             details: connectorType === ConnectorType.HYPER
                 ? { type: HYPER_CONNECTOR, value: { proto: { setupParams } } }
                 : { type: TRINO_CONNECTOR, value: { proto: { setupParams } } },
-        }) as unknown as AttachedDatabaseState;
+        }) as unknown as ConnectionState;
 
         await writer.write(sessionId, {
             type: WRITE_SESSION_MANIFEST,

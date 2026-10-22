@@ -3,8 +3,8 @@ import * as dashql from '@ankoh/dashql-core';
 
 import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
-import { DynamicAttachedDatabaseDispatch } from "./attached_database_registry.js";
-import { CATALOG_UPDATE_SCHEMA_SCRIPT, CATALOG_UPDATE_REGISTER_QUERY } from "./attached_database_state.js";
+import { DynamicConnectionDispatch } from "./connection_registry.js";
+import { CATALOG_UPDATE_SCHEMA_SCRIPT, CATALOG_UPDATE_REGISTER_QUERY } from "./connection_state.js";
 import { QueryType } from "./query_execution_state.js";
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from "./catalog_update_state.js";
 import { generateSchemaSQL, generateCatalogScriptHeader, CatalogSource, type ColumnMetadata } from './catalog_sql_generator.js';
@@ -93,7 +93,7 @@ function generateCatalogSQLFromInformationSchema(result: InformationSchemaColumn
     return sqlStatements.join('\n\n');
 }
 
-export async function queryInformationSchema(connectionId: string, connectionDispatch: DynamicAttachedDatabaseDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor, abortSignal?: AbortSignal): Promise<InformationSchemaColumnsTable | null> {
+export async function queryInformationSchema(connectionId: string, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor, abortSignal?: AbortSignal): Promise<InformationSchemaColumnsTable | null> {
     const query = `
         SELECT
             table_catalog,
@@ -132,7 +132,7 @@ export async function queryInformationSchema(connectionId: string, connectionDis
 
 export async function updateInformationSchemaCatalog(
     connectionId: string,
-    connectionDispatch: DynamicAttachedDatabaseDispatch,
+    connectionDispatch: DynamicConnectionDispatch,
     updateId: number,
     catalogName: string,
     schemaNames: string[],

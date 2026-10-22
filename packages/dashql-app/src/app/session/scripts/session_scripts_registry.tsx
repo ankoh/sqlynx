@@ -141,10 +141,10 @@ export function removeSessionScriptsFromRegistry(reg: SessionScriptsRegistry, se
 /// Session scripts share the connection's catalog by reference (see session_scripts_setup) and own every
 /// editor session they create. destroySessionScripts() drops those editor sessions from the shared catalog and then frees
 /// them, so it MUST run while that catalog is still alive, i.e.
-/// *before* the connection is deleted (DELETE_ATTACHED_DATABASE destroys the catalog). We therefore tear
+/// *before* the connection is deleted (DELETE_CONNECTION destroys the catalog). We therefore tear
 /// the Wasm down synchronously here, in the event handler, and keep the registry-map removal a
 /// pure updater (safe to run more than once). Callers must invoke this before dispatching
-/// DELETE_ATTACHED_DATABASE for the same session.
+/// DELETE_CONNECTION for the same session.
 export function useSessionScriptsDeletion(): (sessionId: string) => void {
     const reg = React.useContext(SESSION_SCRIPTS_REGISTRY_CTX)!;
     const setReg = React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!;

@@ -3,8 +3,8 @@ import * as dashql from '@ankoh/dashql-core';
 
 import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
-import { DynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
-import { CATALOG_UPDATE_SCHEMA_SCRIPT, CATALOG_UPDATE_REGISTER_QUERY } from "./attached_database_state.js";
+import { DynamicConnectionDispatch } from './connection_registry.js';
+import { CATALOG_UPDATE_SCHEMA_SCRIPT, CATALOG_UPDATE_REGISTER_QUERY } from "./connection_state.js";
 import { QueryType } from './query_execution_state.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from "./catalog_update_state.js";
 import { generateSchemaSQL, generateCatalogScriptHeader, CatalogSource, quoteIdentifier, type ColumnMetadata } from './catalog_sql_generator.js';
@@ -91,7 +91,7 @@ export function generateCatalogSQLFromPgAttribute(result: PgAttributeColumnsTabl
 
 export async function queryPgAttribute(
     connectionId: string,
-    connectionDispatch: DynamicAttachedDatabaseDispatch,
+    connectionDispatch: DynamicConnectionDispatch,
     updateId: number,
     databaseName: string,
     schemaNames: string[],
@@ -163,7 +163,7 @@ export async function queryPgAttribute(
 export async function updatePgSchemaScript(
     logger: LoggerLike,
     connectionId: string,
-    connectionDispatch: DynamicAttachedDatabaseDispatch,
+    connectionDispatch: DynamicConnectionDispatch,
     updateId: number,
     databaseName: string,
     schemaNames: string[],
@@ -202,7 +202,7 @@ export async function updatePgSchemaScript(
 export async function updatePgCatalog(
     logger: LoggerLike,
     connectionId: string,
-    connectionDispatch: DynamicAttachedDatabaseDispatch,
+    connectionDispatch: DynamicConnectionDispatch,
     updateId: number,
     databaseName: string,
     schemaNames: string[],

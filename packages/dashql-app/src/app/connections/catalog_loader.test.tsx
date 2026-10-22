@@ -4,8 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CatalogLoaderProvider, useCatalogLoaderQueue, type CatalogLoaderDependencies } from './catalog_loader.js';
-import { type AttachedDatabaseRegistry, type DynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
-import { CATALOG_UPDATE_CANCELLED, CATALOG_UPDATE_FAILED, CATALOG_UPDATE_SUCCEEDED, type AttachedDatabaseState, type CatalogAction } from './attached_database_state.js';
+import { type ConnectionRegistry, type DynamicConnectionDispatch } from './connection_registry.js';
+import { CATALOG_UPDATE_CANCELLED, CATALOG_UPDATE_FAILED, CATALOG_UPDATE_SUCCEEDED, type ConnectionState, type CatalogAction } from './connection_state.js';
 import { reduceCatalogAction } from './catalog_update_state.js';
 import { CatalogResolver, HYPER_CONNECTOR } from './connector_info.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
@@ -16,12 +16,12 @@ vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 describe('CatalogLoaderProvider queue', () => {
     let container: HTMLDivElement;
     let root: Root;
-    let registry: AttachedDatabaseRegistry;
+    let registry: ConnectionRegistry;
     let enqueue: ReturnType<typeof useCatalogLoaderQueue>;
     let dependencies: CatalogLoaderDependencies;
     let providerRenders: number;
     const updates: Array<{ signal: AbortSignal; resolve: () => void; reject: (error: Error) => void }> = [];
-    const dispatch = vi.fn<DynamicAttachedDatabaseDispatch>();
+    const dispatch = vi.fn<DynamicConnectionDispatch>();
     const scriptsDispatch = vi.fn();
     const updateHyperCatalog = vi.fn<CatalogLoaderDependencies['updateHyperCatalog']>();
 
@@ -65,7 +65,7 @@ describe('CatalogLoaderProvider queue', () => {
         scriptsDispatch.mockReset();
         updateHyperCatalog.mockReset();
         const connection = {
-            databaseId: 'database',
+            connectionId: 'database',
             connectorInfo: { catalogResolver: CatalogResolver.SQL_HYPER },
             details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: {} } } },
             catalog: {},
@@ -73,17 +73,17 @@ describe('CatalogLoaderProvider queue', () => {
                 tasksRunning: new Map(), tasksFinished: new Map(),
                 currentFullRefresh: null, lastFullRefresh: null, restoredAt: null,
             },
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
         registry = {
-            attachedDatabases: new Map([['database', connection]]),
+            connections: new Map([['database', connection]]),
             attachedDatabasesBySession: new Map(),
-            attachedDatabasesByType: [],
-            attachedDatabasesBySignature: new Map(),
+            connectionsByType: [],
+            connectionsBySignature: new Map(),
         };
         // Deliberately do not rerender on dispatch: completion itself must wake the queue.
         dispatch.mockImplementation((id, action) => {
-            registry.attachedDatabases.set(id!, reduceCatalogAction(
-                registry.attachedDatabases.get(id!)!, action as CatalogAction, {} as StorageWriter,
+            registry.connections.set(id!, reduceCatalogAction(
+                registry.connections.get(id!)!, action as CatalogAction, {} as StorageWriter,
             ));
         });
         updateHyperCatalog.mockImplementation((...args) => new Promise((resolve, reject) => {
@@ -95,7 +95,7 @@ describe('CatalogLoaderProvider queue', () => {
         }));
         const executor = vi.fn<ReturnType<CatalogLoaderDependencies['useQueryExecutor']>>();
         dependencies = {
-            useDynamicAttachedDatabaseDispatch: () => {
+            useDynamicConnectionDispatch: () => {
                 providerRenders++;
                 return [registry, dispatch];
             },
@@ -119,7 +119,7 @@ describe('CatalogLoaderProvider queue', () => {
         await act(async () => enqueue('database', false));
         expect(updateHyperCatalog).toHaveBeenCalledTimes(1);
         const first = updates[0];
-        const task = registry.attachedDatabases.get('database')!.catalogUpdates.tasksRunning.values().next().value!;
+        const task = registry.connections.get('database')!.catalogUpdates.tasksRunning.values().next().value!;
         const abort = vi.spyOn(task.cancellation, 'abort');
 
         await act(async () => enqueue('database', true));
@@ -157,7 +157,7 @@ describe('CatalogLoaderProvider queue', () => {
         expect(scriptsDispatch).not.toHaveBeenCalled();
 
         // Completion must consume the throttled request, rather than leave it to run later.
-        const connection = registry.attachedDatabases.get('database')!;
+        const connection = registry.connections.get('database')!;
         connection.catalogUpdates.lastFullRefresh = null;
         registry = { ...registry };
         await render();
@@ -172,7 +172,7 @@ describe('CatalogLoaderProvider queue', () => {
         expect(dispatch.mock.calls.some(([, action]) => action.type === CATALOG_UPDATE_SUCCEEDED)).toBe(true);
         expect(updateHyperCatalog).toHaveBeenCalledTimes(1);
         expect(scriptsDispatch).toHaveBeenCalledTimes(1);
-        registry.attachedDatabases.get('database')!.catalogUpdates.lastFullRefresh = null;
+        registry.connections.get('database')!.catalogUpdates.lastFullRefresh = null;
         registry = { ...registry };
         await render();
         expect(updateHyperCatalog).toHaveBeenCalledTimes(1);

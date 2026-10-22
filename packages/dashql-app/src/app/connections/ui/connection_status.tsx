@@ -1,12 +1,12 @@
 import * as React from 'react';
 import symbols from '@ankoh/dashql-svg-symbols';
 
-import { AttachedDatabaseState } from '../attached_database_state.js';
+import { ConnectionState } from '../connection_state.js';
 import { Button, ButtonVariant } from '../../../ui/foundations/button.js';
 
 interface ButtonProps {
     sessionId?: string;
-    conn: AttachedDatabaseState;
+    conn: ConnectionState;
     onClick?: () => void;
     compact?: boolean;
 }

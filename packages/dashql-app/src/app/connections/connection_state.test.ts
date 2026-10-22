@@ -3,16 +3,16 @@ import * as flatbuffers from 'flatbuffers';
 import * as dashql from '@ankoh/dashql-core';
 import {
     APPLY_CATALOG_CHANGES,
-    attachedDatabaseCatalogMatchesStorage,
+    connectionCatalogMatchesStorage,
     CATALOG_UPDATE_SUCCEEDED,
-    createAttachedDatabaseStateForType,
-    DELETE_ATTACHED_DATABASE,
-    RESET_ATTACHED_DATABASE,
-    reduceAttachedDatabaseState,
-    replaceAttachedDatabaseCatalogFromStorage,
+    createConnectionStateForType,
+    DELETE_CONNECTION,
+    RESET_CONNECTION,
+    reduceConnectionState,
+    replaceConnectionCatalogFromStorage,
     UPDATE_CATALOG,
-    type AttachedDatabaseState,
-} from './attached_database_state.js';
+    type ConnectionState,
+} from './connection_state.js';
 import { TestLogger } from '../../platform/logger/test_logger.js';
 import { ConnectorType } from './connector_info.js';
 import { publishCatalogBatch } from './catalog_batch.js';
@@ -29,16 +29,16 @@ afterEach(() => {
     dql.resetUnsafe();
 });
 
-function state(): AttachedDatabaseState {
-    return { ...createAttachedDatabaseStateForType(dql, ConnectorType.HYPER, new Map()), databaseId: 'test' };
+function state(): ConnectionState {
+    return { ...createConnectionStateForType(dql, ConnectorType.HYPER, new Map()), connectionId: 'test' };
 }
 
 describe('attached database descriptor catalogs', () => {
-    it.each([RESET_ATTACHED_DATABASE, DELETE_ATTACHED_DATABASE] as const)('promptly aborts pending publishers before clearing running tasks on %s', async type => {
+    it.each([RESET_CONNECTION, DELETE_CONNECTION] as const)('promptly aborts pending publishers before clearing running tasks on %s', async type => {
         const database = state();
         const controllers = [new AbortController(), new AbortController()];
         const aborts = controllers.map(controller => vi.spyOn(controller, 'abort'));
-        const cleanup = vi.spyOn(database.catalog, type === RESET_ATTACHED_DATABASE ? 'clear' : 'destroy');
+        const cleanup = vi.spyOn(database.catalog, type === RESET_CONNECTION ? 'clear' : 'destroy');
         for (const [taskId, cancellation] of controllers.entries()) {
             database.catalogUpdates.tasksRunning.set(taskId, {
                 taskId,
@@ -61,7 +61,7 @@ describe('attached database descriptor catalogs', () => {
             processor: () => new Promise(() => {}),
         });
         const outcome = publication.then(() => 'published', error => error.name);
-        const next = reduceAttachedDatabaseState(database, { type, value: null }, {} as any, {} as any);
+        const next = reduceConnectionState(database, { type, value: null }, {} as any, {} as any);
         expect(controllers.every(controller => controller.signal.aborted)).toBe(true);
         for (const abort of aborts) {
             expect(abort.mock.invocationCallOrder[0]).toBeLessThan(cleanup.mock.invocationCallOrder[0]);
@@ -82,7 +82,7 @@ describe('attached database descriptor catalogs', () => {
         const version = database.catalog.createSnapshot().read().catalogReader.catalogVersion();
         const schema = 'CREATE TABLE stored(id int);';
         const functions = 'CREATE FUNCTION stored_fn() RETURNS bigint;';
-        expect(replaceAttachedDatabaseCatalogFromStorage(database, schema, functions)).toBe(true);
+        expect(replaceConnectionCatalogFromStorage(database, schema, functions)).toBe(true);
         expect(replace.mock.calls.map(([id, rank]) => [id, rank])).toEqual([
             [database.catalogRelationScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK],
             [database.catalogFunctionScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK],
@@ -99,8 +99,8 @@ describe('attached database descriptor catalogs', () => {
         expect(functionAnalysis).not.toHaveBeenCalled();
         expect(database.catalog.createSnapshot().read().catalogReader.tablesLength()).toBe(1);
         expect(database.catalog.createSnapshot().read().catalogReader.catalogVersion()).toBe(version + 2n);
-        expect(attachedDatabaseCatalogMatchesStorage(database, schema, functions)).toBe(true);
-        expect(replaceAttachedDatabaseCatalogFromStorage(database, schema, functions)).toBe(false);
+        expect(connectionCatalogMatchesStorage(database, schema, functions)).toBe(true);
+        expect(replaceConnectionCatalogFromStorage(database, schema, functions)).toBe(false);
         expect(replace).toHaveBeenCalledTimes(2);
     });
 
@@ -108,16 +108,16 @@ describe('attached database descriptor catalogs', () => {
         const database = state();
         const schema = 'CREATE TABLE stored(id int);';
         const functions = 'CREATE FUNCTION stored_fn() RETURNS bigint;';
-        replaceAttachedDatabaseCatalogFromStorage(database, schema, functions);
+        replaceConnectionCatalogFromStorage(database, schema, functions);
         const restoredAt = database.catalogUpdates.restoredAt;
         const snapshot = database.catalog.createSnapshot();
-        expect(() => replaceAttachedDatabaseCatalogFromStorage(database, 'CREATE TABLE changed(id int);', 'invalid ! SQL'))
+        expect(() => replaceConnectionCatalogFromStorage(database, 'CREATE TABLE changed(id int);', 'invalid ! SQL'))
             .toThrow();
-        expect(attachedDatabaseCatalogMatchesStorage(database, schema, functions)).toBe(true);
+        expect(connectionCatalogMatchesStorage(database, schema, functions)).toBe(true);
         expect(database.catalog.createSnapshot()).toBe(snapshot);
         const replace = vi.spyOn(database.catalog, 'replaceDescriptor').mockImplementation(() => { throw new Error('import failed'); });
-        expect(() => replaceAttachedDatabaseCatalogFromStorage(database, 'CREATE TABLE changed(id int);', functions)).toThrow('import failed');
-        expect(attachedDatabaseCatalogMatchesStorage(database, schema, functions)).toBe(true);
+        expect(() => replaceConnectionCatalogFromStorage(database, 'CREATE TABLE changed(id int);', functions)).toThrow('import failed');
+        expect(connectionCatalogMatchesStorage(database, schema, functions)).toBe(true);
         expect(database.catalog.createSnapshot()).toBe(snapshot);
         expect(database.catalogUpdates.restoredAt).toBe(restoredAt);
         replace.mockRestore();
@@ -125,27 +125,27 @@ describe('attached database descriptor catalogs', () => {
 
     it('replaces removed storage files with empty descriptors', () => {
         const database = state();
-        replaceAttachedDatabaseCatalogFromStorage(database, 'CREATE TABLE stored(id int);', 'CREATE FUNCTION stored_fn() RETURNS bigint;');
-        expect(replaceAttachedDatabaseCatalogFromStorage(database, null, null)).toBe(true);
+        replaceConnectionCatalogFromStorage(database, 'CREATE TABLE stored(id int);', 'CREATE FUNCTION stored_fn() RETURNS bigint;');
+        expect(replaceConnectionCatalogFromStorage(database, null, null)).toBe(true);
         expect(database.catalog.createSnapshot().read().catalogReader.tablesLength()).toBe(0);
-        expect(attachedDatabaseCatalogMatchesStorage(database, null, null)).toBe(true);
-        expect(replaceAttachedDatabaseCatalogFromStorage(database, null, null)).toBe(false);
+        expect(connectionCatalogMatchesStorage(database, null, null)).toBe(true);
+        expect(replaceConnectionCatalogFromStorage(database, null, null)).toBe(false);
     });
 
     it('republishes identical storage SQL after reset clears descriptor identities', () => {
         let database = state();
         const schema = 'CREATE TABLE stored(id int);';
         const functions = 'CREATE FUNCTION stored_fn() RETURNS bigint;';
-        replaceAttachedDatabaseCatalogFromStorage(database, schema, functions);
-        database = reduceAttachedDatabaseState(database, { type: RESET_ATTACHED_DATABASE, value: null }, {} as any, {} as any);
+        replaceConnectionCatalogFromStorage(database, schema, functions);
+        database = reduceConnectionState(database, { type: RESET_CONNECTION, value: null }, {} as any, {} as any);
         expect(database.catalogRelationScript.toString()).toBe(schema);
         expect(database.catalogFunctionScript.toString()).toBe(functions);
-        expect(attachedDatabaseCatalogMatchesStorage(database, schema, functions)).toBe(false);
-        expect(replaceAttachedDatabaseCatalogFromStorage(database, schema, functions)).toBe(true);
+        expect(connectionCatalogMatchesStorage(database, schema, functions)).toBe(false);
+        expect(replaceConnectionCatalogFromStorage(database, schema, functions)).toBe(true);
         expect(database.catalog.containsEntryId(database.catalogRelationScript.catalog_entry_id)).toBe(true);
         expect(database.catalog.containsEntryId(database.catalogFunctionScript.catalog_entry_id)).toBe(true);
         expect(database.catalog.createSnapshot().read().catalogReader.tablesLength()).toBe(1);
-        expect(attachedDatabaseCatalogMatchesStorage(database, schema, functions)).toBe(true);
+        expect(connectionCatalogMatchesStorage(database, schema, functions)).toBe(true);
     });
 
     it.each([
@@ -157,7 +157,7 @@ describe('attached database descriptor catalogs', () => {
         const database = state();
         const schema = 'CREATE TABLE stored(id int);';
         const functions = 'CREATE FUNCTION stored_fn() RETURNS bigint;';
-        replaceAttachedDatabaseCatalogFromStorage(database, schema, functions);
+        replaceConnectionCatalogFromStorage(database, schema, functions);
         const snapshot = database.catalog.createSnapshot();
         const version = snapshot.read().catalogReader.catalogVersion();
         const restoredAt = database.catalogUpdates.restoredAt;
@@ -172,7 +172,7 @@ describe('attached database descriptor catalogs', () => {
                 replaceDescriptor(id, rank, descriptor);
             });
         }
-        expect(() => replaceAttachedDatabaseCatalogFromStorage(database,
+        expect(() => replaceConnectionCatalogFromStorage(database,
             'CREATE TABLE changed(id int);', 'CREATE FUNCTION changed_fn() RETURNS bigint;'))
             .toThrow(failure === 'source write' ? 'allocation failed' : 'import failed');
         expect(publication).toHaveBeenCalledTimes((source === 'functions' ? 1 : 0) + (failure === 'descriptor import' ? 1 : 0));
@@ -186,18 +186,18 @@ describe('attached database descriptor catalogs', () => {
         else {
             expect(currentSnapshot).not.toBe(snapshot);
             expect(currentSnapshot.read().catalogReader.catalogVersion()).toBe(version + 1n);
-            expect(attachedDatabaseCatalogMatchesStorage(database, 'CREATE TABLE changed(id int);', functions)).toBe(true);
+            expect(connectionCatalogMatchesStorage(database, 'CREATE TABLE changed(id int);', functions)).toBe(true);
         }
         expect(database.catalogUpdates.restoredAt).toBe(restoredAt);
     });
 
     it('drops both descriptors before destroying their text-only source scripts', () => {
         const database = state();
-        replaceAttachedDatabaseCatalogFromStorage(database, 'CREATE TABLE stored(id int);', 'CREATE FUNCTION stored_fn() RETURNS bigint;');
+        replaceConnectionCatalogFromStorage(database, 'CREATE TABLE stored(id int);', 'CREATE FUNCTION stored_fn() RETURNS bigint;');
         const drops = vi.spyOn(database.catalog, 'dropDescriptor');
         const destroyRelations = vi.spyOn(database.catalogRelationScript, 'destroy');
         const destroyFunctions = vi.spyOn(database.catalogFunctionScript, 'destroy');
-        reduceAttachedDatabaseState(database, { type: DELETE_ATTACHED_DATABASE, value: null }, {} as any, {} as any);
+        reduceConnectionState(database, { type: DELETE_CONNECTION, value: null }, {} as any, {} as any);
         expect(drops.mock.calls).toEqual([
             [database.catalogRelationScript.catalog_entry_id],
             [database.catalogFunctionScript.catalog_entry_id],
@@ -208,7 +208,7 @@ describe('attached database descriptor catalogs', () => {
 });
 
 /// The relations of the relation descriptor as `db.schema.table(a, b)`
-function relationsOf(database: AttachedDatabaseState): string[] {
+function relationsOf(database: ConnectionState): string[] {
     const relations: string[] = [];
     const entries = database.catalog.describeEntriesOf(database.catalogRelationScript.catalog_entry_id)
         .unpackAndDestroy() as dashql.buffers.catalog.CatalogEntriesT;
@@ -232,8 +232,8 @@ describe('catalog changes of executed statements', () => {
 
     it('qualify with the connection defaults, patch the relation descriptor and record the changes SQL', () => {
         const database = state();
-        replaceAttachedDatabaseCatalogFromStorage(database, 'CREATE TABLE "hyper"."public"."stored"(id int);', null);
-        const next = reduceAttachedDatabaseState(database, {
+        replaceConnectionCatalogFromStorage(database, 'CREATE TABLE "hyper"."public"."stored"(id int);', null);
+        const next = reduceConnectionState(database, {
             type: APPLY_CATALOG_CHANGES,
             value: [change(DROP, '', 'stored'), change(CREATE, 'other', 'created', ['a', 'b'])],
         }, {} as any, new TestLogger());
@@ -246,23 +246,23 @@ describe('catalog changes of executed statements', () => {
 
     it('survive a reload of the relation script from storage', () => {
         const database = state();
-        replaceAttachedDatabaseCatalogFromStorage(database, 'CREATE TABLE "hyper"."public"."stored"(id int);', null);
-        const next = reduceAttachedDatabaseState(database, {
+        replaceConnectionCatalogFromStorage(database, 'CREATE TABLE "hyper"."public"."stored"(id int);', null);
+        const next = reduceConnectionState(database, {
             type: APPLY_CATALOG_CHANGES,
             value: [change(CREATE, '', 'created', ['a'])],
         }, {} as any, new TestLogger());
-        replaceAttachedDatabaseCatalogFromStorage(next, 'CREATE TABLE "hyper"."public"."edited"(id int);', null);
+        replaceConnectionCatalogFromStorage(next, 'CREATE TABLE "hyper"."public"."edited"(id int);', null);
         expect(relationsOf(next)).toEqual(['hyper.public.created(a)', 'hyper.public.edited(id)']);
     });
 
     it('are cleared by a catalog refresh', () => {
         let database = state();
-        database = reduceAttachedDatabaseState(database, {
+        database = reduceConnectionState(database, {
             type: APPLY_CATALOG_CHANGES,
             value: [change(CREATE, '', 'created', ['a'])],
         }, {} as any, new TestLogger());
         expect(database.catalogChangesSql).not.toBe('');
-        database = reduceAttachedDatabaseState(database, {
+        database = reduceConnectionState(database, {
             type: UPDATE_CATALOG,
             value: [1, {
                 taskId: 1,
@@ -276,7 +276,7 @@ describe('catalog changes of executed statements', () => {
                 lastUpdateAt: new Date(),
             }],
         }, {} as any, new TestLogger());
-        database = reduceAttachedDatabaseState(database, { type: CATALOG_UPDATE_SUCCEEDED, value: [1] }, {} as any, new TestLogger());
+        database = reduceConnectionState(database, { type: CATALOG_UPDATE_SUCCEEDED, value: [1] }, {} as any, new TestLogger());
         expect(database.catalogChangesSql).toBe('');
     });
 });

@@ -10,8 +10,8 @@ import { EmbeddedDatabaseProvider } from '../../../platform/database/embedded_da
 import type { EmbeddedComputeDatabase } from '../../../platform/database/embedded_database.js';
 import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
 import { createQueryResponseStreamMetrics, QueryExecutionStatus, type QueryExecutionResponseStream } from '../../../query/query_execution_state.js';
-import { AttachedDatabaseRegistry, useAttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
-import { ConnectionHealth, createConnectionMetrics, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionRegistry, useConnectionRegistry } from '../../connections/connection_registry.js';
+import { ConnectionHealth, createConnectionMetrics, type ConnectionState } from '../../connections/connection_state.js';
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR } from '../../connections/connector_info.js';
 import { QueryExecutorProvider } from '../../connections/query_executor.js';
 import { SessionTestBackend } from '../../storage/session_test_backend.js';
@@ -75,14 +75,14 @@ function fixture(sessionId: string, deferStream = false) {
         scripts: { 1: { scriptKey: 1, fileName: '1_commands.sql', scriptSession, latestQueryId: null } },
     } as unknown as SessionScripts;
     const database = {
-        databaseId: session.databaseId, active: false,
+        connectionId: session.databaseId, active: false,
         connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
         connectionSignature: { signatureString: session.databaseId },
         connectionHealth: ConnectionHealth.ONLINE, metrics: createConnectionMetrics(),
         details: { type: HYPER_CONNECTOR, value: { proto: {}, channel: { executeQuery } } },
         queriesActive: new Map(), queriesActiveOrdered: [],
         queriesFinished: new Map(), queriesFinishedOrdered: [], snapshotQueriesActiveFinished: 0,
-    } as unknown as AttachedDatabaseState;
+    } as unknown as ConnectionState;
     const modify = vi.fn<ModifySessionScripts>(action => {
         if (action.type === REGISTER_QUERY) session.scripts[action.value[0]].latestQueryId = action.value[1];
     });
@@ -102,16 +102,16 @@ function Consumer(props: { sessionId: string; capture: (execution: Execution) =>
 
 function SeedRegistries(props: { fixtures: Fixture[]; children: React.ReactNode }) {
     const [, setSessions] = useSessionScriptsRegistry();
-    const [, setConnections] = useAttachedDatabaseRegistry();
+    const [, setConnections] = useConnectionRegistry();
     const [ready, setReady] = React.useState(false);
     React.useEffect(() => {
         setSessions(registry => ({ ...registry,
             sessionScriptsMap: new Map(props.fixtures.map(f => [f.session.sessionId, f.session])),
         }));
         setConnections(registry => ({ ...registry,
-            attachedDatabases: new Map(props.fixtures.map(f => [f.database.databaseId, f.database])),
+            connections: new Map(props.fixtures.map(f => [f.database.connectionId, f.database])),
             attachedDatabasesBySession: new Map(props.fixtures.map(f => [f.session.sessionId, {
-                mainDatabaseId: f.database.databaseId, attachedDatabaseIds: [],
+                mainDatabaseId: f.database.connectionId, attachedDatabaseIds: [],
             }])),
         }));
         setReady(true);
@@ -157,7 +157,7 @@ describe('SessionExecutionProvider', () => {
         await act(async () => {
             root.render(<LoggerProvider>
                 <StorageProvider backend={backend}>
-                    <AttachedDatabaseRegistry>
+                    <ConnectionRegistry>
                         <SessionScriptsRegistryProvider>
                             <EmbeddedDatabaseProvider setupDatabase={setupDatabase}>
                                 <ComputeConnectionProvider>
@@ -174,7 +174,7 @@ describe('SessionExecutionProvider', () => {
                                 </ComputeConnectionProvider>
                             </EmbeddedDatabaseProvider>
                         </SessionScriptsRegistryProvider>
-                    </AttachedDatabaseRegistry>
+                    </ConnectionRegistry>
                 </StorageProvider>
             </LoggerProvider>);
             await new Promise(resolve => setTimeout(resolve, 0));

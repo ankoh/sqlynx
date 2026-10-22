@@ -14,7 +14,7 @@ import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundation
 import { ButtonGroup } from '../../../../ui/foundations/button_group.js';
 import { IndicatorStatus } from '../../../../ui/foundations/status_indicator.js';
 import { SymbolIcon } from '../../../../ui/foundations/symbol_icon.js';
-import { ConnectionHealth, type AttachedDatabaseState } from '../../../connections/attached_database_state.js';
+import { ConnectionHealth, type ConnectionState } from '../../../connections/connection_state.js';
 import { ExecuteConnectionGuard } from '../session_connection_attention.js';
 import type { ConnectorType } from '../../../connections/connector_info.js';
 import { QueryExecutionStatus, queryIsDone } from '../../../connections/query_execution_state.js';
@@ -43,7 +43,7 @@ export interface ScriptCardProps {
     /// The connection state itself changes with every query event of the session.
     databaseId: string | null;
     connectionHealth: ConnectionHealth | null;
-    connectionDetails: AttachedDatabaseState['details'] | null;
+    connectionDetails: ConnectionState['details'] | null;
     connectorType: ConnectorType;
     /// Whether the session caches query results.
     cacheQueryResults: boolean;
@@ -478,7 +478,7 @@ export interface ScriptFeedRowProps {
     sessionId: string;
     databaseId: string | null;
     connectionHealth: ConnectionHealth | null;
-    connectionDetails: AttachedDatabaseState['details'] | null;
+    connectionDetails: ConnectionState['details'] | null;
     connectorType: ConnectorType;
     cacheQueryResults: boolean;
     storageReader: StorageReader;

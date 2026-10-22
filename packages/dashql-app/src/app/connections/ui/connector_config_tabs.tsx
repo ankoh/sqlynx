@@ -6,19 +6,19 @@ import { CONNECTOR_INFOS, ConnectorType, useConnectorList } from '../connector_i
 import { HyperConnectorSettings } from './hyper_connection_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connection_settings.js';
 import { TrinoConnectorSettings } from './trino_connection_settings.js';
-import { useAttachedDatabaseById } from '../attached_database_registry.js';
-import { ConnectionHealth, ConnectionStatus, SWITCH_CONNECTOR_TYPE } from '../attached_database_state.js';
+import { useConnectionById } from '../connection_registry.js';
+import { ConnectionHealth, ConnectionStatus, SWITCH_CONNECTOR_TYPE } from '../connection_state.js';
 
 interface Props {
     className?: string;
-    databaseId: string | null;
+    connectionId: string | null;
     selectedConnectorType: ConnectorType;
     setSelectedConnectorType: (type: ConnectorType) => void;
     lockConnectorType?: boolean;
 }
 
 export const ConnectorConfigTabs: React.FC<Props> = (props: Props) => {
-    const [conn, modifyConn] = useAttachedDatabaseById(props.databaseId);
+    const [conn, modifyConn] = useConnectionById(props.connectionId);
     const availableConnectors = useConnectorList();
     const currentConnector = conn?.connectorInfo ?? null;
     const connectors = currentConnector && !availableConnectors.some(info => info.connectorType === currentConnector.connectorType)
@@ -59,15 +59,15 @@ export const ConnectorConfigTabs: React.FC<Props> = (props: Props) => {
         tabRenderers[connectorType] = () => {
             // Pass the session connection to the matching tab, or to all tabs when unconfigured
             // (since SWITCH_CONNECTOR_TYPE ensures the type matches the selected tab)
-            const databaseId = (isCurrentConnection || isUnconfigured) ? props.databaseId : null;
+            const databaseId = (isCurrentConnection || isUnconfigured) ? props.connectionId : null;
 
             switch (connectorType) {
                 case ConnectorType.TRINO:
-                    return <TrinoConnectorSettings databaseId={databaseId} />;
+                    return <TrinoConnectorSettings connectionId={databaseId} />;
                 case ConnectorType.SALESFORCE_DATA_CLOUD:
-                    return <SalesforceConnectorSettings databaseId={databaseId} />;
+                    return <SalesforceConnectorSettings connectionId={databaseId} />;
                 case ConnectorType.HYPER:
-                    return <HyperConnectorSettings databaseId={databaseId} />;
+                    return <HyperConnectorSettings connectionId={databaseId} />;
                 default:
                     throw new Error(`unsupported connector type ${connectorType}`);
             }

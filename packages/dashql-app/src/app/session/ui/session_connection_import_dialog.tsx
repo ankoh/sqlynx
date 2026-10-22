@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Button, ButtonVariant } from '../../../ui/foundations/button.js';
 import { Overlay, OverlaySize } from '../../../ui/foundations/overlay.js';
 import type { ConnectionImportChoice, ConnectionImportPlanItem } from '../persistence/session_connection_import.js';
-import { connectionParamsLabel } from './attached_database_label.js';
+import { connectionParamsLabel } from './connection_label.js';
 
 import * as styles from './session_import_conflict_dialog.module.css';
 import * as ownStyles from './session_connection_import_dialog.module.css';

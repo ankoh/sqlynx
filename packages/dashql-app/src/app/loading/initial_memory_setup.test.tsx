@@ -4,19 +4,19 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Logger } from '../../platform/logger/logger.js';
-import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { ConnectionHealth, type ConnectionState } from '../connections/connection_state.js';
 import type { HyperSetupApi } from '../connections/hyper/hyper_connection_setup.js';
 import { cancelInitialMemorySetup, useInitialMemorySetup } from './initial_memory_setup.js';
 
 describe('initial Memory setup', () => {
     let container: HTMLDivElement;
     let root: Root;
-    let database: AttachedDatabaseState;
+    let database: ConnectionState;
     let setup: HyperSetupApi;
     const dispatch = vi.fn();
     const logger = { warn: vi.fn() } as unknown as Logger;
 
-    function Consumer(props: { sessionId: string | null; database: AttachedDatabaseState | null }) {
+    function Consumer(props: { sessionId: string | null; database: ConnectionState | null }) {
         useInitialMemorySetup(props.sessionId, props.database, setup, dispatch, logger);
         return <div>Session visible</div>;
     }
@@ -33,11 +33,11 @@ describe('initial Memory setup', () => {
         document.body.appendChild(container);
         root = createRoot(container);
         database = {
-            databaseId: 'memory',
+            connectionId: 'memory',
             connectionHealth: ConnectionHealth.NOT_STARTED,
             params: { hyper: { protocol: 'WASM', endpoint: '' } },
             details: { value: { proto: { setupParams: { protocol: 'V3_HTTP' } } } },
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
         setup = { setup: vi.fn().mockResolvedValue(null), reset: vi.fn() };
         dispatch.mockReset();
     });
@@ -76,7 +76,7 @@ describe('initial Memory setup', () => {
         setup.setup = vi.fn<HyperSetupApi['setup']>(() => new Promise(() => {}));
         await render();
         expect(container.textContent).toBe('Session visible');
-        await render({ ...database, databaseId: 'second-memory' }, 'second-session');
+        await render({ ...database, connectionId: 'second-memory' }, 'second-session');
         await render();
         expect(setup.setup).toHaveBeenCalledTimes(2);
     });

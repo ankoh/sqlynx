@@ -21,7 +21,7 @@ import {
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useAppConfig } from '../../config/app_config.js';
 import { useHyperGrpcClient, useHyperHttpClient } from './hyperdb_grpc_client_provider.js';
-import { RESET_ATTACHED_DATABASE } from '../attached_database_state.js';
+import { RESET_CONNECTION } from '../connection_state.js';
 import { useEmbeddedDatabaseSetup, type EmbeddedDatabaseSetupFn } from '../../../platform/database/embedded_database_provider.js';
 import { EmbeddedDatabaseChannel, EmbeddedHyperDatabaseChannel } from '../embedded/embedded_database_channel.js';
 
@@ -134,7 +134,7 @@ export const HyperSetupProvider: React.FC<Props> = (props: Props) => {
         };
         const reset = async (dispatch: Dispatch<HyperConnectorAction>) => {
             dispatch({
-                type: RESET_ATTACHED_DATABASE,
+                type: RESET_CONNECTION,
                 value: null,
             });
         };

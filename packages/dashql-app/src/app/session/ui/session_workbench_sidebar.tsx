@@ -45,25 +45,25 @@ import { classNames } from '../../../utils/classnames.js';
 import { OPEN_SESSION, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../../router/router.js';
 import { SessionSetupStatus } from '../../router/session_setup_status.js';
 import {
-    AttachedDatabaseState,
-    DELETE_ATTACHED_DATABASE,
-} from '../../connections/attached_database_state.js';
+    ConnectionState,
+    DELETE_CONNECTION,
+} from '../../connections/connection_state.js';
 import {
     connectionRefCount,
     detachSession,
     findSessionQueries,
-    findSessionsForAttachedDatabase,
+    findSessionsForConnection,
     resolveSessionAttachedDatabases,
     useAttachConnection,
-    useAttachedDatabaseRegistry,
+    useConnectionRegistry,
     useConnectionAllocator,
     useSessionAttachedDatabases,
     useAttachedDatabaseStateAllocator,
-    useDynamicAttachedDatabaseDispatch,
-    type AttachedDatabaseRegistry,
-} from '../../connections/attached_database_registry.js';
+    useDynamicConnectionDispatch,
+    type ConnectionRegistry,
+} from '../../connections/connection_registry.js';
 import {
-    createDefaultHyperWasmAttachedDatabaseState,
+    createDefaultHyperWasmConnectionState,
     createConnectionStateFromParams,
     createDefaultConnectionParamsForConnector,
 } from '../../connections/connection_params.js';
@@ -100,9 +100,9 @@ import {
 } from '../scripts/session_scripts_registry.js';
 import { useSessionScriptsSetup } from '../scripts/session_scripts_setup.js';
 import { BundledSessionsOverlay } from '../../ui/bundled_sessions_overlay.js';
-import { attachedDatabaseLabel, isHyperWasmAttachedDatabase } from './attached_database_label.js';
+import { connectionLabel, isHyperWasmConnection } from './connection_label.js';
 import { useAppFlavor } from '../../flavor/flavor_provider.js';
-import { canRefreshAttachedDatabase } from './attached_database_refresh.js';
+import { canRefreshConnection } from './connection_refresh.js';
 import { SessionURLShareOverlay } from './session_url_share_overlay.js';
 import { SessionFileSaveOverlay } from './session_file_save_overlay.js';
 import { isCatalogRefreshRunning } from '../../connections/catalog_update_state.js';
@@ -126,15 +126,15 @@ interface CatalogRow extends CatalogNode {
     depth: number;
 }
 
-interface AttachedDatabaseListRow {
+interface ConnectionListRow {
     type: 'attached-database';
     key: string;
-    database: AttachedDatabaseState;
+    database: ConnectionState;
 }
 
-type AttachedDatabaseTreeRow = AttachedDatabaseListRow | CatalogRow;
+type ConnectionTreeRow = ConnectionListRow | CatalogRow;
 
-const ATTACHED_DATABASE_ROW_HEIGHT = 38;
+const CONNECTION_ROW_HEIGHT = 38;
 const CATALOG_ROW_HEIGHT = 34;
 
 export function isVisibleCatalogNode(kind: CatalogNode['kind'], name: string): boolean {
@@ -143,7 +143,7 @@ export function isVisibleCatalogNode(kind: CatalogNode['kind'], name: string): b
 
 interface SessionItem {
     sessionId: string;
-    database: AttachedDatabaseState;
+    database: ConnectionState;
     scripts: SessionScripts;
     label: string;
     path: string;
@@ -167,9 +167,9 @@ interface Props {
 export interface SessionWorkbenchSidebarDependencies {
     useRouterNavigate: typeof useRouterNavigate;
     useRouteContext: typeof useRouteContext;
-    useDynamicAttachedDatabaseDispatch: typeof useDynamicAttachedDatabaseDispatch;
+    useDynamicConnectionDispatch: typeof useDynamicConnectionDispatch;
     useSessionScriptsRegistry: typeof useSessionScriptsRegistry;
-    useAttachedDatabaseRegistry: typeof useAttachedDatabaseRegistry;
+    useConnectionRegistry: typeof useConnectionRegistry;
     useAttachedDatabaseStateAllocator: typeof useAttachedDatabaseStateAllocator;
     useConnectionAllocator: typeof useConnectionAllocator;
     useAttachConnection: typeof useAttachConnection;
@@ -184,7 +184,7 @@ export interface SessionWorkbenchSidebarDependencies {
     useLogger: typeof useLogger;
     useInvalidSessionRegistry: typeof useInvalidSessionRegistry;
     useSessionAttachedDatabases: typeof useSessionAttachedDatabases;
-    createDefaultHyperWasmAttachedDatabaseState: typeof createDefaultHyperWasmAttachedDatabaseState;
+    createDefaultHyperWasmConnectionState: typeof createDefaultHyperWasmConnectionState;
     createConnectionStateFromParams: typeof createConnectionStateFromParams;
     BundledSessionsOverlay: typeof BundledSessionsOverlay;
     ConnectionSettingsOverlay: typeof ConnectionSettingsOverlay;
@@ -196,9 +196,9 @@ export interface SessionWorkbenchSidebarDependencies {
 const DEFAULT_SESSION_WORKBENCH_SIDEBAR_DEPENDENCIES: SessionWorkbenchSidebarDependencies = {
     useRouterNavigate,
     useRouteContext,
-    useDynamicAttachedDatabaseDispatch,
+    useDynamicConnectionDispatch,
     useSessionScriptsRegistry,
-    useAttachedDatabaseRegistry,
+    useConnectionRegistry,
     useAttachedDatabaseStateAllocator,
     useConnectionAllocator,
     useAttachConnection,
@@ -213,7 +213,7 @@ const DEFAULT_SESSION_WORKBENCH_SIDEBAR_DEPENDENCIES: SessionWorkbenchSidebarDep
     useLogger,
     useInvalidSessionRegistry,
     useSessionAttachedDatabases,
-    createDefaultHyperWasmAttachedDatabaseState,
+    createDefaultHyperWasmConnectionState,
     createConnectionStateFromParams,
     BundledSessionsOverlay,
     ConnectionSettingsOverlay,
@@ -314,7 +314,7 @@ function catalogIcon(kind: CatalogNode['kind']): React.ReactElement {
     }
 }
 
-interface AttachedDatabaseTreeEntryProps {
+interface ConnectionTreeEntryProps {
     name: string;
     icon: React.ReactNode;
     depth: number;
@@ -324,7 +324,7 @@ interface AttachedDatabaseTreeEntryProps {
     className?: string;
 }
 
-const AttachedDatabaseTreeEntry: React.FC<AttachedDatabaseTreeEntryProps> = ({
+const ConnectionTreeEntry: React.FC<ConnectionTreeEntryProps> = ({
     name,
     icon,
     depth,
@@ -363,8 +363,8 @@ const AttachedDatabaseTreeEntry: React.FC<AttachedDatabaseTreeEntryProps> = ({
     );
 };
 
-interface AttachedDatabaseTreeRowProps {
-    rows: AttachedDatabaseTreeRow[];
+interface ConnectionTreeRowProps {
+    rows: ConnectionTreeRow[];
     expanded: ReadonlySet<string>;
     onToggle: (key: string) => void;
     onOpenSettings: (databaseId: string, anchor: HTMLButtonElement) => void;
@@ -380,19 +380,19 @@ export interface ConnectionUsage {
     usedHere: boolean;
 }
 
-export function attachedDatabaseTreeRowHeight(index: number, props: AttachedDatabaseTreeRowProps): number {
+export function connectionTreeRowHeight(index: number, props: ConnectionTreeRowProps): number {
     return props.rows[index]?.type === 'attached-database'
-        ? ATTACHED_DATABASE_ROW_HEIGHT + (index === 0 ? 8 : 0)
+        ? CONNECTION_ROW_HEIGHT + (index === 0 ? 8 : 0)
         : CATALOG_ROW_HEIGHT;
 }
 
-const AttachedDatabaseTreeRow = (props: RowComponentProps<AttachedDatabaseTreeRowProps>) => {
+const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => {
     const row = props.rows[props.index];
     if (row == null) return <div style={props.style} />;
     if (row.type === 'attached-database') {
         const expanded = props.expanded.has(row.key);
-        const label = attachedDatabaseLabel(row.database);
-        const usage = props.describeUsage?.(row.database.databaseId) ?? null;
+        const label = connectionLabel(row.database);
+        const usage = props.describeUsage?.(row.database.connectionId) ?? null;
         return (
             <div
                 style={props.style}
@@ -402,7 +402,7 @@ const AttachedDatabaseTreeRow = (props: RowComponentProps<AttachedDatabaseTreeRo
                     props.index === 0 && styles.database_row_container_first,
                 )}
             >
-                <AttachedDatabaseTreeEntry
+                <ConnectionTreeEntry
                     className={styles.database_row}
                     name={label}
                     depth={0}
@@ -422,15 +422,15 @@ const AttachedDatabaseTreeRow = (props: RowComponentProps<AttachedDatabaseTreeRo
                             {usage.sessionCount === 0 ? 'unused' : usage.sessionCount}
                         </span>
                     )}
-                    <AttachedDatabaseRefreshButton database={row.database} label={label} />
-                    <AttachedDatabaseRowMenu
+                    <ConnectionRefreshButton database={row.database} label={label} />
+                    <ConnectionRowMenu
                         database={row.database}
                         label={label}
-                        onOpenSettings={anchor => props.onOpenSettings(row.database.databaseId, anchor)}
-                        onDelete={props.onDelete == null || usage == null ? undefined : () => props.onDelete!(row.database.databaseId)}
+                        onOpenSettings={anchor => props.onOpenSettings(row.database.connectionId, anchor)}
+                        onDelete={props.onDelete == null || usage == null ? undefined : () => props.onDelete!(row.database.connectionId)}
                         sessionCount={usage?.sessionCount}
                     />
-                </AttachedDatabaseTreeEntry>
+                </ConnectionTreeEntry>
             </div>
         );
     }
@@ -439,7 +439,7 @@ const AttachedDatabaseTreeRow = (props: RowComponentProps<AttachedDatabaseTreeRo
     const expanded = props.expanded.has(node.key);
     return (
         <div style={props.style} className={styles.tree_row_container}>
-            <AttachedDatabaseTreeEntry
+            <ConnectionTreeEntry
                 className={styles.catalog_row}
                 name={node.name || 'Unnamed'}
                 icon={catalogIcon(node.kind)}
@@ -448,23 +448,23 @@ const AttachedDatabaseTreeRow = (props: RowComponentProps<AttachedDatabaseTreeRo
                 onToggle={expandable ? () => props.onToggle(node.key) : undefined}
             >
                 <span className={styles.catalog_node_kind}>{node.kind}</span>
-            </AttachedDatabaseTreeEntry>
+            </ConnectionTreeEntry>
         </div>
     );
 };
 
-interface AttachedDatabaseTreeProps {
-    databases: AttachedDatabaseState[];
+interface ConnectionTreeProps {
+    databases: ConnectionState[];
     onOpenSettings: (databaseId: string, anchor: HTMLButtonElement) => void;
     /// Describe how sessions use a connection
     describeUsage?: (databaseId: string) => ConnectionUsage;
     /// Delete a connection that no session uses
     onDelete?: (databaseId: string) => void;
     /// Is a connection expanded initially?
-    initiallyExpanded?: (database: AttachedDatabaseState, databaseCount: number) => boolean;
+    initiallyExpanded?: (database: ConnectionState, databaseCount: number) => boolean;
 }
 
-const attachedDatabaseKey = (databaseId: string) => `attached-database:${databaseId}`;
+const connectionKey = (databaseId: string) => `attached-database:${databaseId}`;
 
 /// Keep the identity of an array as long as its elements are identical
 function useShallowStableArray<T>(values: T[]): T[] {
@@ -475,25 +475,25 @@ function useShallowStableArray<T>(values: T[]): T[] {
     return ref.current;
 }
 
-export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ databases, onOpenSettings, describeUsage, onDelete, initiallyExpanded = isAttachedDatabaseInitiallyExpanded }) => {
+export const ConnectionTree: React.FC<ConnectionTreeProps> = ({ databases, onOpenSettings, describeUsage, onDelete, initiallyExpanded = isConnectionInitiallyExpanded }) => {
     // The database states change with every query event while the catalogs rarely change.
     // A catalog caches its snapshot until it is modified (which destroys the snapshot), so the snapshot identity
     // tells us when the trees must be rebuilt. Never keep a reader of a snapshot that is no longer current.
-    const databaseIds = useShallowStableArray(databases.map(database => database.databaseId));
+    const databaseIds = useShallowStableArray(databases.map(database => database.connectionId));
     const snapshots = useShallowStableArray(databases.map(database => database.catalog.createSnapshot()));
     const catalogTrees = React.useMemo(() => databaseIds.map((databaseId, i) => {
         const reader = snapshots[i].read();
         return {
             databaseId,
             reader,
-            roots: createCatalogTree(reader, `${attachedDatabaseKey(databaseId)}/catalog`),
+            roots: createCatalogTree(reader, `${connectionKey(databaseId)}/catalog`),
         };
     }), [databaseIds, snapshots]);
     const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(() => {
         const initial = new Set<string>();
         catalogTrees.forEach((tree, i) => {
             if (!initiallyExpanded(databases[i], databases.length)) return;
-            initial.add(attachedDatabaseKey(tree.databaseId));
+            initial.add(connectionKey(tree.databaseId));
             for (const root of tree.roots) initial.add(root.key);
         });
         return initial;
@@ -509,7 +509,7 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
             catalogTrees.forEach((tree, i) => {
                 if (knownDatabaseIds.current.has(tree.databaseId)) return;
                 if (initiallyExpanded(databases[i], databases.length)) {
-                    next.add(attachedDatabaseKey(tree.databaseId));
+                    next.add(connectionKey(tree.databaseId));
                     for (const root of tree.roots) next.add(root.key);
                 }
             });
@@ -518,14 +518,14 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
         knownDatabaseIds.current = nextDatabaseIds;
     }, [databaseIds]);
     const catalogRows = React.useMemo(() => catalogTrees.map(tree => (
-        expanded.has(attachedDatabaseKey(tree.databaseId))
+        expanded.has(connectionKey(tree.databaseId))
             ? flattenCatalogRows(tree.reader, tree.roots, expanded)
             : []
     )), [catalogTrees, expanded]);
     const rows = React.useMemo(() => {
-        const next: AttachedDatabaseTreeRow[] = [];
+        const next: ConnectionTreeRow[] = [];
         databases.forEach((database, i) => {
-            next.push({ type: 'attached-database', key: attachedDatabaseKey(database.databaseId), database });
+            next.push({ type: 'attached-database', key: connectionKey(database.connectionId), database });
             next.push(...catalogRows[i]);
         });
         return next;
@@ -542,7 +542,7 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
             return next;
         });
     }, []);
-    const rowProps = React.useMemo<AttachedDatabaseTreeRowProps>(() => ({
+    const rowProps = React.useMemo<ConnectionTreeRowProps>(() => ({
         rows,
         expanded,
         onToggle: toggle,
@@ -556,8 +556,8 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
                 listRef={listRef}
                 style={{ width: size?.width ?? 200, height: size?.height ?? 200 }}
                 rowCount={rows.length}
-                rowHeight={attachedDatabaseTreeRowHeight}
-                rowComponent={AttachedDatabaseTreeRow}
+                rowHeight={connectionTreeRowHeight}
+                rowComponent={ConnectionTreeRow}
                 rowProps={rowProps}
             />
             <VerticalScrollShadows getScrollElement={getScrollElement} refreshKey={rows.length} />
@@ -565,7 +565,7 @@ export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ data
     );
 };
 
-export function attachedDatabaseDisplayOrder(attached: NonNullable<ReturnType<typeof resolveSessionAttachedDatabases>>): AttachedDatabaseState[] {
+export function connectionDisplayOrder(attached: NonNullable<ReturnType<typeof resolveSessionAttachedDatabases>>): ConnectionState[] {
     return [attached.main, ...attached.attached];
 }
 
@@ -574,15 +574,15 @@ export function attachedDatabaseDisplayOrder(attached: NonNullable<ReturnType<ty
 /// sessions and connections that no session uses. Connections of internal hosts (e.g. the shell),
 /// which are referenced by no session of the scripts registry, are not shown.
 export function listedConnections(
-    registry: Pick<AttachedDatabaseRegistry, 'attachedDatabases' | 'attachedDatabasesBySession'>,
+    registry: Pick<ConnectionRegistry, 'connections' | 'attachedDatabasesBySession'>,
     sessionIds: ReadonlySet<string>,
-    currentSessionConnections: readonly AttachedDatabaseState[],
-): AttachedDatabaseState[] {
+    currentSessionConnections: readonly ConnectionState[],
+): ConnectionState[] {
     const listed = [...currentSessionConnections];
-    const seen = new Set(listed.map(database => database.databaseId));
-    for (const [databaseId, database] of registry.attachedDatabases) {
+    const seen = new Set(listed.map(database => database.connectionId));
+    for (const [databaseId, database] of registry.connections) {
         if (seen.has(databaseId)) continue;
-        const sessions = findSessionsForAttachedDatabase(registry as AttachedDatabaseRegistry, databaseId);
+        const sessions = findSessionsForConnection(registry as ConnectionRegistry, databaseId);
         if (sessions.length === 0 ? database.active : sessions.some(sessionId => sessionIds.has(sessionId))) {
             listed.push(database);
         }
@@ -590,8 +590,8 @@ export function listedConnections(
     return listed;
 }
 
-export function isAttachedDatabaseInitiallyExpanded(database: AttachedDatabaseState, databaseCount: number): boolean {
-    return databaseCount === 1 || !isHyperWasmAttachedDatabase(database);
+export function isConnectionInitiallyExpanded(database: ConnectionState, databaseCount: number): boolean {
+    return databaseCount === 1 || !isHyperWasmConnection(database);
 }
 
 interface SessionRowMenuProps {
@@ -704,31 +704,31 @@ const SessionRowMenu: React.FC<SessionRowMenuProps> = ({ item, onDuplicate, onDe
     );
 };
 
-interface AttachedDatabaseRowMenuProps {
-    database: AttachedDatabaseState;
+interface ConnectionRowMenuProps {
+    database: ConnectionState;
     label: string;
     onOpenSettings: (anchor: HTMLButtonElement) => void;
     /// Delete the connection, only possible if no session uses it
     onDelete?: () => void;
     /// The number of sessions that use the connection
     sessionCount?: number;
-    dependencies?: AttachedDatabaseRefreshDependencies;
+    dependencies?: ConnectionRefreshDependencies;
 }
 
-export interface AttachedDatabaseRefreshDependencies {
+export interface ConnectionRefreshDependencies {
     useCatalogLoaderQueue: typeof useCatalogLoaderQueue;
 }
 
-const DEFAULT_ATTACHED_DATABASE_REFRESH_DEPENDENCIES: AttachedDatabaseRefreshDependencies = {
+const DEFAULT_CONNECTION_REFRESH_DEPENDENCIES: ConnectionRefreshDependencies = {
     useCatalogLoaderQueue,
 };
 
-export const AttachedDatabaseRowMenu: React.FC<AttachedDatabaseRowMenuProps> = ({ database, label, onOpenSettings, onDelete, sessionCount = 0, dependencies = DEFAULT_ATTACHED_DATABASE_REFRESH_DEPENDENCIES }) => {
+export const ConnectionRowMenu: React.FC<ConnectionRowMenuProps> = ({ database, label, onOpenSettings, onDelete, sessionCount = 0, dependencies = DEFAULT_CONNECTION_REFRESH_DEPENDENCIES }) => {
     const [open, setOpen] = React.useState(false);
     const triggerRef = React.useRef<HTMLButtonElement>(null);
     const refreshCatalog = dependencies.useCatalogLoaderQueue();
     const isRefreshing = isCatalogRefreshRunning(database);
-    const canRefresh = canRefreshAttachedDatabase(database);
+    const canRefresh = canRefreshConnection(database);
 
     return (
         <AnchoredOverlay
@@ -772,7 +772,7 @@ export const AttachedDatabaseRowMenu: React.FC<AttachedDatabaseRowMenuProps> = (
                         aria-busy={isRefreshing}
                         onClick={() => {
                             setOpen(false);
-                            refreshCatalog(database.databaseId, true);
+                            refreshCatalog(database.connectionId, true);
                         }}
                     >
                         <ActionList.Leading>
@@ -803,16 +803,16 @@ export const AttachedDatabaseRowMenu: React.FC<AttachedDatabaseRowMenuProps> = (
     );
 };
 
-interface AttachedDatabaseRefreshButtonProps {
-    database: AttachedDatabaseState;
+interface ConnectionRefreshButtonProps {
+    database: ConnectionState;
     label: string;
-    dependencies?: AttachedDatabaseRefreshDependencies;
+    dependencies?: ConnectionRefreshDependencies;
 }
 
-export const AttachedDatabaseRefreshButton: React.FC<AttachedDatabaseRefreshButtonProps> = ({ database, label, dependencies = DEFAULT_ATTACHED_DATABASE_REFRESH_DEPENDENCIES }) => {
+export const ConnectionRefreshButton: React.FC<ConnectionRefreshButtonProps> = ({ database, label, dependencies = DEFAULT_CONNECTION_REFRESH_DEPENDENCIES }) => {
     const refreshCatalog = dependencies.useCatalogLoaderQueue();
     const isRefreshing = isCatalogRefreshRunning(database);
-    const canRefresh = canRefreshAttachedDatabase(database);
+    const canRefresh = canRefreshConnection(database);
 
     return (
         <IconButton
@@ -822,7 +822,7 @@ export const AttachedDatabaseRefreshButton: React.FC<AttachedDatabaseRefreshButt
             aria-label={`Refresh catalog for ${label}`}
             aria-busy={isRefreshing}
             disabled={!canRefresh}
-            onClick={() => refreshCatalog(database.databaseId, true)}
+            onClick={() => refreshCatalog(database.connectionId, true)}
         >
             {isRefreshing
                 ? <StatusIndicator status={IndicatorStatus.Running} width="14px" height="14px" />
@@ -902,9 +902,9 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const dependencies = props.dependencies ?? DEFAULT_SESSION_WORKBENCH_SIDEBAR_DEPENDENCIES;
     const navigate = dependencies.useRouterNavigate();
     const route = dependencies.useRouteContext();
-    const [databaseRegistry, databaseDispatch] = dependencies.useDynamicAttachedDatabaseDispatch();
+    const [databaseRegistry, databaseDispatch] = dependencies.useDynamicConnectionDispatch();
     const [scriptsRegistry, setScriptsRegistry] = dependencies.useSessionScriptsRegistry();
-    const [, setDatabaseRegistry] = dependencies.useAttachedDatabaseRegistry();
+    const [, setDatabaseRegistry] = dependencies.useConnectionRegistry();
     const allocateDatabase = dependencies.useAttachedDatabaseStateAllocator();
     const allocateConnection = dependencies.useConnectionAllocator();
     const attachConnection = dependencies.useAttachConnection();
@@ -919,8 +919,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const logger = dependencies.useLogger();
     const { invalidSessions, deleteInvalidSession } = dependencies.useInvalidSessionRegistry();
     const attached = dependencies.useSessionAttachedDatabases(props.sessionScripts.sessionId);
-    const attachedDatabaseRows = React.useMemo(
-        () => attached == null ? [] : attachedDatabaseDisplayOrder(attached),
+    const sessionConnectionRows = React.useMemo(
+        () => attached == null ? [] : connectionDisplayOrder(attached),
         [attached?.main, attached?.attached],
     );
     const [connectionOverlayDatabaseId, setConnectionOverlayDatabaseId] = React.useState<string | null>(null);
@@ -955,7 +955,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         for (const [sessionId, scripts] of scriptsRegistry.sessionScriptsMap) {
             const mapping = databaseRegistry.attachedDatabasesBySession.get(sessionId);
             const databaseId = mapping?.mainDatabaseId;
-            const database = databaseId == null ? null : databaseRegistry.attachedDatabases.get(databaseId);
+            const database = databaseId == null ? null : databaseRegistry.connections.get(databaseId);
             if (database == null) continue;
             const location = storageReader.getSessionLocation(sessionId);
             const path = displayPath(sessionId, location);
@@ -996,18 +996,18 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     }), [invalidSessions, storageReader]);
     const sessionCount = sessions.length + invalidItems.length;
     const connectionRows = React.useMemo(
-        () => listedConnections(databaseRegistry, new Set(scriptsRegistry.sessionScriptsMap.keys()), attachedDatabaseRows),
-        [databaseRegistry, scriptsRegistry, attachedDatabaseRows],
+        () => listedConnections(databaseRegistry, new Set(scriptsRegistry.sessionScriptsMap.keys()), sessionConnectionRows),
+        [databaseRegistry, scriptsRegistry, sessionConnectionRows],
     );
     const connectionCount = connectionRows.length;
     const describeUsage = React.useCallback((databaseId: string): ConnectionUsage => ({
         sessionCount: connectionRefCount(databaseRegistry, databaseId),
-        usedHere: attachedDatabaseRows.some(database => database.databaseId === databaseId),
-    }), [attachedDatabaseRows, databaseRegistry]);
-    const initiallyExpanded = React.useCallback((database: AttachedDatabaseState, _count: number) => (
-        attachedDatabaseRows.includes(database)
-        && isAttachedDatabaseInitiallyExpanded(database, attachedDatabaseRows.length)
-    ), [attachedDatabaseRows]);
+        usedHere: sessionConnectionRows.some(database => database.connectionId === databaseId),
+    }), [sessionConnectionRows, databaseRegistry]);
+    const initiallyExpanded = React.useCallback((database: ConnectionState, _count: number) => (
+        sessionConnectionRows.includes(database)
+        && isConnectionInitiallyExpanded(database, sessionConnectionRows.length)
+    ), [sessionConnectionRows]);
 
     const dndSensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -1033,14 +1033,14 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     }, [logger, storageReader.backend]);
 
     /// Create a session that uses an existing connection
-    const createSessionWithConnection = React.useCallback((database: AttachedDatabaseState) => {
+    const createSessionWithConnection = React.useCallback((database: ConnectionState) => {
         setCreateOpen(false);
         const sessionId = crypto.randomUUID();
-        attachConnection(sessionId, database.databaseId);
+        attachConnection(sessionId, database.connectionId);
         setupSessionScripts(sessionId, database);
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
-            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.databaseId, [database]] },
+            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [database]] },
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
@@ -1050,18 +1050,18 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const createConnection = React.useCallback((connector: ConnectorType) => {
         setCreateConnectionOpen(false);
         const params = createDefaultConnectionParamsForConnector(CONNECTOR_INFOS[connector]);
-        const initialDatabase = dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params, databaseRegistry.attachedDatabasesBySignature);
+        const initialDatabase = dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params, databaseRegistry.connectionsBySignature);
         const database = allocateConnection({ ...initialDatabase, active: true });
         connectionSettingsAnchorRef.current = createConnectionButtonRef.current;
-        setConnectionOverlayDatabaseId(database.databaseId);
-    }, [allocateConnection, databaseRegistry.attachedDatabasesBySignature, dependencies, props.sessionScripts.instance]);
+        setConnectionOverlayDatabaseId(database.connectionId);
+    }, [allocateConnection, databaseRegistry.connectionsBySignature, dependencies, props.sessionScripts.instance]);
 
     /// Delete a connection that no session uses
     const deleteConnection = React.useCallback((databaseId: string) => {
-        const database = databaseRegistry.attachedDatabases.get(databaseId);
+        const database = databaseRegistry.connections.get(databaseId);
         if (database == null || connectionRefCount(databaseRegistry, databaseId) > 0) return;
-        if (!window.confirm(`Delete the connection "${attachedDatabaseLabel(database)}"?`)) return;
-        databaseDispatch(databaseId, { type: DELETE_ATTACHED_DATABASE, value: null });
+        if (!window.confirm(`Delete the connection "${connectionLabel(database)}"?`)) return;
+        databaseDispatch(databaseId, { type: DELETE_CONNECTION, value: null });
     }, [databaseDispatch, databaseRegistry]);
 
     const createSession = React.useCallback((connector: ConnectorType) => {
@@ -1069,18 +1069,18 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         const sessionId = crypto.randomUUID();
         const params = createDefaultConnectionParamsForConnector(CONNECTOR_INFOS[connector]);
         const initialDatabase = connector === ConnectorType.HYPER
-            ? dependencies.createDefaultHyperWasmAttachedDatabaseState(props.sessionScripts.instance, databaseRegistry.attachedDatabasesBySignature)
-            : dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params, databaseRegistry.attachedDatabasesBySignature);
+            ? dependencies.createDefaultHyperWasmConnectionState(props.sessionScripts.instance, databaseRegistry.connectionsBySignature)
+            : dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params, databaseRegistry.connectionsBySignature);
         // The session is committed now; settings must not switch its initialized script dialect.
         const database = allocateDatabase(sessionId, { ...initialDatabase, active: true });
         setupSessionScripts(sessionId, database);
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
-            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.databaseId, [database]] },
+            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [database]] },
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
-    }, [allocateDatabase, databaseRegistry.attachedDatabasesBySignature, dependencies, navigate, props.closeAfterSelection, props.sessionScripts.instance, setupSessionScripts, storageWriter]);
+    }, [allocateDatabase, databaseRegistry.connectionsBySignature, dependencies, navigate, props.closeAfterSelection, props.sessionScripts.instance, setupSessionScripts, storageWriter]);
 
     const closeConnectionOverlay = React.useCallback(() => {
         setConnectionOverlayDatabaseId(null);
@@ -1163,7 +1163,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         // computations are dropped.
         const mapping = databaseRegistry.attachedDatabasesBySession.get(item.sessionId);
         for (const databaseId of mapping == null ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds]) {
-            const database = databaseRegistry.attachedDatabases.get(databaseId);
+            const database = databaseRegistry.connections.get(databaseId);
             if (database == null) continue;
             for (const queryId of findSessionQueries(database, item.sessionId)) {
                 computationDispatch({ type: DELETE_COMPUTATION, value: [queryId] });
@@ -1256,13 +1256,13 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                                         <>
                                             <ActionList.GroupHeading>Existing connection</ActionList.GroupHeading>
                                             {connectionRows.map(database => (
-                                                <ActionList.ListItem key={database.databaseId} onClick={() => createSessionWithConnection(database)}>
+                                                <ActionList.ListItem key={database.connectionId} onClick={() => createSessionWithConnection(database)}>
                                                     <ActionList.Leading>
                                                         <svg width="16px" height="16px" aria-hidden="true">
                                                             <use xlinkHref={`${symbols}#${database.connectorInfo.icons.colored}`} />
                                                         </svg>
                                                     </ActionList.Leading>
-                                                    <ActionList.ItemText>{attachedDatabaseLabel(database)}</ActionList.ItemText>
+                                                    <ActionList.ItemText>{connectionLabel(database)}</ActionList.ItemText>
                                                 </ActionList.ListItem>
                                             ))}
                                             <ActionList.GroupHeading>New connection</ActionList.GroupHeading>
@@ -1359,7 +1359,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                     </AnchoredOverlay>
                 </header>
                 <div className={styles.database_body} data-electron-drag-region="false">
-                    {connectionRows.length > 0 && <AttachedDatabaseTree
+                    {connectionRows.length > 0 && <ConnectionTree
                         databases={connectionRows}
                         describeUsage={describeUsage}
                         onDelete={deleteConnection}
@@ -1372,7 +1372,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                 </div>
             </section>
             <dependencies.ConnectionSettingsOverlay
-                databaseId={connectionOverlayDatabaseId}
+                connectionId={connectionOverlayDatabaseId}
                 isOpen={connectionOverlayDatabaseId != null}
                 onClose={closeConnectionOverlay}
                 anchorRef={connectionSettingsAnchorRef}

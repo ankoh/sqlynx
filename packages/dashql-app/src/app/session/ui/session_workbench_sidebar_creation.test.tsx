@@ -3,7 +3,7 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
 import { SessionSetupStatus } from '../../router/session_setup_status.js';
 import { SELECT_SESSION } from '../../router/router.js';
@@ -22,28 +22,28 @@ const state = {
     allocateDatabase: vi.fn(),
     allocateConnection: vi.fn(),
     attachConnection: vi.fn(),
-    local: null as AttachedDatabaseState | null,
-    overlayProps: null as { databaseId: string | null; headerTitle?: string; isOpen: boolean; onClose: () => void; onConnected?: (database: AttachedDatabaseState) => void } | null,
+    local: null as ConnectionState | null,
+    overlayProps: null as { connectionId: string | null; headerTitle?: string; isOpen: boolean; onClose: () => void; onConnected?: (database: ConnectionState) => void } | null,
     shareProps: null as { isOpen: boolean; sessionId?: string } | null,
     fileSaveProps: null as { isOpen: boolean; sessionScripts?: { sessionId: string }; fileName?: string } | null,
-    attachedDatabases: new Map<string, AttachedDatabaseState>(),
+    connections: new Map<string, ConnectionState>(),
     attachedDatabasesBySession: new Map<string, { mainDatabaseId: string; attachedDatabaseIds: string[] }>(),
     sessionScriptsMap: new Map<string, unknown>(),
-    sessionAttachedDatabases: null as { main: AttachedDatabaseState; attached: AttachedDatabaseState[] } | null,
+    sessionAttachedDatabases: null as { main: ConnectionState; attached: ConnectionState[] } | null,
 };
 
 const dependencies = {
     useRouterNavigate: () => state.navigate,
     useRouteContext: () => ({ sessionId: 'current-session', sessionSetupStatus: SessionSetupStatus.NONE }),
-    useAttachedDatabaseRegistry: () => [{
-        attachedDatabases: state.attachedDatabases,
+    useConnectionRegistry: () => [{
+        connections: state.connections,
         attachedDatabasesBySession: state.attachedDatabasesBySession,
     }, vi.fn()],
     useSessionAttachedDatabases: () => state.sessionAttachedDatabases,
-    useDynamicAttachedDatabaseDispatch: () => [{
-        attachedDatabases: state.attachedDatabases,
+    useDynamicConnectionDispatch: () => [{
+        connections: state.connections,
         attachedDatabasesBySession: state.attachedDatabasesBySession,
-        attachedDatabasesBySignature: new Map(),
+        connectionsBySignature: new Map(),
     }, state.dispatchDatabase],
     useAttachedDatabaseStateAllocator: () => state.allocateDatabase,
     useConnectionAllocator: () => state.allocateConnection,
@@ -81,7 +81,7 @@ const dependencies = {
     useDashQLCoreSetup: () => vi.fn(),
     usePlatformType: () => 0,
     useLogger: () => ({ warn: vi.fn(), error: vi.fn() }),
-    createDefaultHyperWasmAttachedDatabaseState: () => ({ type: 'local' }),
+    createDefaultHyperWasmConnectionState: () => ({ type: 'local' }),
     createConnectionStateFromParams: (...args: unknown[]) => state.createConnectionStateFromParams(...args),
 } as unknown as SessionWorkbenchSidebarDependencies;
 
@@ -113,17 +113,17 @@ describe('SessionWorkbenchSidebar session creation', () => {
         state.overlayProps = null;
         state.shareProps = null;
         state.fileSaveProps = null;
-        state.attachedDatabases.clear();
+        state.connections.clear();
         state.attachedDatabasesBySession.clear();
         state.sessionScriptsMap.clear();
         state.sessionAttachedDatabases = null;
-        state.local = { databaseId: 'local-database' } as AttachedDatabaseState;
+        state.local = { connectionId: 'local-database' } as ConnectionState;
         state.local = {
-            databaseId: 'local-database',
+            connectionId: 'local-database',
             connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
             details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } },
             ...EMPTY_CATALOG,
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
         state.allocateDatabase.mockReset().mockReturnValue(state.local);
         state.allocateConnection.mockReset();
         state.attachConnection.mockReset();
@@ -156,13 +156,13 @@ describe('SessionWorkbenchSidebar session creation', () => {
                 }),
             },
             catalogUpdates: { currentFullRefresh: null, tasksRunning: new Map() },
-        } as AttachedDatabaseState;
-        const attached = { ...main, databaseId: 'attached-database' };
-        state.attachedDatabases.set(main.databaseId, main);
-        state.attachedDatabases.set(attached.databaseId, attached);
+        } as ConnectionState;
+        const attached = { ...main, connectionId: 'attached-database' };
+        state.connections.set(main.connectionId, main);
+        state.connections.set(attached.connectionId, attached);
         state.attachedDatabasesBySession.set('current-session', {
-            mainDatabaseId: main.databaseId,
-            attachedDatabaseIds: [attached.databaseId],
+            mainDatabaseId: main.connectionId,
+            attachedDatabaseIds: [attached.connectionId],
         });
         state.sessionScriptsMap.set('current-session', {
             sessionId: 'current-session',
@@ -189,7 +189,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
                 read: () => ({ catalogReader: { databasesLength: () => 0 } }),
             }) },
             catalogUpdates: { currentFullRefresh: null, tasksRunning: new Map() },
-        } as AttachedDatabaseState;
+        } as ConnectionState;
         state.sessionAttachedDatabases = { main, attached: [] };
         act(() => root.render(<SessionWorkbenchSidebar sessionScripts={{
             sessionId: 'current-session', instance: {},
@@ -198,7 +198,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
         act(() => {
             Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'Settings')!.click();
         });
-        expect(state.overlayProps).toMatchObject({ databaseId: main.databaseId, isOpen: true });
+        expect(state.overlayProps).toMatchObject({ connectionId: main.connectionId, isOpen: true });
         expect(state.overlayProps?.onConnected).toBeUndefined();
         act(() => {
             Array.from(container.querySelectorAll('button')).find(button => button.textContent === 'Complete setup')!.click();
@@ -255,7 +255,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
 
     it.each([ConnectionHealth.NOT_STARTED, ConnectionHealth.CONNECTING, ConnectionHealth.FAILED, ConnectionHealth.CANCELLED])('selects a disconnected session immediately (%s)', async connectionHealth => {
         const database = {
-            databaseId: 'salesforce-database',
+            connectionId: 'salesforce-database',
             connectionHealth,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD],
             details: {
@@ -263,10 +263,10 @@ describe('SessionWorkbenchSidebar session creation', () => {
                 value: { proto: { setupParams: {} } },
             },
             ...EMPTY_CATALOG,
-        } as unknown as AttachedDatabaseState;
-        state.attachedDatabases.set(database.databaseId, database);
+        } as unknown as ConnectionState;
+        state.connections.set(database.connectionId, database);
         state.attachedDatabasesBySession.set('salesforce-session', {
-            mainDatabaseId: database.databaseId,
+            mainDatabaseId: database.connectionId,
             attachedDatabaseIds: [],
         });
         state.sessionScriptsMap.set('salesforce-session', {
@@ -294,7 +294,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
 
     it('offers URL sharing from the session row menu', () => {
         const sessionId = 'current-session';
-        state.attachedDatabases.set('local-database', state.local!);
+        state.connections.set('local-database', state.local!);
         state.attachedDatabasesBySession.set(sessionId, {
             mainDatabaseId: 'local-database',
             attachedDatabaseIds: [],
@@ -321,7 +321,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
 
     it('opens export settings before saving from the session row menu', () => {
         const sessionId = 'current-session';
-        state.attachedDatabases.set('local-database', state.local!);
+        state.connections.set('local-database', state.local!);
         state.attachedDatabasesBySession.set(sessionId, {
             mainDatabaseId: 'local-database',
             attachedDatabaseIds: [],
@@ -351,14 +351,14 @@ describe('SessionWorkbenchSidebar session creation', () => {
     });
 
     it('lists the connections of other sessions and creates sessions with them', () => {
-        const other = { ...state.local!, databaseId: 'trino-database', connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
-            details: { type: TRINO_CONNECTOR, value: { proto: { setupParams: {} } } } } as unknown as AttachedDatabaseState;
-        state.attachedDatabases.set(state.local!.databaseId, state.local!);
-        state.attachedDatabases.set(other.databaseId, other);
-        state.attachedDatabasesBySession.set('current-session', { mainDatabaseId: state.local!.databaseId, attachedDatabaseIds: [] });
-        state.attachedDatabasesBySession.set('trino-session', { mainDatabaseId: other.databaseId, attachedDatabaseIds: [] });
+        const other = { ...state.local!, connectionId: 'trino-database', connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
+            details: { type: TRINO_CONNECTOR, value: { proto: { setupParams: {} } } } } as unknown as ConnectionState;
+        state.connections.set(state.local!.connectionId, state.local!);
+        state.connections.set(other.connectionId, other);
+        state.attachedDatabasesBySession.set('current-session', { mainDatabaseId: state.local!.connectionId, attachedDatabaseIds: [] });
+        state.attachedDatabasesBySession.set('trino-session', { mainDatabaseId: other.connectionId, attachedDatabaseIds: [] });
         state.attachedDatabasesBySession.set('shell', { mainDatabaseId: 'shell', attachedDatabaseIds: [] });
-        state.attachedDatabases.set('shell', { ...other, databaseId: 'shell' } as AttachedDatabaseState);
+        state.connections.set('shell', { ...other, connectionId: 'shell' } as ConnectionState);
         for (const sessionId of ['current-session', 'trino-session']) {
             state.sessionScriptsMap.set(sessionId, { sessionId, name: sessionId, sessionMetadata: {} });
         }

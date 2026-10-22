@@ -10,16 +10,16 @@ import { ConnectorType, CONNECTOR_INFOS, HYPER_CONNECTOR } from '../connector_in
 import {
     ConnectionHealth,
     ConnectionStatus,
-    AttachedDatabaseState,
-    AttachedDatabaseStateWithoutId,
-    createAttachedDatabaseState,
+    ConnectionState,
+    ConnectionStateWithoutId,
+    createConnectionState,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_SUCCEEDED,
-    RESET_ATTACHED_DATABASE,
-    DELETE_ATTACHED_DATABASE,
-} from '../attached_database_state.js';
+    RESET_CONNECTION,
+    DELETE_CONNECTION,
+} from '../connection_state.js';
 import { Hasher } from "../../../utils/hash.js";
 import { ConnectionSignatureMap, updateConnectionSignature } from "../connection_signature.js";
 import { DefaultHasher } from "../../../utils/hash_default.js";
@@ -51,14 +51,14 @@ export function createHyperConnectionStateDetails(params?: connection.HyperConne
     };
 }
 
-export function createHyperConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): AttachedDatabaseStateWithoutId {
-    return createAttachedDatabaseState(dql, CONNECTOR_INFOS[ConnectorType.HYPER], connSigs, {
+export function createHyperConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
+    return createConnectionState(dql, CONNECTOR_INFOS[ConnectorType.HYPER], connSigs, {
         type: HYPER_CONNECTOR,
         value: createHyperConnectionStateDetails()
     });
 }
 
-export function getHyperConnectionDetails(state: AttachedDatabaseState | null): HyperConnectionDetails | null {
+export function getHyperConnectionDetails(state: ConnectionState | null): HyperConnectionDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case HYPER_CONNECTOR: return state.details.value;
@@ -82,8 +82,8 @@ export const HYPER_CHANNEL_SETUP_STARTED = Symbol('HYPER_CHANNEL_SETUP_STARTED')
 export const HYPER_CHANNEL_READY = Symbol('HYPER_CHANNEL_READY');
 
 export type HyperConnectorAction =
-    | VariantKind<typeof RESET_ATTACHED_DATABASE, null>
-    | VariantKind<typeof DELETE_ATTACHED_DATABASE, null>
+    | VariantKind<typeof RESET_CONNECTION, null>
+    | VariantKind<typeof DELETE_CONNECTION, null>
     | VariantKind<typeof HYPER_CHANNEL_SETUP_STARTED, connection.HyperConnectionParams>
     | VariantKind<typeof HYPER_CHANNEL_SETUP_CANCELLED, DetailedError>
     | VariantKind<typeof HYPER_CHANNEL_SETUP_FAILED, DetailedError>
@@ -94,12 +94,12 @@ export type HyperConnectorAction =
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
-export function reduceHyperConnectorState(state: AttachedDatabaseState, action: HyperConnectorAction, _storage: StorageWriter): AttachedDatabaseState | null {
+export function reduceHyperConnectorState(state: ConnectionState, action: HyperConnectorAction, _storage: StorageWriter): ConnectionState | null {
     const details = state.details.value as HyperConnectionDetails;
-    let next: AttachedDatabaseState | null = null;
+    let next: ConnectionState | null = null;
     switch (action.type) {
-        case DELETE_ATTACHED_DATABASE:
-        case RESET_ATTACHED_DATABASE:
+        case DELETE_CONNECTION:
+        case RESET_CONNECTION:
             details.channel?.close();
             next = {
                 ...state,
@@ -186,7 +186,7 @@ export function reduceHyperConnectorState(state: AttachedDatabaseState, action: 
                     type: HYPER_CONNECTOR,
                     value: details,
                 },
-                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.databaseId),
+                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.connectionId),
             };
             break;
         }

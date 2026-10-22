@@ -20,12 +20,12 @@ describe('Query result cache clearing', () => {
     });
 
     it('marks the finished queries of the session whose results were deleted', () => {
-        const database = (databaseId: string, queries: [number, string | null, boolean][]) => ({
-            databaseId,
+        const database = (connectionId: string, queries: [number, string | null, boolean][]) => ({
+            connectionId,
             queriesFinished: new Map(queries.map(([queryId, cacheKey, cacheDeleted]) => [queryId, { queryId, cacheKey, cacheDeleted }])),
         });
         const registry = {
-            attachedDatabases: new Map<string, any>([
+            connections: new Map<string, any>([
                 ['main', database('main', [[1, 'a', false], [2, 'other', false], [3, null, false], [4, 'b', true]])],
                 ['attached', database('attached', [[5, 'b', false]])],
                 ['unrelated', database('unrelated', [[6, 'a', false]])],

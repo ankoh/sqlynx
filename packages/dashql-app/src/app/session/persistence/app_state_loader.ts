@@ -2,17 +2,17 @@ import type { DashQL } from '@ankoh/dashql-core';
 import type { Logger } from '../../../platform/logger/logger.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
 import { ProgressCounter } from '../../../utils/progress.js';
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
-import { registerAttachedDatabase, type AttachedDatabaseRegistry, type SessionAttachedDatabases } from '../../connections/attached_database_registry.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
+import { registerConnection, type ConnectionRegistry, type SessionAttachedDatabases } from '../../connections/connection_registry.js';
 import type { SessionScripts, ScriptData } from '../scripts/session_scripts.js';
 import { addSessionScriptsForConnection, type SessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { createEmptyScriptData, destroySessionScripts, replaceScriptSessionText } from '../scripts/session_scripts.js';
-import { decodeConnectionFromProto, restoreAttachedDatabaseState } from '../../connections/connection_import.js';
+import { decodeConnectionFromProto, restoreConnectionState } from '../../connections/connection_import.js';
 import { CONNECTOR_TYPES, ConnectorType, type ConnectorInfo } from '../../connections/connector_info.js';
 import type { StorageBackend, SessionEntry, SessionData, SessionRegistryBackend, ConnectionEntry } from '../../storage/storage_backend.js';
 import { StorageBackendType, STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, isSessionRegistryBackend } from '../../storage/storage_backend.js';
 import { connectionParamsEqual } from '../../connections/connection_params.js';
-import { dedupeAttachedDatabases, patchSessionConnection, upsertConnectionEntry } from '../../storage/storage_writer.js';
+import { patchSessionConnection, upsertConnectionEntry } from '../../storage/storage_writer.js';
 import { validateSessionData, describeInvalidSession, isValidUuid, SessionValidationError, type InvalidSession } from '../../storage/session_validation.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../connections/catalog_update_state.js';
 import { beginCatalogBatch, invalidateCatalogBatch, publishCatalogBatch, type BatchProcessor, type CatalogBatchEntry } from '../../connections/catalog_batch.js';
@@ -21,7 +21,7 @@ import { readSessionSettings, type SessionSettings } from '../scripts/session_se
 const LOG_CTX = "app_state_loader";
 
 export interface RestoredAppState {
-    connectionStates: Map<string, AttachedDatabaseState>;
+    connectionStates: Map<string, ConnectionState>;
     attachedDatabasesBySession: Map<string, SessionAttachedDatabases>;
     connectionStatesByType: string[][];
     connectionSignatures: Map<string, string | null>;
@@ -138,7 +138,7 @@ interface RestoreContext {
     /// The batch processor for catalog scripts
     processor?: BatchProcessor;
     /// The connections (connectionId -> state)
-    connectionStates: Map<string, AttachedDatabaseState>;
+    connectionStates: Map<string, ConnectionState>;
     /// The connections by connector type
     connectionStatesByType: string[][];
     /// The connection signatures
@@ -150,7 +150,7 @@ interface RestoreContext {
     /// The connections whose catalog is restored, sessions no longer seed them
     catalogsRestored: Set<string>;
     /// The connections that were registered while restoring sessions
-    newConnections: Map<string, AttachedDatabaseState>;
+    newConnections: Map<string, ConnectionState>;
     /// The writes that bring the stored state in line with the restored one
     pendingWrites: RestorePendingWrites;
 }
@@ -197,7 +197,7 @@ function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Log
 /// Returns true if there was a catalog to restore.
 async function restoreConnectionCatalog(
     ctx: RestoreContext,
-    connectionState: AttachedDatabaseState,
+    connectionState: ConnectionState,
     load: () => Promise<CatalogTexts>,
     logContext: Record<string, string>,
 ): Promise<boolean> {
@@ -227,17 +227,17 @@ async function restoreConnectionCatalog(
 
 /// Restore a connection of the app manifest
 async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntry): Promise<void> {
-    let state: AttachedDatabaseState;
+    let state: ConnectionState;
     try {
         const [connectorInfo, details] = decodeConnectionFromProto(entry.params as any, entry.id);
-        state = restoreAttachedDatabaseState(ctx.core, entry.id, connectorInfo, details, ctx.connectionSignatures, entry.paramsDraft);
+        state = restoreConnectionState(ctx.core, entry.id, connectorInfo, details, ctx.connectionSignatures, entry.paramsDraft);
     } catch (error) {
         // Sessions referencing the connection register it again from their copies
         ctx.logger.warn("Failed to restore connection", { connectionId: entry.id, error: stringifyError(error) }, LOG_CTX);
         return;
     }
-    ctx.connectionStates.set(state.databaseId, state);
-    ctx.connectionStatesByType[state.connectorInfo.connectorType].push(state.databaseId);
+    ctx.connectionStates.set(state.connectionId, state);
+    ctx.connectionStatesByType[state.connectorInfo.connectorType].push(state.connectionId);
     for (const alias of entry.aliases ?? []) {
         ctx.aliases.set(alias, entry.id);
     }
@@ -267,7 +267,7 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
 
 /// Resolve a session's reference to a connection.
 /// The app manifest wins over the copy in the session, an unknown connection is registered from the copy.
-function resolveSessionDatabase(ctx: RestoreContext, sessionId: string, database: SessionData['mainDatabase']): AttachedDatabaseState {
+function resolveSessionDatabase(ctx: RestoreContext, sessionId: string, database: SessionData['mainDatabase']): ConnectionState {
     const connectionId = ctx.aliases.get(database.databaseId) ?? database.databaseId;
     const known = ctx.connectionStates.get(connectionId);
     if (known != null) {
@@ -277,12 +277,12 @@ function resolveSessionDatabase(ctx: RestoreContext, sessionId: string, database
         return known;
     }
     const [connectorInfo, details] = decodeConnectionFromProto(database.params as any, sessionId);
-    const state = restoreAttachedDatabaseState(ctx.core, connectionId, connectorInfo, details, ctx.connectionSignatures, database.paramsDraft);
-    ctx.connectionStates.set(state.databaseId, state);
-    ctx.connectionStatesByType[connectorInfo.connectorType].push(state.databaseId);
-    ctx.newConnections.set(state.databaseId, state);
+    const state = restoreConnectionState(ctx.core, connectionId, connectorInfo, details, ctx.connectionSignatures, database.paramsDraft);
+    ctx.connectionStates.set(state.connectionId, state);
+    ctx.connectionStatesByType[connectorInfo.connectorType].push(state.connectionId);
+    ctx.newConnections.set(state.connectionId, state);
     ctx.pendingWrites.connectionEntries.push({
-        id: state.databaseId,
+        id: state.connectionId,
         params: state.params,
         ...(database.paramsDraft == null ? {} : { paramsDraft: database.paramsDraft }),
         createdAt: new Date().toISOString(),
@@ -338,8 +338,9 @@ async function restoreSessionEntry(
     const attachedConnectionStates = sessionData.attachedDatabases.map(database => resolveSessionDatabase(ctx, sessionId, database));
     const connectorInfo = connectionState.connectorInfo;
     attachedDatabasesBySession.set(sessionId, {
-        mainDatabaseId: connectionState.databaseId,
-        attachedDatabaseIds: dedupeAttachedDatabases(connectionState.databaseId, attachedConnectionStates).map(database => database.databaseId),
+        mainDatabaseId: connectionState.connectionId,
+        attachedDatabaseIds: [...new Set(attachedConnectionStates.map(database => database.connectionId))]
+            .filter(id => id !== connectionState.connectionId),
     });
 
     const connectionDuration = performance.now() - connectionStartTime;
@@ -362,7 +363,7 @@ async function restoreSessionEntry(
         restoreSessionScripts: restoreSessionScriptsProgress.clone(),
     });
 
-    const connectionId = connectionState.databaseId;
+    const connectionId = connectionState.connectionId;
     if (ctx.catalogsRestored.has(connectionId)) {
         restoreCatalogs.addSucceeded();
     } else {
@@ -423,7 +424,7 @@ async function restoreSessionEntry(
             ctx.core,
             backend,
             sessionId,
-            connectionState.databaseId,
+            connectionState.connectionId,
             sessionData.name?.trim() || null,
             readSessionSettings(sessionData.settings, connectorInfo),
             connectorInfo,
@@ -455,7 +456,7 @@ async function restoreSessionEntry(
 
     if (restoredSessionScripts != null) {
         sessionScripts.set(sessionId, restoredSessionScripts);
-        sessionScriptsByConnection.set(connectionState.databaseId, [...(sessionScriptsByConnection.get(connectionState.databaseId) ?? []), sessionId]);
+        sessionScriptsByConnection.set(connectionState.connectionId, [...(sessionScriptsByConnection.get(connectionState.connectionId) ?? []), sessionId]);
         sessionScriptsByConnectionType[connectorInfo.connectorType].push(sessionId);
     }
 
@@ -547,7 +548,7 @@ export interface RestoredSession {
     /// The session id
     sessionId: string;
     /// The connections the session registered, connections that were already live are not included
-    databases: AttachedDatabaseState[];
+    databases: ConnectionState[];
     /// The connections the session references
     mapping: SessionAttachedDatabases;
     /// The session scripts
@@ -555,12 +556,12 @@ export interface RestoredSession {
 }
 
 export function mergeRestoredSessionIntoConnections(
-    reg: AttachedDatabaseRegistry,
+    reg: ConnectionRegistry,
     restored: RestoredSession,
-): AttachedDatabaseRegistry {
+): ConnectionRegistry {
     for (const database of restored.databases) {
-        if (!reg.attachedDatabases.has(database.databaseId)) {
-            registerAttachedDatabase(reg, database);
+        if (!reg.connections.has(database.connectionId)) {
+            registerConnection(reg, database);
         }
     }
     reg.attachedDatabasesBySession.set(restored.sessionId, restored.mapping);
@@ -579,7 +580,7 @@ export function mergeRestoredSessionIntoScripts(
 
 /// Apply the catalog changes of executed statements on top of the restored relation script.
 /// Unreadable changes are dropped, the next catalog refresh describes the relations anyway.
-function restoreCatalogChanges(connection: AttachedDatabaseState, changesSql: string, logger: Logger, logContext: Record<string, string>): void {
+function restoreCatalogChanges(connection: ConnectionState, changesSql: string, logger: Logger, logContext: Record<string, string>): void {
     try {
         connection.catalog.applyCatalogChangesSql(connection.catalogRelationScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, changesSql);
         connection.catalogChangesSql = changesSql;
@@ -594,7 +595,7 @@ export function destroyRestoredSession(restored: RestoredSession): void {
     for (const database of restored.databases) destroyRestoredConnection(database);
 }
 
-function destroyRestoredConnection(connection: AttachedDatabaseState): void {
+function destroyRestoredConnection(connection: ConnectionState): void {
     invalidateCatalogBatch(connection.catalog);
     connection.connectionSignature.signatures.delete(
         connection.connectionSignature.signatureString,
@@ -607,7 +608,7 @@ function destroyRestoredConnection(connection: AttachedDatabaseState): void {
 }
 
 /// The live connections that a restored session resolves its references against
-export type LiveConnections = Pick<AttachedDatabaseRegistry, 'attachedDatabases' | 'attachedDatabasesBySignature'>;
+export type LiveConnections = Pick<ConnectionRegistry, 'connections' | 'connectionsBySignature'>;
 
 /// Restore a single, already-persisted session (connection references + catalog + session) and
 /// return just that session's pieces.
@@ -630,8 +631,8 @@ export async function restoreSingleSession(
     // manifest entry `restoreSessionEntry` needs to route the load.
     const sessionEntry: SessionEntry = { path: sessionId, storageType: StorageBackendType.OPFS };
 
-    const ctx = createRestoreContext(core, backend, logger, processor, live.attachedDatabasesBySignature);
-    for (const [connectionId, state] of live.attachedDatabases) {
+    const ctx = createRestoreContext(core, backend, logger, processor, live.connectionsBySignature);
+    for (const [connectionId, state] of live.connections) {
         ctx.connectionStates.set(connectionId, state);
         ctx.catalogsRestored.add(connectionId);
     }

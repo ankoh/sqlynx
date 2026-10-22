@@ -3,7 +3,7 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
 import { CONNECTOR_INFOS } from './connector_info.js';
-import { DELETE_ATTACHED_DATABASE, SET_CONNECTION_DRAFT } from './attached_database_state.js';
+import { DELETE_CONNECTION, SET_CONNECTION_DRAFT } from './connection_state.js';
 import { ConnectionPersistenceProvider, useConnectionSave, type ConnectionSaveResult } from './connection_persistence.js';
 
 import {
@@ -11,18 +11,18 @@ import {
     CATALOG_UPDATE_SUCCEEDED,
     ConnectionHealth,
     UPDATE_CATALOG,
-    type AttachedDatabaseState,
-} from './attached_database_state.js';
+    type ConnectionState,
+} from './connection_state.js';
 import {
-    type AttachedDatabaseRegistry,
-    type DynamicAttachedDatabaseDispatch,
-    AttachedDatabaseRegistry as AttachedDatabaseRegistryProvider,
+    type ConnectionRegistry,
+    type DynamicConnectionDispatch,
+    ConnectionRegistry as ConnectionRegistryProvider,
     didPersistedConnectionChange,
     resolveSessionAttachedDatabases,
     resolveSessionExecutionDatabase,
-    useAttachedDatabaseRegistry,
-    useDynamicAttachedDatabaseDispatch,
-} from './attached_database_registry.js';
+    useConnectionRegistry,
+    useDynamicConnectionDispatch,
+} from './connection_registry.js';
 import { ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import { CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
@@ -30,13 +30,13 @@ import { StorageProvider, useStorageWriter } from '../storage/storage_provider.j
 import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from '../storage/session_test_backend.js';
 import type { StorageWriter } from '../storage/storage_writer.js';
 
-function database(databaseId: string, health: ConnectionHealth): AttachedDatabaseState {
-    return { databaseId, connectionHealth: health } as AttachedDatabaseState;
+function database(databaseId: string, health: ConnectionHealth): ConnectionState {
+    return { connectionId: databaseId, connectionHealth: health } as ConnectionState;
 }
 
-function registry(attachedDatabaseId: string | null, mainDatabaseId = attachedDatabaseId ?? 'local'): AttachedDatabaseRegistry {
+function registry(attachedDatabaseId: string | null, mainDatabaseId = attachedDatabaseId ?? 'local'): ConnectionRegistry {
     return {
-        attachedDatabases: new Map([
+        connections: new Map([
             ['local', database('local', ConnectionHealth.ONLINE)],
             ['remote', database('remote', ConnectionHealth.FAILED)],
         ]),
@@ -44,41 +44,41 @@ function registry(attachedDatabaseId: string | null, mainDatabaseId = attachedDa
             mainDatabaseId,
             attachedDatabaseIds: attachedDatabaseId == null ? [] : [attachedDatabaseId],
         }]]),
-        attachedDatabasesByType: [],
-        attachedDatabasesBySignature: new Map(),
+        connectionsByType: [],
+        connectionsBySignature: new Map(),
     };
 }
 
 describe('session attached database routing', () => {
     it('resolves local and remote databases independently', () => {
         const attached = resolveSessionAttachedDatabases(registry('remote'), 'session');
-        expect(attached?.main.databaseId).toBe('remote');
-        expect(attached?.attached.map(database => database.databaseId)).toEqual(['remote']);
+        expect(attached?.main.connectionId).toBe('remote');
+        expect(attached?.attached.map(database => database.connectionId)).toEqual(['remote']);
     });
 
     it('routes execution to the remote main database even when it is offline', () => {
         const execution = resolveSessionExecutionDatabase(registry('remote'), 'session');
-        expect(execution?.databaseId).toBe('remote');
+        expect(execution?.connectionId).toBe('remote');
         expect(execution?.connectionHealth).toBe(ConnectionHealth.FAILED);
     });
 
     it('routes execution to the local main database even when a remote is attached', () => {
-        expect(resolveSessionExecutionDatabase(registry('remote', 'local'), 'session')?.databaseId).toBe('local');
+        expect(resolveSessionExecutionDatabase(registry('remote', 'local'), 'session')?.connectionId).toBe('local');
     });
 
     it('routes execution to local when it is the only attached database', () => {
-        expect(resolveSessionExecutionDatabase(registry(null), 'session')?.databaseId).toBe('local');
+        expect(resolveSessionExecutionDatabase(registry(null), 'session')?.connectionId).toBe('local');
     });
 
     it('does not fall back to local when a configured remote is missing', () => {
         const value = registry('remote', 'remote');
-        value.attachedDatabases.delete('remote');
+        value.connections.delete('remote');
         expect(resolveSessionExecutionDatabase(value, 'session')).toBeNull();
     });
 });
 
 describe('session manifest persistence', () => {
-    const state = (active: boolean, endpoint: string): AttachedDatabaseState => ({
+    const state = (active: boolean, endpoint: string): ConnectionState => ({
         active,
         params: { hyper: { protocol: 'V3_HTTP', endpoint, tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' } } },
         details: {
@@ -93,7 +93,7 @@ describe('session manifest persistence', () => {
                 },
             },
         },
-    } as unknown as AttachedDatabaseState);
+    } as unknown as ConnectionState);
 
     it('ignores transient connection state changes', () => {
         const prev = state(true, 'https://db.example.com');
@@ -127,7 +127,7 @@ describe('catalog refresh persistence', () => {
         const functionsSQL = 'CREATE FUNCTION test() AS 1;';
         const script = (sql: string) => ({ toString: () => sql });
         const connection = {
-            databaseId: TEST_DATABASE_ID,
+            connectionId: TEST_DATABASE_ID,
             active: true,
             connectionSignature: { signatureString: 'salesforce' },
             connectorInfo: { connectorType: ConnectorType.SALESFORCE_DATA_CLOUD },
@@ -138,14 +138,14 @@ describe('catalog refresh persistence', () => {
             catalogUpdates: {
                 tasksRunning: new Map(), tasksFinished: new Map(), currentFullRefresh: null, lastFullRefresh: null, restoredAt: null,
             },
-        } as unknown as AttachedDatabaseState;
-        let setRegistry!: React.Dispatch<React.SetStateAction<AttachedDatabaseRegistry>>;
-        let currentRegistry!: AttachedDatabaseRegistry;
-        let dispatch!: DynamicAttachedDatabaseDispatch;
+        } as unknown as ConnectionState;
+        let setRegistry!: React.Dispatch<React.SetStateAction<ConnectionRegistry>>;
+        let currentRegistry!: ConnectionRegistry;
+        let dispatch!: DynamicConnectionDispatch;
         let writer!: StorageWriter;
         function Harness() {
-            [currentRegistry, setRegistry] = useAttachedDatabaseRegistry();
-            [, dispatch] = useDynamicAttachedDatabaseDispatch();
+            [currentRegistry, setRegistry] = useConnectionRegistry();
+            [, dispatch] = useDynamicConnectionDispatch();
             writer = useStorageWriter();
             return null;
         }
@@ -154,15 +154,15 @@ describe('catalog refresh persistence', () => {
         try {
             await act(async () => root.render(React.createElement(LoggerProvider, null,
                 React.createElement(StorageProvider, { backend },
-                    React.createElement(AttachedDatabaseRegistryProvider, null, React.createElement(Harness)),
+                    React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness)),
                 ),
             )));
             await act(async () => setRegistry(reg => {
-                reg.attachedDatabases.set(TEST_DATABASE_ID, connection);
+                reg.connections.set(TEST_DATABASE_ID, connection);
                 reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
-            expect(currentRegistry.attachedDatabases.get(TEST_DATABASE_ID)).toBe(connection);
+            expect(currentRegistry.connections.get(TEST_DATABASE_ID)).toBe(connection);
             expect(currentRegistry.attachedDatabasesBySession.get(TEST_SESSION_ID)?.mainDatabaseId).toBe(TEST_DATABASE_ID);
             const task = {
                 taskId: 1, taskVariant: CatalogUpdateVariant.FULL_CATALOG_REFRESH,
@@ -176,7 +176,7 @@ describe('catalog refresh persistence', () => {
                     : { type: CATALOG_UPDATE_PARTIALLY_SUCCEEDED, value: [1, new Error('partial metadata')] });
             });
             await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
-            expect(currentRegistry.attachedDatabases.get(TEST_DATABASE_ID)?.catalogUpdates.tasksFinished.has(1)).toBe(true);
+            expect(currentRegistry.connections.get(TEST_DATABASE_ID)?.catalogUpdates.tasksFinished.has(1)).toBe(true);
             // The refresh describes the changes of earlier statements, recorded catalog changes are cleared
             expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([
                 `${TEST_SESSION_ID}/dashql-catalog-relations.sql`,
@@ -209,7 +209,7 @@ describe('catalog refresh persistence', () => {
             queries: [], error: null, startedAt: new Date(), finishedAt: null, lastUpdateAt: new Date(),
         };
         const attached = {
-            databaseId: attachedId, active: true,
+            connectionId: attachedId, active: true,
             connectionSignature: { signatureString: 'attached' },
             connectorInfo: { connectorType: ConnectorType.SALESFORCE_DATA_CLOUD },
             details: { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: { proto: { setupParams: {} } } },
@@ -218,13 +218,13 @@ describe('catalog refresh persistence', () => {
                 tasksRunning: new Map([[2, task]]), tasksFinished: new Map(), currentFullRefresh: 2,
                 lastFullRefresh: null, restoredAt: null,
             },
-        } as unknown as AttachedDatabaseState;
-        let dispatch!: DynamicAttachedDatabaseDispatch;
+        } as unknown as ConnectionState;
+        let dispatch!: DynamicConnectionDispatch;
         let writer!: StorageWriter;
-        let setRegistry!: React.Dispatch<React.SetStateAction<AttachedDatabaseRegistry>>;
+        let setRegistry!: React.Dispatch<React.SetStateAction<ConnectionRegistry>>;
         function Harness() {
-            [, setRegistry] = useAttachedDatabaseRegistry();
-            [, dispatch] = useDynamicAttachedDatabaseDispatch();
+            [, setRegistry] = useConnectionRegistry();
+            [, dispatch] = useDynamicConnectionDispatch();
             writer = useStorageWriter();
             return null;
         }
@@ -233,11 +233,11 @@ describe('catalog refresh persistence', () => {
         try {
             await act(async () => root.render(React.createElement(LoggerProvider, null,
                 React.createElement(StorageProvider, { backend },
-                    React.createElement(AttachedDatabaseRegistryProvider, null, React.createElement(Harness)),
+                    React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness)),
                 ),
             )));
             act(() => setRegistry(reg => {
-                reg.attachedDatabases.set(attachedId, attached);
+                reg.connections.set(attachedId, attached);
                 reg.attachedDatabasesBySession.set(TEST_SESSION_ID, {
                     mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [attachedId],
                 });
@@ -259,7 +259,7 @@ describe('shared connection persistence', () => {
     const trino = (endpoint: string) => ({ trino: { endpoint, catalogName: '', auth: { authType: 'AUTH_BASIC' } } }) as any;
 
     /// Dispatch to the connection and let the batched registry update apply
-    async function dispatchAndSettle(harness: { dispatch: DynamicAttachedDatabaseDispatch }, action: Parameters<DynamicAttachedDatabaseDispatch>[1]) {
+    async function dispatchAndSettle(harness: { dispatch: DynamicConnectionDispatch }, action: Parameters<DynamicConnectionDispatch>[1]) {
         await act(async () => {
             harness.dispatch(TEST_DATABASE_ID, action);
             await new Promise<void>(resolve => setTimeout(resolve, 0));
@@ -272,24 +272,24 @@ describe('shared connection persistence', () => {
             backend.sessions.set(sessionId, testSession({ sessionId, mainDatabase: { databaseId: TEST_DATABASE_ID, params: trino('https://old') } }));
         }
         const connection = {
-            databaseId: TEST_DATABASE_ID,
+            connectionId: TEST_DATABASE_ID,
             active: true,
             params: trino('https://old'),
             connectionHealth: ConnectionHealth.NOT_STARTED,
             connectionSignature: { signatureString: 'trino', signatures: new Map() },
             connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
             catalogChangesSql: '',
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
         const harness = {} as {
-            registry: AttachedDatabaseRegistry;
-            dispatch: DynamicAttachedDatabaseDispatch;
+            registry: ConnectionRegistry;
+            dispatch: DynamicConnectionDispatch;
             writer: StorageWriter;
             save: () => Promise<ConnectionSaveResult | null>;
         };
-        let setRegistry!: React.Dispatch<React.SetStateAction<AttachedDatabaseRegistry>>;
+        let setRegistry!: React.Dispatch<React.SetStateAction<ConnectionRegistry>>;
         function Harness() {
-            [harness.registry, setRegistry] = useAttachedDatabaseRegistry();
-            [, harness.dispatch] = useDynamicAttachedDatabaseDispatch();
+            [harness.registry, setRegistry] = useConnectionRegistry();
+            [, harness.dispatch] = useDynamicConnectionDispatch();
             harness.writer = useStorageWriter();
             harness.save = useConnectionSave(TEST_DATABASE_ID).save;
             return null;
@@ -298,13 +298,13 @@ describe('shared connection persistence', () => {
         const root = createRoot(container);
         await act(async () => root.render(React.createElement(LoggerProvider, null,
             React.createElement(StorageProvider, { backend },
-                React.createElement(AttachedDatabaseRegistryProvider, null,
+                React.createElement(ConnectionRegistryProvider, null,
                     React.createElement(ConnectionPersistenceProvider, null, React.createElement(Harness)),
                 ),
             ),
         )));
         await act(async () => setRegistry(reg => {
-            reg.attachedDatabases.set(TEST_DATABASE_ID, connection);
+            reg.connections.set(TEST_DATABASE_ID, connection);
             for (const sessionId of sessionIds) {
                 reg.attachedDatabasesBySession.set(sessionId, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
             }
@@ -335,7 +335,7 @@ describe('shared connection persistence', () => {
             for (const sessionId of [TEST_SESSION_ID, OTHER_SESSION_ID]) {
                 expect(backend.sessions.get(sessionId)!.mainDatabase).toEqual({ databaseId: TEST_DATABASE_ID, params: trino('https://new') });
             }
-            const saved = harness.registry.attachedDatabases.get(TEST_DATABASE_ID)!;
+            const saved = harness.registry.connections.get(TEST_DATABASE_ID)!;
             expect(saved.params).toEqual(trino('https://new'));
             expect(saved.paramsDraft).toBeUndefined();
         } finally {
@@ -366,8 +366,8 @@ describe('shared connection persistence', () => {
     it('refuses to delete connections that sessions use', async () => {
         const { harness, unmount } = await render([TEST_SESSION_ID]);
         try {
-            await dispatchAndSettle(harness, { type: DELETE_ATTACHED_DATABASE, value: null });
-            expect(harness.registry.attachedDatabases.has(TEST_DATABASE_ID)).toBe(true);
+            await dispatchAndSettle(harness, { type: DELETE_CONNECTION, value: null });
+            expect(harness.registry.connections.has(TEST_DATABASE_ID)).toBe(true);
         } finally {
             unmount();
         }

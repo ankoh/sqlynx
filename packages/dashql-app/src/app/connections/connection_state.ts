@@ -71,9 +71,9 @@ export interface CatalogUpdates {
     lastFullRefresh: number | null;
 }
 
-export interface AttachedDatabaseState {
+export interface ConnectionState {
     /// Runtime identity of the attached database.
-    databaseId: string;
+    connectionId: string;
 
     /// The connection state contains many references into the Wasm heap.
     /// It therefore makes sense that connection state users resolve the "right" module through here.
@@ -213,12 +213,12 @@ export function printConnectionHealth(health: ConnectionHealth) {
     }
 }
 
-export type AttachedDatabaseStateWithoutId = Omit<AttachedDatabaseState, "databaseId">;
+export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;
 
-export const DELETE_ATTACHED_DATABASE = Symbol('DELETE_ATTACHED_DATABASE');
-export const RESET_ATTACHED_DATABASE = Symbol('RESET_ATTACHED_DATABASE');
+export const DELETE_CONNECTION = Symbol('DELETE_CONNECTION');
+export const RESET_CONNECTION = Symbol('RESET_CONNECTION');
 export const SWITCH_CONNECTOR_TYPE = Symbol('SWITCH_CONNECTOR_TYPE');
-export const SET_ATTACHED_DATABASE_ACTIVE = Symbol('SET_ATTACHED_DATABASE_ACTIVE');
+export const SET_CONNECTION_ACTIVE = Symbol('SET_CONNECTION_ACTIVE');
 export const SET_CATALOG_SCRIPT = Symbol('SET_CATALOG_SCRIPT');
 export const APPLY_CATALOG_CHANGES = Symbol('APPLY_CATALOG_CHANGES');
 export const UPDATE_CATALOG = Symbol('UPDATE_CATALOG');
@@ -250,14 +250,14 @@ export type CatalogAction =
     | VariantKind<typeof CATALOG_UPDATE_PARTIALLY_SUCCEEDED, [number, Error]>
     ;
 
-export type AttachedDatabaseAction =
+export type ConnectionAction =
     | VariantKind<typeof SET_CONNECTION_DRAFT, ConnectionParams>
     | VariantKind<typeof DISCARD_CONNECTION_DRAFT, null>
     | VariantKind<typeof COMMIT_CONNECTION_PARAMS, ConnectionParams>
-    | VariantKind<typeof DELETE_ATTACHED_DATABASE, null>
-    | VariantKind<typeof RESET_ATTACHED_DATABASE, null>
+    | VariantKind<typeof DELETE_CONNECTION, null>
+    | VariantKind<typeof RESET_CONNECTION, null>
     | VariantKind<typeof SWITCH_CONNECTOR_TYPE, ConnectorType>
-    | VariantKind<typeof SET_ATTACHED_DATABASE_ACTIVE, null>
+    | VariantKind<typeof SET_CONNECTION_ACTIVE, null>
     | CatalogAction
     | QueryExecutionAction
     | HyperConnectorAction
@@ -265,7 +265,7 @@ export type AttachedDatabaseAction =
     | SalesforceConnectionStateAction
     ;
 
-export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action: AttachedDatabaseAction, storage: StorageWriter, logger: Logger): AttachedDatabaseState {
+export function reduceConnectionState(state: ConnectionState, action: ConnectionAction, storage: StorageWriter, logger: Logger): ConnectionState {
     switch (action.type) {
         case SET_CONNECTION_DRAFT: {
             if (getConnectionInfoFromParams(action.value)?.connectorType !== state.connectorInfo.connectorType) return state;
@@ -335,9 +335,9 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
         case QUERY_CACHE_DELETED:
             return reduceQueryAction(state, action);
 
-        // RESET_ATTACHED_DATABASE is a bit special since we want to clean up our details as well
-        case RESET_ATTACHED_DATABASE: {
-            cancelConnectionSetup(state.databaseId);
+        // RESET_CONNECTION is a bit special since we want to clean up our details as well
+        case RESET_CONNECTION: {
+            cancelConnectionSetup(state.connectionId);
             // Reset the DashQL catalog
             invalidateCatalogBatch(state.catalog);
             for (const task of state.catalogUpdates.tasksRunning.values()) {
@@ -348,7 +348,7 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
             // XXX Cancel currently running queries
 
             // Cleanup query executions and catalog
-            const cleaned: AttachedDatabaseState = {
+            const cleaned: ConnectionState = {
                 ...state,
                 connectionStatus: ConnectionStatus.NOT_STARTED,
                 connectionHealth: ConnectionHealth.NOT_STARTED,
@@ -366,7 +366,7 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
                 queriesFinished: new Map(),
             };
             // Cleanup the details
-            let newState: AttachedDatabaseState | null = null;
+            let newState: ConnectionState | null = null;
             switch (state.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
                     newState = reduceSalesforceConnectionState(cleaned, action as SalesforceConnectionStateAction, storage);
@@ -410,18 +410,18 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
             };
         }
 
-        // SET_ATTACHED_DATABASE_ACTIVE marks the database as active.
+        // SET_CONNECTION_ACTIVE marks the connection as active.
         // Once active, storage writes are enabled for both connection and session scripts state.
-        case SET_ATTACHED_DATABASE_ACTIVE: {
+        case SET_CONNECTION_ACTIVE: {
             if (state.active) {
                 return state;
             }
             return { ...state, active: true };
         }
 
-        /// DELETE_ATTACHED_DATABASE deletes the attached database state
-        case DELETE_ATTACHED_DATABASE: {
-            cancelConnectionSetup(state.databaseId);
+        /// DELETE_CONNECTION deletes the connection state
+        case DELETE_CONNECTION: {
+            cancelConnectionSetup(state.connectionId);
             invalidateCatalogBatch(state.catalog);
             for (const task of state.catalogUpdates.tasksRunning.values()) {
                 task.cancellation.abort(new DOMException('Attached database was deleted', 'AbortError'));
@@ -431,7 +431,7 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
             // XXX Cancel currently running queries
 
             // Cleanup query executions and catalog
-            const cleaned: AttachedDatabaseState = {
+            const cleaned: ConnectionState = {
                 ...state,
                 connectionStatus: ConnectionStatus.NOT_STARTED,
                 connectionHealth: ConnectionHealth.NOT_STARTED,
@@ -448,7 +448,7 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
             };
 
             // Dispatch to the individual state detail handlers
-            let newState: AttachedDatabaseState | null = null;
+            let newState: ConnectionState | null = null;
             switch (state.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
                     newState = reduceSalesforceConnectionState(cleaned, action as SalesforceConnectionStateAction, storage);
@@ -504,7 +504,7 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
                     break;
             }
             // Dispatch to the individual state detail handlers
-            let newState: AttachedDatabaseState | null = null;
+            let newState: ConnectionState | null = null;
             switch (state.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
                     newState = reduceSalesforceConnectionState(state, action as SalesforceConnectionStateAction, storage);
@@ -555,20 +555,20 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
 
 /// Apply the catalog changes of executed statements to the relation descriptor and record them as SQL.
 /// The changes are qualified with the default database and schema of the connection.
-function applyCatalogChanges(state: AttachedDatabaseState, changes: dashql.buffers.catalog.CatalogChangeT[], logger: Logger): AttachedDatabaseState {
+function applyCatalogChanges(state: ConnectionState, changes: dashql.buffers.catalog.CatalogChangeT[], logger: Logger): ConnectionState {
     if (changes.length === 0) return state;
     try {
         const qualified = state.instance.qualifyCatalogChanges(changes, catalogNameDefaults(state.details));
         state.catalog.applyCatalogChanges(state.catalogRelationScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, qualified);
         const catalogChangesSql = state.instance.appendCatalogChangesSql(state.catalogChangesSql, qualified);
         logger.info('Applied catalog changes of executed statements', {
-            databaseId: state.databaseId,
+            connectionId: state.connectionId,
             changes: qualified.length.toString(),
         }, LOG_CTX);
         return { ...state, catalogChangesSql };
     } catch (e: unknown) {
         logger.error('Failed to apply catalog changes of executed statements', {
-            databaseId: state.databaseId,
+            connectionId: state.connectionId,
             error: stringifyError(e),
         }, LOG_CTX);
         return state;
@@ -579,7 +579,7 @@ export function createConnectionMetrics(): connection.ConnectionMetrics {
     return createQueryExecutionMetrics();
 }
 
-export function createAttachedDatabaseState(dql: dashql.DashQL, info: ConnectorInfo, connSigs: ConnectionSignatureMap, details: ConnectionStateDetailsVariant): AttachedDatabaseStateWithoutId {
+export function createConnectionState(dql: dashql.DashQL, info: ConnectorInfo, connSigs: ConnectionSignatureMap, details: ConnectionStateDetailsVariant): ConnectionStateWithoutId {
     const catalog = dql.createCatalog();
     const catalogRelationScript = dql.createScript(catalog);
     catalogRelationScript.replaceText(generateCatalogScriptHeader(CatalogSource.Unknown));
@@ -615,7 +615,7 @@ export function createAttachedDatabaseState(dql: dashql.DashQL, info: ConnectorI
     };
 }
 
-export function createAttachedDatabaseStateForType(dql: dashql.DashQL, type: ConnectorType, connSigs: ConnectionSignatureMap): AttachedDatabaseStateWithoutId {
+export function createConnectionStateForType(dql: dashql.DashQL, type: ConnectorType, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
     const connInfo = CONNECTOR_INFOS[type as number];
     const connMetrics = createConnectionMetrics();
     const connDetails = createConnectionStateDetails(type);
@@ -658,8 +658,8 @@ export function createAttachedDatabaseStateForType(dql: dashql.DashQL, type: Con
 /// Apply catalog files read from storage without scheduling a persistence write. The database
 /// object and catalog remain alive, so active channels, query history and consumers keep stable
 /// references while session scripts are subsequently re-analyzed against the refreshed catalog.
-export function replaceAttachedDatabaseCatalogFromStorage(
-    state: AttachedDatabaseState,
+export function replaceConnectionCatalogFromStorage(
+    state: ConnectionState,
     schemaSql: string | null,
     functionsSql: string | null,
 ): boolean {
@@ -691,8 +691,8 @@ export function replaceAttachedDatabaseCatalogFromStorage(
 
 /// Generated empty catalog files contain only comments and whitespace. Treat those as equivalent to
 /// an absent file so unrelated session watcher events do not report a false external catalog edit.
-export function attachedDatabaseCatalogMatchesStorage(
-    state: AttachedDatabaseState,
+export function connectionCatalogMatchesStorage(
+    state: ConnectionState,
     schemaSql: string | null,
     functionsSql: string | null,
 ): boolean {
@@ -713,6 +713,6 @@ function catalogScriptHasNoStatements(sql: string): boolean {
     return sql.split('\n').every(line => line.trim() === '' || line.trimStart().startsWith('--'));
 }
 
-export function computeAttachedDatabaseSignature(state: AttachedDatabaseState, hasher: Hasher) {
+export function computeConnectionSignature(state: ConnectionState, hasher: Hasher) {
     return computeConnectionSignatureFromDetails(state.details, hasher);
 }

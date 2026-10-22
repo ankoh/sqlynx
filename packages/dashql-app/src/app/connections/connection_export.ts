@@ -1,10 +1,10 @@
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
-import { AttachedDatabaseState } from "./attached_database_state.js";
+import { ConnectionState } from "./connection_state.js";
 import { HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import { sanitizeConnectionParamsForSharing } from './connection_params.js';
 
-export function encodeConnectionAsProto(state: AttachedDatabaseState): connection.Connection {
+export function encodeConnectionAsProto(state: ConnectionState): connection.Connection {
     const params = sanitizeConnectionParamsForSharing(state.params);
     switch (state.details.type) {
         case SALESFORCE_DATA_CLOUD_CONNECTOR:

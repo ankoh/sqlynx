@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as styles from './session_page.module.css';
 
 import { useSessionScripts } from '../scripts/session_scripts_registry.js';
-import { useAttachedDatabaseState } from '../../connections/attached_database_registry.js';
+import { useConnectionState } from '../../connections/connection_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useRouteContext } from '../../router/router.js';
 
@@ -15,7 +15,7 @@ const LOG_CTX = 'session_page';
 
 export interface SessionPageDependencies {
     useSessionScripts: typeof useSessionScripts;
-    useAttachedDatabaseState: typeof useAttachedDatabaseState;
+    useConnectionState: typeof useConnectionState;
     useLogger: typeof useLogger;
     useRouteContext: typeof useRouteContext;
     useSessionViewMode: typeof useSessionViewMode;
@@ -25,7 +25,7 @@ export interface SessionPageDependencies {
 
 const DEFAULT_DEPENDENCIES: SessionPageDependencies = {
     useSessionScripts,
-    useAttachedDatabaseState,
+    useConnectionState,
     useLogger,
     useRouteContext,
     useSessionViewMode,
@@ -42,7 +42,7 @@ export const SessionPage: React.FC<Props> = (props: Props) => {
     const route = dependencies.useRouteContext();
     const logger = dependencies.useLogger();
     const [sessionScripts, modifySessionScripts] = dependencies.useSessionScripts(route.sessionId ?? null);
-    const [conn] = dependencies.useAttachedDatabaseState(sessionScripts?.sessionId ?? null);
+    const [conn] = dependencies.useConnectionState(sessionScripts?.sessionId ?? null);
     const { mode: sessionMode } = dependencies.useSessionViewMode();
     const sessionPageVisible = sessionMode !== SessionViewMode.Shell;
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as styles from './session_shell_page.module.css';
 
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
 import { useCancelQuery, useQueryExecutor, useQueryState } from '../../connections/query_executor.js';
 import { SessionViewMode, useSessionViewMode } from '../scripts/session_commands.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
@@ -30,7 +30,7 @@ function formatInstantiationProgress(bytesLoaded: number, bytesTotal: number): s
 interface Props {
     sessionId: string;
     sessionName?: string | null;
-    connection: AttachedDatabaseState | null;
+    connection: ConnectionState | null;
     active: boolean;
 }
 
@@ -66,7 +66,7 @@ export const SessionShellPage: React.FC<Props> = ({ sessionId, sessionName, conn
         const getOutputMode = () => outputModeRef.current;
         const environment = createSessionShellEnvironment(
             sessionId,
-            connection.databaseId,
+            connection.connectionId,
             executeQuery,
             cancelQuery,
             getOutputMode,
@@ -123,7 +123,7 @@ export const SessionShellPage: React.FC<Props> = ({ sessionId, sessionName, conn
         return () => {
             cancelled = true;
         };
-    }, [connection?.databaseId, connectorName, shellName, relationsSql, functionsSql, executeQuery, cancelQuery, setMode]);
+    }, [connection?.connectionId, connectorName, shellName, relationsSql, functionsSql, executeQuery, cancelQuery, setMode]);
 
     React.useEffect(() => {
         if (active) controllerRef.current?.focus();
@@ -131,7 +131,7 @@ export const SessionShellPage: React.FC<Props> = ({ sessionId, sessionName, conn
 
     React.useEffect(() => {
         setResultQueryId(null);
-    }, [connection?.databaseId]);
+    }, [connection?.connectionId]);
 
     React.useEffect(() => () => {
         ++generationRef.current;

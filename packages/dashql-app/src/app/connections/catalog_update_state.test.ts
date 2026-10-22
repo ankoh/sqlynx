@@ -7,17 +7,17 @@ import {
     CATALOG_UPDATE_PARTIALLY_SUCCEEDED,
     CATALOG_UPDATE_SUCCEEDED,
     UPDATE_CATALOG,
-    type AttachedDatabaseState,
+    type ConnectionState,
     type CatalogAction,
-} from './attached_database_state.js';
+} from './connection_state.js';
 
-function createConnection(currentFullRefresh: number | null, runningTaskIds: number[]): AttachedDatabaseState {
+function createConnection(currentFullRefresh: number | null, runningTaskIds: number[]): ConnectionState {
     return {
         catalogUpdates: {
             currentFullRefresh,
             tasksRunning: new Map(runningTaskIds.map(taskId => [taskId, {}])),
         },
-    } as unknown as AttachedDatabaseState;
+    } as unknown as ConnectionState;
 }
 
 describe('isCatalogRefreshRunning', () => {
@@ -66,7 +66,7 @@ describe('reduceCatalogAction', () => {
                     lastFullRefresh: 6,
                     restoredAt: null,
                 },
-            } as unknown as AttachedDatabaseState;
+            } as unknown as ConnectionState;
             const storage = {} as any;
             state = reduceCatalogAction(state, { type: UPDATE_CATALOG, value: [7, task(7)] }, storage);
             state = reduceCatalogAction(state, { type: UPDATE_CATALOG, value: [8, task(8)] }, storage);
@@ -103,7 +103,7 @@ describe('reduceCatalogAction', () => {
         };
         const state = {
             active: true,
-            databaseId: 'database',
+            connectionId: 'database',
             catalogRelationScript: {},
             catalogFunctionScript: {},
             catalogUpdates: {
@@ -113,7 +113,7 @@ describe('reduceCatalogAction', () => {
                 lastFullRefresh: null,
                 restoredAt: null,
             },
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
         const storage = { write: vi.fn() };
 
         const next = reduceCatalogAction(state, {

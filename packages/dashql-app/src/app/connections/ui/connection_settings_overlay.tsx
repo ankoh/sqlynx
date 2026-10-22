@@ -7,10 +7,10 @@ import { OverlaySize } from '../../../ui/foundations/overlay.js';
 import { Button, ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
 import { SymbolIcon } from '../../../ui/foundations/symbol_icon.js';
 import { ConnectorType } from '../connector_info.js';
-import { findSessionsForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistrySelector, useConnectionDraft } from '../attached_database_registry.js';
+import { findSessionsForConnection, useConnectionById, useConnectionRegistrySelector, useConnectionDraft } from '../connection_registry.js';
 import { failedSessionCopies, useConnectionSave, type ConnectionSaveResult } from '../connection_persistence.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
-import { ConnectionHealth, type AttachedDatabaseState } from '../attached_database_state.js';
+import { ConnectionHealth, type ConnectionState } from '../connection_state.js';
 import { HyperConnectorSettings } from './hyper_connection_settings.js';
 import { TrinoConnectorSettings } from './trino_connection_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connection_settings.js';
@@ -19,21 +19,21 @@ const UndoIcon = SymbolIcon('undo_16');
 
 interface Props {
     /// The connection to configure
-    databaseId: string | null;
+    connectionId: string | null;
     isOpen: boolean;
     onClose: () => void;
     anchorRef: React.RefObject<HTMLElement | null>;
     headerTitle?: string;
-    onConnected?: (database: AttachedDatabaseState) => void;
+    onConnected?: (database: ConnectionState) => void;
     side?: AnchorSide;
     /// Renders the name of a session, the session id if absent
     renderSessionName?: (sessionId: string) => React.ReactNode;
 }
 
 export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
-    const [conn, _modifyConn] = useAttachedDatabaseById(props.databaseId);
-    const { paramsDraft, discard } = useConnectionDraft(props.databaseId);
-    const { saving, result: saveResult, save, retry } = useConnectionSave(props.databaseId);
+    const [conn, _modifyConn] = useConnectionById(props.connectionId);
+    const { paramsDraft, discard } = useConnectionDraft(props.connectionId);
+    const { saving, result: saveResult, save, retry } = useConnectionSave(props.connectionId);
     const connecting = conn?.connectionHealth === ConnectionHealth.CONNECTING;
 
     const currentConnectorType = conn?.connectorInfo.connectorType ?? ConnectorType.HYPER;
@@ -41,8 +41,8 @@ export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
     const completedDatabaseId = React.useRef<string | null>(null);
     React.useEffect(() => {
         if (!props.isOpen || conn?.connectionHealth !== ConnectionHealth.ONLINE || props.onConnected == null) return;
-        if (completedDatabaseId.current === conn.databaseId) return;
-        completedDatabaseId.current = conn.databaseId;
+        if (completedDatabaseId.current === conn.connectionId) return;
+        completedDatabaseId.current = conn.connectionId;
         void props.onConnected(conn);
     }, [conn, props.isOpen, props.onConnected]);
     React.useEffect(() => {
@@ -89,12 +89,12 @@ export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
         >
             <div className={styles.overlay_container}>
                 <div className={styles.content}>
-                    {currentConnectorType === ConnectorType.HYPER && <HyperConnectorSettings databaseId={props.databaseId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
-                    {currentConnectorType === ConnectorType.TRINO && <TrinoConnectorSettings databaseId={props.databaseId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
-                    {currentConnectorType === ConnectorType.SALESFORCE_DATA_CLOUD && <SalesforceConnectorSettings databaseId={props.databaseId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
+                    {currentConnectorType === ConnectorType.HYPER && <HyperConnectorSettings connectionId={props.connectionId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
+                    {currentConnectorType === ConnectorType.TRINO && <TrinoConnectorSettings connectionId={props.connectionId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
+                    {currentConnectorType === ConnectorType.SALESFORCE_DATA_CLOUD && <SalesforceConnectorSettings connectionId={props.connectionId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
                 </div>
                 <ConnectionSaveFooter
-                    databaseId={props.databaseId}
+                    connectionId={props.connectionId}
                     dirty={paramsDraft != null}
                     saving={saving}
                     result={saveResult}
@@ -108,7 +108,7 @@ export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
 
 interface FooterProps {
     /// The connection
-    databaseId: string | null;
+    connectionId: string | null;
     /// Are there unsaved edits?
     dirty: boolean;
     /// Is the connection being saved?
@@ -123,9 +123,9 @@ interface FooterProps {
 
 /// The sessions that use the connection and the outcome of saving it
 function ConnectionSaveFooter(props: FooterProps): React.ReactElement | null {
-    const databaseId = props.databaseId;
-    const sessionIds = useAttachedDatabaseRegistrySelector(React.useCallback(
-        registry => databaseId == null ? '' : findSessionsForAttachedDatabase(registry, databaseId).join(','),
+    const databaseId = props.connectionId;
+    const sessionIds = useConnectionRegistrySelector(React.useCallback(
+        registry => databaseId == null ? '' : findSessionsForConnection(registry, databaseId).join(','),
         [databaseId],
     ));
     const sessionCount = sessionIds === '' ? 0 : sessionIds.split(',').length;

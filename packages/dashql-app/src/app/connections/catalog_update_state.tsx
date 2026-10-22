@@ -7,10 +7,10 @@ import {
     CATALOG_UPDATE_PARTIALLY_SUCCEEDED,
     CATALOG_UPDATE_SUCCEEDED,
     CatalogAction,
-    AttachedDatabaseState,
+    ConnectionState,
     SET_CATALOG_SCRIPT,
     UPDATE_CATALOG,
-} from './attached_database_state.js';
+} from './connection_state.js';
 export { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../catalog.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../catalog.js';
 
@@ -57,13 +57,13 @@ export interface CatalogUpdateTaskState {
     lastUpdateAt: Date | null;
 }
 
-export function isCatalogRefreshRunning(connection: AttachedDatabaseState | null): boolean {
+export function isCatalogRefreshRunning(connection: ConnectionState | null): boolean {
     if (connection == null) return false;
     const refreshId = connection.catalogUpdates.currentFullRefresh;
     return refreshId != null && connection.catalogUpdates.tasksRunning.has(refreshId);
 }
 
-export function reduceCatalogAction(state: AttachedDatabaseState, action: CatalogAction, _storage: StorageWriter): AttachedDatabaseState {
+export function reduceCatalogAction(state: ConnectionState, action: CatalogAction, _storage: StorageWriter): ConnectionState {
     const now = new Date();
 
     if (action.type == UPDATE_CATALOG) {

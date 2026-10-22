@@ -10,7 +10,7 @@ import { SessionScripts } from '../scripts/session_scripts.js';
 import { SymbolIcon } from '../../../ui/foundations/symbol_icon.js';
 import { SessionFileSaveOverlay } from './session_file_save_overlay.js';
 import { SessionURLShareOverlay } from './session_url_share_overlay.js';
-import { ConnectionHealth, AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, ConnectionState } from '../../connections/connection_state.js';
 import { CONNECTION_HEALTH_COLORS } from '../../connections/ui/connection_status.js';
 import { isCatalogRefreshRunning } from '../../connections/catalog_update_state.js';
 import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status_indicator.js';
@@ -29,7 +29,7 @@ const DEFAULT_CONNECTION_COMMAND_LIST_DEPENDENCIES: ConnectionCommandListDepende
 };
 
 export const ConnectionCommandList: React.FC<{
-    conn: AttachedDatabaseState | null;
+    conn: ConnectionState | null;
     sessionScripts: SessionScripts | null;
     navigationDisabled?: boolean;
     onOpenSettings?: () => void;
@@ -103,7 +103,7 @@ export const ConnectionCommandList: React.FC<{
 };
 
 export const SessionCommandList: React.FC<{
-    conn: AttachedDatabaseState | null;
+    conn: ConnectionState | null;
     sessionScripts: SessionScripts | null;
     modifySessionScripts: ModifySessionScripts | null;
     navigationDisabled?: boolean;

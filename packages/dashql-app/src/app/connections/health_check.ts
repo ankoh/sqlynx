@@ -1,5 +1,5 @@
-import { AttachedDatabaseDispatch } from './attached_database_registry.js';
-import { HEALTH_CHECK_CANCELLED, HEALTH_CHECK_FAILED, HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED } from './attached_database_state.js';
+import { ConnectionDispatch } from './connection_registry.js';
+import { HEALTH_CHECK_CANCELLED, HEALTH_CHECK_FAILED, HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED } from './connection_state.js';
 import { DetailedError } from './connection_types.js';
 import { HyperDatabaseChannel } from './hyper/hyperdb_grpc_client.js';
 import { QueryExecutor } from './query_executor.js';
@@ -44,7 +44,7 @@ export async function performHealthCheck(
     executor: QueryExecutor,
     connectionId: string,
     channel: HealthCheckChannel,
-    dispatch: AttachedDatabaseDispatch,
+    dispatch: ConnectionDispatch,
     abortSignal: AbortSignal,
 ): Promise<void> {
     dispatch({ type: HEALTH_CHECK_STARTED, value: null });

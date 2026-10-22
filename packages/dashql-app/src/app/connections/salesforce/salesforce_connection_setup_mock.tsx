@@ -22,7 +22,7 @@ import { Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { SalesforceSetupApi } from './salesforce_connection_setup.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
-import { HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED, RESET_ATTACHED_DATABASE } from '../attached_database_state.js';
+import { HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED, RESET_CONNECTION } from '../connection_state.js';
 import { HyperDatabaseChannelMock } from '../hyper/hyperdb_grpc_client_mock.js';
 
 
@@ -157,7 +157,7 @@ export function mockSalesforceAuthFlow(api: SalesforceApiClientInterface, config
     };
     const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
         dispatch({
-            type: RESET_ATTACHED_DATABASE,
+            type: RESET_CONNECTION,
             value: null,
         })
     };

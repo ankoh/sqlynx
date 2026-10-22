@@ -18,9 +18,9 @@ import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useHyperGrpcClient, useHyperHttpClient } from '../hyper/hyperdb_grpc_client_provider.js';
 import { flattenKeyValueList, KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../../ui/foundations/keyvalue_list.js';
 import { Dispatch } from '../../../utils/variant.js';
-import { useAttachedDatabaseById, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useConnectionById, useConnectionDraftForm } from '../connection_registry.js';
 import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
-import { ConnectionHealth } from '../attached_database_state.js';
+import { ConnectionHealth } from '../connection_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useHyperSetup } from '../hyper/hyper_connection_setup.js';
 import { useQueryExecutor } from '../query_executor.js';
@@ -89,7 +89,7 @@ export function buildHyperConnectionSetupParams(pageState: HyperConnectionPageSt
 }
 
 interface Props {
-    databaseId: string | null;
+    connectionId: string | null;
     onClose?: () => void;
     headerActions?: React.ReactNode;
 }
@@ -105,11 +105,11 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
     const connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER];
 
     // Wire up the page state
-    const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
-    const saveBeforeConnect = useSaveBeforeConnect(props.databaseId);
-    const { saving } = useConnectionSave(props.databaseId);
+    const [connectionState, dispatchConnectionState] = useConnectionById(props.connectionId);
+    const saveBeforeConnect = useSaveBeforeConnect(props.connectionId);
+    const { saving } = useConnectionSave(props.connectionId);
 
-    const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
+    const [pageState, setPageState] = useConnectionDraftForm(props.connectionId,
         params => buildHyperConnectionPageState(params && 'hyper' in params ? params.hyper as connection.HyperConnectionParams : undefined),
         form => ({ hyper: { ...buildHyperConnectionSetupParams(form), draftRows: { metadata: form.gRPCMetadata, queryParameters: form.queryParameters } } }));
 
@@ -184,13 +184,13 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
         if (!await saveBeforeConnect()) return;
 
         const controller = new AbortController();
-        const unregister = registerConnectionSetup(connectionState.databaseId, controller);
+        const unregister = registerConnectionSetup(connectionState.connectionId, controller);
         try {
             // Setup the Hyper connection
             setupAbortController.current = controller;
-            const hyperChannel = await hyperSetup.setup(dispatchAttachedDatabaseState, setupParams, controller.signal);
+            const hyperChannel = await hyperSetup.setup(dispatchConnectionState, setupParams, controller.signal);
             if (hyperChannel != null && protocol !== 'WASM') {
-                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'hyper', channel: hyperChannel }, dispatchAttachedDatabaseState, controller.signal);
+                await performHealthCheck(queryExecutor, connectionState.connectionId, { type: 'hyper', channel: hyperChannel }, dispatchConnectionState, controller.signal);
             }
 
             // Start the the inital catalog update
@@ -206,7 +206,7 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
 
     // Helper to cancel and reset the authorization
     const cancelSetup = () => {
-        if (props.databaseId != null) cancelConnectionSetup(props.databaseId);
+        if (props.connectionId != null) cancelConnectionSetup(props.connectionId);
         if (setupAbortController.current) {
             setupAbortController.current.abort(new DOMException('Connection setup cancelled', 'AbortError'));
             setupAbortController.current = null;
@@ -214,7 +214,7 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
     };
     const resetSetup = async () => {
         if (hyperSetup) {
-            await hyperSetup.reset(dispatchAttachedDatabaseState);
+            await hyperSetup.reset(dispatchConnectionState);
         }
     };
 

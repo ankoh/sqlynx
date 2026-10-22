@@ -4,7 +4,7 @@ import * as dashql from '@ankoh/dashql-core';
 import { Logger, stringifyError } from '../../platform/logger/logger.js';
 import { VariantKind } from '../../utils/index.js';
 import { SessionScripts } from '../session/scripts/session_scripts.js';
-import { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { ConnectionState } from '../connections/connection_state.js';
 import { createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
 import type { SessionSettings } from '../session/scripts/session_settings.js';
 import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, ConnectionEntry, ConnectionParams, SessionRegistryBackend } from './storage_backend.js';
@@ -84,7 +84,7 @@ export const DELETE_SCRIPT = Symbol('DELETE_SCRIPT');
 export const RENAME_SCRIPT = Symbol('RENAME_SCRIPT');
 
 export type StorageWriteTaskVariant =
-    | VariantKind<typeof WRITE_SESSION_MANIFEST, [string, string, AttachedDatabaseState[]]>
+    | VariantKind<typeof WRITE_SESSION_MANIFEST, [string, string, ConnectionState[]]>
     | VariantKind<typeof WRITE_SESSION_PROPERTIES, [string, SessionProperties]>
     | VariantKind<typeof WRITE_SESSION_CATALOG_SCRIPT, [string, dashql.DashQLScript]>
     | VariantKind<typeof WRITE_SESSION_FUNCTION_SCRIPT, [string, dashql.DashQLScript]>
@@ -578,7 +578,7 @@ export class StorageWriter {
                 for (const database of databases) {
                     const params = database.params;
                     if (params == null) continue;
-                    persistedDatabases.push({ databaseId: database.databaseId, params });
+                    persistedDatabases.push({ databaseId: database.connectionId, params });
                 }
                 const mainDatabase = persistedDatabases.find(database => database.databaseId === mainDatabaseId);
                 if (mainDatabase == null) {
@@ -620,7 +620,7 @@ export class StorageWriter {
                 if (existingSession != null && sessionManifestEquals(existingSession, connData)) {
                     this.logger.debug("Skipping session write: manifest unchanged", {
                         sessionId,
-                        databaseIds: databases.map(database => database.databaseId).join(','),
+                        databaseIds: databases.map(database => database.connectionId).join(','),
                     }, LOG_CTX);
                     break;
                 }

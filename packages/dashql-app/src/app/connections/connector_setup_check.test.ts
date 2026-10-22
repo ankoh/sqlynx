@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type * as connection from '@ankoh/dashql-jsonschema/connection.js';
-import type { AttachedDatabaseState } from './attached_database_state.js';
+import type { ConnectionState } from './connection_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import { checkSalesforceConnectionSetup, ConnectionSetupCheck } from './connector_setup_check.js';
 
@@ -33,7 +33,7 @@ describe('Salesforce connection setup check', () => {
                     },
                 },
             },
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
         expect(checkSalesforceConnectionSetup(state, params)).toBe(expected);
     });
 });

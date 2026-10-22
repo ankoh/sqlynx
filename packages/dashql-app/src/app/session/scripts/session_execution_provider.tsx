@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { ConnectionHealth } from '../../connections/attached_database_state.js';
+import { ConnectionHealth } from '../../connections/connection_state.js';
 import { ConnectorType, HYPER_CONNECTOR } from '../../connections/connector_info.js';
-import { useAttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
+import { useConnectionRegistry } from '../../connections/connection_registry.js';
 import { useCancelQuery, useQueryExecutor } from '../../connections/query_executor.js';
 import { useSessionScriptsRegistry, type ModifySessionScripts } from './session_scripts_registry.js';
 import { runSessionExecution, type SessionExecutionState } from './session_execution.js';
@@ -34,7 +34,7 @@ export function useSessionExecution(sessionId: string) {
 
 export function SessionExecutionProvider(props: React.PropsWithChildren) {
     const [registry] = useSessionScriptsRegistry();
-    const [connections] = useAttachedDatabaseRegistry();
+    const [connections] = useConnectionRegistry();
     const executeQuery = useQueryExecutor();
     const cancelQuery = useCancelQuery();
     const [states, setStates] = React.useState(new Map<string, SessionExecutionState>());
@@ -47,7 +47,7 @@ export function SessionExecutionProvider(props: React.PropsWithChildren) {
     React.useEffect(() => {
         for (const [id, controller] of runs.current) {
             const session = registry.sessionScriptsMap.get(id);
-            if (!session || connections.attachedDatabases.get(session.databaseId)?.connectionHealth !== ConnectionHealth.ONLINE) {
+            if (!session || connections.connections.get(session.databaseId)?.connectionHealth !== ConnectionHealth.ONLINE) {
                 controller.abort();
             }
         }
@@ -63,7 +63,7 @@ export function SessionExecutionProvider(props: React.PropsWithChildren) {
         const session = registry.sessionScriptsMap.get(sessionId);
         if (!session || runs.current.has(sessionId) || runningDatabases.current.has(session.databaseId)
             || Object.keys(session.scriptRefs).length === 0) return;
-        const connection = connections.attachedDatabases.get(session.databaseId);
+        const connection = connections.connections.get(session.databaseId);
         if (connection?.connectionHealth !== ConnectionHealth.ONLINE || connection.queriesActive.size > 0) return;
         const controller = new AbortController();
         runs.current.set(sessionId, controller);

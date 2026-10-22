@@ -3,7 +3,7 @@ import * as styles from './session_feed_page.module.css';
 
 import { FileDirectoryIcon, LinkIcon, PaperAirplaneIcon, SquareFillIcon, SymbolIcon, ThreeBarsIcon } from '../../../../ui/foundations/symbol_icon.js';
 
-import { ConnectionHealth, type AttachedDatabaseState } from '../../../connections/attached_database_state.js';
+import { ConnectionHealth, type ConnectionState } from '../../../connections/connection_state.js';
 import {
     SELECT_SCRIPT,
     type SessionScripts,
@@ -76,7 +76,7 @@ const DEFAULT_DEPENDENCIES: SessionFeedPageDependencies = {
 interface Props {
     sessionScripts: SessionScripts;
     modifySessionScripts: ModifySessionScripts;
-    connection: AttachedDatabaseState | null;
+    connection: ConnectionState | null;
     active: boolean;
     dependencies?: SessionFeedPageDependencies;
 }
@@ -99,12 +99,12 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
     const connectionTriggerRef = React.useRef<HTMLButtonElement>(null);
     const connectionHealth = props.connection?.connectionHealth;
     const disconnected = connectionHealth !== ConnectionHealth.ONLINE;
-    const connectionAttention = useSessionConnectionAttention(props.sessionScripts.sessionId, props.connection?.databaseId ?? null, connectionHealth);
+    const connectionAttention = useSessionConnectionAttention(props.sessionScripts.sessionId, props.connection?.connectionId ?? null, connectionHealth);
     const embedded = props.connection?.details?.type === HYPER_CONNECTOR && props.connection.details.value.proto.setupParams?.protocol === 'WASM';
     const connectionIdentity = embedded ? 'Embedded' : props.connection?.connectorInfo?.names.displayShort ?? 'Database';
     const connectionLabel = connectionHealth === ConnectionHealth.CONNECTING ? 'Connecting'
         : connectionHealth === ConnectionHealth.FAILED ? 'Failed' : disconnected ? 'Disconnected' : connectionIdentity;
-    React.useEffect(() => setConnectionOpen(false), [props.sessionScripts.sessionId, props.connection?.databaseId]);
+    React.useEffect(() => setConnectionOpen(false), [props.sessionScripts.sessionId, props.connection?.connectionId]);
     const execution = dependencies.useSessionExecution(props.sessionScripts.sessionId);
     const run = execution.state;
     const [executionDetailsOpen, setExecutionDetailsOpen] = React.useState(false);
@@ -220,7 +220,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                         }}>
                         <span className={styles.connection_label}>{connectionLabel}</span>
                     </dependencies.Button>
-                    <dependencies.ConnectionSettingsOverlay databaseId={props.connection?.databaseId ?? null}
+                    <dependencies.ConnectionSettingsOverlay connectionId={props.connection?.connectionId ?? null}
                         isOpen={connectionOpen} onClose={() => setConnectionOpen(false)} anchorRef={connectionTriggerRef}
                         side={AnchorSide.OutsideBottom} renderSessionName={renderSessionName} />
                     <dependencies.Button ref={shareTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={LinkIcon} aria-label="Share as URL" aria-expanded={shareOpen} onClick={() => {

@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
-import { AttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
+import { ConnectionRegistry } from '../../connections/connection_registry.js';
 import { SessionTestBackend } from '../../storage/session_test_backend.js';
 import { StorageProvider } from '../../storage/storage_provider.js';
 import { REGISTER_QUERY, RENAME_SESSION, type SessionScripts } from './session_scripts.js';
@@ -67,14 +67,14 @@ describe('useSessionScripts dispatch', () => {
             await act(async () => {
                 root.render(<LoggerProvider>
                     <StorageProvider backend={backend}>
-                        <AttachedDatabaseRegistry>
+                        <ConnectionRegistry>
                             <SessionScriptsRegistryProvider>
                                 <SeedRegistry sessions={sessions}>
                                     {/* No key: changing the route id must reuse the hook and its pending queue. */}
                                     <Consumer sessionId={sessionId} capture={capture} />
                                 </SeedRegistry>
                             </SessionScriptsRegistryProvider>
-                        </AttachedDatabaseRegistry>
+                        </ConnectionRegistry>
                     </StorageProvider>
                 </LoggerProvider>);
             });

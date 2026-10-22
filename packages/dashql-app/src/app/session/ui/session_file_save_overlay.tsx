@@ -5,7 +5,7 @@ import { DownloadIcon, FileIcon } from '../../../ui/foundations/symbol_icon.js';
 
 import { AnchorAlignment } from '../../../ui/foundations/anchored_position.js';
 import { AnchoredOverlay } from '../../../ui/foundations/anchored_overlay.js';
-import { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionState } from '../../connections/connection_state.js';
 import { SessionExportSettings, SessionExportSettingsView } from './session_export_settings_view.js';
 import { SessionScripts } from '../scripts/session_scripts.js';
 import { classNames } from '../../../utils/classnames.js';
@@ -17,18 +17,18 @@ import { useStorageReader } from '../../storage/storage_provider.js';
 import { StorageBackend } from '../../storage/storage_backend.js';
 import { IconButton } from '../../../ui/foundations/button.js';
 import { DASHQL_ARCHIVE_FILENAME_EXT } from '../../../globals.js';
-import { resolveSessionAttachedDatabases, useAttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
+import { resolveSessionAttachedDatabases, useConnectionRegistry } from '../../connections/connection_registry.js';
 
 async function packAndCompressFile(
     backend: StorageBackend,
-    databases: AttachedDatabaseState[],
+    databases: ConnectionState[],
     sessionScripts: SessionScripts,
     settings: SessionExportSettings,
 ): Promise<Uint8Array> {
     const connectionParams = new Map();
     for (const database of databases) {
         const params = database.params;
-        if (params != null) connectionParams.set(database.databaseId, params);
+        if (params != null) connectionParams.set(database.connectionId, params);
     }
     const zipBlob = await exportSessionAsSharedZip(backend, sessionScripts.sessionId, connectionParams, settings);
     const arrayBuffer = await zipBlob.arrayBuffer();
@@ -41,7 +41,7 @@ interface Props {
     setIsOpen: (v: boolean) => void;
     anchorRef?: React.RefObject<HTMLButtonElement | null>;
     sessionScripts: SessionScripts | null;
-    conn: AttachedDatabaseState | null;
+    conn: ConnectionState | null;
     fileName?: string;
 }
 
@@ -50,7 +50,7 @@ export const SessionFileSaveOverlay: React.FC<Props> = (props: Props) => {
     const buttonRef = React.createRef<HTMLButtonElement>();
     const fileDownloader = useFileDownloader();
     const storage = useStorageReader();
-    const [databaseRegistry] = useAttachedDatabaseRegistry();
+    const [databaseRegistry] = useConnectionRegistry();
     const fileName = `${props.fileName ?? props.sessionScripts?.sessionMetadata.originalFileName ?? "session"}.${DASHQL_ARCHIVE_FILENAME_EXT}`;
 
     const [settings, setSettings] = React.useState<SessionExportSettings>({

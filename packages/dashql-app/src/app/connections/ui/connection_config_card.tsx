@@ -7,8 +7,8 @@ import { ChevronLeftIcon } from '../../../ui/foundations/symbol_icon.js';
 import { Button, IconButton, ButtonVariant } from '../../../ui/foundations/button.js';
 import { ConnectorConfigTabs } from './connector_config_tabs.js';
 import { ConnectorType } from '../connector_info.js';
-import { useAttachedDatabaseById, useAttachedDatabaseRegistry } from '../attached_database_registry.js';
-import { ConnectionHealth } from '../attached_database_state.js';
+import { useConnectionById, useConnectionRegistry } from '../connection_registry.js';
+import { ConnectionHealth } from '../connection_state.js';
 
 interface Props {
     sessionId: string;
@@ -19,9 +19,9 @@ interface Props {
 }
 
 export const ConnectionConfigCard: React.FC<Props> = (props: Props) => {
-    const [registry] = useAttachedDatabaseRegistry();
+    const [registry] = useConnectionRegistry();
     const databaseId = registry.attachedDatabasesBySession.get(props.sessionId)?.mainDatabaseId ?? null;
-    const [conn, _modifyConn] = useAttachedDatabaseById(databaseId);
+    const [conn, _modifyConn] = useConnectionById(databaseId);
 
     // Default to TRINO or first available connector
     const defaultConnectorType = conn?.connectorInfo.connectorType ?? ConnectorType.TRINO;
@@ -65,7 +65,7 @@ export const ConnectionConfigCard: React.FC<Props> = (props: Props) => {
             <div className={`${baseStyles.card_section} ${styles.card_body}`}>
                 <ConnectorConfigTabs
                     className={styles.content_sized_tabs}
-                     databaseId={databaseId}
+                     connectionId={databaseId}
                     selectedConnectorType={selectedConnectorType}
                     setSelectedConnectorType={setSelectedConnectorType}
                     lockConnectorType={!!props.onSkip}

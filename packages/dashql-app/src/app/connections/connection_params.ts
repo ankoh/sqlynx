@@ -2,7 +2,7 @@ import * as dashql from '@ankoh/dashql-core';
 import type * as app_session from '@ankoh/dashql-jsonschema/app_session.js';
 
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR, ConnectorInfo } from './connector_info.js';
-import { ConnectionHealth, AttachedDatabaseStateWithoutId, ConnectionStatus, createConnectionMetrics } from './attached_database_state.js';
+import { ConnectionHealth, ConnectionStateWithoutId, ConnectionStatus, createConnectionMetrics } from './connection_state.js';
 import { computeNewConnectionSignatureFromDetails, ConnectionStateDetailsVariant } from './connection_state_details.js';
 import { createHyperConnectionParamsSignature } from './hyper/hyper_connection_params.js';
 import { createHyperConnectionStateDetails } from './hyper/hyper_connection_state.js';
@@ -143,7 +143,7 @@ export function createConnectionParamsSignature(params: ConnectionParams): any {
     return null;
 }
 
-export function createConnectionStateFromParams(dql: dashql.DashQL, params: ConnectionParams, connSigs: ConnectionSignatureMap): AttachedDatabaseStateWithoutId {
+export function createConnectionStateFromParams(dql: dashql.DashQL, params: ConnectionParams, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
     const info = getConnectionInfoFromParams(params)!;
     const details = getConnectionStateDetailsFromParams(params)!;
     const sig = computeNewConnectionSignatureFromDetails(details);
@@ -182,10 +182,10 @@ export function createConnectionStateFromParams(dql: dashql.DashQL, params: Conn
     };
 }
 
-export function createDefaultHyperWasmAttachedDatabaseState(
+export function createDefaultHyperWasmConnectionState(
     dql: dashql.DashQL,
     connSigs: ConnectionSignatureMap,
-): AttachedDatabaseStateWithoutId {
+): ConnectionStateWithoutId {
     const connector = CONNECTOR_INFOS[ConnectorType.HYPER];
     return createConnectionStateFromParams(
         dql,

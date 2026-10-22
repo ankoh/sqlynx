@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as dashql from '@ankoh/dashql-core';
 import { ScriptFeedRow, type ScriptFeedRowDependencies } from './session_feed_row.js';
 import { ConnectorType } from '../../../connections/connector_info.js';
-import { ConnectionHealth } from '../../../connections/attached_database_state.js';
+import { ConnectionHealth } from '../../../connections/connection_state.js';
 import { SessionConnectionAttentionContext } from '../session_connection_attention.js';
 import { SessionDataCard, type SessionDataCardProps } from './session_data_card.js';
 import { HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../../connections/connector_info.js';
@@ -294,7 +294,7 @@ describe('Session feed composer', () => {
         ScriptFeedRow: () => <div />,
     };
     const onlineConn = {
-        databaseId: 'database', connectionHealth: ConnectionHealth.ONLINE,
+        connectionId: 'database', connectionHealth: ConnectionHealth.ONLINE,
         details: { type: HYPER_CONNECTOR, value: { proto: {} } },
     } as any;
 

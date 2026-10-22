@@ -22,7 +22,7 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-import { ConnectionHealth, AttachedDatabaseState } from '../../../connections/attached_database_state.js';
+import { ConnectionHealth, ConnectionState } from '../../../connections/connection_state.js';
 import { getSelectedScriptRef, getSelectedScriptRefs, getSortedScriptFileNames, SessionScripts, type ScriptData, SELECT_SCRIPT, CREATE_SCRIPT, DELETE_SCRIPT, RENAME_SCRIPT, REORDER_SCRIPTS, SET_SCRIPT_TEXT, ACCEPT_PENDING_DIFF, REJECT_PENDING_DIFF } from '../../scripts/session_scripts.js';
 import { useQueryExecutor } from '../../../connections/query_executor.js';
 import { type ModifySessionScripts } from '../../scripts/session_scripts_registry.js';
@@ -54,7 +54,7 @@ export interface SessionFeedProps {
     sessionScripts: SessionScripts;
     modifySessionScripts: ModifySessionScripts;
     showDetails: (fileName?: string, initialTab?: DetailsTabKey) => void;
-    conn: AttachedDatabaseState | null;
+    conn: ConnectionState | null;
     /// Whether the feed is the visible, interactive layer. The feed stays mounted (just hidden) while
     /// the catalog/details overlay is open so it keeps its scroll position and measured row heights;
     /// while inactive its global key handlers must stand down so Escape/Enter belong to the overlay.
@@ -248,7 +248,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
         if (cacheKey != null) {
             await storageReader.backend.deleteQueryResultCache(sessionScripts.sessionId, cacheKey).catch(() => { });
         }
-        dependencies.runSessionScript(conn!.databaseId, sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
+        dependencies.runSessionScript(conn!.connectionId, sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
     }, [props.modifySessionScripts, isDisconnected, executeQuery, storageReader, logger]);
 
     const handleExecuteEntry = React.useCallback((fileName: string) => {
@@ -257,7 +257,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
         const entry = sessionScripts.scriptRefs[fileName];
         const scriptData = entry != null ? sessionScripts.scripts[entry.scriptId] : undefined;
         if (scriptData == null) return;
-        dependencies.runSessionScript(conn!.databaseId, sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
+        dependencies.runSessionScript(conn!.connectionId, sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
     }, [executeQuery, isDisconnected, props.modifySessionScripts, logger]);
 
     const handleDelete = React.useCallback((fileName: string) => {
@@ -470,7 +470,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
             connectionAttention?.request(next.sessionId);
             return;
         }
-        dependencies.runSessionScript(conn.databaseId, next, scriptData, executeQuery, props.modifySessionScripts, logger);
+        dependencies.runSessionScript(conn.connectionId, next, scriptData, executeQuery, props.modifySessionScripts, logger);
     }, [connectionAttention, executeQuery, logger, props.modifySessionScripts]);
 
     // A question becomes a script that receives its SQL from the AI provider
@@ -503,7 +503,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
 
     const rowProps = React.useMemo<ScriptFeedRowProps>(() => ({
         sessionId: props.sessionScripts.sessionId,
-        databaseId: props.conn?.databaseId ?? null,
+        databaseId: props.conn?.connectionId ?? null,
         connectionHealth: props.conn?.connectionHealth ?? null,
         connectionDetails: props.conn?.details ?? null,
         connectorType: props.sessionScripts.connectorInfo.connectorType,
@@ -542,7 +542,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
         onCreate: handleCreate,
         onEditorView: handleEditorView,
         onRowHeightChange: feedLayout.rowHeights.setRowHeight,
-    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.sessionScripts.scripts, props.sessionScripts.scriptFocus.fileName, props.sessionScripts.connectorInfo.connectorType, props.sessionScripts.settings.cacheQueryResults, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, sqlGenerations.generations, sqlGenerations.stop, sqlGenerations.dismiss, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
+    }), [entries, props.active, props.conn?.connectionId, props.conn?.connectionHealth, props.conn?.details, props.sessionScripts.scripts, props.sessionScripts.scriptFocus.fileName, props.sessionScripts.connectorInfo.connectorType, props.sessionScripts.settings.cacheQueryResults, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, sqlGenerations.generations, sqlGenerations.stop, sqlGenerations.dismiss, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
     const getScrollElement = React.useCallback(() => feedLayout.listRef.current?.element ?? null, [feedLayout.listRef]);
 
     // An empty session greets the user with the composer in place of the feed.

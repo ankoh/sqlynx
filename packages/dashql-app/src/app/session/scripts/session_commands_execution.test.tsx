@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionCommands, type SessionCommandsDependencies } from './session_commands.js';
-import { ConnectionHealth } from '../../connections/attached_database_state.js';
+import { ConnectionHealth } from '../../connections/connection_state.js';
 import { SessionConnectionAttentionContext } from '../ui/session_connection_attention.js';
 
 describe('global session execution feedback', () => {
@@ -25,7 +25,7 @@ describe('global session execution feedback', () => {
     };
     const dependencies = {
         useSessionScripts: () => [sessionScripts, vi.fn()],
-        useAttachedDatabaseState: (sessionId: string) => { resolveMain(sessionId); return [connection, vi.fn()]; },
+        useConnectionState: (sessionId: string) => { resolveMain(sessionId); return [connection, vi.fn()]; },
         useQueryExecutor: () => execute,
         useCatalogLoaderQueue: () => vi.fn(),
         useLogger: () => ({ info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
@@ -58,13 +58,13 @@ describe('global session execution feedback', () => {
         expect(execute).not.toHaveBeenCalled();
         expect(resolveMain).toHaveBeenCalledWith('session');
         expect(document.activeElement).toBe(focused);
-        connection = { databaseId: 'main', connectionHealth: ConnectionHealth.ONLINE };
+        connection = { connectionId: 'main', connectionHealth: ConnectionHealth.ONLINE };
         render();
         expect(attention?.active).toBe(false);
     });
 
     it('executes against the main database rather than a script database identity', () => {
-        connection = { databaseId: 'main', connectionHealth: ConnectionHealth.ONLINE };
+        connection = { connectionId: 'main', connectionHealth: ConnectionHealth.ONLINE };
         render();
         shortcut();
         expect(execute).toHaveBeenCalledWith('main', expect.objectContaining({ query: 'SELECT 1' }));

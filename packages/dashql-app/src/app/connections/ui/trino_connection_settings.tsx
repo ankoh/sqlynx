@@ -8,12 +8,12 @@ import * as style from './connection_settings.module.css';
 import { BookIcon, KeyIcon, PlugIcon, XIcon } from '../../../ui/foundations/symbol_icon.js';
 
 import { Button, ButtonVariant } from '../../../ui/foundations/button.js';
-import { ConnectionHealth } from '../attached_database_state.js';
+import { ConnectionHealth } from '../connection_state.js';
 import { Dispatch } from '../../../utils/variant.js';
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../../ui/foundations/keyvalue_list.js';
 import { TextField, VALIDATION_WARNING } from '../../../ui/foundations/text_field.js';
 import { classNames } from '../../../utils/classnames.js';
-import { useAttachedDatabaseById, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useConnectionById, useConnectionDraftForm } from '../connection_registry.js';
 import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useQueryExecutor } from '../query_executor.js';
@@ -62,7 +62,7 @@ export function buildPageStateFromParams(params: connection.TrinoConnectionParam
 }
 
 interface Props {
-    databaseId: string | null;
+    connectionId: string | null;
     onClose?: () => void;
     headerActions?: React.ReactNode;
 }
@@ -77,11 +77,11 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
     const wrongPlatform = requiresSwitchingToNative(connectorInfo);
 
     // Resolve connection state
-    const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
-    const saveBeforeConnect = useSaveBeforeConnect(props.databaseId);
-    const { saving } = useConnectionSave(props.databaseId);
+    const [connectionState, dispatchConnectionState] = useConnectionById(props.connectionId);
+    const saveBeforeConnect = useSaveBeforeConnect(props.connectionId);
+    const { saving } = useConnectionSave(props.connectionId);
 
-    const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
+    const [pageState, setPageState] = useConnectionDraftForm(props.connectionId,
         params => buildPageStateFromParams(params && 'trino' in params ? params.trino as connection.TrinoConnectionParams : undefined),
         form => ({ trino: { ...form.newParams, draftRows: { metadata: form.newParamsMetadata } } }));
 
@@ -273,14 +273,14 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
         if (!await saveBeforeConnect()) return;
 
         const controller = new AbortController();
-        const unregister = registerConnectionSetup(connectionState.databaseId, controller);
+        const unregister = registerConnectionSetup(connectionState.connectionId, controller);
         try {
             // Setup the Trino connection
             setupAbortController.current = controller;
             const connectionParams: connection.TrinoConnectionParams = pageState.newParams;
-            const trinoChannel = await trinoSetup.setup(dispatchAttachedDatabaseState, connectionParams, controller.signal);
+            const trinoChannel = await trinoSetup.setup(dispatchConnectionState, connectionParams, controller.signal);
             if (trinoChannel != null) {
-                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'trino', channel: trinoChannel }, dispatchAttachedDatabaseState, controller.signal);
+                await performHealthCheck(queryExecutor, connectionState.connectionId, { type: 'trino', channel: trinoChannel }, dispatchConnectionState, controller.signal);
             }
 
         } catch (error: any) {
@@ -300,7 +300,7 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
 
     // Helper to cancel and reset the authorization
     const cancelSetup = () => {
-        if (props.databaseId != null) cancelConnectionSetup(props.databaseId);
+        if (props.connectionId != null) cancelConnectionSetup(props.connectionId);
         if (setupAbortController.current) {
             setupAbortController.current.abort(new DOMException('Connection setup cancelled', 'AbortError'));
             setupAbortController.current = null;
@@ -308,7 +308,7 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
     };
     const resetSetup = async () => {
         if (trinoSetup) {
-            await trinoSetup.reset(dispatchAttachedDatabaseState);
+            await trinoSetup.reset(dispatchConnectionState);
         }
     };
 

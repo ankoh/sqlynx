@@ -8,7 +8,7 @@ import { AppSettingsSync } from './config/app_settings_sync.js';
 import { SessionCatalogLoaderProvider } from './session/scripts/session_catalog_loader.js';
 import { ComputationRegistry } from '../compute/computation_registry.js';
 import { ComputationScheduler } from '../compute/computation_scheduler.js';
-import { AttachedDatabaseRegistry } from './connections/attached_database_registry.js';
+import { ConnectionRegistry } from './connections/connection_registry.js';
 import { ConnectionPersistenceProvider } from './connections/connection_persistence.js';
 import { ComputeConnectionProvider } from '../compute/compute_connection_provider.js';
 import { DashQLCoreProvider } from './providers/core_provider.js';
@@ -63,7 +63,7 @@ applyFlavorToDocument(APP_FLAVOR);
 // For example:
 // - SessionCatalogLoaderProvider requires SessionScriptsRegistryProvider to mark connection scripts as outdated.
 const SessionProviders = (props: { children: React.ReactElement }) => (
-    <AttachedDatabaseRegistry>
+    <ConnectionRegistry>
         <ConnectionPersistenceProvider>
             <SalesforceConnector>
                 <HyperConnector>
@@ -93,7 +93,7 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
                 </HyperConnector>
             </SalesforceConnector>
         </ConnectionPersistenceProvider>
-    </AttachedDatabaseRegistry>
+    </ConnectionRegistry>
 );
 
 const AppProviders = (props: { children: React.ReactElement }) => (

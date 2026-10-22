@@ -1,8 +1,8 @@
 import * as arrow from 'apache-arrow';
 import * as React from 'react';
 
-import { resolveSessionExecutionDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
-import { APPLY_CATALOG_CHANGES } from './attached_database_state.js';
+import { resolveSessionExecutionDatabase, useConnectionDispatch, useConnectionRegistryStore, useDynamicConnectionDispatch } from './connection_registry.js';
+import { APPLY_CATALOG_CHANGES } from './connection_state.js';
 import {
     createQueryResponseStreamMetrics,
     QUERY_CACHE_RECORDED,
@@ -95,7 +95,7 @@ export const useCancelQuery = () => React.useContext(EXECUTOR_CTX)!.cancel;
 export function useQueryState(sessionId: string | null, queryId: number | null) {
     // Subscribe to the single query instead of the registry.
     // The registry changes with every lifecycle event of every query, including the internal queries of computations.
-    const store = useAttachedDatabaseRegistryStore();
+    const store = useConnectionRegistryStore();
     const getQueryState = React.useCallback(() => {
         if (queryId == null) return null;
         const database = resolveSessionExecutionDatabase(store.current, sessionId);
@@ -104,7 +104,7 @@ export function useQueryState(sessionId: string | null, queryId: number | null) 
     return React.useSyncExternalStore(store.subscribe, getQueryState);
 }
 
-function createConnectionQueryExecutionTracker(connectionId: string, dispatch: ReturnType<typeof useDynamicAttachedDatabaseDispatch>[1]): QueryExecutionTracker {
+function createConnectionQueryExecutionTracker(connectionId: string, dispatch: ReturnType<typeof useDynamicConnectionDispatch>[1]): QueryExecutionTracker {
     return {
         dispatch: action => dispatch(connectionId, action),
     };
@@ -115,8 +115,8 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
     // The connection registry changes frequently.
     // This executor resolves everything ad-hoc through the registry store and never re-renders for registry changes.
-    const connStore = useAttachedDatabaseRegistryStore();
-    const connDispatch = useAttachedDatabaseDispatch();
+    const connStore = useConnectionRegistryStore();
+    const connDispatch = useConnectionDispatch();
 
     const computeDispatch = useComputationDispatch();
     const computeDb = useComputeDatabase();
@@ -129,7 +129,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         if (!computeDb) {
             throw new Error(`Compute database is not yet ready`);
         }
-        const conn = connStore.current.attachedDatabases.get(connectionId);
+        const conn = connStore.current.connections.get(connectionId);
         if (!conn) {
             traced.error("Connection not configured", { connectionId, "query": queryId.toString() }, LOG_CTX);
             throw new Error(`Couldn't find a connection with id ${connectionId}`);

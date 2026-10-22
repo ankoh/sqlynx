@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
+import { useDynamicConnectionDispatch } from './connection_registry.js';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
 import { CatalogResolver, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
@@ -10,7 +10,7 @@ import {
     CATALOG_UPDATE_PARTIALLY_SUCCEEDED,
     CATALOG_UPDATE_SUCCEEDED,
     UPDATE_CATALOG,
-} from './attached_database_state.js';
+} from './connection_state.js';
 import { updateSalesforceCatalog } from './salesforce/salesforce_catalog_update.js';
 import { useQueryExecutor } from './query_executor.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
@@ -39,14 +39,14 @@ const LOADER_QUEUE_FN_CTX = React.createContext<RefreshCatalogFn | null>(null);
 export const useCatalogLoaderQueue = () => React.useContext(LOADER_QUEUE_FN_CTX)!;
 
 export interface CatalogLoaderDependencies {
-    useDynamicAttachedDatabaseDispatch: typeof useDynamicAttachedDatabaseDispatch;
+    useDynamicConnectionDispatch: typeof useDynamicConnectionDispatch;
     useQueryExecutor: typeof useQueryExecutor;
     useSalesforceAPI: typeof useSalesforceAPI;
     updateHyperCatalog: typeof updateHyperCatalog;
 }
 
 const DEFAULT_DEPENDENCIES: CatalogLoaderDependencies = {
-    useDynamicAttachedDatabaseDispatch,
+    useDynamicConnectionDispatch,
     useQueryExecutor,
     useSalesforceAPI,
     updateHyperCatalog,
@@ -70,8 +70,8 @@ export function CatalogLoaderProvider(props: CatalogLoaderProviderProps) {
 
     // The connection registry changes frequently, the connection map is stable.
     // This executor will depend on the map directly since it can resolve everything ad-hoc.
-    const [connReg, connDispatch] = dependencies.useDynamicAttachedDatabaseDispatch();
-    const connMap = connReg.attachedDatabases;
+    const [connReg, connDispatch] = dependencies.useDynamicConnectionDispatch();
+    const connMap = connReg.connections;
     const onCatalogDidUpdate = React.useRef(props.onCatalogDidUpdate);
     onCatalogDidUpdate.current = props.onCatalogDidUpdate;
 
@@ -317,7 +317,7 @@ export function CatalogLoaderProvider(props: CatalogLoaderProviderProps) {
             logger.debug("Received catalog update request", { connectionId }, LOG_CTX);
 
             // Find the connection
-            const connState = connReg.attachedDatabases.get(connectionId);
+            const connState = connReg.connections.get(connectionId);
             if (!connState) {
                 logger.warn("Failed to resolve connection", { connectionId }, LOG_CTX);
                 processed.push(connectionId);

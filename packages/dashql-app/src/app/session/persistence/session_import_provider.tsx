@@ -16,8 +16,8 @@ import { displayPath } from '../../storage/session_locator.js';
 import { useStorage } from '../../storage/storage_provider.js';
 import { restoreSingleSession } from './app_state_loader.js';
 import { mergeRestoredSessionIntoConnections, mergeRestoredSessionIntoScripts } from './app_state_loader.js';
-import { connectionRefCount, findSessionQueries, useAttachedDatabaseRegistrySetter, useAttachedDatabaseRegistryStore } from '../../connections/attached_database_registry.js';
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { connectionRefCount, findSessionQueries, useConnectionRegistrySetter, useConnectionRegistryStore } from '../../connections/connection_registry.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
 import { useSessionScriptsRegistrySetter } from '../scripts/session_scripts_registry.js';
 import { useDashQLCoreSetup } from '../../providers/core_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
@@ -89,8 +89,8 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
     const setupCore = useDashQLCoreSetup();
     const [reader, writer] = useStorage();
     // Read the registry when importing instead of re-creating the import context for every query event
-    const connectionStore = useAttachedDatabaseRegistryStore();
-    const setConnections = useAttachedDatabaseRegistrySetter();
+    const connectionStore = useConnectionRegistryStore();
+    const setConnections = useConnectionRegistrySetter();
     const setScripts = useSessionScriptsRegistrySetter();
     const cancelQuery = useCancelQuery();
     const [dialog, setDialog] = React.useState<ConflictDialogState | null>(null);
@@ -118,8 +118,8 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
         // The live connections may be ahead of the manifest while writes are debounced
         const live = connectionStore.current;
         const entries: ConnectionEntry[] = ((await backend.loadManifest()).connections ?? [])
-            .map(entry => ({ ...entry, params: live.attachedDatabases.get(entry.id)?.params ?? entry.params }));
-        for (const [connectionId, connection] of live.attachedDatabases) {
+            .map(entry => ({ ...entry, params: live.connections.get(entry.id)?.params ?? entry.params }));
+        for (const [connectionId, connection] of live.connections) {
             if (!entries.some(entry => entry.id === connectionId) && connectionRefCount(live, connectionId) > 0) {
                 entries.push({ id: connectionId, params: connection.params });
             }
@@ -149,11 +149,11 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
         const mapping = connections.attachedDatabasesBySession.get(sessionId);
         const databases = mapping == null ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds]
             .filter((databaseId): databaseId is string => databaseId != null)
-            .map(databaseId => connections.attachedDatabases.get(databaseId))
-            .filter((database): database is AttachedDatabaseState => database != null);
+            .map(databaseId => connections.connections.get(databaseId))
+            .filter((database): database is ConnectionState => database != null);
         // Connections may be shared, only the queries of the session are cancelled
         await Promise.all(databases.flatMap(database => findSessionQueries(database, sessionId, false).map(queryId =>
-            cancelQuery(database.databaseId, queryId)
+            cancelQuery(database.connectionId, queryId)
         )));
         writer.pause();
         try {

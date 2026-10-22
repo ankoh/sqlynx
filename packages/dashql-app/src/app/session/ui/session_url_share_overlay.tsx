@@ -13,7 +13,7 @@ import { classNames } from '../../../utils/classnames.js';
 import { exportSessionAsUrl, SessionLinkTarget } from '../persistence/session_export.js';
 import { connectionParamsHaveLoginHint, getConnectionParamsFromStateDetails } from '../../connections/connection_params.js';
 import { sleep } from '../../../utils/sleep.js';
-import { resolveSessionAttachedDatabases, useAttachedDatabaseState, useAttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
+import { resolveSessionAttachedDatabases, useConnectionState, useConnectionRegistry } from '../../connections/connection_registry.js';
 import { useRouteContext } from '../../router/router.js';
 import { useSessionScripts } from '../scripts/session_scripts_registry.js';
 import { useStorageReader } from '../../storage/storage_provider.js';
@@ -42,8 +42,8 @@ export const SessionURLShareOverlay: React.FC<Props> = (props: Props) => {
     const buttonRef = React.createRef<HTMLButtonElement>();
 
     const [sessionScripts] = useSessionScripts(props.sessionId ?? route.sessionId ?? null);
-    const [connection, _modifyConnection] = useAttachedDatabaseState(sessionScripts?.sessionId ?? null);
-    const [databaseRegistry] = useAttachedDatabaseRegistry();
+    const [connection, _modifyConnection] = useConnectionState(sessionScripts?.sessionId ?? null);
+    const [databaseRegistry] = useConnectionRegistry();
     const storage = useStorageReader();
     const [state, setState] = React.useState<State>(() => ({
         publicURLText: null,
@@ -74,7 +74,7 @@ export const SessionURLShareOverlay: React.FC<Props> = (props: Props) => {
                     const params = new Map();
                     for (const database of [attached.main, ...attached.attached]) {
                         const connectionParams = database.params;
-                        if (connectionParams != null) params.set(database.databaseId, connectionParams);
+                        if (connectionParams != null) params.set(database.connectionId, connectionParams);
                     }
                     setupUrl = await exportSessionAsUrl(
                         storage.backend,

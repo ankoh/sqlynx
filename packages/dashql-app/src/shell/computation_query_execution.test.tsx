@@ -2,7 +2,7 @@ import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 
-import { AttachedDatabaseRegistry, useAttachedDatabaseRegistry } from '../app/connections/attached_database_registry.js';
+import { ConnectionRegistry, useConnectionRegistry } from '../app/connections/connection_registry.js';
 import { useCreateComputeQueryExecution } from '../compute/computation_query_execution.js';
 import { TABLE_AGGREGATION_TASK, type TaskVariant } from '../compute/computation_scheduler.js';
 import { QueryExecutionStatus, QueryType } from '../query/query_execution_state.js';
@@ -27,22 +27,22 @@ describe('ShellComputeQueryExecutionProvider', () => {
     it('tracks aggregation queries in the shell query history', async () => {
         let createExecution: ReturnType<typeof useCreateComputeQueryExecution> = null;
         let shell: ReturnType<typeof useShellConnection> | null = null;
-        let registry: ReturnType<typeof useAttachedDatabaseRegistry>[0] | null = null;
+        let registry: ReturnType<typeof useConnectionRegistry>[0] | null = null;
         const Probe = () => {
             createExecution = useCreateComputeQueryExecution();
             shell = useShellConnection();
-            [registry] = useAttachedDatabaseRegistry();
+            [registry] = useConnectionRegistry();
             return null;
         };
 
         act(() => root.render(
-            <AttachedDatabaseRegistry>
+            <ConnectionRegistry>
                 <ShellConnectionProvider>
                     <ShellComputeQueryExecutionProvider>
                         <Probe />
                     </ShellComputeQueryExecutionProvider>
                 </ShellConnectionProvider>
-            </AttachedDatabaseRegistry>,
+            </ConnectionRegistry>,
         ));
 
         const task = {
@@ -62,6 +62,6 @@ describe('ShellComputeQueryExecutionProvider', () => {
             },
             status: QueryExecutionStatus.SUCCEEDED,
         }]);
-        expect([...registry!.attachedDatabases.values()][0].queriesFinished.size).toBe(1);
+        expect([...registry!.connections.values()][0].queriesFinished.size).toBe(1);
     });
 });

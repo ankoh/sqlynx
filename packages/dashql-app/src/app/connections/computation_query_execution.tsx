@@ -13,7 +13,7 @@ import {
 } from '../../compute/computation_scheduler.js';
 import { QueryType } from '../../query/query_execution_state.js';
 import { executeTrackedQuery } from '../../query/tracked_query_execution.js';
-import { useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore } from './attached_database_registry.js';
+import { useConnectionDispatch, useConnectionRegistryStore } from './connection_registry.js';
 
 const LOG_CTX = 'scheduler';
 
@@ -21,11 +21,11 @@ export function SessionComputeQueryExecutionProvider(props: React.PropsWithChild
     // Resolve the connection through the store when the task starts.
     // Every tracked compute query changes the registry, subscribing to it would re-create the execution factory
     // and re-render the scheduler for every query lifecycle event.
-    const store = useAttachedDatabaseRegistryStore();
-    const dispatch = useAttachedDatabaseDispatch();
+    const store = useConnectionRegistryStore();
+    const dispatch = useConnectionDispatch();
     const createExecution = React.useCallback((task: TaskVariant) => {
         let connectionId: string | null = null;
-        for (const [candidateId, connection] of store.current.attachedDatabases) {
+        for (const [candidateId, connection] of store.current.connections) {
             if (connection.queriesActive.has(task.value.tableId) || connection.queriesFinished.has(task.value.tableId)) {
                 connectionId = candidateId;
                 break;

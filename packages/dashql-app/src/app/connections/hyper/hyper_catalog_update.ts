@@ -1,8 +1,8 @@
 import * as arrow from 'apache-arrow';
 import * as dashql from '@ankoh/dashql-core';
 
-import { CATALOG_UPDATE_SCHEMA_SCRIPT, CATALOG_UPDATE_REGISTER_QUERY } from '../attached_database_state.js';
-import { DynamicAttachedDatabaseDispatch } from '../attached_database_registry.js';
+import { CATALOG_UPDATE_SCHEMA_SCRIPT, CATALOG_UPDATE_REGISTER_QUERY } from '../connection_state.js';
+import { DynamicConnectionDispatch } from '../connection_registry.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../catalog_update_state.js';
 import { CatalogSource, DEFAULT_DATABASE_NAME, generateCatalogScriptHeader, generateCatalogScriptHeaderForSource, generateSchemaSQL, quoteIdentifier, type ColumnMetadata } from '../catalog_sql_generator.js';
 import { CATALOG_QUERY_READ_TIMEOUT_MS, queryPgAttribute, generateCatalogSQLFromPgAttribute } from '../catalog_query_pg_attribute.js';
@@ -93,7 +93,7 @@ export function buildHyperCloudCatalogQuery(databaseAlias: string): string {
     `;
 }
 
-export function generateCatalogSQLFromHyperCloud(result: HyperCloudCatalogTable, attachedDatabaseName: string): string {
+export function generateCatalogSQLFromHyperCloud(result: HyperCloudCatalogTable, connectionName: string): string {
     const schemas = new Map<string, Map<string, ColumnMetadata[]>>();
     for (const batch of result.batches) {
         const schemaNames = batch.getChild('schema_name')!;
@@ -122,14 +122,14 @@ export function generateCatalogSQLFromHyperCloud(result: HyperCloudCatalogTable,
 
     const statements: string[] = [];
     for (const schemaName of [...schemas.keys()].sort()) {
-        statements.push(generateSchemaSQL(attachedDatabaseName, schemaName, schemas.get(schemaName)!));
+        statements.push(generateSchemaSQL(connectionName, schemaName, schemas.get(schemaName)!));
     }
     return statements.filter(Boolean).join('\n\n');
 }
 
 async function queryHyperCloudCatalog(
     connectionId: string,
-    connectionDispatch: DynamicAttachedDatabaseDispatch,
+    connectionDispatch: DynamicConnectionDispatch,
     updateId: number,
     databaseAlias: string,
     executor: QueryExecutor,
@@ -194,7 +194,7 @@ function renderCatalogSections(sections: Map<string, string>, targetOrder: strin
 export async function updateHyperCatalog(
     logger: LoggerLike,
     connectionId: string,
-    connectionDispatch: DynamicAttachedDatabaseDispatch,
+    connectionDispatch: DynamicConnectionDispatch,
     updateId: number,
     attachedDatabases: AttachedDatabase[],
     executor: QueryExecutor,

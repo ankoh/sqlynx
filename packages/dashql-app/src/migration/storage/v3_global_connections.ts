@@ -1,6 +1,6 @@
 import { stringifyError } from '../../platform/logger/logger.js';
 import { connectionParamsEqual, connectionParamsKey, connectionParamsWithoutDraftRows } from '../../app/connections/connection_params.js';
-import type { AttachedDatabaseRole } from '../../app/connections/attached_database_registry.js';
+import type { AttachedDatabaseRole } from '../../app/connections/connection_registry.js';
 import type { ConnectionEntry, ConnectionParams, SessionData } from '../../app/storage/storage_backend.js';
 import { dedupeAttachedDatabases } from '../../app/storage/storage_writer.js';
 import { isValidUuid } from '../../app/storage/session_validation.js';

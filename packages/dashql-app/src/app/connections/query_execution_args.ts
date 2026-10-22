@@ -51,7 +51,7 @@ export interface QueryExecutionArgs {
     /// column's group. Requires `analyzeResults`.
     projection?: UmapRequest;
     /// Optional channel to run the query on. When present, the executor uses this
-    /// channel instead of reading one from the AttachedDatabaseState. Callers need this
+    /// channel instead of reading one from the ConnectionState. Callers need this
     /// when they hold the channel locally but haven't waited for the React state
     /// update that publishes it into the connection map (e.g. right after a
     /// connection setup resolves).

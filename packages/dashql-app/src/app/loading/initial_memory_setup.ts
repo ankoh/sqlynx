@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import type { Logger } from '../../platform/logger/logger.js';
 import { stringifyError } from '../../platform/logger/logger.js';
-import type { DynamicAttachedDatabaseDispatch } from '../connections/attached_database_registry.js';
-import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import type { DynamicConnectionDispatch } from '../connections/connection_registry.js';
+import { ConnectionHealth, type ConnectionState } from '../connections/connection_state.js';
 import type { HyperSetupApi } from '../connections/hyper/hyper_connection_setup.js';
 import { cancelConnectionSetup, registerConnectionSetup } from '../connections/connection_setup_cancellation.js';
 
@@ -19,30 +19,30 @@ export function cancelInitialMemorySetup(databaseId: string): boolean {
 
 export function useInitialMemorySetup(
     sessionId: string | null,
-    database: AttachedDatabaseState | null,
+    database: ConnectionState | null,
     setup: HyperSetupApi | null,
-    dispatch: DynamicAttachedDatabaseDispatch,
+    dispatch: DynamicConnectionDispatch,
     logger: Logger,
 ): void {
     const considered = React.useRef(new Set<string>());
     const attempts = React.useRef(new Map<string, AbortController>());
     React.useEffect(() => {
         if (sessionId == null || database == null || setup == null) return;
-        if (considered.current.has(database.databaseId)) return;
+        if (considered.current.has(database.connectionId)) return;
         // Consume the initial selection even when online, cancelled, or carrying a draft.
         // Later resets, draft discards, and session switches must not opt back into setup.
-        considered.current.add(database.databaseId);
+        considered.current.add(database.connectionId);
         const params = database.params;
         if (database.connectionHealth !== ConnectionHealth.NOT_STARTED
             || database.paramsDraft != null
             || !('hyper' in params)
             || params.hyper.protocol !== 'WASM') return;
         const abort = new AbortController();
-        attempts.current.set(database.databaseId, abort);
-        startupAttempts.set(database.databaseId, abort);
-        const unregister = registerConnectionSetup(database.databaseId, abort);
+        attempts.current.set(database.connectionId, abort);
+        startupAttempts.set(database.connectionId, abort);
+        const unregister = registerConnectionSetup(database.connectionId, abort);
         void setup.setup(
-            action => dispatch(database.databaseId, action),
+            action => dispatch(database.connectionId, action),
             structuredClone(params.hyper) as Parameters<HyperSetupApi['setup']>[1],
             abort.signal,
         ).catch(error => {
@@ -51,8 +51,8 @@ export function useInitialMemorySetup(
             }, 'app_loader');
         }).finally(() => {
             unregister();
-            attempts.current.delete(database.databaseId);
-            if (startupAttempts.get(database.databaseId) === abort) startupAttempts.delete(database.databaseId);
+            attempts.current.delete(database.connectionId);
+            if (startupAttempts.get(database.connectionId) === abort) startupAttempts.delete(database.connectionId);
         });
     }, [database, dispatch, logger, sessionId, setup]);
     React.useEffect(() => () => {

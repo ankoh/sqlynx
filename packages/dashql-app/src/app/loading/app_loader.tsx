@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { AppLoadingStatus } from '../router/app_loading_status.js';
 import { OPEN_LINK_SESSION, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../router/router.js';
-import { resolveSessionExecutionDatabase, useAttachConnection, useAttachedDatabaseDispatch, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator } from '../connections/attached_database_registry.js';
-import { isHyperWasmAttachedDatabase } from '../session/ui/attached_database_label.js';
+import { resolveSessionExecutionDatabase, useAttachConnection, useConnectionDispatch, useConnectionRegistry, useAttachedDatabaseStateAllocator } from '../connections/connection_registry.js';
+import { isHyperWasmConnection } from '../session/ui/connection_label.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
@@ -33,7 +33,7 @@ import {
 import { stringifyError } from '../../platform/logger/logger.js';
 import { SessionImportCard } from '../session/ui/session_import_card.js';
 import { IndicatorStatus } from '../../ui/foundations/status_indicator.js';
-import { createDefaultHyperWasmAttachedDatabaseState } from '../connections/connection_params.js';
+import { createDefaultHyperWasmConnectionState } from '../connections/connection_params.js';
 import { useAppSettingsReady } from '../config/app_settings_sync.js';
 import { InvalidSessionRegistryProvider } from '../session/persistence/invalid_session_registry.js';
 import { useHyperSetup } from '../connections/hyper/hyper_connection_setup.js';
@@ -72,8 +72,8 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const [storageReader, storageWriter] = useStorage();
     const allocateAttachedDatabase = useAttachedDatabaseStateAllocator();
     const attachConnection = useAttachConnection();
-    const [connReg, setConnReg] = useAttachedDatabaseRegistry();
-    const dispatchDatabase = useAttachedDatabaseDispatch();
+    const [connReg, setConnReg] = useConnectionRegistry();
+    const dispatchDatabase = useConnectionDispatch();
     const setSessionScriptsRegistry = useSessionScriptsRegistrySetter();
     const setupEmbeddedDatabase = useEmbeddedDatabaseSetup();
     const hyperSetup = useHyperSetup();
@@ -353,16 +353,16 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
                 if (sessionId == null) {
                     sessionId = crypto.randomUUID();
                     // The embedded engine is a single database, a known embedded connection is reused
-                    const embedded = [...loaded.restoredConnections.values()].find(isHyperWasmAttachedDatabase);
-                    if (embedded != null) attachConnection(sessionId, embedded.databaseId);
+                    const embedded = [...loaded.restoredConnections.values()].find(isHyperWasmConnection);
+                    if (embedded != null) attachConnection(sessionId, embedded.connectionId);
                     const database = embedded ?? allocateAttachedDatabase(
                         sessionId,
-                        { ...createDefaultHyperWasmAttachedDatabaseState(core, connReg.attachedDatabasesBySignature), active: true },
+                        { ...createDefaultHyperWasmConnectionState(core, connReg.connectionsBySignature), active: true },
                     );
                     setupSessionScripts(sessionId, database, 'Default');
                     void storageWriter.write(groupSessionManifestWrites(sessionId), {
                         type: WRITE_SESSION_MANIFEST,
-                        value: [sessionId, database.databaseId, [database]],
+                        value: [sessionId, database.connectionId, [database]],
                     });
                 }
                 navigate({

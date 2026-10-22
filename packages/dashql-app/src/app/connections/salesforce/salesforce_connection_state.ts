@@ -10,17 +10,17 @@ import { SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
 import {
     ConnectionHealth,
-    AttachedDatabaseState,
-    AttachedDatabaseStateWithoutId,
+    ConnectionState,
+    ConnectionStateWithoutId,
     ConnectionStatus,
-    createAttachedDatabaseState,
-    DELETE_ATTACHED_DATABASE,
+    createConnectionState,
+    DELETE_CONNECTION,
     HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
-    RESET_ATTACHED_DATABASE,
-} from '../attached_database_state.js';
+    RESET_CONNECTION,
+} from '../connection_state.js';
 import { Hasher } from '../../../utils/hash.js';
 import { ConnectionSignatureMap, updateConnectionSignature } from '../connection_signature.js';
 import { DefaultHasher } from '../../../utils/hash_default.js';
@@ -47,15 +47,15 @@ export function createSalesforceConnectionStateDetails(params?: connection.Sales
 }
 
 /// Create the connection state
-export function createSalesforceConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): AttachedDatabaseStateWithoutId {
-    return createAttachedDatabaseState(dql, CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD], connSigs, {
+export function createSalesforceConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
+    return createConnectionState(dql, CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD], connSigs, {
         type: SALESFORCE_DATA_CLOUD_CONNECTOR,
         value: createSalesforceConnectionStateDetails(),
     });
 }
 
 /// Unpack the connection state from the variant
-export function getSalesforceConnectionDetails(state: AttachedDatabaseState | null): SalesforceConnectionStateDetails | null {
+export function getSalesforceConnectionDetails(state: ConnectionState | null): SalesforceConnectionStateDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case SALESFORCE_DATA_CLOUD_CONNECTOR: return state.details.value;
@@ -113,16 +113,16 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof SF_CHANNEL_SETUP_CANCELLED, DetailedError>
     | VariantKind<typeof SF_CHANNEL_SETUP_FAILED, DetailedError>
     | VariantKind<typeof SF_CHANNEL_SETUP_STARTED, connection.HyperConnectionParams>
-    | VariantKind<typeof RESET_ATTACHED_DATABASE, null>
-    | VariantKind<typeof DELETE_ATTACHED_DATABASE, null>
+    | VariantKind<typeof RESET_CONNECTION, null>
+    | VariantKind<typeof DELETE_CONNECTION, null>
     ;
 
-export function reduceSalesforceConnectionState(state: AttachedDatabaseState, action: SalesforceConnectionStateAction, _storage: StorageWriter): AttachedDatabaseState | null {
+export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction, _storage: StorageWriter): ConnectionState | null {
     const details = state.details.value as SalesforceConnectionStateDetails;
-    let next: AttachedDatabaseState | null = null;
+    let next: ConnectionState | null = null;
     switch (action.type) {
-        case DELETE_ATTACHED_DATABASE:
-        case RESET_ATTACHED_DATABASE:
+        case DELETE_CONNECTION:
+        case RESET_CONNECTION:
             details.channel?.close();
             next = {
                 ...state,
@@ -181,7 +181,7 @@ export function reduceSalesforceConnectionState(state: AttachedDatabaseState, ac
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: newDetails,
                 },
-                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.databaseId),
+                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.connectionId),
             };
             break
         }

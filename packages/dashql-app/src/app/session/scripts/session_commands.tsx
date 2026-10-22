@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { ConnectionHealth, printConnectionHealth } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, printConnectionHealth } from '../../connections/connection_state.js';
 import { ConnectorInfo } from '../../connections/connector_info.js';
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
 import { getSelectedScriptRef, SELECT_NEXT_SCRIPT, SELECT_PREV_SCRIPT } from './session_scripts.js';
 import { useCatalogLoaderQueue } from '../../connections/catalog_loader.js';
-import { useAttachedDatabaseState } from '../../connections/attached_database_registry.js';
+import { useConnectionState } from '../../connections/connection_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useQueryExecutor } from '../../connections/query_executor.js';
 import { useRouteContext } from '../../router/router.js';
@@ -40,7 +40,7 @@ interface Props {
 
 export interface SessionCommandsDependencies {
     useSessionScripts: typeof useSessionScripts;
-    useAttachedDatabaseState: typeof useAttachedDatabaseState;
+    useConnectionState: typeof useConnectionState;
     useQueryExecutor: typeof useQueryExecutor;
     useCatalogLoaderQueue: typeof useCatalogLoaderQueue;
     useLogger: typeof useLogger;
@@ -49,7 +49,7 @@ export interface SessionCommandsDependencies {
 }
 
 const DEFAULT_DEPENDENCIES: SessionCommandsDependencies = {
-    useSessionScripts, useAttachedDatabaseState,
+    useSessionScripts, useConnectionState,
     useQueryExecutor, useCatalogLoaderQueue, useLogger, useAppConfig, useAppSettingsReady,
 };
 
@@ -107,8 +107,8 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
     const settingsReady = dependencies.useAppSettingsReady();
 
     const [sessionScripts, modifySessionScripts] = dependencies.useSessionScripts(route.sessionId ?? null);
-    const [connection, _dispatchConnection] = dependencies.useAttachedDatabaseState(sessionScripts?.sessionId ?? null);
-    const connectionAttention = useSessionConnectionAttention(sessionScripts?.sessionId ?? null, connection?.databaseId ?? null, connection?.connectionHealth);
+    const [connection, _dispatchConnection] = dependencies.useConnectionState(sessionScripts?.sessionId ?? null);
+    const connectionAttention = useSessionConnectionAttention(sessionScripts?.sessionId ?? null, connection?.connectionId ?? null, connection?.connectionHealth);
     const executeQuery = dependencies.useQueryExecutor();
     const refreshCatalog = dependencies.useCatalogLoaderQueue();
     const [sessionViewMode, setSessionViewModeState] = React.useState(() => sessionViewModeFromSearch(location.search, dashboardsEnabled));
@@ -210,7 +210,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                             break;
                         }
                         await runSessionScript(
-                            connection.databaseId,
+                            connection.connectionId,
                             sessionScripts,
                             scriptData,
                             executeQuery,
@@ -225,7 +225,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                     } else if (isCatalogRefreshRunning(connection)) {
                         logger.debug("Catalog refresh already running", { sessionId: sessionScripts.sessionId }, LOG_CTX);
                     } else {
-                        refreshCatalog(connection.databaseId, true);
+                        refreshCatalog(connection.connectionId, true);
                     }
                     break;
                 case SessionCommandType.CloseSession: {

@@ -1,14 +1,14 @@
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
 import { HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connections/connector_info.js';
 import { getConnectionInfoFromParams, type ConnectionParams } from '../../connections/connection_params.js';
 
-export function isHyperWasmAttachedDatabase(database: AttachedDatabaseState): boolean {
+export function isHyperWasmConnection(database: ConnectionState): boolean {
     return database.details.type === HYPER_CONNECTOR &&
         (database.details.value.proto.setupParams?.protocol ?? 'WASM') === 'WASM';
 }
 
-export function attachedDatabaseLabel(database: AttachedDatabaseState): string {
-    if (isHyperWasmAttachedDatabase(database)) return 'Memory';
+export function connectionLabel(database: ConnectionState): string {
+    if (isHyperWasmConnection(database)) return 'Memory';
     let protocol = 'HTTP';
     if (database.details.type === HYPER_CONNECTOR) {
         const value = database.details.value.proto.setupParams?.protocol;

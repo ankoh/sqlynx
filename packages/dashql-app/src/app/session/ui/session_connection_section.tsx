@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
 import type { SessionScripts } from '../scripts/session_scripts.js';
 import * as ActionList from '../../../ui/foundations/action_list.js';
 import { ConnectionCommandList } from './session_command_lists.js';
 import * as styles from './session_connection_section.module.css';
 
 interface Props {
-    conn: AttachedDatabaseState | null;
+    conn: ConnectionState | null;
     sessionScripts: SessionScripts;
     onOpenSettings: (anchor: HTMLButtonElement | null) => void;
     actions: React.ReactElement;

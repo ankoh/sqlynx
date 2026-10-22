@@ -3,8 +3,8 @@ import * as dashql from '@ankoh/dashql-core';
 import { TracedLogger } from '../../platform/logger/logger.js';
 import type { AppStateRestorationProgress, RestoredAppState } from '../session/persistence/app_state_loader.js';
 import { AppLoadingProgress, AppLoadingProgressConsumer } from './app_loading_progress.js';
-import { SetAttachedDatabaseRegistryAction } from '../connections/attached_database_registry.js';
-import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { SetConnectionRegistryAction } from '../connections/connection_registry.js';
+import type { ConnectionState } from '../connections/connection_state.js';
 import { Dispatch } from '../../utils/variant.js';
 import { SetSessionScriptsRegistryAction } from '../session/scripts/session_scripts_registry.js';
 import { ProgressCounter } from '../../utils/progress.js';
@@ -24,7 +24,7 @@ export interface AppLoadingResult {
     /// Valid restored sessions in persisted manifest order.
     restoredSessionIds: string[];
     /// The restored connections
-    restoredConnections: Map<string, AttachedDatabaseState>;
+    restoredConnections: Map<string, ConnectionState>;
 }
 
 export function selectStartupSession(
@@ -44,7 +44,7 @@ export interface AppStateRestorer {
 }
 
 /// Main logic to setup the application
-export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage: AppStateRestorer, resetConnections: Dispatch<SetAttachedDatabaseRegistryAction>, resetSessionScripts: Dispatch<SetSessionScriptsRegistryAction>, consumer: AppLoadingProgressConsumer) {
+export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage: AppStateRestorer, resetConnections: Dispatch<SetConnectionRegistryAction>, resetSessionScripts: Dispatch<SetSessionScriptsRegistryAction>, consumer: AppLoadingProgressConsumer) {
     const traced = logger.childSpan();
     traced.info("Loading application", {}, "app_loading");
     const appLoadStartTime = performance.now();
@@ -80,10 +80,10 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
         connectionCount: state.connectionStates.size.toString()
     }, "app_loading");
     resetConnections({
-        attachedDatabases: state.connectionStates,
+        connections: state.connectionStates,
         attachedDatabasesBySession: state.attachedDatabasesBySession,
-        attachedDatabasesByType: state.connectionStatesByType,
-        attachedDatabasesBySignature: state.connectionSignatures,
+        connectionsByType: state.connectionStatesByType,
+        connectionsBySignature: state.connectionSignatures,
     });
 
     // Reset the session scripts registry

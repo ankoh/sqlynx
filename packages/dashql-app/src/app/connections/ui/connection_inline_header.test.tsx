@@ -5,7 +5,7 @@ import { afterEach, beforeEach } from 'vitest';
 
 import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../connector_info.js';
-import { ConnectionHealth, ConnectionStatus, type AttachedDatabaseState } from '../attached_database_state.js';
+import { ConnectionHealth, ConnectionStatus, type ConnectionState } from '../connection_state.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 
 describe('ConnectionInlineHeader', () => {
@@ -29,7 +29,7 @@ describe('ConnectionInlineHeader', () => {
             connectionHealth: ConnectionHealth.NOT_STARTED,
             connectionStatus: ConnectionStatus.NOT_STARTED,
             details: { type: Symbol('test'), value: null },
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
 
         act(() => root.render(
             <LoggerProvider>
@@ -55,7 +55,7 @@ describe('ConnectionInlineHeader', () => {
             connectionHealth: ConnectionHealth.NOT_STARTED,
             connectionStatus: ConnectionStatus.NOT_STARTED,
             details: { type: Symbol('test'), value: null },
-        } as unknown as AttachedDatabaseState;
+        } as unknown as ConnectionState;
 
         act(() => root.render(
             <LoggerProvider>

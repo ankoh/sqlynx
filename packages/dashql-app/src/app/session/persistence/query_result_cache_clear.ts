@@ -2,9 +2,9 @@ import { STORAGE_CACHE_EXTENSION, type StorageBackend } from '../../storage/stor
 import { QUERY_CACHE_DELETED } from '../../connections/query_execution_state.js';
 import {
     resolveSessionAttachedDatabases,
-    type AttachedDatabaseRegistry,
-    type DynamicAttachedDatabaseDispatch,
-} from '../../connections/attached_database_registry.js';
+    type ConnectionRegistry,
+    type DynamicConnectionDispatch,
+} from '../../connections/connection_registry.js';
 
 /// The content hash of a cached query result file
 export function cacheFileHash(name: string): string {
@@ -23,8 +23,8 @@ export async function clearQueryResultCache(backend: StorageBackend, sessionId: 
 /// Mark the finished queries of a session whose cached results were deleted, their results no longer advertise
 /// a cache entry. Returns the number of marked queries.
 export function markDeletedQueryResults(
-    registry: AttachedDatabaseRegistry,
-    dispatch: DynamicAttachedDatabaseDispatch,
+    registry: ConnectionRegistry,
+    dispatch: DynamicConnectionDispatch,
     sessionId: string,
     hashes: Iterable<string>,
 ): number {
@@ -34,7 +34,7 @@ export function markDeletedQueryResults(
     for (const database of databases == null ? [] : [databases.main, ...databases.attached]) {
         for (const query of database.queriesFinished.values()) {
             if (query.cacheKey != null && deleted.has(query.cacheKey) && !query.cacheDeleted) {
-                dispatch(database.databaseId, { type: QUERY_CACHE_DELETED, value: [query.queryId] });
+                dispatch(database.connectionId, { type: QUERY_CACHE_DELETED, value: [query.queryId] });
                 ++marked;
             }
         }

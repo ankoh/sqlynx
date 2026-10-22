@@ -7,7 +7,7 @@ import { DashQLCompletionAbortEffect, DashQLCompletionStatus, DashQLProcessorPlu
 import type { Icon } from '../../../ui/foundations/symbol_icon.js';
 
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
-import { ConnectionHealth, AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, ConnectionState } from '../../connections/connection_state.js';
 import { useCancelQuery, useQueryState, useQueryExecutor } from '../../connections/query_executor.js';
 import { QueryExecutionStatus } from '../../connections/query_execution_state.js';
 import { ScriptDetailsTab } from './script_output_details.js';
@@ -43,7 +43,7 @@ export { ScriptDetailsTab as TabKey };
 export interface ScriptDetailsProps {
     sessionScripts: SessionScripts;
     modifySessionScripts: ModifySessionScripts;
-    connection: AttachedDatabaseState | null;
+    connection: ConnectionState | null;
     hideDetails: () => void;
     scriptId?: number;
     initialTab?: ScriptDetailsTab;
@@ -227,7 +227,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
             return;
         }
         if (scriptData == null || sessionExecution.busy) return;
-        dependencies.runSessionScript(props.connection.databaseId, props.sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
+        dependencies.runSessionScript(props.connection.connectionId, props.sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
     }, [props.connection, props.sessionScripts, props.modifySessionScripts, scriptData, executeQuery, logger, sessionExecution.busy, connectionAttention]);
     const handleRerun = React.useCallback(async (cacheKey: string | null) => {
         if (scriptData == null || props.connection?.connectionHealth !== ConnectionHealth.ONLINE || sessionExecution.busy) {
@@ -239,7 +239,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
             await storageReader.backend.deleteQueryResultCache(props.sessionScripts.sessionId, cacheKey).catch(() => { });
         }
         if (props.connection != null) {
-            dependencies.runSessionScript(props.connection.databaseId, props.sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
+            dependencies.runSessionScript(props.connection.connectionId, props.sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
         }
     }, [props.connection, props.sessionScripts, props.modifySessionScripts, scriptData, executeQuery, storageReader, logger, sessionExecution.busy]);
 
@@ -365,7 +365,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
                             onToggleExpanded={handleToggleResultExpanded}
                             contentId={`script-result-${scriptData.scriptKey}`}
                             onCancelQuery={activeQueryId != null
-                                ? () => sessionExecution.busy ? sessionExecution.stop() : props.connection && cancelQuery(props.connection.databaseId, activeQueryId)
+                                ? () => sessionExecution.busy ? sessionExecution.stop() : props.connection && cancelQuery(props.connection.connectionId, activeQueryId)
                                 : undefined}
                             statusActions={(
                                 <>

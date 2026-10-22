@@ -1,7 +1,7 @@
-import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
 import { isCatalogRefreshRunning } from '../../connections/catalog_update_state.js';
 
-export function canRefreshAttachedDatabase(database: AttachedDatabaseState): boolean {
+export function canRefreshConnection(database: ConnectionState): boolean {
     return database.connectionHealth === ConnectionHealth.ONLINE &&
         database.connectorInfo.features.refreshSchemaAction &&
         !isCatalogRefreshRunning(database);

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConnectionHealth } from '../../connections/attached_database_state.js';
+import { ConnectionHealth } from '../../connections/connection_state.js';
 import { ConnectorType } from '../../connections/connector_info.js';
 import * as dashql from '@ankoh/dashql-core';
 import { DELETE_SCRIPT, RENAME_SCRIPT, SET_SCRIPT_TEXT, type SessionScripts } from '../scripts/session_scripts.js';
@@ -100,7 +100,7 @@ describe('ScriptDetails V2 flat scripts', () => {
 
     it('executes the pinned script from Ctrl+E', () => {
         const modify = vi.fn();
-        const connection = { databaseId: 'database', connectionHealth: ConnectionHealth.ONLINE } as any;
+        const connection = { connectionId: 'database', connectionHealth: ConnectionHealth.ONLINE } as any;
         act(() => root.render(<ScriptDetails sessionScripts={scripts()} modifySessionScripts={modify}
             connection={connection} hideDetails={() => {}} scriptId={2} dependencies={dependencies} />));
         const handler = state.keyHandlers.find(value => value.key === 'e' && value.ctrlKey === true);
@@ -112,7 +112,7 @@ describe('ScriptDetails V2 flat scripts', () => {
     it('blocks pinned Ctrl+E and cached reruns before cache deletion while main is offline', async () => {
         const request = vi.fn();
         state.deleteCache.mockReset().mockResolvedValue(undefined);
-        const connection = { databaseId: 'main', connectionHealth: ConnectionHealth.FAILED } as any;
+        const connection = { connectionId: 'main', connectionHealth: ConnectionHealth.FAILED } as any;
         act(() => root.render(<SessionConnectionAttentionContext.Provider value={{ sessionId: 'session', active: false, request }}>
             <ScriptDetails sessionScripts={scripts()} modifySessionScripts={vi.fn()}
                 connection={connection} hideDetails={() => {}} scriptId={2} dependencies={dependencies} />
@@ -143,7 +143,7 @@ describe('ScriptDetails V2 flat scripts', () => {
             }),
             startExecution: () => ({}),
         } as any;
-        const connection = { databaseId: 'database', connectionHealth: ConnectionHealth.ONLINE } as any;
+        const connection = { connectionId: 'database', connectionHealth: ConnectionHealth.ONLINE } as any;
         act(() => root.render(<ScriptDetails sessionScripts={sessionScripts} modifySessionScripts={vi.fn()}
             connection={connection} hideDetails={() => {}} scriptId={2} dependencies={dependencies} />));
 

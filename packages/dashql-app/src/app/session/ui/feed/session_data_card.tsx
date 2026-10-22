@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as styles from './session_feed.module.css';
-import type { AttachedDatabaseState } from '../../../connections/attached_database_state.js';
+import type { ConnectionState } from '../../../connections/connection_state.js';
 import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
 import type { DataFile } from '../../../storage/storage_backend.js';
 import type { StorageReader } from '../../../storage/storage_provider.js';
@@ -15,7 +15,7 @@ import { formatBytes } from '../../../../utils/format.js';
 export interface SessionDataCardProps {
     sessionId: string;
     file: DataFile;
-    conn: AttachedDatabaseState | null;
+    conn: ConnectionState | null;
     storageReader: StorageReader;
     onRemoved: () => void;
 }

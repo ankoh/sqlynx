@@ -1,10 +1,10 @@
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
-import { type AttachedDatabaseState } from '../../connections/attached_database_state.js';
-import { attachedDatabaseLabel } from './attached_database_label.js';
+import { type ConnectionState } from '../../connections/connection_state.js';
+import { connectionLabel } from './connection_label.js';
 import {
-    attachedDatabaseDisplayOrder,
+    connectionDisplayOrder,
     flattenCatalogRows,
-    isAttachedDatabaseInitiallyExpanded,
+    isConnectionInitiallyExpanded,
     isVisibleCatalogNode,
     type CatalogNode,
 } from './session_workbench_sidebar.js';
@@ -17,9 +17,9 @@ describe('session workbench database labels', () => {
                 type: HYPER_CONNECTOR,
                 value: { proto: { setupParams: { protocol: 'WASM' } } },
             },
-        } as AttachedDatabaseState;
+        } as ConnectionState;
 
-        expect(attachedDatabaseLabel(database)).toBe('Memory');
+        expect(connectionLabel(database)).toBe('Memory');
     });
 
     it('keeps the connector and protocol label for remote Hyper databases', () => {
@@ -29,28 +29,28 @@ describe('session workbench database labels', () => {
                 type: HYPER_CONNECTOR,
                 value: { proto: { setupParams: { protocol: 'V3_HTTP' } } },
             },
-        } as AttachedDatabaseState;
+        } as ConnectionState;
 
-        expect(attachedDatabaseLabel(database)).toBe('Hyper / HTTP');
+        expect(connectionLabel(database)).toBe('Hyper / HTTP');
     });
 
     it('renders Memory first and initially collapses it only when another database exists', () => {
         const memory = {
-            databaseId: 'memory',
+            connectionId: 'memory',
             connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
             details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } },
-        } as AttachedDatabaseState;
+        } as ConnectionState;
         const remote = {
-            databaseId: 'remote',
+            connectionId: 'remote',
             connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
             details: { type: TRINO_CONNECTOR, value: { proto: { setupParams: {} } } },
-        } as AttachedDatabaseState;
+        } as ConnectionState;
 
-        expect(attachedDatabaseDisplayOrder({ main: remote, attached: [memory] }).map(database => database.databaseId))
+        expect(connectionDisplayOrder({ main: remote, attached: [memory] }).map(database => database.connectionId))
             .toEqual(['remote', 'memory']);
-        expect(isAttachedDatabaseInitiallyExpanded(memory, 1)).toBe(true);
-        expect(isAttachedDatabaseInitiallyExpanded(memory, 2)).toBe(false);
-        expect(isAttachedDatabaseInitiallyExpanded(remote, 2)).toBe(true);
+        expect(isConnectionInitiallyExpanded(memory, 1)).toBe(true);
+        expect(isConnectionInitiallyExpanded(memory, 2)).toBe(false);
+        expect(isConnectionInitiallyExpanded(remote, 2)).toBe(true);
     });
 });
 

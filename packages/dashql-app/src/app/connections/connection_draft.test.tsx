@@ -4,13 +4,13 @@ import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import {
     ConnectionHealth, ConnectionStatus, DISCARD_CONNECTION_DRAFT, HEALTH_CHECK_FAILED,
-    HEALTH_CHECK_CANCELLED, HEALTH_CHECK_SUCCEEDED, RESET_ATTACHED_DATABASE, SET_CONNECTION_DRAFT,
-    reduceAttachedDatabaseState, type AttachedDatabaseState, type AttachedDatabaseAction,
-} from './attached_database_state.js';
+    HEALTH_CHECK_CANCELLED, HEALTH_CHECK_SUCCEEDED, RESET_CONNECTION, SET_CONNECTION_DRAFT,
+    reduceConnectionState, type ConnectionState, type ConnectionAction,
+} from './connection_state.js';
 import {
-    AttachedDatabaseRegistry as RegistryProvider, useAttachedDatabaseRegistry,
-    useAttachedDatabaseById, useConnectionDraftForm,
-} from './attached_database_registry.js';
+    ConnectionRegistry as RegistryProvider, useConnectionRegistry,
+    useConnectionById, useConnectionDraftForm,
+} from './connection_registry.js';
 import { ConnectorType, CONNECTOR_INFOS } from './connector_info.js';
 import { createDefaultConnectionParamsForConnector, getConnectionStateDetailsFromParams, type ConnectionParams } from './connection_params.js';
 import { HYPER_CHANNEL_SETUP_STARTED, HYPER_CHANNEL_READY, HYPER_CHANNEL_SETUP_FAILED, HYPER_CHANNEL_SETUP_CANCELLED } from './hyper/hyper_connection_state.js';
@@ -31,26 +31,26 @@ function globalDraft(backend: SessionTestBackend): ConnectionParams | undefined 
     return backend.connections?.find(entry => entry.id === TEST_DATABASE_ID)?.paramsDraft;
 }
 
-function database(type: ConnectorType): AttachedDatabaseState {
+function database(type: ConnectorType): ConnectionState {
     const connectorInfo = CONNECTOR_INFOS[type];
     const params = createDefaultConnectionParamsForConnector(connectorInfo);
     return {
-        databaseId: TEST_DATABASE_ID, connectorInfo, params, active: false,
+        connectionId: TEST_DATABASE_ID, connectorInfo, params, active: false,
         connectionStatus: ConnectionStatus.NOT_STARTED, connectionHealth: ConnectionHealth.NOT_STARTED,
         details: getConnectionStateDetailsFromParams(params),
         connectionSignature: { signatureString: 'initial', signatures: new Map() },
         catalog: { clear: vi.fn() }, catalogUpdates: { tasksRunning: new Map() },
-    } as unknown as AttachedDatabaseState;
+    } as unknown as ConnectionState;
 }
-function reduce(state: AttachedDatabaseState, action: AttachedDatabaseAction) {
-    return reduceAttachedDatabaseState(state, action, {} as StorageWriter, {} as Logger);
+function reduce(state: ConnectionState, action: ConnectionAction) {
+    return reduceConnectionState(state, action, {} as StorageWriter, {} as Logger);
 }
 function edited(params: ConnectionParams, endpoint: string): ConnectionParams {
     if ('hyper' in params) return { hyper: { ...params.hyper, protocol: 'V3_HTTP', endpoint } };
     if ('trino' in params) return { trino: { ...params.trino, endpoint } };
     return { salesforce: { ...params.salesforce, instanceUrl: endpoint } };
 }
-function start(params: ConnectionParams): AttachedDatabaseAction {
+function start(params: ConnectionParams): ConnectionAction {
     if ('hyper' in params) return { type: HYPER_CHANNEL_SETUP_STARTED, value: params.hyper as any };
     if ('trino' in params) return { type: TRINO_CHANNEL_SETUP_STARTED, value: params.trino as any };
     return { type: SETUP_STARTED, value: params.salesforce };
@@ -104,8 +104,8 @@ describe('durable connection drafts', () => {
             { type: setupCancelled, value: { message: 'setup cancelled' } },
             { type: HEALTH_CHECK_FAILED, value: { message: 'failed' } },
             { type: HEALTH_CHECK_CANCELLED, value: null },
-            { type: RESET_ATTACHED_DATABASE, value: null },
-        ] as AttachedDatabaseAction[]) {
+            { type: RESET_CONNECTION, value: null },
+        ] as ConnectionAction[]) {
             const next = reduce(state, action);
             expect(next.params).toEqual(initial.params);
             expect(next.paramsDraft).toEqual(draft);
@@ -145,15 +145,15 @@ describe('durable connection drafts', () => {
 
     it.each([false, true])('saves invalid edits with active=%s into the app manifest and does not resurrect a discarded draft', async active => {
         const backend = new SessionTestBackend();
-        let setRegistry!: ReturnType<typeof useAttachedDatabaseRegistry>[1];
+        let setRegistry!: ReturnType<typeof useConnectionRegistry>[1];
         let edit!: React.Dispatch<React.SetStateAction<string>>;
-        let dispatch!: ReturnType<typeof useAttachedDatabaseById>[1];
+        let dispatch!: ReturnType<typeof useConnectionById>[1];
         let writer!: StorageWriter;
-        let current!: AttachedDatabaseState;
+        let current!: ConnectionState;
         let value = '';
         function Harness() {
-            [, setRegistry] = useAttachedDatabaseRegistry();
-            [current, dispatch] = useAttachedDatabaseById(TEST_DATABASE_ID) as [AttachedDatabaseState, typeof dispatch];
+            [, setRegistry] = useConnectionRegistry();
+            [current, dispatch] = useConnectionById(TEST_DATABASE_ID) as [ConnectionState, typeof dispatch];
             [value, edit] = useConnectionDraftForm(TEST_DATABASE_ID,
                 params => params && 'trino' in params ? params.trino.endpoint : '',
                 endpoint => edited(current.params, endpoint));
@@ -164,7 +164,7 @@ describe('durable connection drafts', () => {
         try {
             await act(async () => root.render(<LoggerProvider><StorageProvider backend={backend}><RegistryProvider><Harness /></RegistryProvider></StorageProvider></LoggerProvider>));
             await act(async () => setRegistry(reg => {
-                reg.attachedDatabases.set(TEST_DATABASE_ID, { ...database(ConnectorType.TRINO), active });
+                reg.connections.set(TEST_DATABASE_ID, { ...database(ConnectorType.TRINO), active });
                 reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
@@ -193,14 +193,14 @@ describe('durable connection drafts', () => {
 
     it('persists and rehydrates incomplete duplicate header rows without flattening the form', async () => {
         const backend = new SessionTestBackend();
-        let setRegistry!: ReturnType<typeof useAttachedDatabaseRegistry>[1];
+        let setRegistry!: ReturnType<typeof useConnectionRegistry>[1];
         let edit!: React.Dispatch<React.SetStateAction<HyperConnectionPageState>>;
-        let dispatch!: ReturnType<typeof useAttachedDatabaseById>[1];
+        let dispatch!: ReturnType<typeof useConnectionById>[1];
         let form!: HyperConnectionPageState;
         let writer!: StorageWriter;
         function Harness() {
-            [, setRegistry] = useAttachedDatabaseRegistry();
-            [, dispatch] = useAttachedDatabaseById(TEST_DATABASE_ID);
+            [, setRegistry] = useConnectionRegistry();
+            [, dispatch] = useConnectionById(TEST_DATABASE_ID);
             [form, edit] = useConnectionDraftForm(TEST_DATABASE_ID,
                 params => buildHyperConnectionPageState(params && 'hyper' in params ? params.hyper as any : undefined),
                 value => ({ hyper: { ...buildHyperConnectionSetupParams(value), draftRows: { metadata: value.gRPCMetadata, queryParameters: value.queryParameters } } }));
@@ -211,7 +211,7 @@ describe('durable connection drafts', () => {
         try {
             await act(async () => root.render(<LoggerProvider><StorageProvider backend={backend}><RegistryProvider><Harness /></RegistryProvider></StorageProvider></LoggerProvider>));
             await act(async () => setRegistry(reg => {
-                reg.attachedDatabases.set(TEST_DATABASE_ID, database(ConnectorType.HYPER));
+                reg.connections.set(TEST_DATABASE_ID, database(ConnectorType.HYPER));
                 reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
@@ -225,8 +225,8 @@ describe('durable connection drafts', () => {
             expect(buildHyperConnectionPageState(persisted.hyper).gRPCMetadata).toEqual(rows);
             expect(buildHyperConnectionPageState(persisted.hyper).endpoint).toBe('invalid');
             await act(async () => setRegistry(reg => {
-                const current = reg.attachedDatabases.get(TEST_DATABASE_ID)!;
-                reg.attachedDatabases.set(TEST_DATABASE_ID, { ...current, paramsDraft: persisted });
+                const current = reg.connections.get(TEST_DATABASE_ID)!;
+                reg.connections.set(TEST_DATABASE_ID, { ...current, paramsDraft: persisted });
                 return { ...reg };
             }));
             expect(form.gRPCMetadata).toEqual(rows);

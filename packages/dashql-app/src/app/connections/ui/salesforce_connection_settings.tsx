@@ -4,9 +4,9 @@ import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
 import { KeyIcon, PersonIcon } from '../../../ui/foundations/symbol_icon.js';
 
-import { useAttachedDatabaseById, useConnectionDraftForm } from '../attached_database_registry.js';
+import { useConnectionById, useConnectionDraftForm } from '../connection_registry.js';
 import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
-import { ConnectionHealth, ConnectionStatus } from '../attached_database_state.js';
+import { ConnectionHealth, ConnectionStatus } from '../connection_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useQueryExecutor } from '../query_executor.js';
 import { useSalesforceSetup } from '../salesforce/salesforce_connector.js';
@@ -121,7 +121,7 @@ export function getConnectionError(status: ConnectionStateDetailsVariant | null)
 }
 
 interface Props {
-    databaseId: string | null;
+    connectionId: string | null;
     onClose?: () => void;
     headerActions?: React.ReactNode;
 }
@@ -136,7 +136,7 @@ export interface SalesforceConnectionAliasField {
 }
 
 interface SalesforceConnectionSettingsPageProps {
-    connectionState: ReturnType<typeof useAttachedDatabaseById>[0];
+    connectionState: ReturnType<typeof useConnectionById>[0];
     hyperProtocol: connection.HyperProtocol;
     protocols?: connection.HyperProtocol[];
     wrongPlatform: boolean;
@@ -318,9 +318,9 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     const queryExecutor = useQueryExecutor();
 
     // Resolve connection state
-    const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
-    const saveBeforeConnect = useSaveBeforeConnect(props.databaseId);
-    const { saving } = useConnectionSave(props.databaseId);
+    const [connectionState, dispatchConnectionState] = useConnectionById(props.connectionId);
+    const saveBeforeConnect = useSaveBeforeConnect(props.connectionId);
+    const { saving } = useConnectionSave(props.connectionId);
     const salesforceConnection = getSalesforceConnectionDetails(connectionState);
     const editableParams = connectionState?.paramsDraft ?? connectionState?.params;
     const salesforceParams = editableParams && 'salesforce' in editableParams ? editableParams.salesforce : undefined;
@@ -331,7 +331,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         appConsumerKey: params?.appConsumerKey ?? "",
         login: params?.login ?? "",
     });
-    const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
+    const [pageState, setPageState] = useConnectionDraftForm(props.connectionId,
         params => buildPageState(params && 'salesforce' in params ? params.salesforce : undefined),
         form => ({ salesforce: {
             ...salesforceParams,
@@ -389,12 +389,12 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         if (!await saveBeforeConnect()) return;
 
         const controller = new AbortController();
-        const unregister = connectionState == null ? () => {} : registerConnectionSetup(connectionState.databaseId, controller);
+        const unregister = connectionState == null ? () => {} : registerConnectionSetup(connectionState.connectionId, controller);
         try {
             setupAbortController.current = controller;
-            const sfChannel = await sfSetup.setup(dispatchAttachedDatabaseState, setupParams, controller.signal);
+            const sfChannel = await sfSetup.setup(dispatchConnectionState, setupParams, controller.signal);
             if (connectionState != null) {
-                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'salesforce', channel: sfChannel }, dispatchAttachedDatabaseState, controller.signal);
+                await performHealthCheck(queryExecutor, connectionState.connectionId, { type: 'salesforce', channel: sfChannel }, dispatchConnectionState, controller.signal);
             }
         } catch {
             // Setup updates connection state with the failure details.
@@ -406,7 +406,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
 
     // Helper to cancel and reset the setup
     const cancelSetup = () => {
-        if (props.databaseId != null) cancelConnectionSetup(props.databaseId);
+        if (props.connectionId != null) cancelConnectionSetup(props.connectionId);
         if (setupAbortController.current) {
             setupAbortController.current.abort(new DOMException('Connection setup cancelled', 'AbortError'));
             setupAbortController.current = null;
@@ -414,7 +414,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     };
     const resetSetup = async () => {
         if (sfSetup) {
-            await sfSetup.reset(dispatchAttachedDatabaseState);
+            await sfSetup.reset(dispatchConnectionState);
         }
     };
 

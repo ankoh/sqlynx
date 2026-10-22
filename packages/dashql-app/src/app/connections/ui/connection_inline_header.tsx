@@ -7,7 +7,7 @@ import * as style from './connection_inline_header.module.css';
 import { PlugIcon, XIcon } from '../../../ui/foundations/symbol_icon.js';
 
 import { Button, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
-import { ConnectionHealth, AttachedDatabaseState } from '../attached_database_state.js';
+import { ConnectionHealth, ConnectionState } from '../connection_state.js';
 import { ConnectorInfo } from '../connector_info.js';
 import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status_indicator.js';
 import { SegmentedControl } from '../../../ui/foundations/segmented_control.js';
@@ -18,7 +18,7 @@ const LOG_CTX = "conn_inline_header";
 
 interface Props {
     connector: ConnectorInfo;
-    connection: AttachedDatabaseState | null;
+    connection: ConnectionState | null;
     wrongPlatform: boolean;
     setupConnection?: () => void;
     cancelSetup?: () => void;

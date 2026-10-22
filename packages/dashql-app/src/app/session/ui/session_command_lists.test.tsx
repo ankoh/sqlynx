@@ -7,7 +7,7 @@ vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
 const commandDispatch = vi.fn();
 
-import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR } from '../../connections/connector_info.js';
 import { ConnectionCommandList, type ConnectionCommandListDependencies } from './session_command_lists.js';
 
@@ -16,7 +16,7 @@ const dependencies: ConnectionCommandListDependencies = {
     useSessionCommandDispatch: () => commandDispatch,
 };
 
-function createConnection(currentFullRefresh: number | null, runningTaskIds: number[]): AttachedDatabaseState {
+function createConnection(currentFullRefresh: number | null, runningTaskIds: number[]): ConnectionState {
     return {
         connectionHealth: ConnectionHealth.ONLINE,
         connectorInfo: {
@@ -31,7 +31,7 @@ function createConnection(currentFullRefresh: number | null, runningTaskIds: num
             currentFullRefresh,
             tasksRunning: new Map(runningTaskIds.map(taskId => [taskId, {}])),
         },
-    } as unknown as AttachedDatabaseState;
+    } as unknown as ConnectionState;
 }
 
 describe('ConnectionCommandList', () => {
@@ -50,7 +50,7 @@ describe('ConnectionCommandList', () => {
         container.remove();
     });
 
-    function renderConnection(connection: AttachedDatabaseState) {
+    function renderConnection(connection: ConnectionState) {
         act(() => {
             root.render(<ConnectionCommandList conn={connection} sessionScripts={null} dependencies={dependencies} />);
         });
@@ -88,7 +88,7 @@ describe('ConnectionCommandList', () => {
                 proto: { setupParams: { protocol: 'WASM' } },
                 channel: null,
             },
-        } as AttachedDatabaseState['details'];
+        } as ConnectionState['details'];
 
         renderConnection(connection);
 

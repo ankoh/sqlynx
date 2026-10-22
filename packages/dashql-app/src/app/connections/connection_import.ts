@@ -4,7 +4,7 @@ import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 import { computeConnectionSignatureFromDetails, ConnectionStateDetailsVariant } from './connection_state_details.js';
 import { LoggableException } from '../../platform/logger/logger.js';
 import { CONNECTOR_INFOS, ConnectorInfo, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
-import { ConnectionHealth, AttachedDatabaseState, ConnectionStatus, createConnectionMetrics } from './attached_database_state.js';
+import { ConnectionHealth, ConnectionState, ConnectionStatus, createConnectionMetrics } from './connection_state.js';
 import { generateCatalogScriptHeader, CatalogSource } from './catalog_sql_generator.js';
 import { generateFunctionScriptHeader } from './catalog_function_sql_generator.js';
 import { DefaultHasher } from '../../utils/hash_default.js';
@@ -63,7 +63,7 @@ export function decodeConnectionFromProto(conn: connection.Connection, sessionId
     }
 }
 
-export function restoreAttachedDatabaseState(instance: dashql.DashQL, databaseId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap, paramsDraft?: ConnectionParams): AttachedDatabaseState {
+export function restoreConnectionState(instance: dashql.DashQL, databaseId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap, paramsDraft?: ConnectionParams): ConnectionState {
     const hasher = new DefaultHasher();
     computeConnectionSignatureFromDetails(details, hasher);
     const sig = newConnectionSignature(hasher, connSigs, null);
@@ -88,8 +88,8 @@ export function restoreAttachedDatabaseState(instance: dashql.DashQL, databaseId
     const restoredCatalogRelationScript = catalogRelationScript;
     const restoredCatalogFunctionScript = catalogFunctionScript;
 
-    const state: AttachedDatabaseState = {
-        databaseId,
+    const state: ConnectionState = {
+        connectionId: databaseId,
         instance,
         active: true,
         connectionStatus: ConnectionStatus.NOT_STARTED,

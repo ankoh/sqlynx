@@ -70,7 +70,7 @@ describe('loadApp', () => {
         );
 
         expect(resetConnections).toHaveBeenCalledOnce();
-        expect(resetConnections.mock.calls[0][0].attachedDatabases.size).toBe(0);
+        expect(resetConnections.mock.calls[0][0].connections.size).toBe(0);
         expect(resetSessionScripts).toHaveBeenCalledOnce();
         expect(resetSessionScripts.mock.calls[0][0].sessionScriptsMap.size).toBe(0);
         expect(result.invalidSessions.size).toBe(0);

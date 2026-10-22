@@ -27,7 +27,7 @@ import { collectSalesforceAuthInfo, getSalesforceLakehousePath, SalesforceApiCli
 import { Dispatch } from '../../../utils/variant.js';
 import { Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { PlatformEventListener } from '../../../platform/events/event_listener.js';
-import { RESET_ATTACHED_DATABASE } from '../attached_database_state.js';
+import { RESET_CONNECTION } from '../connection_state.js';
 import { AttachedDatabase, HyperDatabaseChannel, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../hyper/hyperdb_grpc_client.js';
 import { authenticateSalesforce, SalesforceAuthenticationProgress } from './salesforce_authentication.js';
 
@@ -224,7 +224,7 @@ export function createSalesforceSetup(grpcClient: HyperDatabaseClient | null, ht
     };
     const reset = async (updateState: Dispatch<SalesforceConnectionStateAction>) => {
         updateState({
-            type: RESET_ATTACHED_DATABASE,
+            type: RESET_CONNECTION,
             value: null,
         });
     };

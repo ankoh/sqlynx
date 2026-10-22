@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { AIClient } from '../../../platform/ai/ai_client.js';
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
 import type { ModifySessionScripts } from '../scripts/session_scripts_registry.js';
 import { SET_SCRIPT_TEXT, type SessionScripts, type ScriptData } from '../scripts/session_scripts.js';
 import { buildCatalogNameIndex, collectMentionedIdentifiers } from './catalog_name_index.js';
@@ -34,7 +34,7 @@ export interface SqlGenerationsArgs {
     /// The scripts of the session, a deleted script stops its translation
     sessionScripts: SessionScripts;
     /// The connection whose schema the SQL is generated for
-    conn: AttachedDatabaseState | null;
+    conn: ConnectionState | null;
     /// Modifies the scripts of the session
     modifySessionScripts: ModifySessionScripts;
     /// Appends a script with the given text to the session

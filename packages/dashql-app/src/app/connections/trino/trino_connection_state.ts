@@ -10,16 +10,16 @@ import { ConnectorType, CONNECTOR_INFOS, TRINO_CONNECTOR } from '../connector_in
 import {
     ConnectionHealth,
     ConnectionStatus,
-    AttachedDatabaseState,
-    AttachedDatabaseStateWithoutId,
-    createAttachedDatabaseState,
+    ConnectionState,
+    ConnectionStateWithoutId,
+    createConnectionState,
     HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
-    RESET_ATTACHED_DATABASE,
-    DELETE_ATTACHED_DATABASE,
-} from '../attached_database_state.js';
+    RESET_CONNECTION,
+    DELETE_CONNECTION,
+} from '../connection_state.js';
 import { TrinoChannelInterface } from "./trino_channel.js";
 import { Hasher } from "../../../utils/hash.js";
 import { ConnectionSignatureMap, updateConnectionSignature } from "../connection_signature.js";
@@ -55,14 +55,14 @@ export function createTrinoConnectionStateDetails(params?: connection.TrinoConne
     };
 }
 
-export function createTrinoConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): AttachedDatabaseStateWithoutId {
-    return createAttachedDatabaseState(dql, CONNECTOR_INFOS[ConnectorType.TRINO], connSigs, {
+export function createTrinoConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
+    return createConnectionState(dql, CONNECTOR_INFOS[ConnectorType.TRINO], connSigs, {
         type: TRINO_CONNECTOR,
         value: createTrinoConnectionStateDetails(),
     });
 }
 
-export function getTrinoConnectionDetails(state: AttachedDatabaseState | null): TrinoConnectionStateDetails | null {
+export function getTrinoConnectionDetails(state: ConnectionState | null): TrinoConnectionStateDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case TRINO_CONNECTOR: return state.details.value;
@@ -83,8 +83,8 @@ export const TRINO_CHANNEL_SETUP_STARTED = Symbol('TRINO_CHANNEL_SETUP_STARTED')
 export const TRINO_CHANNEL_READY = Symbol('TRINO_CHANNEL_READY');
 
 export type TrinoConnectorAction =
-    | VariantKind<typeof RESET_ATTACHED_DATABASE, null>
-    | VariantKind<typeof DELETE_ATTACHED_DATABASE, null>
+    | VariantKind<typeof RESET_CONNECTION, null>
+    | VariantKind<typeof DELETE_CONNECTION, null>
     // OAuth flow actions
     | VariantKind<typeof OAUTH_STARTED, connection.TrinoConnectionParams>
     | VariantKind<typeof OAUTH_CANCELLED, DetailedError>
@@ -107,12 +107,12 @@ export type TrinoConnectorAction =
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
-export function reduceTrinoConnectorState(state: AttachedDatabaseState, action: TrinoConnectorAction, _storage: StorageWriter): AttachedDatabaseState | null {
+export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoConnectorAction, _storage: StorageWriter): ConnectionState | null {
     const details = state.details.value as TrinoConnectionStateDetails;
-    let next: AttachedDatabaseState | null = null;
+    let next: ConnectionState | null = null;
     switch (action.type) {
-        case DELETE_ATTACHED_DATABASE:
-        case RESET_ATTACHED_DATABASE:
+        case DELETE_CONNECTION:
+        case RESET_CONNECTION:
             details.channel?.close();
             next = {
                 ...state,
@@ -162,7 +162,7 @@ export function reduceTrinoConnectorState(state: AttachedDatabaseState, action: 
                     type: TRINO_CONNECTOR,
                     value: newDetails,
                 },
-                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.databaseId),
+                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.connectionId),
             };
             break;
         }
@@ -393,7 +393,7 @@ export function reduceTrinoConnectorState(state: AttachedDatabaseState, action: 
                     type: TRINO_CONNECTOR,
                     value: newDetails,
                 },
-                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.databaseId)
+                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.connectionId)
             };
             break;
         }

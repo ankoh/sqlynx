@@ -19,7 +19,7 @@ import {
 } from './trino_connection_state.js';
 import { Dispatch } from '../../../utils/index.js';
 import { LoggableException, Logger, stringifyError } from '../../../platform/logger/logger.js';
-import { RESET_ATTACHED_DATABASE } from '../attached_database_state.js';
+import { RESET_CONNECTION } from '../connection_state.js';
 import { requestTrinoAccessToken, TrinoApiClientInterface, TrinoApiEndpoint } from './trino_api_client.js';
 import { TrinoChannel, TrinoChannelInterface } from './trino_channel.js';
 import { TrinoConnectorConfig } from '../connector_configs.js';
@@ -316,7 +316,7 @@ export function createTrinoSetup(
     };
     const reset = async (updateState: Dispatch<TrinoConnectorAction>) => {
         updateState({
-            type: RESET_ATTACHED_DATABASE,
+            type: RESET_CONNECTION,
             value: null,
         })
     };

@@ -1,7 +1,7 @@
-import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
-import { canRefreshAttachedDatabase } from './attached_database_refresh.js';
+import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
+import { canRefreshConnection } from './connection_refresh.js';
 
-function database(overrides: Partial<AttachedDatabaseState> = {}): AttachedDatabaseState {
+function database(overrides: Partial<ConnectionState> = {}): ConnectionState {
     return {
         connectionHealth: ConnectionHealth.ONLINE,
         connectorInfo: { features: { refreshSchemaAction: true } },
@@ -10,17 +10,17 @@ function database(overrides: Partial<AttachedDatabaseState> = {}): AttachedDatab
             tasksRunning: new Map(),
         },
         ...overrides,
-    } as AttachedDatabaseState;
+    } as ConnectionState;
 }
 
 describe('attached database catalog refresh', () => {
     it('is available only for online refreshable databases without an active refresh', () => {
-        expect(canRefreshAttachedDatabase(database())).toBe(true);
-        expect(canRefreshAttachedDatabase(database({ connectionHealth: ConnectionHealth.FAILED }))).toBe(false);
-        expect(canRefreshAttachedDatabase(database({
+        expect(canRefreshConnection(database())).toBe(true);
+        expect(canRefreshConnection(database({ connectionHealth: ConnectionHealth.FAILED }))).toBe(false);
+        expect(canRefreshConnection(database({
             connectorInfo: { features: { refreshSchemaAction: false } } as any,
         }))).toBe(false);
-        expect(canRefreshAttachedDatabase(database({
+        expect(canRefreshConnection(database({
             catalogUpdates: {
                 currentFullRefresh: 7,
                 tasksRunning: new Map([[7, {} as any]]),

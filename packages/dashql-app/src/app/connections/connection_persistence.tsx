@@ -8,12 +8,12 @@ import {
     WRITE_CONNECTION_ENTRY,
     type StorageWriteResult,
 } from '../storage/storage_writer.js';
-import { COMMIT_CONNECTION_PARAMS } from './attached_database_state.js';
+import { COMMIT_CONNECTION_PARAMS } from './connection_state.js';
 import {
-    findSessionsForAttachedDatabase,
-    useAttachedDatabaseDispatch,
-    useAttachedDatabaseRegistryStore,
-} from './attached_database_registry.js';
+    findSessionsForConnection,
+    useConnectionDispatch,
+    useConnectionRegistryStore,
+} from './connection_registry.js';
 import { connectionParamsWithoutDraftRows, type ConnectionParams } from './connection_params.js';
 
 /// The outcome of writing a session's copy of the connection params
@@ -73,8 +73,8 @@ const IDLE_SAVE_STATE: ConnectionSaveState = { saving: false, result: null };
 /// partial failure heals forward: the next load rewrites stale copies from the manifest.
 export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElement }> = (props) => {
     const storageWriter = useStorageWriter();
-    const registryStore = useAttachedDatabaseRegistryStore();
-    const dispatch = useAttachedDatabaseDispatch();
+    const registryStore = useConnectionRegistryStore();
+    const dispatch = useConnectionDispatch();
     const [states, setStates] = React.useState(() => new Map<string, ConnectionSaveState>());
 
     const setState = React.useCallback((connectionId: string, state: ConnectionSaveState) => {
@@ -92,7 +92,7 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
     }, [storageWriter]);
 
     const save = React.useCallback(async (connectionId: string): Promise<ConnectionSaveResult> => {
-        const connection = registryStore.current.attachedDatabases.get(connectionId);
+        const connection = registryStore.current.connections.get(connectionId);
         if (connection == null) {
             throw new Error(`no connection registered with id ${connectionId}`);
         }
@@ -110,7 +110,7 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
                 return result;
             }
             dispatch(connectionId, { type: COMMIT_CONNECTION_PARAMS, value: params });
-            const sessionIds = findSessionsForAttachedDatabase(registryStore.current, connectionId);
+            const sessionIds = findSessionsForConnection(registryStore.current, connectionId);
             const result: ConnectionSaveResult = { params, manifest, sessions: await writeSessionCopies(connectionId, sessionIds, params) };
             setState(connectionId, { saving: false, result });
             return result;
@@ -162,10 +162,10 @@ export function useConnectionSave(connectionId: string | null) {
 /// Resolves false if the connection must not be set up because the draft could not be saved.
 export function useSaveBeforeConnect(connectionId: string | null): () => Promise<boolean> {
     const persistence = React.useContext(CONNECTION_PERSISTENCE_CTX);
-    const registryStore = useAttachedDatabaseRegistryStore();
+    const registryStore = useConnectionRegistryStore();
     return React.useCallback(async () => {
         if (connectionId == null || persistence == null) return true;
-        const connection = registryStore.current.attachedDatabases.get(connectionId);
+        const connection = registryStore.current.connections.get(connectionId);
         if (connection?.paramsDraft == null) return true;
         const result = await persistence.save(connectionId);
         return result.manifest.status === 'written';

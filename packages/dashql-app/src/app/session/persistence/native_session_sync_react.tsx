@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { connectionRefCount, useAttachedDatabaseRegistry, type AttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
-import { catalogFileMatchesStorage, attachedDatabaseCatalogMatchesStorage, replaceAttachedDatabaseCatalogFromStorage } from '../../connections/attached_database_state.js';
+import { connectionRefCount, useConnectionRegistry, type ConnectionRegistry } from '../../connections/connection_registry.js';
+import { catalogFileMatchesStorage, connectionCatalogMatchesStorage, replaceConnectionCatalogFromStorage } from '../../connections/connection_state.js';
 import { useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { sessionScriptsMatchStorageSnapshot, replaceSessionScriptsFromStorage } from '../scripts/session_scripts.js';
 import { isNativePlatform } from '../../../platform/native_globals.js';
@@ -11,7 +11,7 @@ import { useStorage } from '../../storage/storage_provider.js';
 import { getAppFlavor } from '../../flavor/flavor_resolution.js';
 import { NativeSessionSyncService, nativeSessionWatchForLocation } from './native_session_sync.js';
 import type { SessionScriptsStorageSnapshot, SessionScripts } from '../scripts/session_scripts.js';
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
 import { DEBOUNCE_DURATION_SESSION_WRITE, groupConnectionFileWrites, WRITE_CONNECTION_FILE, type StorageWriter } from '../../storage/storage_writer.js';
 import {
     STORAGE_SCRIPTS_FOLDER,
@@ -24,10 +24,10 @@ const LOG_CTX = 'native_session_sync';
 /// The main connection of a session whose catalog the session's files may replace.
 /// The catalog files of a session are a copy of its connection's catalog. A connection that several
 /// sessions share keeps its catalog, an edited copy in one folder must not replace it for all of them.
-function reloadableCatalogConnection(registry: AttachedDatabaseRegistry, sessionId: string): AttachedDatabaseState | null {
+function reloadableCatalogConnection(registry: ConnectionRegistry, sessionId: string): ConnectionState | null {
     const connectionId = registry.attachedDatabasesBySession.get(sessionId)?.mainDatabaseId;
     if (connectionId == null || connectionRefCount(registry, connectionId) > 1) return null;
-    return registry.attachedDatabases.get(connectionId) ?? null;
+    return registry.connections.get(connectionId) ?? null;
 }
 
 interface SessionReloadDecision {
@@ -56,7 +56,7 @@ function snapshotMatchesCompletedWrite(
     snapshot: SessionScriptsStorageSnapshot,
     schema: string | null,
     functions: string | null,
-    connection: AttachedDatabaseState | undefined,
+    connection: ConnectionState | undefined,
     sessionScripts: SessionScripts | undefined,
     writer: StorageWriter,
 ): boolean {
@@ -103,7 +103,7 @@ function snapshotMatchesCompletedWrite(
 export const NativeSessionSync: React.FC = () => {
     const logger = useLogger();
     const [reader, writer] = useStorage();
-    const [connectionRegistry, setAttachedDatabaseRegistry] = useAttachedDatabaseRegistry();
+    const [connectionRegistry, setConnectionRegistry] = useConnectionRegistry();
     const [sessionScriptsRegistry, setSessionScriptsRegistry] = useSessionScriptsRegistry();
     const connectionRegistryRef = React.useRef(connectionRegistry);
     const sessionScriptsRegistryRef = React.useRef(sessionScriptsRegistry);
@@ -131,7 +131,7 @@ export const NativeSessionSync: React.FC = () => {
             const connection = reloadableCatalogConnection(connectionRegistryRef.current, sessionId);
             const currentSessionScripts = sessionScriptsRegistryRef.current.sessionScriptsMap.get(sessionId);
             const sessionUnchanged = currentSessionScripts != null && sessionScriptsMatchStorageSnapshot(currentSessionScripts, snapshot);
-            const catalogUnchanged = connection == null || attachedDatabaseCatalogMatchesStorage(connection, schema, functions);
+            const catalogUnchanged = connection == null || connectionCatalogMatchesStorage(connection, schema, functions);
             if (sessionUnchanged && catalogUnchanged) {
                 return;
             }
@@ -172,12 +172,12 @@ export const NativeSessionSync: React.FC = () => {
             const latestConnection = reloadableCatalogConnection(connectionRegistryRef.current, sessionId);
             const latestSessionScripts = sessionScriptsRegistryRef.current.sessionScriptsMap.get(sessionId);
             const catalogChanged = latestConnection != null
-                ? replaceAttachedDatabaseCatalogFromStorage(latestConnection, schema, functions)
+                ? replaceConnectionCatalogFromStorage(latestConnection, schema, functions)
                 : false;
             if (catalogChanged) {
-                setAttachedDatabaseRegistry(registry => ({ ...registry }));
+                setConnectionRegistry(registry => ({ ...registry }));
                 // The catalog of the connection follows its only session
-                const connectionId = latestConnection!.databaseId;
+                const connectionId = latestConnection!.connectionId;
                 for (const [fileName, script] of [
                     [STORAGE_CATALOG_RELATIONS, latestConnection!.catalogRelationScript],
                     [STORAGE_CATALOG_FUNCTIONS, latestConnection!.catalogFunctionScript],

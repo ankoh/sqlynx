@@ -3,25 +3,25 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
 
 const refreshCatalog = vi.fn();
 
 vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 import {
-    AttachedDatabaseRefreshButton,
-    AttachedDatabaseRowMenu,
-    type AttachedDatabaseRefreshDependencies,
+    ConnectionRefreshButton,
+    ConnectionRowMenu,
+    type ConnectionRefreshDependencies,
 } from './session_workbench_sidebar.js';
 
-const dependencies: AttachedDatabaseRefreshDependencies = {
+const dependencies: ConnectionRefreshDependencies = {
     useCatalogLoaderQueue: () => refreshCatalog,
 };
 
-function database(): AttachedDatabaseState {
+function database(): ConnectionState {
     return {
-        databaseId: 'database-1',
+        connectionId: 'database-1',
         connectionHealth: ConnectionHealth.ONLINE,
         connectorInfo: {
             features: { refreshSchemaAction: true },
@@ -30,10 +30,10 @@ function database(): AttachedDatabaseState {
             currentFullRefresh: null,
             tasksRunning: new Map(),
         },
-    } as AttachedDatabaseState;
+    } as ConnectionState;
 }
 
-describe('AttachedDatabaseRowMenu', () => {
+describe('ConnectionRowMenu', () => {
     let container: HTMLDivElement;
     let root: Root;
 
@@ -51,7 +51,7 @@ describe('AttachedDatabaseRowMenu', () => {
 
     function renderMenu(onOpenSettings = vi.fn()) {
         act(() => root.render(
-            <AttachedDatabaseRowMenu
+            <ConnectionRowMenu
                 database={database()}
                 label="Hyper / WASM"
                 onOpenSettings={onOpenSettings}
@@ -86,7 +86,7 @@ describe('AttachedDatabaseRowMenu', () => {
 
     it('also exposes the inline catalog refresh action', () => {
         act(() => root.render(
-            <AttachedDatabaseRefreshButton database={database()} label="Hyper / WASM" dependencies={dependencies} />,
+            <ConnectionRefreshButton database={database()} label="Hyper / WASM" dependencies={dependencies} />,
         ));
         act(() => {
             (container.querySelector('[aria-label="Refresh catalog for Hyper / WASM"]') as HTMLButtonElement).click();

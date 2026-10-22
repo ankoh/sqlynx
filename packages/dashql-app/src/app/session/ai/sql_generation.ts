@@ -2,7 +2,7 @@ import * as core from '@ankoh/dashql-core';
 
 import type { AIClient, ChatMessage, CompletionValidation } from '../../../platform/ai/ai_client.js';
 import type { Logger } from '../../../platform/logger/logger.js';
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
 import type { SessionScripts } from '../scripts/session_scripts.js';
 import { ConnectorType } from '../../connections/connector_info.js';
 import { quoteIdentifier } from '../../connections/catalog_sql_generator.js';
@@ -115,7 +115,7 @@ function describeSessionTables(sessionScripts: SessionScripts): string[] {
 
 /// Build the schema that the model may query: the user relations of the connection and the tables of the session.
 /// The schema is cut off at a statement boundary once it exceeds the budget.
-export function buildSchemaContext(conn: AttachedDatabaseState | null, sessionScripts: SessionScripts, logger: Logger): string {
+export function buildSchemaContext(conn: ConnectionState | null, sessionScripts: SessionScripts, logger: Logger): string {
     const relationScript = conn?.catalogRelationScript.toString() ?? '';
     const relations = relationScript.trim().length > 0
         ? describeConnectionRelations(sessionScripts.instance, relationScript)
