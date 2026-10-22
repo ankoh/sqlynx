@@ -47,7 +47,7 @@ function fixture(entries: Array<[string, string]>) {
         scriptRefs[fileName] = createScriptRef(scriptKey, fileName);
     }
     let live: NotebookScripts = {
-        instance: dql, notebookId: crypto.randomUUID(), name: 'Execution integration',
+        instance: dql, notebookId: crypto.randomUUID(), name: 'Execution integration', settings: { cacheQueryResults: false },
         databaseId: crypto.randomUUID(), notebookMetadata: createEmptyMetadata(),
         connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], connectionCatalog: catalog,
         scripts, scriptRefs, scriptFocus: { fileName: entries[0]?.[0] ?? '' }, semanticUserFocus: null,

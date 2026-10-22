@@ -15,7 +15,7 @@ describe('global notebook execution feedback', () => {
     const execute = vi.fn();
     const resolveMain = vi.fn();
     const notebookScripts = {
-        notebookId: 'notebook', connectorInfo: { features: { executeQueryAction: true } },
+        notebookId: 'notebook', connectorInfo: { features: { executeQueryAction: true } }, settings: { cacheQueryResults: false },
         scriptFocus: { fileName: '01_query.sql' },
         scriptRefs: { '01_query.sql': { scriptId: 1, fileName: '01_query.sql' } },
         scripts: { 1: { scriptKey: 1, annotations: {}, analysisOutdated: false, scriptSession: {

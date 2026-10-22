@@ -46,6 +46,10 @@
       "$ref": "#/definitions/NotebookMetadata",
       "description": "The notebook metadata"
     },
+    "settings": {
+      "$ref": "#/definitions/NotebookSettings",
+      "description": "The notebook settings. Absent in notebooks written before settings existed."
+    },
     "lastModified": {
       "type": "string",
       "format": "date-time",
@@ -84,6 +88,18 @@
       "type": "string",
       "enum": ["FILE", "LOCAL", "HTTP"],
       "description": "The origin type of the notebook"
+    },
+    "NotebookSettings": {
+      "type": "object",
+      "description": "Notebook settings",
+      "properties": {
+        "cacheQueryResults": {
+          "type": "boolean",
+          "description": "Whether query results are cached and reused for unchanged queries"
+        }
+      },
+      "required": ["cacheQueryResults"],
+      "additionalProperties": false
     },
     "NotebookMetadata": {
       "type": "object",

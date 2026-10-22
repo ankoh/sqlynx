@@ -48,6 +48,12 @@
     font-size: var(--font_size_subtitle);
 }
 
+.caching_label {
+    font-size: var(--font_size_caption);
+    color: var(--query_cache_header_color);
+    white-space: nowrap;
+}
+
 /* A compact summary of the aggregate cache totals, shown next to the title. */
 .summary {
     font-family: var(--font_family_mono);

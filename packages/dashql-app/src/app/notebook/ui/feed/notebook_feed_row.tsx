@@ -45,6 +45,8 @@ export interface ScriptCardProps {
     connectionHealth: ConnectionHealth | null;
     connectionDetails: AttachedDatabaseState['details'] | null;
     connectorType: ConnectorType;
+    /// Whether the notebook caches query results.
+    cacheQueryResults: boolean;
     storageReader: StorageReader;
     isFocused: boolean;
     scriptData: ScriptData | undefined;
@@ -160,7 +162,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
             try {
                 // Compile the query
                 const compiled = compileNotebookQuery(props.scriptData, props.connectorType);
-                if (!compiled.cacheable) {
+                if (!props.cacheQueryResults || !compiled.cacheable) {
                     setIsCached(false);
                     return;
                 }
@@ -192,6 +194,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
         queryState?.cacheKey,
         queryState?.cacheDeleted,
         props.connectionDetails,
+        props.cacheQueryResults,
         props.notebookId,
     ]);
 
@@ -477,6 +480,7 @@ export interface ScriptFeedRowProps {
     connectionHealth: ConnectionHealth | null;
     connectionDetails: AttachedDatabaseState['details'] | null;
     connectorType: ConnectorType;
+    cacheQueryResults: boolean;
     storageReader: StorageReader;
     entries: ReturnType<typeof getSelectedScriptRefs>;
     scripts: NotebookScripts['scripts'];
@@ -624,6 +628,7 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                     connectionHealth={props.connectionHealth}
                     connectionDetails={props.connectionDetails}
                     connectorType={props.connectorType}
+                    cacheQueryResults={props.cacheQueryResults}
                     storageReader={props.storageReader}
                     isFocused={scriptFileName === props.focusedFileName}
                     scriptData={scriptData}

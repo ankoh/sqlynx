@@ -507,6 +507,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         connectionHealth: props.conn?.connectionHealth ?? null,
         connectionDetails: props.conn?.details ?? null,
         connectorType: props.notebookScripts.connectorInfo.connectorType,
+        cacheQueryResults: props.notebookScripts.settings.cacheQueryResults,
         entries,
         storageReader: storageReader,
         scripts: props.notebookScripts.scripts,
@@ -541,7 +542,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         onCreate: handleCreate,
         onEditorView: handleEditorView,
         onRowHeightChange: feedLayout.rowHeights.setRowHeight,
-    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, sqlGenerations.generations, sqlGenerations.stop, sqlGenerations.dismiss, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
+    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, props.notebookScripts.settings.cacheQueryResults, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, sqlGenerations.generations, sqlGenerations.stop, sqlGenerations.dismiss, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
     const getScrollElement = React.useCallback(() => feedLayout.listRef.current?.element ?? null, [feedLayout.listRef]);
 
     // An empty notebook greets the user with the composer in place of the feed.

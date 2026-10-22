@@ -57,7 +57,7 @@ function scripts(): NotebookScripts {
         }), startExecution: () => ({}),
     };
     return {
-        notebookId: 'notebook', name: 'Test', databaseId: 'database', instance: {} as any, notebookMetadata: {} as any,
+        notebookId: 'notebook', name: 'Test', databaseId: 'database', settings: { cacheQueryResults: true }, instance: {} as any, notebookMetadata: {} as any,
         connectorInfo: { connectorType: ConnectorType.TRINO } as any, connectionCatalog: {} as any,
         scripts: { 1: { scriptKey: 1, fileName: '01_first.sql', scriptSession, analysisOutdated: false, annotations: {}, latestQueryId: null } as any,
             2: { scriptKey: 2, fileName: '02_second.sql', scriptSession, analysisOutdated: false, annotations: {}, latestQueryId: null } as any },

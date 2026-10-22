@@ -3,6 +3,7 @@ import { AttachedDatabaseState } from '../connections/attached_database_state.js
 import { NotebookScripts } from './notebook_scripts.js';
 import { useNotebookScriptsAllocator } from './notebook_scripts_registry.js';
 import { createEmptyMetadata } from './script_types.js';
+import { createDefaultNotebookSettings } from './notebook_settings.js';
 
 export type NotebookScriptsSetup = (notebookId: string, database: AttachedDatabaseState, name?: string) => NotebookScripts;
 
@@ -17,6 +18,7 @@ export function useNotebookScriptsSetup(): NotebookScriptsSetup {
             connectorInfo: database.connectorInfo,
             notebookId,
             name: name ?? null,
+            settings: createDefaultNotebookSettings(database.connectorInfo),
             databaseId: database.databaseId,
             connectionCatalog: database.catalog,
             scripts: {},

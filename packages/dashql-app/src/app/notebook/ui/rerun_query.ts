@@ -86,7 +86,8 @@ function executeNotebookScript(
         analyzeResults: true,
         replaceComputationId: scriptData.latestResultQueryId === undefined
             ? scriptData.latestQueryId : scriptData.latestResultQueryId,
-        cacheable: compiled.cacheable,
+        // Notebooks opt into reusing cached results, a script decides if its query result can be cached
+        cacheable: notebookScripts.settings.cacheQueryResults && compiled.cacheable,
         cacheSignature: compiled.cacheSignature,
         projection: projectionForVisualizeQuery(scriptData.annotations.visualizeQuery),
         metadata: {

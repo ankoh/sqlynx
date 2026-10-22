@@ -68,7 +68,9 @@ describe('registerNotebookScriptQuery', () => {
 });
 
 describe('runNotebookScript', () => {
-    it.each([undefined, null, 5])('uses retained result id %s after analyzing an outdated script', async latestResultQueryId => {
+    it.each([
+        [undefined, true], [null, true], [5, true], [undefined, false],
+    ])('uses retained result id %s and notebook caching %s after analyzing an outdated script', async (latestResultQueryId, cacheQueryResults) => {
         const compileQuery = vi.fn((_config: dashql.buffers.formatting.FormattingConfigT) => ({
             read: () => ({
                 errorsLength: () => 0,
@@ -92,7 +94,7 @@ describe('runNotebookScript', () => {
             analysisOutdated: false,
         };
         const notebookScripts = {
-            scripts: { 7: outdated }, connectorInfo: { connectorType: ConnectorType.TRINO },
+            scripts: { 7: outdated }, connectorInfo: { connectorType: ConnectorType.TRINO }, settings: { cacheQueryResults },
         } as unknown as NotebookScripts;
         const modifyNotebookScripts = vi.fn((action) => {
             if (action.type === ANALYZE_OUTDATED_SCRIPT) {
@@ -121,7 +123,7 @@ describe('runNotebookScript', () => {
         expect(executeQuery).toHaveBeenCalledWith('connection', expect.objectContaining({
             query: 'SELECT 1',
             scriptExecution,
-            cacheable: true,
+            cacheable: cacheQueryResults,
             cacheSignature: 'signature',
             replaceComputationId: latestResultQueryId === undefined ? 9 : latestResultQueryId,
         }));

@@ -55,7 +55,7 @@ vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect()
 
 function baseProps() {
     return {
-        notebookId: 'notebook', databaseId: null, connectionHealth: null, connectionDetails: null, connectorType: ConnectorType.TRINO,
+        notebookId: 'notebook', databaseId: null, connectionHealth: null, connectionDetails: null, connectorType: ConnectorType.TRINO, cacheQueryResults: false,
         storageReader: { backend: { hasCachedQueryResult: vi.fn() } },
         entries: [{ scriptId: 1, fileName: '01_alpha.sql' }, { scriptId: 2, fileName: '02_beta.sql' }],
         scripts: { 1: script(1, '01_alpha.sql'), 2: script(2, '02_beta.sql') }, scriptDebugMode: false, formattingDebugMode: false,
@@ -306,7 +306,7 @@ describe('Notebook feed composer', () => {
             scriptRefs[fileName] = { scriptId: i + 1, fileName };
         });
         return {
-            notebookId: 'notebook', name: null, databaseId: 'database', instance: {} as any, notebookMetadata: {} as any,
+            notebookId: 'notebook', name: null, databaseId: 'database', settings: { cacheQueryResults: false }, instance: {} as any, notebookMetadata: {} as any,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], connectionCatalog: {} as any,
             scripts, scriptRefs, scriptFocus: { fileName: fileNames[fileNames.length - 1] ?? '' }, semanticUserFocus: null,
         };

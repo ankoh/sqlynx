@@ -45,7 +45,7 @@ function fixture() {
         scriptRefs[fileName] = createScriptRef(scriptKey, fileName);
     }
     const state: NotebookScripts = {
-        instance: dql, notebookId: crypto.randomUUID(), name: 'Test', databaseId: crypto.randomUUID(),
+        instance: dql, notebookId: crypto.randomUUID(), name: 'Test', databaseId: crypto.randomUUID(), settings: { cacheQueryResults: false },
         notebookMetadata: createEmptyMetadata(), connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
         connectionCatalog: catalog, scripts, scriptRefs,
         scriptFocus: { fileName: '2_query.sql' }, semanticUserFocus: null,

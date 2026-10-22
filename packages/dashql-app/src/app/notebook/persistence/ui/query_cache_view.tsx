@@ -15,6 +15,9 @@ import { observeSize } from '../../../../ui/foundations/size_observer.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { useStorageReader } from '../storage_provider.js';
 import { VerticalScrollShadows } from '../../../../ui/foundations/vertical_scroll_shadows.js';
+import { ToggleSwitch } from '../../../../ui/foundations/toggle_switch.js';
+import { useNotebookScripts } from '../../scripts/notebook_scripts_registry.js';
+import { UPDATE_NOTEBOOK_SETTINGS } from '../../scripts/notebook_scripts.js';
 
 const LOG_CTX = 'query_cache_view';
 
@@ -78,6 +81,14 @@ export function QueryCacheView(props: { notebookId: string | null; onClose: () =
     const [databaseRegistry, databaseDispatch] = useDynamicAttachedDatabaseDispatch();
     const databaseRegistryRef = React.useRef(databaseRegistry);
     databaseRegistryRef.current = databaseRegistry;
+
+    // Whether the notebook caches query results at all
+    const [notebookScripts, modifyNotebookScripts] = useNotebookScripts(notebookId);
+    const cachingEnabled = notebookScripts?.settings.cacheQueryResults ?? false;
+    const toggleCaching = React.useCallback(() => {
+        void modifyNotebookScripts({ type: UPDATE_NOTEBOOK_SETTINGS, value: { cacheQueryResults: !cachingEnabled } });
+    }, [modifyNotebookScripts, cachingEnabled]);
+    const cachingLabelId = React.useId();
 
     const [entries, setEntries] = React.useState<CacheFileStat[]>([]);
 
@@ -161,6 +172,14 @@ export function QueryCacheView(props: { notebookId: string | null; onClose: () =
                     )}
                 </div>
                 <div className={styles.header_right_container}>
+                    <div id={cachingLabelId} className={styles.caching_label}>Caching</div>
+                    <ToggleSwitch
+                        size="small"
+                        checked={cachingEnabled}
+                        disabled={notebookScripts == null}
+                        onClick={toggleCaching}
+                        aria-labelledby={cachingLabelId}
+                    />
                     <IconButton
                         variant={ButtonVariant.Invisible}
                         aria-label="Refresh cache listing"

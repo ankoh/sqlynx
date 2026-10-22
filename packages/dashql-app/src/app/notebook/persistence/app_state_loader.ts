@@ -14,6 +14,7 @@ import { StorageBackendType } from './storage_backend.js';
 import { validateNotebookData, describeInvalidNotebook, isValidUuid, NotebookValidationError, type InvalidNotebook } from './notebook_validation.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../connections/catalog_update_state.js';
 import { beginCatalogBatch, invalidateCatalogBatch, publishCatalogBatch, type BatchProcessor, type CatalogBatchEntry } from '../connections/catalog_batch.js';
+import { readNotebookSettings, type NotebookSettings } from '../scripts/notebook_settings.js';
 
 const LOG_CTX = "app_state_loader";
 
@@ -55,6 +56,7 @@ async function restoreNotebookScripts(
     notebookId: string,
     databaseId: string,
     name: string | null,
+    settings: NotebookSettings,
     connectorInfo: ConnectorInfo,
     connectionCatalog: any,
     notebookMetadata: any,
@@ -94,6 +96,7 @@ async function restoreNotebookScripts(
             instance: core,
             notebookId,
             name,
+            settings,
             databaseId,
             notebookMetadata,
             connectorInfo,
@@ -304,6 +307,7 @@ async function restoreNotebookEntry(
             notebookId,
             connectionState.databaseId,
             notebookData.name?.trim() || null,
+            readNotebookSettings(notebookData.settings, connectorInfo),
             connectorInfo,
             connectionState.catalog,
             notebookData.metadata,

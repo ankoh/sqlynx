@@ -6,6 +6,7 @@ import { VariantKind } from '../../../utils/index.js';
 import { NotebookScripts } from '../scripts/notebook_scripts.js';
 import { AttachedDatabaseState } from '../connections/attached_database_state.js';
 import { createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
+import type { NotebookSettings } from '../scripts/notebook_settings.js';
 import type { StorageBackend, NotebookData, NotebookMetadata as StorageNotebookMetadata } from './storage_backend.js';
 import { STORAGE_SCRIPTS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES } from './storage_backend.js';
 
@@ -46,6 +47,7 @@ function notebookManifestEquals(a: NotebookData, b: NotebookData): boolean {
         formatVersion: s.formatVersion,
         notebookId: s.notebookId,
         name: s.name,
+        settings: s.settings,
         mainDatabase: s.mainDatabase,
         attachedDatabases: s.attachedDatabases,
         metadata: s.metadata,
@@ -57,7 +59,16 @@ export const DEBOUNCE_DURATION_NOTEBOOK_WRITE = 100;
 export const DEBOUNCE_DURATION_SCRIPT_WRITE = 100;
 
 export const WRITE_NOTEBOOK_MANIFEST = Symbol('WRITE_NOTEBOOK_MANIFEST');
-export const WRITE_NOTEBOOK_NAME = Symbol('WRITE_NOTEBOOK_NAME');
+export const WRITE_NOTEBOOK_PROPERTIES = Symbol('WRITE_NOTEBOOK_PROPERTIES');
+
+/// The notebook fields that are owned by the user, not derived from scripts or connections.
+/// They are written together since writes of the same manifest replace each other while debounced.
+export interface NotebookProperties {
+    /// The notebook name, null if the user never named the notebook
+    name: string | null;
+    /// The notebook settings
+    settings: NotebookSettings;
+}
 export const WRITE_NOTEBOOK_CATALOG_SCRIPT = Symbol('WRITE_NOTEBOOK_CATALOG_SCRIPT');
 export const WRITE_NOTEBOOK_FUNCTION_SCRIPT = Symbol('WRITE_NOTEBOOK_FUNCTION_SCRIPT');
 export const WRITE_NOTEBOOK_CATALOG_CHANGES = Symbol('WRITE_NOTEBOOK_CATALOG_CHANGES');
@@ -69,7 +80,7 @@ export const RENAME_SCRIPT = Symbol('RENAME_SCRIPT');
 
 export type StorageWriteTaskVariant =
     | VariantKind<typeof WRITE_NOTEBOOK_MANIFEST, [string, string, AttachedDatabaseState[]]>
-    | VariantKind<typeof WRITE_NOTEBOOK_NAME, [string, string | null]>
+    | VariantKind<typeof WRITE_NOTEBOOK_PROPERTIES, [string, NotebookProperties]>
     | VariantKind<typeof WRITE_NOTEBOOK_CATALOG_SCRIPT, [string, dashql.DashQLScript]>
     | VariantKind<typeof WRITE_NOTEBOOK_FUNCTION_SCRIPT, [string, dashql.DashQLScript]>
     | VariantKind<typeof WRITE_NOTEBOOK_CATALOG_CHANGES, [string, string]>
@@ -471,6 +482,7 @@ export class StorageWriter {
                     mainDatabase,
                     attachedDatabases: attachedDatabases as NotebookData['attachedDatabases'],
                     metadata: notebookMetadata,
+                    ...(existingNotebook?.settings ? { settings: existingNotebook.settings } : {}),
                 };
 
                 // Skip the write if the persisted manifest already matches what we'd write.
@@ -491,10 +503,10 @@ export class StorageWriter {
                 this.completedFileContents.set(actualPath, JSON.stringify(connData, null, 2));
                 break;
             }
-            case WRITE_NOTEBOOK_NAME: {
-                const [notebookId, name] = task.value;
+            case WRITE_NOTEBOOK_PROPERTIES: {
+                const [notebookId, { name, settings }] = task.value;
                 const existing = await this.backend.loadNotebook(notebookId);
-                const next: NotebookData = { ...existing };
+                const next: NotebookData = { ...existing, settings };
                 if (name) next.name = name;
                 else delete next.name;
                 if (notebookManifestEquals(existing, next)) break;
@@ -619,6 +631,7 @@ export class StorageWriter {
                     mainDatabase,
                     attachedDatabases,
                     metadata: notebookMetadata,
+                    settings: notebookScripts.settings,
                 };
 
                 const notebookTimeBefore = new Date();

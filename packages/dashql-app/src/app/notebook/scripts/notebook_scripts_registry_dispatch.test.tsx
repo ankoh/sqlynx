@@ -8,7 +8,7 @@ import { AttachedDatabaseRegistry } from '../connections/attached_database_regis
 import { NotebookTestBackend } from '../persistence/notebook_test_backend.js';
 import { StorageProvider } from '../persistence/storage_provider.js';
 import { REGISTER_QUERY, RENAME_NOTEBOOK, type NotebookScripts } from './notebook_scripts.js';
-import { StorageWriter, WRITE_NOTEBOOK_NAME } from '../persistence/storage_writer.js';
+import { StorageWriter, WRITE_NOTEBOOK_PROPERTIES } from '../persistence/storage_writer.js';
 import {
     NotebookScriptsRegistryProvider,
     useNotebookScripts,
@@ -21,6 +21,7 @@ function fixture(notebookId: string): NotebookScripts {
     // REGISTER_QUERY only needs the script entry; no Wasm or execution setup is required.
     return {
         notebookId,
+        settings: { cacheQueryResults: false },
         scripts: { 1: { scriptKey: 1, latestQueryId: null } },
     } as unknown as NotebookScripts;
 }
@@ -108,7 +109,7 @@ describe('useNotebookScripts dispatch', () => {
                 modifyA({ type: RENAME_NOTEBOOK, value: 'Offline notebook' });
             });
             await vi.waitFor(() => expect(write).toHaveBeenCalledWith(expect.any(String), {
-                type: WRITE_NOTEBOOK_NAME, value: ['a', 'Offline notebook'],
+                type: WRITE_NOTEBOOK_PROPERTIES, value: ['a', { name: 'Offline notebook', settings: { cacheQueryResults: false } }],
             }, expect.any(Number)));
         } finally {
             write.mockRestore();

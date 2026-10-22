@@ -11,7 +11,7 @@ import {
     StorageWriter,
     WRITE_NOTEBOOK_MANIFEST,
     WRITE_SCRIPT,
-    WRITE_NOTEBOOK_NAME,
+    WRITE_NOTEBOOK_PROPERTIES,
     groupNotebookConnectionWrites,
     groupNotebookManifestWrites,
 } from './storage_writer.js';
@@ -45,7 +45,7 @@ describe('V2 storage writer flat mutations', () => {
                 : { type: SET_CONNECTION_DRAFT, value: paramsDraft }, writer, logger);
             const name = discard ? 'renamed during discard' : 'renamed during edit';
             const rename = () => writer.write(groupNotebookManifestWrites(TEST_NOTEBOOK_ID), {
-                type: WRITE_NOTEBOOK_NAME, value: [TEST_NOTEBOOK_ID, name],
+                type: WRITE_NOTEBOOK_PROPERTIES, value: [TEST_NOTEBOOK_ID, { name, settings: { cacheQueryResults: true } }],
             }, 10_000);
             const connection = () => writer.write(groupNotebookConnectionWrites(TEST_NOTEBOOK_ID), {
                 type: WRITE_NOTEBOOK_MANIFEST, value: [TEST_NOTEBOOK_ID, TEST_DATABASE_ID, [state]],
@@ -56,6 +56,7 @@ describe('V2 storage writer flat mutations', () => {
             await expect(Promise.all(tasks)).resolves.toEqual([true, true]);
             const saved = await backend.loadNotebook(TEST_NOTEBOOK_ID);
             expect(saved.name).toBe(name);
+            expect(saved.settings).toEqual({ cacheQueryResults: true });
             expect(saved.mainDatabase.params).toEqual(params);
             expect(saved.mainDatabase.paramsDraft).toEqual(discard ? undefined : paramsDraft);
         }

@@ -16,10 +16,11 @@ import {
     groupScriptWrites,
     RENAME_SCRIPT as STORAGE_RENAME_SCRIPT,
     StorageWriter,
-    WRITE_NOTEBOOK_NAME,
+    WRITE_NOTEBOOK_PROPERTIES,
     WRITE_SCRIPT,
 } from '../persistence/storage_writer.js';
 import type { NotebookScriptsInput } from './notebook_scripts_registry.js';
+import type { NotebookSettings } from './notebook_settings.js';
 import { Logger, LoggerLike, LoggableException, stringifyError } from '../../../platform/logger/logger.js';
 import { ScriptAnnotations, ScriptRef, NotebookMetadata as NotebookMetadataType, ResolvedVisualizeQuery, createEmptyAnnotations, createScriptRef, planScriptInsertion, normalizeScriptName, scriptOrderPrefixString, formatScriptOrderPrefix, scriptDisplayName, uniqueScriptBase } from './script_types.js';
 
@@ -44,6 +45,8 @@ export interface NotebookScripts {
     notebookId: string;
     /// The user-supplied notebook name, independent from attached database identity.
     name: string | null;
+    /// The notebook settings.
+    settings: NotebookSettings;
     /// Attached database whose catalog backs script analysis.
     databaseId: string;
     /// The notebook metadata
@@ -128,6 +131,7 @@ export const SET_SCRIPT_TEXT = Symbol('SET_SCRIPT_TEXT');
 export const ACCEPT_PENDING_DIFF = Symbol('ACCEPT_PENDING_DIFF');
 export const REJECT_PENDING_DIFF = Symbol('REJECT_PENDING_DIFF');
 export const RENAME_NOTEBOOK = Symbol('RENAME_NOTEBOOK');
+export const UPDATE_NOTEBOOK_SETTINGS = Symbol('UPDATE_NOTEBOOK_SETTINGS');
 
 export type NotebookScriptsAction =
     | VariantKind<typeof SELECT_NEXT_SCRIPT, null>
@@ -148,6 +152,7 @@ export type NotebookScriptsAction =
     | VariantKind<typeof ACCEPT_PENDING_DIFF, ScriptKey>
     | VariantKind<typeof REJECT_PENDING_DIFF, ScriptKey>
     | VariantKind<typeof RENAME_NOTEBOOK, string | null>
+    | VariantKind<typeof UPDATE_NOTEBOOK_SETTINGS, Partial<NotebookSettings>>
     ;
 
 const STATS_HISTORY_LIMIT = 20;
@@ -266,6 +271,14 @@ function applyScriptRepad(
     return { scriptRefs: nextScriptRefs, scripts: nextScripts, focusFileName: nextFocus };
 }
 
+function writeNotebookProperties(state: NotebookScripts, storage: StorageWriter) {
+    void storage.write(
+        groupNotebookManifestWrites(state.notebookId),
+        { type: WRITE_NOTEBOOK_PROPERTIES, value: [state.notebookId, { name: state.name, settings: state.settings }] },
+        DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+    );
+}
+
 export function reduceNotebookScripts(state: NotebookScripts, action: NotebookScriptsAction, storageArg: StorageWriter, logger: Logger, _active: boolean): NotebookScripts {
     // Notebook files are local state, independent of connection setup and health.
     const storage = storageArg;
@@ -274,12 +287,16 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
             const trimmed = action.value?.trim() ?? '';
             const name = trimmed.length > 0 ? trimmed : null;
             if (name === state.name) return state;
-            void storage.write(
-                groupNotebookManifestWrites(state.notebookId),
-                { type: WRITE_NOTEBOOK_NAME, value: [state.notebookId, name] },
-                DEBOUNCE_DURATION_NOTEBOOK_WRITE,
-            );
-            return { ...state, name };
+            const next = { ...state, name };
+            writeNotebookProperties(next, storage);
+            return next;
+        }
+        case UPDATE_NOTEBOOK_SETTINGS: {
+            const settings = { ...state.settings, ...action.value };
+            if (Object.entries(settings).every(([key, value]) => state.settings[key as keyof NotebookSettings] === value)) return state;
+            const next = { ...state, settings };
+            writeNotebookProperties(next, storage);
+            return next;
         }
         case SELECT_NEXT_SCRIPT: {
             const files = getSortedScriptFileNames(state.scriptRefs);

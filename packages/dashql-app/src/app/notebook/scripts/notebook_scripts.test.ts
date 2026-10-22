@@ -6,7 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Logger } from '../../../platform/logger/logger.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../connections/connector_info.js';
 import { NotebookTestBackend } from '../persistence/notebook_test_backend.js';
-import { StorageWriter, type StorageWriteTaskVariant } from '../persistence/storage_writer.js';
+import { StorageWriter, WRITE_NOTEBOOK_PROPERTIES, type StorageWriteTaskVariant } from '../persistence/storage_writer.js';
 import {
     ANALYZE_OUTDATED_SCRIPT,
     compileNotebookQuery,
@@ -19,12 +19,14 @@ import {
     RENAME_SCRIPT,
     RENAME_NOTEBOOK,
     UPDATE_FROM_PROCESSOR,
+    UPDATE_NOTEBOOK_SETTINGS,
     REORDER_SCRIPTS,
     replaceNotebookScriptsFromStorage,
     replaceScriptSessionText,
 } from './notebook_scripts.js';
 import { runNotebookScript } from '../ui/rerun_query.js';
 import { createEmptyAnnotations, createEmptyMetadata, createScriptRef } from './script_types.js';
+import { createDefaultNotebookSettings, readNotebookSettings } from './notebook_settings.js';
 
 declare const DASHQL_PRECOMPILED: Promise<Uint8Array>;
 
@@ -63,7 +65,7 @@ function state(names = ['1_alpha.sql', '2_beta.sql', '3_gamma.sql']): NotebookSc
         refs[name] = createScriptRef(scriptKey, name);
     }
     return {
-        instance: dql, notebookId: crypto.randomUUID(), name: 'Test', databaseId: crypto.randomUUID(),
+        instance: dql, notebookId: crypto.randomUUID(), name: 'Test', databaseId: crypto.randomUUID(), settings: { cacheQueryResults: false },
         notebookMetadata: createEmptyMetadata(), connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
         connectionCatalog: catalog, scripts, scriptRefs: refs,
         scriptFocus: { fileName: names[1] ?? names[0] ?? '' }, semanticUserFocus: null,
@@ -89,9 +91,32 @@ describe('V2 flat notebook script mutations', () => {
         current = reduceNotebookScripts(current, {
             type: DELETE_SCRIPT, value: getSortedScriptFileNames(current.scriptRefs)[0],
         }, writer, logger, false);
-        expect(writer.records.some(task => task.type.description === 'WRITE_NOTEBOOK_NAME')).toBe(true);
+        expect(writer.records.some(task => task.type.description === 'WRITE_NOTEBOOK_PROPERTIES')).toBe(true);
         expect(writer.records.filter(task => task.type.description === 'WRITE_SCRIPT').length).toBeGreaterThanOrEqual(2);
         expect(writer.records.some(task => task.type.description === 'DELETE_SCRIPT')).toBe(true);
+    });
+
+    it('persists settings together with the name and skips unchanged settings', () => {
+        const writer = new RecordingWriter(logger, new NotebookTestBackend());
+        let current = state();
+        current = reduceNotebookScripts(current, { type: UPDATE_NOTEBOOK_SETTINGS, value: { cacheQueryResults: true } }, writer, logger, false);
+        expect(current.settings).toEqual({ cacheQueryResults: true });
+        expect(writer.records[writer.records.length - 1]).toEqual({
+            type: WRITE_NOTEBOOK_PROPERTIES, value: [current.notebookId, { name: 'Test', settings: { cacheQueryResults: true } }],
+        });
+        const writes = writer.records.length;
+        expect(reduceNotebookScripts(current, { type: UPDATE_NOTEBOOK_SETTINGS, value: { cacheQueryResults: true } }, writer, logger, false)).toBe(current);
+        expect(writer.records).toHaveLength(writes);
+    });
+
+    it.each([
+        [ConnectorType.HYPER, false],
+        [ConnectorType.TRINO, true],
+        [ConnectorType.SALESFORCE_DATA_CLOUD, true],
+    ])('defaults %s notebooks to caching %s, also when settings were never persisted', (type, cacheQueryResults) => {
+        expect(createDefaultNotebookSettings(CONNECTOR_INFOS[type])).toEqual({ cacheQueryResults });
+        expect(readNotebookSettings(undefined, CONNECTOR_INFOS[type])).toEqual({ cacheQueryResults });
+        expect(readNotebookSettings({ cacheQueryResults: !cacheQueryResults }, CONNECTOR_INFOS[type])).toEqual({ cacheQueryResults: !cacheQueryResults });
     });
 
     it('persists editor text changes with an inactive connection', () => {

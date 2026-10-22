@@ -66,6 +66,8 @@ export interface ConnectorFeatures {
     executeQueryAction: boolean;
     /// Can refresh a schema?
     refreshSchemaAction: boolean;
+    /// Do new notebooks cache query results?
+    queryResultCaching: boolean;
 }
 
 export const CONNECTOR_INFOS: ConnectorInfo[] = [
@@ -89,6 +91,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             schemaScript: false,
             executeQueryAction: true,
             refreshSchemaAction: true,
+            queryResultCaching: false,
         },
         platforms: {
             browser: true,
@@ -115,6 +118,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             schemaScript: false,
             executeQueryAction: true,
             refreshSchemaAction: true,
+            queryResultCaching: true,
         },
         platforms: {
             browser: true,
@@ -141,6 +145,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             schemaScript: false,
             executeQueryAction: true,
             refreshSchemaAction: true,
+            queryResultCaching: true,
         },
         platforms: {
             browser: true,
