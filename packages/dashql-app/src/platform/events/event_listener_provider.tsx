@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { useLocation } from 'react-router-dom';
 
-import { PlatformEventListener, EVENT_QUERY_PARAMETER, SESSION_QUERY_PARAMETER } from './event_listener.js';
+import { PlatformEventListener, EVENT_QUERY_PARAMETER, SESSION_QUERY_PARAMETER, readSessionUrlParameter } from './event_listener.js';
+import { LEGACY_SESSION_QUERY_PARAMETER } from '../../migration/legacy_links.js';
 import { WebPlatformEventListener } from './web_event_listener.js';
 import { ElectronPlatformEventListener } from './electron_event_listener.js';
 import { AppHost, getAppHost } from '../native_globals.js';
@@ -42,7 +43,7 @@ export const PlatformEventListenerProvider: React.FC<Props> = (props: Props) => 
     React.useEffect(() => {
         const searchParams = new URLSearchParams(documentSearch);
         const data = searchParams.get(EVENT_QUERY_PARAMETER);
-        const sessionUrl = searchParams.get(SESSION_QUERY_PARAMETER);
+        const sessionUrl = readSessionUrlParameter(searchParams);
 
         if ((!data && !sessionUrl) || location.state == SKIP_EVENT_LISTENER) {
             return;
@@ -64,6 +65,7 @@ export const PlatformEventListenerProvider: React.FC<Props> = (props: Props) => 
             // would dispatch the same session again and immediately reopen the conflict dialog.
             searchParams.delete(EVENT_QUERY_PARAMETER);
             searchParams.delete(SESSION_QUERY_PARAMETER);
+            searchParams.delete(LEGACY_SESSION_QUERY_PARAMETER);
             const search = searchParams.toString();
             const nextUrl = `${location.pathname}${search ? `?${search}` : ''}${location.hash}`;
             globalThis.history.replaceState(globalThis.history.state, '', nextUrl);

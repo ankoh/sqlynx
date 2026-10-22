@@ -2,12 +2,19 @@ import * as app_event from '@ankoh/dashql-jsonschema/app_event.js';
 import * as buf from "@bufbuild/protobuf";
 
 import { BASE64URL_CODEC } from '../../utils/base64.js';
+import { LEGACY_SESSION_QUERY_PARAMETER, migrateAppEventData } from '../../migration/legacy_links.js';
 import { Logger } from '../logger/logger.js';
 import { PlatformDragDropEventVariant, SETUP_SESSION, SETUP_SESSION_URL, SetupEventVariant } from './event.js';
 
 const LOG_CTX = "event_listener";
 export const EVENT_QUERY_PARAMETER = "data";
 export const SESSION_QUERY_PARAMETER = "session";
+
+/// Read the URL of a hosted session from the query parameters of a link, links of older versions
+/// use the legacy parameter
+export function readSessionUrlParameter(params: URLSearchParams): string | null {
+    return params.get(SESSION_QUERY_PARAMETER) || params.get(LEGACY_SESSION_QUERY_PARAMETER) || null;
+}
 
 type ClipboardSetup =
     | { type: "event", value: string }
@@ -30,7 +37,7 @@ export function parseClipboardSetup(text: string): ClipboardSetup | null {
 
     const eventData = url.searchParams.get(EVENT_QUERY_PARAMETER);
     if (eventData) return { type: "event", value: eventData };
-    const sessionUrl = url.searchParams.get(SESSION_QUERY_PARAMETER);
+    const sessionUrl = readSessionUrlParameter(url.searchParams);
     return sessionUrl ? { type: "session", value: sessionUrl } : null;
 }
 
@@ -265,7 +272,8 @@ export abstract class PlatformEventListener {
         try {
             const dataBuffer = BASE64URL_CODEC.decode(dataBase64);
             const dataJson = new TextDecoder().decode(dataBuffer);
-            const event: app_event.AppEventData = JSON.parse(dataJson);
+            // Links of older versions name the event fields differently
+            const event = migrateAppEventData(JSON.parse(dataJson)) as app_event.AppEventData;
             this.logger.info(`Parsed app event`, {}, LOG_CTX);
             return event;
 

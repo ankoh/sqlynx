@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { HttpClient, HttpFetchResult } from '../../../platform/http/http_client.js';
 import { readSessionBundleFromHttp } from './http_session_bundle.js';
 import { testSession } from '../../storage/session_test_backend.js';
+import { SESSION_FORMAT_VERSION } from '../../../migration/versions.js';
 
 const URL = new globalThis.URL('https://example.com/session/dashql-session.json');
 
@@ -72,6 +73,65 @@ describe('V2 HTTP session bundle', () => {
         expect(result.incomplete).toBe(true);
         expect(vi.mocked(httpClient.fetch).mock.calls.map(call => String(call[0])))
             .not.toContain('https://example.com/session/scripts/page%2Fquery.sql');
+    });
+
+    it('loads a current session without asking for files of older versions', async () => {
+        const httpClient = client({
+            '/session/dashql-session.json': JSON.stringify(testSession()),
+            '/session/dashql-session-index.json': JSON.stringify({ scripts: [] }),
+            '/session/dashql-catalog-relations.sql': 'CREATE TABLE r (a INT)',
+        });
+        const result = await readSessionBundleFromHttp(URL, httpClient);
+        expect(result.bundle.schemaSql).toBe('CREATE TABLE r (a INT)');
+        expect(result.incomplete).toBe(false);
+        expect(vi.mocked(httpClient.fetch).mock.calls.map(call => new globalThis.URL(String(call[0])).pathname).sort()).toEqual([
+            '/session/dashql-catalog-functions.sql',
+            '/session/dashql-catalog-relations.sql',
+            '/session/dashql-session-index.json',
+            '/session/dashql-session.json',
+        ]);
+    });
+
+    it('migrates a remote session of format version 3', async () => {
+        const result = await readSessionBundleFromHttp(URL, client({
+            '/session/dashql-session.json': JSON.stringify({ ...testSession(), formatVersion: 3 }),
+            '/session/dashql-session-index.json': JSON.stringify({ scripts: [] }),
+            '/session/dashql-catalog-relations.sql': 'CREATE TABLE r (a INT)',
+        }));
+        expect(result.bundle.session.formatVersion).toBe(SESSION_FORMAT_VERSION);
+        expect(result.bundle.schemaSql).toBe('CREATE TABLE r (a INT)');
+    });
+
+    it('migrates a remote notebook behind a link of an older version', async () => {
+        const { sessionId, ...session } = { ...testSession(), formatVersion: 2 };
+        const progress = vi.fn();
+        const notebookUrl = new globalThis.URL('https://example.com/session/dashql-notebook.json');
+        const result = await readSessionBundleFromHttp(notebookUrl, client({
+            '/session/dashql-notebook.json': JSON.stringify({ ...session, notebookId: sessionId }),
+            '/session/dashql-notebook-index.json': JSON.stringify({ scripts: [{ name: '01_a.sql' }] }),
+            '/session/dashql-relations.sql': 'CREATE TABLE r (a INT)',
+            '/session/dashql-functions.sql': 'CREATE FUNCTION f() RETURNS INT',
+            '/session/scripts/01_a.sql': 'SELECT 1',
+        }), undefined, progress);
+        expect(result.bundle.session).toMatchObject({ formatVersion: SESSION_FORMAT_VERSION, sessionId });
+        expect(result.bundle.session).not.toHaveProperty('notebookId');
+        expect(result.bundle.session.metadata.originalHttpUrl).toBe(notebookUrl.toString());
+        expect(result.bundle.schemaSql).toBe('CREATE TABLE r (a INT)');
+        expect(result.bundle.functionsSql).toBe('CREATE FUNCTION f() RETURNS INT');
+        expect(result.bundle.scripts).toEqual([{ name: '01_a.sql', sql: 'SELECT 1' }]);
+        expect(result).toMatchObject({ indexedScriptCount: 1, loadedScriptCount: 1, incomplete: false });
+        expect(progress).toHaveBeenLastCalledWith(expect.objectContaining({ phase: 'files', completedFileCount: 5, totalFileCount: 5 }));
+    });
+
+    it('refuses a remote session of a newer version', async () => {
+        await expect(readSessionBundleFromHttp(URL, client({
+            '/session/dashql-session.json': JSON.stringify({ ...testSession(), formatVersion: SESSION_FORMAT_VERSION + 1 }),
+        }))).rejects.toThrow('Unsupported session format version');
+    });
+
+    it('refuses a URL that does not name the session metadata', async () => {
+        await expect(readSessionBundleFromHttp(new globalThis.URL('https://example.com/session/other.json'), client({})))
+            .rejects.toThrow('Remote session URL must end in dashql-session.json');
     });
 
     it('strictly refuses a remote V1 session', async () => {

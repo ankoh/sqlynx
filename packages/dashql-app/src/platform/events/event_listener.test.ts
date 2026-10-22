@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { SETUP_SESSION_URL, type SetupEventVariant } from './event.js';
-import { parseClipboardSetup, PlatformEventListener } from './event_listener.js';
+import { SETUP_SESSION, SETUP_SESSION_URL, type SetupEventVariant } from './event.js';
+import { parseClipboardSetup, PlatformEventListener, readSessionUrlParameter } from './event_listener.js';
 import { TestLogger } from '../logger/test_logger.js';
+import { BASE64URL_CODEC } from '../../utils/base64.js';
 
 class TestPlatformEventListener extends PlatformEventListener {
     public starts = 0;
@@ -30,6 +31,7 @@ describe('PlatformEventListener clipboard events', () => {
         'dashql://localhost?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
         'https://dashql.app/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
         'http://localhost:9002/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
+        'https://dashql.app/?notebook=https%3A%2F%2Fexample.com%2Fdashql-session.json',
     ])('accepts a session link from %s', link => {
         expect(parseClipboardSetup(link)).toEqual({
             type: 'session',
@@ -92,5 +94,28 @@ describe('PlatformEventListener clipboard events', () => {
         listener.dispose();
         listener.dispose();
         expect(listener.stops).toBe(1);
+    });
+});
+
+describe('PlatformEventListener links of older versions', () => {
+    it('reads the session URL under the current and the legacy parameter', () => {
+        expect(readSessionUrlParameter(new URLSearchParams('session=a'))).toBe('a');
+        expect(readSessionUrlParameter(new URLSearchParams('notebook=b'))).toBe('b');
+        expect(readSessionUrlParameter(new URLSearchParams('session=a&notebook=b'))).toBe('a');
+        expect(readSessionUrlParameter(new URLSearchParams('data=c'))).toBeNull();
+    });
+
+    it('dispatches the session ZIP of an app event that embeds it as notebook', () => {
+        const listener = new TestPlatformEventListener(new TestLogger());
+        const setupEvents: SetupEventVariant[] = [];
+        listener.subscribeSetupEvents(event => setupEvents.push(event));
+
+        const zip = new Uint8Array([80, 75, 3, 4]);
+        const json = JSON.stringify({ notebook: BASE64URL_CODEC.encode(zip.buffer) });
+        const event = listener.readAppEvent(BASE64URL_CODEC.encode(new TextEncoder().encode(json).buffer), 'test');
+        expect(event).not.toBeNull();
+        listener.dispatchAppEvent(event!);
+
+        expect(setupEvents).toEqual([{ type: SETUP_SESSION, value: zip }]);
     });
 });

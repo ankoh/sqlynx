@@ -51,11 +51,11 @@ export async function readSessionBundleHead(folder: MigrationFolder, errorPrefix
     if (!validation.ok) {
         throw new Error(`${errorPrefix}: invalid ${STORAGE_SESSION_FILE}: ${describeSessionValidationError(validation.error)}`);
     }
-    return {
-        session,
-        schemaSql: await folder.readText(STORAGE_CATALOG_RELATIONS),
-        functionsSql: await folder.readText(STORAGE_CATALOG_FUNCTIONS),
-    };
+    const [schemaSql, functionsSql] = await Promise.all([
+        folder.readText(STORAGE_CATALOG_RELATIONS),
+        folder.readText(STORAGE_CATALOG_FUNCTIONS),
+    ]);
+    return { session, schemaSql, functionsSql };
 }
 
 export interface SessionCatalogValidationResult {

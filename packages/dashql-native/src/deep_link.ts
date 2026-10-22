@@ -24,10 +24,12 @@ export function parseDeepLink(link: string): DeepLink | null {
     const parameters = [...url.searchParams.entries()];
     if (parameters.length !== 1) return null;
     const [name, value] = parameters[0];
-    if ((name !== "data" && name !== "session") || value.length === 0 || value.length > MAX_DEEP_LINK_DATA_LENGTH) {
+    // Links of older versions pass hosted sessions as "notebook", see legacy_links.ts of the app
+    const isSession = name === "session" || name === "notebook";
+    if ((name !== "data" && !isSession) || value.length === 0 || value.length > MAX_DEEP_LINK_DATA_LENGTH) {
         return null;
     }
-    return {type: name === "data" ? "event" : "session", value};
+    return {type: isSession ? "session" : "event", value};
 }
 
 export function parseDeepLinksFromCommandLine(commandLine: readonly string[]): DeepLink[] {

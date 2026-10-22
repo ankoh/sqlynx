@@ -19,6 +19,8 @@ describe("parseDeepLink", () => {
         "dashql://localhost?session=https%3A%2F%2Fexample.com%2Fdashql-session.json",
         "https://dashql.app/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json",
         "http://localhost:9002/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json",
+        "dashql://localhost?notebook=https%3A%2F%2Fexample.com%2Fdashql-session.json",
+        "https://dashql.app/?notebook=https%3A%2F%2Fexample.com%2Fdashql-session.json",
     ])("extracts session payloads from supported links: %s", (link) => {
         expect(parseDeepLink(link)).toEqual({
             type: "session",
