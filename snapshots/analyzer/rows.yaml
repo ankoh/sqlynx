@@ -18,6 +18,11 @@ analyzer-snapshots:
             - catalog-id: "256.65536.4294967296.2"
               name: tags
               text: "tags array..tag text))"
+      catalog-changes:
+        - statement-id: 0
+          type: create
+          name: orders
+          columns: [id,product,tags]
       errors: []
 
   - name: row_field_access
@@ -36,6 +41,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.1"
                 name: product
                 text: "product ro..ntity int)"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: orders
+            columns: [id,product]
         errors: []
     script:
       input: select (product).name, (o.product).quantity, o.product.name, product.quantity from orders o
@@ -109,6 +119,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: product
                 text: "product ro..ntity int)"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: product
+            columns: [name]
+          - statement-id: 1
+            type: create
+            name: orders
+            columns: [id,product]
         errors: []
     script:
       input: select product.name from product, orders
@@ -171,6 +190,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: quantity
                 text: "quantity int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: orders
+            columns: [id,product]
+          - statement-id: 1
+            type: create
+            name: stock
+            columns: [name,quantity]
         errors: []
     script:
       input: select id from orders where exists (select 1 from stock where stock.name = product.name)
@@ -246,6 +274,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.1"
                 name: product
                 text: "product ro..ntity int)"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: orders
+            columns: [id,product]
         errors: []
     script:
       input: select row(id, product.name) from orders where (id, (product).quantity) = (1, 2)
@@ -350,6 +383,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.1"
                 name: product
                 text: "product ro..ntity int)"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: orders
+            columns: [id,product]
         errors: []
     script:
       input: select s.id, missing.name from (select id from orders) s, orders

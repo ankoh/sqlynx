@@ -1,6 +1,6 @@
 import type { QueryExecutor } from '../connections/query_executor.js';
 import { QueryType } from '../connections/query_execution_state.js';
-import { NotebookScripts, ScriptData, REGISTER_QUERY, REGISTER_SCRIPT_RESULT, compileNotebookQuery, createScriptExecution } from '../scripts/notebook_scripts.js';
+import { NotebookScripts, ScriptData, CATALOG_DID_UPDATE, REGISTER_QUERY, REGISTER_SCRIPT_RESULT, compileNotebookQuery, createScriptExecution } from '../scripts/notebook_scripts.js';
 import { ensureNotebookScriptAnalyzed, ModifyNotebookScripts } from '../scripts/notebook_scripts_registry.js';
 import { projectionForVisualizeQuery } from '../scripts/script_types.js';
 import type { LoggerLike } from '../../../platform/logger/logger.js';
@@ -81,6 +81,8 @@ function executeNotebookScript(
     const [queryId, execution] = executeQuery(connectionId, {
         query: queryText,
         scriptExecution: createScriptExecution(scriptData, notebookScripts.connectorInfo.connectorType),
+        // Scripts may reference the relations that a statement created or dropped
+        onCatalogChanged: () => { void modifyNotebookScripts({ type: CATALOG_DID_UPDATE, value: null }); },
         analyzeResults: true,
         replaceComputationId: scriptData.latestResultQueryId === undefined
             ? scriptData.latestQueryId : scriptData.latestResultQueryId,

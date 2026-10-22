@@ -5,6 +5,7 @@
 //! [`CatalogEntryRef`]: an analyzed script keeps the entries it references alive, which replaces the
 //! `retained_catalog_dependencies` lease of the C++ core.
 
+pub mod changes;
 pub mod descriptor;
 pub mod entry;
 pub mod ids;

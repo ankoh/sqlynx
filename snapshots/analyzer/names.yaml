@@ -22,6 +22,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [a]
         errors: []
     script:
       input: select * from A, B where a = 2;
@@ -90,6 +99,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [a]
         errors: []
     script:
       input: select * from A, (select * from B where a = 2);
@@ -167,6 +185,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [a]
         errors: []
     script:
       input: select * from A, (select * from B where a = 2) c where a = 3;
@@ -250,6 +277,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a]
         errors: []
     script:
       input: select * from A, A;
@@ -300,6 +332,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a]
+          - statement-id: 1
+            type: create
+            name: A
+            columns: [a]
         errors: []
     script:
       input: select * from "A", A;
@@ -343,6 +384,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a]
         errors: []
     script:
       input: select * from "a", A;
@@ -384,6 +430,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: foo
+            columns: [a]
         errors: []
     script:
       input: select * from foo where foo.a = 1;
@@ -432,6 +483,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: foo
+            columns: [a]
         errors: []
     script:
       input: select * from foo a, foo where foo.a = 1;
@@ -489,6 +545,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: foo
+            columns: [a]
         errors: []
     script:
       input: select * from foo x, foo, foo where foo.a = 1;
@@ -553,6 +614,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.0"
                 name: a
                 text: "a int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: foo
+            columns: [a]
         errors: []
     script:
       input: select * from foo x where foo.a = 1;

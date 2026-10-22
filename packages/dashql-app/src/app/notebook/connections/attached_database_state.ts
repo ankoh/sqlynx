@@ -43,13 +43,16 @@ import { reduceTrinoConnectorState, TrinoConnectorAction } from './trino/trino_c
 import { computeConnectionSignatureFromDetails, computeNewConnectionSignatureFromDetails, ConnectionStateDetailsVariant, createConnectionStateDetails } from './connection_state_details.js';
 import { ConnectionSignatureMap, ConnectionSignatureState, newConnectionSignature } from './connection_signature.js';
 import { StorageWriter } from '../persistence/storage_writer.js';
-import { Logger } from '../../../platform/logger/logger.js';
+import { Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { invalidateCatalogBatch, publishCatalogBatchSync, type CatalogBatchEntry } from './catalog_batch.js';
 import { connectionParamsEqual, connectionParamsWithoutDraftRows, getConnectionInfoFromParams, getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';
 import { HYPER_CHANNEL_SETUP_STARTED } from './hyper/hyper_connection_state.js';
 import { OAUTH_STARTED, TRINO_CHANNEL_SETUP_STARTED } from './trino/trino_connection_state.js';
 import { SETUP_STARTED } from './salesforce/salesforce_connection_state.js';
 import { cancelConnectionSetup } from './connection_setup_cancellation.js';
+import { catalogNameDefaults } from './catalog_name_defaults.js';
+
+const LOG_CTX = 'attached_database_state';
 
 export interface CatalogUpdates {
     /// The running tasks
@@ -109,6 +112,9 @@ export interface AttachedDatabaseState {
     catalogRelationScript: dashql.DashQLScript;
     /// The catalog function script (consolidated SQL for all function declarations)
     catalogFunctionScript: dashql.DashQLScript;
+    /// The catalog changes of executed statements since the last catalog refresh, as SQL.
+    /// They are applied to the relation descriptor on top of the relation script.
+    catalogChangesSql: string;
 
     /// The queries that are currently running
     queriesActive: Map<number, QueryExecutionState>;
@@ -214,6 +220,7 @@ export const RESET_ATTACHED_DATABASE = Symbol('RESET_ATTACHED_DATABASE');
 export const SWITCH_CONNECTOR_TYPE = Symbol('SWITCH_CONNECTOR_TYPE');
 export const SET_ATTACHED_DATABASE_ACTIVE = Symbol('SET_ATTACHED_DATABASE_ACTIVE');
 export const SET_CATALOG_SCRIPT = Symbol('SET_CATALOG_SCRIPT');
+export const APPLY_CATALOG_CHANGES = Symbol('APPLY_CATALOG_CHANGES');
 export const UPDATE_CATALOG = Symbol('UPDATE_CATALOG');
 export const CATALOG_UPDATE_STARTED = Symbol('CATALOG_UPDATE_STARTED');
 export const CATALOG_UPDATE_REGISTER_QUERY = Symbol('CATALOG_UPDATE_REGISTER_QUERY');
@@ -232,6 +239,7 @@ export const DISCARD_CONNECTION_DRAFT = Symbol('DISCARD_CONNECTION_DRAFT');
 
 export type CatalogAction =
     | VariantKind<typeof SET_CATALOG_SCRIPT, dashql.DashQLScript>
+    | VariantKind<typeof APPLY_CATALOG_CHANGES, dashql.buffers.catalog.CatalogChangeT[]>
     | VariantKind<typeof UPDATE_CATALOG, [number, CatalogUpdateTaskState]>
     | VariantKind<typeof CATALOG_UPDATE_REGISTER_QUERY, [number, number]>
     | VariantKind<typeof CATALOG_UPDATE_SCHEMA_SCRIPT, [number]>
@@ -255,7 +263,7 @@ export type AttachedDatabaseAction =
     | SalesforceConnectionStateAction
     ;
 
-export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action: AttachedDatabaseAction, storage: StorageWriter, _logger: Logger): AttachedDatabaseState {
+export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action: AttachedDatabaseAction, storage: StorageWriter, logger: Logger): AttachedDatabaseState {
     switch (action.type) {
         case SET_CONNECTION_DRAFT: {
             if (getConnectionInfoFromParams(action.value)?.connectorType !== state.connectorInfo.connectorType) return state;
@@ -285,6 +293,9 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
                 ...state,
                 catalogRelationScript: action.value,
             };
+
+        case APPLY_CATALOG_CHANGES:
+            return applyCatalogChanges(state, action.value, logger);
 
         case UPDATE_CATALOG:
         case CATALOG_UPDATE_REGISTER_QUERY:
@@ -531,6 +542,28 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
     }
 }
 
+/// Apply the catalog changes of executed statements to the relation descriptor and record them as SQL.
+/// The changes are qualified with the default database and schema of the connection.
+function applyCatalogChanges(state: AttachedDatabaseState, changes: dashql.buffers.catalog.CatalogChangeT[], logger: Logger): AttachedDatabaseState {
+    if (changes.length === 0) return state;
+    try {
+        const qualified = state.instance.qualifyCatalogChanges(changes, catalogNameDefaults(state.details));
+        state.catalog.applyCatalogChanges(state.catalogRelationScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, qualified);
+        const catalogChangesSql = state.instance.appendCatalogChangesSql(state.catalogChangesSql, qualified);
+        logger.info('Applied catalog changes of executed statements', {
+            databaseId: state.databaseId,
+            changes: qualified.length.toString(),
+        }, LOG_CTX);
+        return { ...state, catalogChangesSql };
+    } catch (e: unknown) {
+        logger.error('Failed to apply catalog changes of executed statements', {
+            databaseId: state.databaseId,
+            error: stringifyError(e),
+        }, LOG_CTX);
+        return state;
+    }
+}
+
 export function createConnectionMetrics(): connection.ConnectionMetrics {
     return createQueryExecutionMetrics();
 }
@@ -562,6 +595,7 @@ export function createAttachedDatabaseState(dql: dashql.DashQL, info: ConnectorI
         },
         catalogRelationScript,
         catalogFunctionScript,
+        catalogChangesSql: '',
         snapshotQueriesActiveFinished: 1,
         queriesActive: new Map(),
         queriesActiveOrdered: [],
@@ -601,6 +635,7 @@ export function createAttachedDatabaseStateForType(dql: dashql.DashQL, type: Con
         },
         catalogRelationScript,
         catalogFunctionScript,
+        catalogChangesSql: '',
         snapshotQueriesActiveFinished: 1,
         queriesActive: new Map(),
         queriesActiveOrdered: [],
@@ -635,6 +670,10 @@ export function replaceAttachedDatabaseCatalogFromStorage(
     if (changed) {
         publishCatalogBatchSync(state.instance, state.catalog, entries);
         state.catalogUpdates.restoredAt = new Date();
+        // The republished relation descriptor lacks the changes of executed statements
+        if (state.catalogChangesSql.length > 0) {
+            state.catalog.applyCatalogChangesSql(state.catalogRelationScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, state.catalogChangesSql);
+        }
     }
     return changed;
 }

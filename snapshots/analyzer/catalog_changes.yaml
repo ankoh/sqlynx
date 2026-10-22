@@ -1,0 +1,447 @@
+analyzer-snapshots:
+
+  - name: catalog_changes_create_drop
+    script:
+      input: |-
+        create table orders (id int, amount double, customer text);
+        create table sales.totals as select id, amount as total from orders;
+        create view other.reporting.report as select id, amount from orders;
+        select id as copied_id into copies from orders;
+        insert into orders values (1, 2.0, 'a');
+        drop table sales.totals;
+        drop view other.reporting.report;
+      catalog-id: 1
+      tables:
+        - catalog-id: "256.65536.4294967296"
+          name: orders
+          text: "create tab..omer text)"
+          columns:
+            - catalog-id: "256.65536.4294967296.0"
+              name: amount
+              text: "amount double"
+            - catalog-id: "256.65536.4294967296.1"
+              name: customer
+              text: "customer text"
+            - catalog-id: "256.65536.4294967296.2"
+              name: id
+              text: "id int"
+        - catalog-id: "256.65537.4294967297"
+          name: totals
+          text: "create tab..rom orders"
+          columns:
+            - catalog-id: "256.65537.4294967297.0"
+              name: id
+            - catalog-id: "256.65537.4294967297.1"
+              name: total
+        - catalog-id: "257.65538.4294967298"
+          name: report
+          text: "create vie..rom orders"
+          columns:
+            - catalog-id: "257.65538.4294967298.0"
+              name: id
+            - catalog-id: "257.65538.4294967298.1"
+              name: amount
+        - catalog-id: "256.65536.4294967299"
+          name: copies
+          text: "copies"
+          columns:
+            - catalog-id: "256.65536.4294967299.0"
+              name: copied_id
+      catalog-changes:
+        - statement-id: 0
+          type: create
+          name: orders
+          columns: [id,amount,customer]
+        - statement-id: 1
+          type: create
+          name: sales.totals
+          columns: [id,total]
+        - statement-id: 2
+          type: create
+          name: other.reporting.report
+          columns: [id,amount]
+        - statement-id: 3
+          type: create
+          name: copies
+          columns: [copied_id]
+        - statement-id: 5
+          type: drop
+          name: sales.totals
+        - statement-id: 6
+          type: drop
+          name: other.reporting.report
+      errors: []
+      table-refs:
+        - type: name/internal
+          catalog-id: "256.65536.4294967296"
+          statement-id: 1
+          text: "orders"
+        - type: name/internal
+          catalog-id: "256.65536.4294967296"
+          statement-id: 2
+          text: "orders"
+        - type: name/internal
+          catalog-id: "256.65536.4294967296"
+          statement-id: 3
+          text: "orders"
+        - type: name/internal
+          catalog-id: "256.65536.4294967296"
+          statement-id: 4
+          role: write
+          text: "orders"
+      inserts:
+        - statement-id: 4
+          target-ref: 3
+          source: "values (1,.. 2.0, 'a')"
+      expressions:
+        - expression-idx: 0
+          type: colref/internal
+          catalog: "256.65536.4294967296.2"
+          statement-id: 1
+          text: "id"
+        - expression-idx: 1
+          type: colref/internal
+          catalog: "256.65536.4294967296.0"
+          statement-id: 1
+          text: "amount"
+        - expression-idx: 2
+          type: colref/internal
+          catalog: "256.65536.4294967296.2"
+          statement-id: 2
+          text: "id"
+        - expression-idx: 3
+          type: colref/internal
+          catalog: "256.65536.4294967296.0"
+          statement-id: 2
+          text: "amount"
+        - expression-idx: 4
+          type: colref/internal
+          catalog: "256.65536.4294967296.2"
+          statement-id: 3
+          text: "id"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 4
+          text: "1"
+        - expression-idx: 6
+          type: literal/float
+          is-const: true
+          statement-id: 4
+          text: "2.0"
+        - expression-idx: 7
+          type: literal/string
+          is-const: true
+          statement-id: 4
+          text: "'a'"
+      constants:
+        - expression: 5
+          text: "1"
+        - expression: 6
+          text: "2.0"
+        - expression: 7
+          text: "'a'"
+      name-scopes:
+        - scope-id: 1
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: id
+              expression: 0
+            - name: total
+              expression: 1
+          text: "select id,..rom orders"
+        - scope-id: 2
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: id
+              expression: 2
+            - name: amount
+              expression: 3
+          text: "select id,..rom orders"
+        - scope-id: 3
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          columns:
+            - name: copied_id
+              expression: 4
+          text: "select id ..rom orders"
+        - scope-id: 4
+          parent: 5
+          correlation-barrier: true
+          columns:
+            - name: '?'
+              expression: 5
+            - name: '?'
+              expression: 6
+            - name: '?'
+              expression: 7
+          text: "values (1,.. 2.0, 'a')"
+        - scope-id: 5
+          sources:
+            - type: table
+              name: orders
+              text: "orders"
+          text: "insert int.. 2.0, 'a')"
+
+  - name: catalog_changes_modifiers
+    script:
+      input: |-
+        create table if not exists events (id int, payload text);
+        create table if not exists summary as select id from events;
+        create or replace view latest as select payload from events;
+        create unlogged table staging (id int);
+        create temp table session_only (id int);
+        create temporary view session_view as select id from events;
+        select id into temp copied from events;
+      catalog-id: 1
+      tables:
+        - catalog-id: "256.65536.4294967296"
+          name: events
+          text: "create tab..load text)"
+          columns:
+            - catalog-id: "256.65536.4294967296.0"
+              name: id
+              text: "id int"
+            - catalog-id: "256.65536.4294967296.1"
+              name: payload
+              text: "payload text"
+        - catalog-id: "256.65536.4294967297"
+          name: summary
+          text: "create tab..rom events"
+          columns:
+            - catalog-id: "256.65536.4294967297.0"
+              name: id
+        - catalog-id: "256.65536.4294967298"
+          name: latest
+          text: "create or ..rom events"
+          columns:
+            - catalog-id: "256.65536.4294967298.0"
+              name: payload
+        - catalog-id: "256.65536.4294967299"
+          name: staging
+          text: "create unl..g (id int)"
+          columns:
+            - catalog-id: "256.65536.4294967299.0"
+              name: id
+              text: "id int"
+        - catalog-id: "256.65536.4294967300"
+          name: session_only
+          text: "create tem..y (id int)"
+          columns:
+            - catalog-id: "256.65536.4294967300.0"
+              name: id
+              text: "id int"
+        - catalog-id: "256.65536.4294967301"
+          name: session_view
+          text: "create tem..rom events"
+          columns:
+            - catalog-id: "256.65536.4294967301.0"
+              name: id
+        - catalog-id: "256.65536.4294967302"
+          name: copied
+          text: "temp copied"
+          columns:
+            - catalog-id: "256.65536.4294967302.0"
+              name: id
+      catalog-changes:
+        - statement-id: 0
+          type: create-if-not-exists
+          name: events
+          columns: [id,payload]
+        - statement-id: 1
+          type: create-if-not-exists
+          name: summary
+          columns: [id]
+        - statement-id: 2
+          type: create
+          name: latest
+          columns: [payload]
+        - statement-id: 3
+          type: create
+          name: staging
+          columns: [id]
+      errors: []
+      table-refs:
+        - type: name/internal
+          catalog-id: "256.65536.4294967296"
+          statement-id: 1
+          text: "events"
+        - type: name/internal
+          catalog-id: "256.65536.4294967296"
+          statement-id: 2
+          text: "events"
+        - type: name/internal
+          catalog-id: "256.65536.4294967296"
+          statement-id: 5
+          text: "events"
+        - type: name/internal
+          catalog-id: "256.65536.4294967296"
+          statement-id: 6
+          text: "events"
+      expressions:
+        - expression-idx: 0
+          type: colref/internal
+          catalog: "256.65536.4294967296.0"
+          statement-id: 1
+          text: "id"
+        - expression-idx: 1
+          type: colref/internal
+          catalog: "256.65536.4294967296.1"
+          statement-id: 2
+          text: "payload"
+        - expression-idx: 2
+          type: colref/internal
+          catalog: "256.65536.4294967296.0"
+          statement-id: 5
+          text: "id"
+        - expression-idx: 3
+          type: colref/internal
+          catalog: "256.65536.4294967296.0"
+          statement-id: 6
+          text: "id"
+      name-scopes:
+        - scope-id: 1
+          sources:
+            - type: table
+              name: events
+              text: "events"
+          columns:
+            - name: id
+              expression: 0
+          text: "select id ..rom events"
+        - scope-id: 2
+          sources:
+            - type: table
+              name: events
+              text: "events"
+          columns:
+            - name: payload
+              expression: 1
+          text: "select pay..rom events"
+        - scope-id: 5
+          sources:
+            - type: table
+              name: events
+              text: "events"
+          columns:
+            - name: id
+              expression: 2
+          text: "select id ..rom events"
+        - scope-id: 6
+          sources:
+            - type: table
+              name: events
+              text: "events"
+          columns:
+            - name: id
+              expression: 3
+          text: "select id ..rom events"
+
+  - name: catalog_changes_catalog_columns
+    catalog:
+      script:
+        input: |-
+          create table base (a int, b int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: base
+            text: "create tab..nt, b int)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: a
+                text: "a int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: b
+                text: "b int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: base
+            columns: [a,b]
+        errors: []
+    script:
+      input: |-
+        create table derived as select * from base;
+        create view narrowed (x) as select a, b from base;
+        drop table base;
+      catalog-id: 2
+      tables:
+        - catalog-id: "256.65536.8589934592"
+          name: derived
+          text: "create tab.. from base"
+          columns:
+            - catalog-id: "256.65536.8589934592.0"
+              name: a
+            - catalog-id: "256.65536.8589934592.1"
+              name: b
+        - catalog-id: "256.65536.8589934593"
+          name: narrowed
+          text: "create vie.. from base"
+          columns:
+            - catalog-id: "256.65536.8589934593.0"
+              name: x
+      catalog-changes:
+        - statement-id: 0
+          type: create
+          name: derived
+          columns: [a,b]
+        - statement-id: 1
+          type: create
+          name: narrowed
+          columns: [x]
+        - statement-id: 2
+          type: drop
+          name: base
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "base"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 1
+          text: "base"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 1
+          text: "a"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 1
+          text: "b"
+      name-scopes:
+        - scope-id: 0
+          sources:
+            - type: table
+              name: base
+              text: "base"
+          columns:
+            - name: a
+              table-column: "256.65536.4294967296.0"
+            - name: b
+              table-column: "256.65536.4294967296.1"
+          text: "select * from base"
+        - scope-id: 1
+          sources:
+            - type: table
+              name: base
+              text: "base"
+          columns:
+            - name: a
+              expression: 0
+            - name: b
+              expression: 1
+          text: "select a, .. from base"

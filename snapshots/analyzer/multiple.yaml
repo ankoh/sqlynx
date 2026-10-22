@@ -28,6 +28,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: |-
@@ -139,6 +148,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: |-

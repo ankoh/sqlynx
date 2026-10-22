@@ -28,6 +28,15 @@ analyzer-snapshots:
               - catalog-id: "257.65537.4294967297.1"
                 name: d
                 text: "d int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: db1.schema1.a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: db2.schema2.a
+            columns: [c,d]
         errors: []
     script:
       input: select * from db1.schema1.A x, db2.schema2.A y where x.a = c;
@@ -101,6 +110,15 @@ analyzer-snapshots:
               - catalog-id: "257.65537.4294967297.1"
                 name: d
                 text: "d int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: db2.schema2.a
+            columns: [c,d]
         errors: []
     script:
       input: select * from db1.schema1.A x, db2.schema2.A where x.a = c;
@@ -162,6 +180,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.1"
                 name: b
                 text: "b int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
         errors: []
     script:
       input: select * from db1.schema1.A, db2.schema2.B where a = c;
@@ -222,6 +245,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.1"
                 name: b
                 text: "b int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: db1.schema1.a
+            columns: [a,b]
         errors: []
     script:
       input: select * from db1.schema1.A, db2.schema2.B where a = c;
@@ -283,6 +311,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.1"
                 name: b
                 text: "b int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: db1.schema1.a
+            columns: [a,b]
         errors: []
     script:
       input: |-

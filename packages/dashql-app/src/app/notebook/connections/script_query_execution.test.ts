@@ -150,4 +150,37 @@ describe('executeScriptQuery', () => {
         expect(execution.resume).not.toHaveBeenCalled();
         expect(execution.destroy).toHaveBeenCalledOnce();
     });
+    it('reports the catalog changes of statements that succeeded', async () => {
+        const first = pending(10n, 1, 'CREATE TABLE t(a INT)', false);
+        const second = pending(11n, 2, 'SELECT * FROM t', true);
+        const change = new core.buffers.catalog.CatalogChangeT(
+            core.buffers.catalog.CatalogChangeType.CREATE_RELATION, '', '', 't', ['a'], false);
+        const afterCreate = update(core.buffers.execution.ScriptExecutionPhase.RUNNING, second);
+        afterCreate.catalogChanges = [change];
+        const execution = createExecution([
+            update(core.buffers.execution.ScriptExecutionPhase.RUNNING, first),
+            afterCreate,
+            update(core.buffers.execution.ScriptExecutionPhase.SUCCEEDED, null),
+        ]);
+        const onCatalogChanges = vi.fn();
+
+        await executeScriptQuery({
+            execution,
+            queryArgs: queryArgs(),
+            abortSignal: new AbortController().signal,
+            logger: new TestLogger().withTrace(createTrace()),
+            notebookId: 'notebook',
+            queryId: 7,
+            logTarget: 'test',
+            callbacks: {
+                executeStatement: vi.fn(async () => null),
+                onStatementStarted: vi.fn(),
+                onStatementSucceeded: vi.fn(),
+                onCatalogChanges,
+                setResultStream: vi.fn(),
+            },
+        });
+
+        expect(onCatalogChanges).toHaveBeenCalledExactlyOnceWith([change]);
+    });
 });

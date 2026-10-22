@@ -10,8 +10,8 @@ import { fetchPrefetchedHyperFunctions } from '../prefetched_hyper_functions.js'
 import { beginCatalogBatch, publishCatalogBatch, type CatalogBatchOptions } from '../catalog_batch.js';
 
 const SALESFORCE_CATALOG_RANK = 100;
-const SALESFORCE_CATALOG_DATABASE = 'lakehouse';
-const SALESFORCE_CATALOG_SCHEMA = 'public';
+export const SALESFORCE_CATALOG_DATABASE = 'lakehouse';
+export const SALESFORCE_CATALOG_SCHEMA = 'public';
 
 export interface ResolvedSalesforceCatalog {
     tables: Map<string, ColumnMetadata[]>;

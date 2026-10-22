@@ -7,7 +7,7 @@ import { NotebookScripts } from '../scripts/notebook_scripts.js';
 import { AttachedDatabaseState } from '../connections/attached_database_state.js';
 import { createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
 import type { StorageBackend, NotebookData, NotebookMetadata as StorageNotebookMetadata } from './storage_backend.js';
-import { STORAGE_SCRIPTS_FOLDER, STORAGE_NOTEBOOK_FILE } from './storage_backend.js';
+import { STORAGE_SCRIPTS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_CATALOG_CHANGES } from './storage_backend.js';
 
 const LOG_CTX = 'storage_writer';
 
@@ -60,6 +60,7 @@ export const WRITE_NOTEBOOK_MANIFEST = Symbol('WRITE_NOTEBOOK_MANIFEST');
 export const WRITE_NOTEBOOK_NAME = Symbol('WRITE_NOTEBOOK_NAME');
 export const WRITE_NOTEBOOK_CATALOG_SCRIPT = Symbol('WRITE_NOTEBOOK_CATALOG_SCRIPT');
 export const WRITE_NOTEBOOK_FUNCTION_SCRIPT = Symbol('WRITE_NOTEBOOK_FUNCTION_SCRIPT');
+export const WRITE_NOTEBOOK_CATALOG_CHANGES = Symbol('WRITE_NOTEBOOK_CATALOG_CHANGES');
 export const REPLACE_NOTEBOOK_SCRIPTS = Symbol('REPLACE_NOTEBOOK_SCRIPTS');
 export const WRITE_SCRIPT = Symbol('WRITE_SCRIPT');
 export const DELETE_NOTEBOOK = Symbol('DELETE_NOTEBOOK');
@@ -71,6 +72,7 @@ export type StorageWriteTaskVariant =
     | VariantKind<typeof WRITE_NOTEBOOK_NAME, [string, string | null]>
     | VariantKind<typeof WRITE_NOTEBOOK_CATALOG_SCRIPT, [string, dashql.DashQLScript]>
     | VariantKind<typeof WRITE_NOTEBOOK_FUNCTION_SCRIPT, [string, dashql.DashQLScript]>
+    | VariantKind<typeof WRITE_NOTEBOOK_CATALOG_CHANGES, [string, string]>
     | VariantKind<typeof REPLACE_NOTEBOOK_SCRIPTS, NotebookScripts>
     | VariantKind<typeof WRITE_SCRIPT, [string, string, string]>
     | VariantKind<typeof DELETE_NOTEBOOK, string>
@@ -89,6 +91,7 @@ export const groupNotebookManifestWrites = (notebookId: string) => `${notebookId
 export const groupNotebookConnectionWrites = (notebookId: string) => `${notebookId}/${STORAGE_NOTEBOOK_FILE}:connections`;
 export const groupNotebookSchemaWrites = (notebookId: string) => `${notebookId}/dashql-relations.sql`;
 export const groupNotebookFunctionWrites = (notebookId: string) => `${notebookId}/dashql-functions.sql`;
+export const groupNotebookCatalogChangesWrites = (notebookId: string) => `${notebookId}/${STORAGE_CATALOG_CHANGES}`;
 export const groupNotebookWrites = (notebookId: string) => `${notebookId}/${STORAGE_SCRIPTS_FOLDER}`;
 export const groupScriptWrites = (notebookId: string, fileName: string) =>
     `${notebookId}/${STORAGE_SCRIPTS_FOLDER}/${fileName}`;
@@ -538,6 +541,21 @@ export class StorageWriter {
                 const actualPath = `${notebookId}/dashql-functions.sql`;
                 this.registerWrite(actualPath, functionsSQL.length, writeDuration);
                 this.completedFileContents.set(actualPath, functionsSQL);
+                break;
+            }
+            case WRITE_NOTEBOOK_CATALOG_CHANGES: {
+                const [notebookId, changesSql] = task.value;
+                this.logger.info("Writing notebook catalog changes", {
+                    key,
+                    notebookId,
+                }, LOG_CTX);
+
+                const timeBefore = new Date();
+                await this.backend.saveNotebookCatalogChanges(notebookId, changesSql);
+                const timeAfter = new Date();
+                const actualPath = `${notebookId}/${STORAGE_CATALOG_CHANGES}`;
+                this.registerWrite(actualPath, changesSql.length, timeAfter.getTime() - timeBefore.getTime());
+                this.completedFileContents.set(actualPath, changesSql);
                 break;
             }
             case REPLACE_NOTEBOOK_SCRIPTS: {

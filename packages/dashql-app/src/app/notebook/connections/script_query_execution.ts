@@ -14,6 +14,8 @@ interface ScriptQueryExecutionCallbacks {
     ) => Promise<arrow.Table | null>;
     onStatementStarted: (index: number, statementCount: number) => void;
     onStatementSucceeded: (index: number, statementCount: number) => void;
+    /// Receives the catalog changes of a statement that succeeded
+    onCatalogChanges?: (changes: core.buffers.catalog.CatalogChangeT[]) => void;
     setResultStream: (stream: QueryExecutionResponseStream | null) => void;
 }
 
@@ -65,6 +67,9 @@ export async function executeScriptQuery(args: ExecuteScriptQueryArgs): Promise<
                 core.buffers.execution.StatementResultStatus.SUCCEEDED,
             ));
             assertValidUpdate(operation, 'Could not continue script execution', args.logTarget);
+            if (operation.catalogChanges.length > 0) {
+                args.callbacks.onCatalogChanges?.(operation.catalogChanges);
+            }
         }
 
         if (operation.snapshot?.phase !== core.buffers.execution.ScriptExecutionPhase.SUCCEEDED) {

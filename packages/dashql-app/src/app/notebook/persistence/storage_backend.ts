@@ -24,6 +24,8 @@ export const STORAGE_SHELL_FOLDER = 'dashql-shell';
 
 export const STORAGE_SCRIPT_SCHEMA = 'dashql-relations.sql';
 export const STORAGE_SCRIPT_FUNCTIONS = 'dashql-functions.sql';
+/// The catalog changes of executed statements since the last catalog refresh
+export const STORAGE_CATALOG_CHANGES = 'dashql-catalog-changes.sql';
 export const STORAGE_SCRIPT_EXTENSION = '.sql';
 
 export interface NotebookIndexScript {
@@ -115,6 +117,11 @@ export interface StorageBackend {
     loadNotebookFunctions(notebookId: string): Promise<string | null>;
     /// Save notebook catalog functions SQL
     saveNotebookFunctions(notebookId: string, sql: string): Promise<void>;
+
+    /// Load the catalog changes of executed statements
+    loadNotebookCatalogChanges(notebookId: string): Promise<string | null>;
+    /// Save the catalog changes of executed statements
+    saveNotebookCatalogChanges(notebookId: string, sql: string): Promise<void>;
 
     /// Load the notebook's flat, naturally ordered script collection.
     loadScripts(notebookId: string): Promise<ScriptData[]>;

@@ -66,6 +66,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.5"
                 name: col6
                 text: "col6 integer"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: table1
+            columns: [col1,col2,col3,col4,col5,col6]
+          - statement-id: 1
+            type: create
+            name: table2
+            columns: [col1,col2,col3,col4,col5,col6]
         errors: []
     script:
       input: select col4 from table1;

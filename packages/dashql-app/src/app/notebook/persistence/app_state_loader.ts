@@ -231,9 +231,10 @@ async function restoreNotebookEntry(
     try {
         const validate = beginCatalogBatch(connectionState.catalog);
         logger.info("Loading catalog scripts", { notebookId }, LOG_CTX);
-        const [schemaSQL, functionsSQL] = await Promise.all([
+        const [schemaSQL, functionsSQL, catalogChangesSql] = await Promise.all([
             backend.loadNotebookSchema(notebookId),
             backend.loadNotebookFunctions(notebookId),
+            backend.loadNotebookCatalogChanges(notebookId),
         ]);
         validate();
         const { catalog, catalogRelationScript, catalogFunctionScript } = connectionState;
@@ -266,6 +267,9 @@ async function restoreNotebookEntry(
                 notebookId,
                 durationMs: catalogDuration.toFixed(2)
             }, LOG_CTX);
+        }
+        if (catalogChangesSql != null && catalogChangesSql.trim().length > 0) {
+            restoreCatalogChanges(connectionState, catalogChangesSql, logger, notebookId);
         }
 
         restoreCatalogs.addSucceeded();
@@ -369,6 +373,18 @@ export function mergeRestoredNotebookIntoScripts(
     reg.notebookScriptsByConnection.set(restored.notebookScripts.databaseId, restored.notebookId);
     reg.notebookScriptsByConnectionType[restored.notebookScripts.connectorInfo.connectorType].push(restored.notebookId);
     return { ...reg };
+}
+
+/// Apply the catalog changes of executed statements on top of the restored relation script.
+/// Unreadable changes are dropped, the next catalog refresh describes the relations anyway.
+function restoreCatalogChanges(connection: AttachedDatabaseState, changesSql: string, logger: Logger, notebookId: string): void {
+    try {
+        connection.catalog.applyCatalogChangesSql(connection.catalogRelationScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, changesSql);
+        connection.catalogChangesSql = changesSql;
+        logger.info("Catalog changes restored", { notebookId, changesLength: changesSql.length.toString() }, LOG_CTX);
+    } catch (error) {
+        logger.warn("Failed to restore the catalog changes", { notebookId, error: stringifyError(error) }, LOG_CTX);
+    }
 }
 
 export function destroyRestoredNotebook(restored: RestoredNotebook): void {

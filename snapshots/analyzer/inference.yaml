@@ -334,6 +334,11 @@ analyzer-snapshots:
             - catalog-id: "256.65536.4294967296.0"
               name: x
               text: "x int"
+      catalog-changes:
+        - statement-id: 1
+          type: create
+          name: foo
+          columns: [x]
       errors: []
       table-refs:
         - type: name/internal

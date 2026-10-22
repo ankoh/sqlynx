@@ -5,6 +5,7 @@
 //! phase, the 1-based index of the current statement and the id of the pending statement. The
 //! update protocol (`Start`, `Resume`, `Cancel` and their protocol errors) is the same.
 
+use crate::catalog::changes::{derive_catalog_change, CatalogChangeOptions};
 use crate::catalog::PROTO_NULL_U32;
 use crate::compiler::{compile, CompilationOptions};
 use crate::script::TextVersion;
@@ -14,7 +15,9 @@ use dashql_buffers::execution::{
     ScriptExecutionProtocolError as ProtocolError, ScriptExecutionSnapshotT, ScriptExecutionUpdateT,
     StatementResultStatus, StatementResultT,
 };
+use dashql_buffers::catalog::CatalogChangeT;
 use dashql_buffers::formatting::FormattingConfigT;
+use std::sync::Arc;
 
 /// The execution of the statements of a script (`ScriptExecution`)
 pub struct ScriptExecution {
@@ -34,6 +37,8 @@ pub struct ScriptExecution {
     error: String,
     /// The id of the statement the host is executing
     pending_statement_id: Option<u64>,
+    /// The catalog change of every compiled statement, relations named as written
+    catalog_changes: Vec<Option<CatalogChangeT>>,
 }
 
 /// A string the C++ object API leaves out when empty
@@ -45,9 +50,27 @@ impl ScriptExecution {
     /// Compile the current text of a session and capture the plan
     pub fn new(session: &mut ScriptSession, formatting_config: FormattingConfigT) -> Self {
         let text_version = session.text_version();
+        // The catalog changes need the analysis of the current text, a current analysis is kept
+        session.analyze();
         let catalog = session.catalog().clone();
         let compilation =
             compile(session.script_mut(), &catalog.borrow(), &formatting_config, CompilationOptions::default());
+        // The statement ids refer to the parsed script, the analysis must describe the same one.
+        // A script with syntax errors runs as raw text and changes nothing we could follow.
+        let script = session.script();
+        let analyzed = script
+            .analyzed
+            .as_ref()
+            .filter(|a| script.parsed.as_ref().is_some_and(|p| Arc::ptr_eq(p, &a.parsed)))
+            .filter(|a| a.parsed.errors.is_empty() && a.parsed.scanned.errors.is_empty());
+        // Temporary relations do not outlive the database session
+        let options = CatalogChangeOptions::default();
+        let catalog_changes = compilation
+            .statements
+            .iter()
+            .flatten()
+            .map(|statement| analyzed.and_then(|a| derive_catalog_change(a, statement.statement_id as usize, &options)))
+            .collect();
         let mut output_statement_index = PROTO_NULL_U32;
         for (i, statement) in compilation.statements.iter().flatten().enumerate() {
             if statement.kind != CompiledScriptStatementKind::COMMAND {
@@ -63,6 +86,7 @@ impl ScriptExecution {
             phase: Phase::IDLE,
             error: String::new(),
             pending_statement_id: None,
+            catalog_changes,
         }
     }
 
@@ -154,7 +178,13 @@ impl ScriptExecution {
                     .unwrap_or_else(|| "statement execution failed".to_string());
                 self.complete(Phase::FAILED, error)
             }
-            _ => self.run_from(self.statement_index),
+            _ => {
+                // The statement that succeeded may have changed the catalog
+                let change = self.catalog_changes.get(self.statement_index as usize - 1).cloned().flatten();
+                let mut update = self.run_from(self.statement_index);
+                update.catalog_changes = change.map(|c| vec![c]);
+                update
+            }
         }
     }
 

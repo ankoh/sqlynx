@@ -272,6 +272,12 @@ export class CompositeStorageBackend implements NotebookRegistryBackend {
     async saveNotebookSchema(notebookId: string, sql: string): Promise<void> {
         return (await this.backendFor(notebookId)).saveNotebookSchema(notebookId, sql);
     }
+    async loadNotebookCatalogChanges(notebookId: string): Promise<string | null> {
+        return (await this.backendFor(notebookId)).loadNotebookCatalogChanges(notebookId);
+    }
+    async saveNotebookCatalogChanges(notebookId: string, sql: string): Promise<void> {
+        return (await this.backendFor(notebookId)).saveNotebookCatalogChanges(notebookId, sql);
+    }
     async loadNotebookFunctions(notebookId: string): Promise<string | null> {
         return (await this.backendFor(notebookId)).loadNotebookFunctions(notebookId);
     }

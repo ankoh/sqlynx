@@ -162,6 +162,7 @@ export function createConnectionStateFromParams(dql: dashql.DashQL, params: Conn
         },
         catalogRelationScript,
         catalogFunctionScript,
+        catalogChangesSql: '',
         snapshotQueriesActiveFinished: 1,
         queriesActive: new Map(),
         queriesActiveOrdered: [],

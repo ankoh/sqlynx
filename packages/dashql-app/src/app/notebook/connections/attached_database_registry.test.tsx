@@ -111,7 +111,11 @@ describe('notebook manifest persistence', () => {
 });
 
 describe('catalog refresh persistence', () => {
-    it.each(['succeeded', 'partially succeeded'] as const)('saves a %s Salesforce catalog without rewriting the manifest', async outcome => {
+    it.each([
+        ['succeeded', ''],
+        ['partially succeeded', ''],
+        ['succeeded', '-- Catalog changes of executed statements\n\nDROP TABLE "lakehouse"."public"."Old__dlm";\n'],
+    ] as const)('saves a %s Salesforce catalog without rewriting the manifest, catalog changes %j', async (outcome, catalogChangesSql) => {
         const backend = new NotebookTestBackend();
         backend.notebooks.set(TEST_NOTEBOOK_ID, testNotebook({
             mainDatabase: { databaseId: TEST_DATABASE_ID, params: { salesforce: { instanceUrl: 'https://example.my.salesforce.com' } } as any },
@@ -127,6 +131,7 @@ describe('catalog refresh persistence', () => {
             details: { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: { proto: { setupParams: { instanceUrl: 'https://example.my.salesforce.com' } } } },
             catalogRelationScript: script(schemaSQL),
             catalogFunctionScript: script(functionsSQL),
+            catalogChangesSql,
             catalogUpdates: {
                 tasksRunning: new Map(), tasksFinished: new Map(), currentFullRefresh: null, lastFullRefresh: null, restoredAt: null,
             },
@@ -169,13 +174,16 @@ describe('catalog refresh persistence', () => {
             });
             await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
             expect(currentRegistry.attachedDatabases.get(TEST_DATABASE_ID)?.catalogUpdates.tasksFinished.has(1)).toBe(true);
+            // The refresh describes the changes of earlier statements, recorded catalog changes are cleared
             expect(writer.getPendingKeysForNotebook(TEST_NOTEBOOK_ID)).toEqual([
                 `${TEST_NOTEBOOK_ID}/dashql-relations.sql`,
                 `${TEST_NOTEBOOK_ID}/dashql-functions.sql`,
+                ...(catalogChangesSql === '' ? [] : [`${TEST_NOTEBOOK_ID}/dashql-catalog-changes.sql`]),
             ]);
             await writer.flush();
             expect(backend.schemas.get(TEST_NOTEBOOK_ID)).toBe(schemaSQL);
             expect(backend.functions.get(TEST_NOTEBOOK_ID)).toBe(functionsSQL);
+            expect(backend.catalogChanges.get(TEST_NOTEBOOK_ID)).toBe(catalogChangesSql === '' ? undefined : '');
             expect(backend.calls).not.toContain(`manifest:${TEST_NOTEBOOK_ID}`);
         } finally {
             act(() => root.unmount());

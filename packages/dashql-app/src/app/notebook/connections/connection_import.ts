@@ -110,6 +110,7 @@ export function restoreAttachedDatabaseState(instance: dashql.DashQL, databaseId
         },
         catalogRelationScript: restoredCatalogRelationScript,
         catalogFunctionScript: restoredCatalogFunctionScript,
+        catalogChangesSql: '',
         queriesActive: new Map(),
         queriesActiveOrdered: [],
         queriesFinished: new Map<number, QueryExecutionState>(),

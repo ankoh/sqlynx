@@ -363,6 +363,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: c
                 text: "c int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
         errors: []
     script:
       input: select a + 1, 2 * 3, b = 2 from t where a < 5 + 5
@@ -665,6 +674,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: c
                 text: "c int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
         errors: []
     script:
       input: select now(), upper('a'), lower(upper('b')), length(a), coalesce(1, 2) from t
@@ -799,6 +817,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: c
                 text: "c int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
         errors: []
     script:
       input: select count(*), count(distinct 1), sum(1) over (), sum(1) over w from t window w as ()
@@ -1226,6 +1253,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: c
                 text: "c int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
         errors: []
     script:
       input: select count(*), count(all a), count(distinct a), f(variadic arr), string_agg(a, ',' order by b) from t
@@ -1340,6 +1376,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: c
                 text: "c int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
         errors: []
     script:
       input: select percentile_cont(0.5) within group (order by a), count(*) filter (where b > 1) from t
@@ -1426,6 +1471,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: c
                 text: "c int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
         errors: []
     script:
       input: select f(a => ), g(1, ) from t
@@ -1484,6 +1538,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -1597,6 +1656,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -1702,6 +1766,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -1804,6 +1873,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -1910,6 +1984,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -2109,6 +2188,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -2252,6 +2336,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -2417,6 +2506,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -2512,6 +2606,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |-
@@ -2633,6 +2732,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: SELECT * FROM sales VISUALIZE USING umap (category => category);
@@ -2699,6 +2803,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: SELECT category FROM sales VISUALIZE USING markdown ();

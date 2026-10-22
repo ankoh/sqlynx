@@ -1,0 +1,34 @@
+analyzer-snapshots:
+  # Created and dropped relations, qualified as written
+  - name: catalog_changes_create_drop
+    script:
+      input: |-
+        create table orders (id int, amount double, customer text);
+        create table sales.totals as select id, amount as total from orders;
+        create view other.reporting.report as select id, amount from orders;
+        select id as copied_id into copies from orders;
+        insert into orders values (1, 2.0, 'a');
+        drop table sales.totals;
+        drop view other.reporting.report;
+  # IF NOT EXISTS, OR REPLACE and UNLOGGED relations, temporary relations are not followed
+  - name: catalog_changes_modifiers
+    script:
+      input: |-
+        create table if not exists events (id int, payload text);
+        create table if not exists summary as select id from events;
+        create or replace view latest as select payload from events;
+        create unlogged table staging (id int);
+        create temp table session_only (id int);
+        create temporary view session_view as select id from events;
+        select id into temp copied from events;
+  # Relations against a catalog, star expansion resolves the catalog columns
+  - name: catalog_changes_catalog_columns
+    catalog:
+      script:
+        input: |-
+          create table base (a int, b int);
+    script:
+      input: |-
+        create table derived as select * from base;
+        create view narrowed (x) as select a, b from base;
+        drop table base;

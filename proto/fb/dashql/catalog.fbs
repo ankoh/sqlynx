@@ -10,6 +10,39 @@ table CatalogDescriptor {
 
 // ----------------------------------------------------------------------------
 
+/// How a statement changed the catalog
+enum CatalogChangeType: uint8 {
+    NONE = 0,
+    /// The statement created or replaced a relation
+    CREATE_RELATION = 1,
+    /// The statement dropped a relation
+    DROP_RELATION = 2,
+}
+
+/// A change of the catalog that a successful statement implies
+table CatalogChange {
+    /// The change type
+    change_type: CatalogChangeType;
+    /// The database name, empty if neither the statement nor the defaults name one
+    database_name: string;
+    /// The schema name, empty if neither the statement nor the defaults name one
+    schema_name: string;
+    /// The relation name
+    relation_name: string;
+    /// The column names of a created relation, in declaration order
+    column_names: [string];
+    /// Is the relation only created if it does not exist yet?
+    if_not_exists: bool;
+}
+
+/// A list of catalog changes
+table CatalogChanges {
+    /// The changes in statement order
+    changes: [CatalogChange];
+}
+
+// ----------------------------------------------------------------------------
+
 table CatalogDescriptorPool {
     /// The entry id
     catalog_entry_id: uint32;

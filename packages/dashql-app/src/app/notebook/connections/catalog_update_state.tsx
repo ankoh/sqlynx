@@ -176,8 +176,10 @@ export function reduceCatalogAction(state: AttachedDatabaseState, action: Catalo
             };
             state.catalogUpdates.tasksRunning.delete(updateId);
             state.catalogUpdates.tasksFinished.set(updateId, update);
+            // The refreshed relation script describes the catalog, the changes of earlier statements are part of it
             return {
                 ...state,
+                catalogChangesSql: '',
                 catalogUpdates: {
                     tasksRunning: state.catalogUpdates.tasksRunning,
                     tasksFinished: state.catalogUpdates.tasksFinished,

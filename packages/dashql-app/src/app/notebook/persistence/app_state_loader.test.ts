@@ -62,6 +62,7 @@ describe('V2 app state loader', () => {
             loadNotebook: vi.fn(async () => testNotebook()), saveNotebookManifest: vi.fn(), deleteNotebook: vi.fn(),
             ensureNotebookIndex: vi.fn(),
             loadNotebookSchema: vi.fn(async () => null), saveNotebookSchema: vi.fn(),
+            loadNotebookCatalogChanges: vi.fn(async () => null), saveNotebookCatalogChanges: vi.fn(),
             loadNotebookFunctions: vi.fn(async () => null), saveNotebookFunctions: vi.fn(),
             loadScripts: vi.fn(async () => [
                 { name: '10_last.sql', sql: 'SELECT 10' },
@@ -228,6 +229,29 @@ describe('real-core startup catalog restoration', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         dql.resetUnsafe();
+    });
+
+    it('applies the persisted catalog changes on top of the restored relations', async () => {
+        const backend = new NotebookTestBackend();
+        backend.notebooks.set(TEST_NOTEBOOK_ID, testNotebook({
+            mainDatabase: { databaseId: TEST_DATABASE_ID, params: { hyper: { protocol: 'WASM' } } as any },
+        }));
+        const schema = 'CREATE TABLE "hyper"."public"."dropped"(id integer); CREATE TABLE "hyper"."public"."kept"(id integer);';
+        const changesSql = dql.appendCatalogChangesSql('', [
+            new dashql.buffers.catalog.CatalogChangeT(dashql.buffers.catalog.CatalogChangeType.DROP_RELATION, 'hyper', 'public', 'dropped'),
+            new dashql.buffers.catalog.CatalogChangeT(dashql.buffers.catalog.CatalogChangeType.CREATE_RELATION, 'hyper', 'public', 'created', ['a']),
+        ]);
+        backend.schemas.set(TEST_NOTEBOOK_ID, schema);
+        backend.catalogChanges.set(TEST_NOTEBOOK_ID, changesSql);
+        const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
+        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
+        const main = restored.connectionStates.get(TEST_DATABASE_ID)!;
+        expect(main.catalogChangesSql).toBe(changesSql);
+        expect(main.catalogRelationScript.toString()).toBe(schema);
+        const entries = main.catalog.describeEntriesOf(main.catalogRelationScript.catalog_entry_id)
+            .unpackAndDestroy() as dashql.buffers.catalog.CatalogEntriesT;
+        const tables = entries.entries.flatMap(entry => entry.schemas.flatMap(schema => schema.tables.map(table => table.tableName)));
+        expect(tables.sort()).toEqual(['created', 'kept']);
     });
 
     it('routes restored relations/functions to the main catalog using receiver source identities and retains persisted SQL', async () => {

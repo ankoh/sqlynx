@@ -25,6 +25,8 @@ import {
     groupNotebookSchemaWrites,
     WRITE_NOTEBOOK_CATALOG_SCRIPT,
     WRITE_NOTEBOOK_FUNCTION_SCRIPT,
+    WRITE_NOTEBOOK_CATALOG_CHANGES,
+    groupNotebookCatalogChangesWrites,
     WRITE_NOTEBOOK_MANIFEST,
 } from '../persistence/storage_writer.js';
 import { connectionParamsEqual, type ConnectionParams } from './connection_params.js';
@@ -289,6 +291,14 @@ export function useAttachedDatabaseDispatch(): DynamicAttachedDatabaseDispatch {
                             void storageWriter.write(
                                 groupNotebookFunctionWrites(notebookId),
                                 { type: WRITE_NOTEBOOK_FUNCTION_SCRIPT, value: [notebookId, next.catalogFunctionScript] },
+                                DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+                            );
+                        }
+                        // Executed statements record catalog changes, a refresh clears them
+                        if (next.active && databaseId === mappingMainDatabaseId(reg, notebookId) && next.catalogChangesSql !== prev.catalogChangesSql) {
+                            void storageWriter.write(
+                                groupNotebookCatalogChangesWrites(notebookId),
+                                { type: WRITE_NOTEBOOK_CATALOG_CHANGES, value: [notebookId, next.catalogChangesSql] },
                                 DEBOUNCE_DURATION_NOTEBOOK_WRITE,
                             );
                         }

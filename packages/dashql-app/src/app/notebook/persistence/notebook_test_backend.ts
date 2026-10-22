@@ -13,6 +13,7 @@ import type { CacheFileStat } from './query_result_cache_eviction.js';
 export class NotebookTestBackend implements StorageBackend {
     readonly notebooks = new Map<string, NotebookData>();
     readonly schemas = new Map<string, string>();
+    readonly catalogChanges = new Map<string, string>();
     readonly functions = new Map<string, string>();
     readonly scripts = new Map<string, Map<string, string>>();
     readonly data = new Map<string, Map<string, Uint8Array>>();
@@ -38,6 +39,7 @@ export class NotebookTestBackend implements StorageBackend {
         this.calls.push(`delete-notebook:${notebookId}`);
         this.notebooks.delete(notebookId);
         this.schemas.delete(notebookId);
+        this.catalogChanges.delete(notebookId);
         this.functions.delete(notebookId);
         this.scripts.delete(notebookId);
         this.data.delete(notebookId);
@@ -46,6 +48,11 @@ export class NotebookTestBackend implements StorageBackend {
     async saveNotebookSchema(notebookId: string, sql: string): Promise<void> {
         this.calls.push(`schema:${notebookId}`);
         this.schemas.set(notebookId, sql);
+    }
+    async loadNotebookCatalogChanges(notebookId: string): Promise<string | null> { return this.catalogChanges.get(notebookId) ?? null; }
+    async saveNotebookCatalogChanges(notebookId: string, sql: string): Promise<void> {
+        this.calls.push(`catalog-changes:${notebookId}`);
+        this.catalogChanges.set(notebookId, sql);
     }
     async loadNotebookFunctions(notebookId: string): Promise<string | null> { return this.functions.get(notebookId) ?? null; }
     async saveNotebookFunctions(notebookId: string, sql: string): Promise<void> {

@@ -80,6 +80,8 @@ declare module '@ankoh/dashql-shell-js' {
     export const plan: DashQLBindings['plan'];
     export const processBatch: DashQLBindings['processBatch'];
     export const parseVegaLiteToVisualize: DashQLBindings['parseVegaLiteToVisualize'];
+    export const appendCatalogChangesSql: DashQLBindings['appendCatalogChangesSql'];
+    export const qualifyCatalogChanges: DashQLBindings['qualifyCatalogChanges'];
 
     export default function init(options?: { module_or_path?: BufferSource | WebAssembly.Module | string | URL | Response }): Promise<unknown>;
 }

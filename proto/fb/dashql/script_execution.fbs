@@ -1,3 +1,5 @@
+include "dashql/catalog.fbs";
+
 namespace dashql.buffers.execution;
 
 enum ScriptExecutionProtocolError: uint8 {
@@ -51,4 +53,6 @@ table ScriptExecutionUpdate {
     protocol_error_message: string;
     snapshot: ScriptExecutionSnapshot;
     pending_statement: PendingStatement;
+    // The catalog changes of the statement that just succeeded
+    catalog_changes: [dashql.buffers.catalog.CatalogChange];
 }

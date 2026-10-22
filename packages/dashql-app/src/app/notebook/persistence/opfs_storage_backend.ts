@@ -1,4 +1,4 @@
-import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
+import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
@@ -182,6 +182,25 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
         const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), true);
         const schemaFile = await notebookDir.getFileHandle(STORAGE_SCRIPT_SCHEMA, { create: true });
         const writable = await schemaFile.createWritable();
+        await writable.write(sql);
+        await writable.close();
+    }
+
+    async loadNotebookCatalogChanges(notebookId: string): Promise<string | null> {
+        try {
+            const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), false);
+            const changesFile = await notebookDir.getFileHandle(STORAGE_CATALOG_CHANGES, { create: false });
+            const file = await changesFile.getFile();
+            return await file.text();
+        } catch {
+            return null;
+        }
+    }
+
+    async saveNotebookCatalogChanges(notebookId: string, sql: string): Promise<void> {
+        const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), true);
+        const changesFile = await notebookDir.getFileHandle(STORAGE_CATALOG_CHANGES, { create: true });
+        const writable = await changesFile.createWritable();
         await writable.write(sql);
         await writable.close();
     }

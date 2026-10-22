@@ -2,14 +2,18 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as flatbuffers from 'flatbuffers';
 import * as dashql from '@ankoh/dashql-core';
 import {
+    APPLY_CATALOG_CHANGES,
     attachedDatabaseCatalogMatchesStorage,
+    CATALOG_UPDATE_SUCCEEDED,
     createAttachedDatabaseStateForType,
     DELETE_ATTACHED_DATABASE,
     RESET_ATTACHED_DATABASE,
     reduceAttachedDatabaseState,
     replaceAttachedDatabaseCatalogFromStorage,
+    UPDATE_CATALOG,
     type AttachedDatabaseState,
 } from './attached_database_state.js';
+import { TestLogger } from '../../../platform/logger/test_logger.js';
 import { ConnectorType } from './connector_info.js';
 import { publishCatalogBatch } from './catalog_batch.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
@@ -200,5 +204,79 @@ describe('attached database descriptor catalogs', () => {
         ]);
         expect(destroyRelations).toHaveBeenCalledTimes(1);
         expect(destroyFunctions).toHaveBeenCalledTimes(1);
+    });
+});
+
+/// The relations of the relation descriptor as `db.schema.table(a, b)`
+function relationsOf(database: AttachedDatabaseState): string[] {
+    const relations: string[] = [];
+    const entries = database.catalog.describeEntriesOf(database.catalogRelationScript.catalog_entry_id)
+        .unpackAndDestroy() as dashql.buffers.catalog.CatalogEntriesT;
+    for (const entry of entries.entries) {
+        for (const schema of entry.schemas) {
+            for (const table of schema.tables) {
+                relations.push(`${schema.databaseName}.${schema.schemaName}.${table.tableName}(${table.columns.map(c => c.columnName).join(', ')})`);
+            }
+        }
+    }
+    return relations.sort();
+}
+
+function change(type: dashql.buffers.catalog.CatalogChangeType, schema: string, relation: string, columns: string[] = []) {
+    return new dashql.buffers.catalog.CatalogChangeT(type, '', schema, relation, columns, false);
+}
+
+describe('catalog changes of executed statements', () => {
+    const CREATE = dashql.buffers.catalog.CatalogChangeType.CREATE_RELATION;
+    const DROP = dashql.buffers.catalog.CatalogChangeType.DROP_RELATION;
+
+    it('qualify with the connection defaults, patch the relation descriptor and record the changes SQL', () => {
+        const database = state();
+        replaceAttachedDatabaseCatalogFromStorage(database, 'CREATE TABLE "hyper"."public"."stored"(id int);', null);
+        const next = reduceAttachedDatabaseState(database, {
+            type: APPLY_CATALOG_CHANGES,
+            value: [change(DROP, '', 'stored'), change(CREATE, 'other', 'created', ['a', 'b'])],
+        }, {} as any, new TestLogger());
+        expect(relationsOf(next)).toEqual(['hyper.other.created(a, b)']);
+        expect(next.catalogChangesSql).toContain('DROP TABLE "hyper"."public"."stored";');
+        expect(next.catalogChangesSql).toContain('CREATE TABLE "hyper"."other"."created"');
+        // The source script stays as the database reported it
+        expect(next.catalogRelationScript.toString()).toContain('stored');
+    });
+
+    it('survive a reload of the relation script from storage', () => {
+        const database = state();
+        replaceAttachedDatabaseCatalogFromStorage(database, 'CREATE TABLE "hyper"."public"."stored"(id int);', null);
+        const next = reduceAttachedDatabaseState(database, {
+            type: APPLY_CATALOG_CHANGES,
+            value: [change(CREATE, '', 'created', ['a'])],
+        }, {} as any, new TestLogger());
+        replaceAttachedDatabaseCatalogFromStorage(next, 'CREATE TABLE "hyper"."public"."edited"(id int);', null);
+        expect(relationsOf(next)).toEqual(['hyper.public.created(a)', 'hyper.public.edited(id)']);
+    });
+
+    it('are cleared by a catalog refresh', () => {
+        let database = state();
+        database = reduceAttachedDatabaseState(database, {
+            type: APPLY_CATALOG_CHANGES,
+            value: [change(CREATE, '', 'created', ['a'])],
+        }, {} as any, new TestLogger());
+        expect(database.catalogChangesSql).not.toBe('');
+        database = reduceAttachedDatabaseState(database, {
+            type: UPDATE_CATALOG,
+            value: [1, {
+                taskId: 1,
+                taskVariant: CatalogUpdateVariant.FULL_CATALOG_REFRESH,
+                status: CatalogUpdateTaskStatus.STARTED,
+                cancellation: new AbortController(),
+                queries: [],
+                error: null,
+                startedAt: new Date(),
+                finishedAt: null,
+                lastUpdateAt: new Date(),
+            }],
+        }, {} as any, new TestLogger());
+        database = reduceAttachedDatabaseState(database, { type: CATALOG_UPDATE_SUCCEEDED, value: [1] }, {} as any, new TestLogger());
+        expect(database.catalogChangesSql).toBe('');
     });
 });

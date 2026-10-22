@@ -34,6 +34,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A, B where a = b;
@@ -107,6 +116,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A, B where a + d = e;
@@ -185,6 +203,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A, B where a = d and b = e;
@@ -268,6 +295,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A, B where (a = d and b = e) or (a = d and d = 42);
@@ -374,6 +410,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A, B where a = (d + 42);
@@ -455,6 +500,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A join B on (a = b);
@@ -528,6 +582,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A, C where a = c;
@@ -601,6 +664,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A, B where a = c;
@@ -744,6 +816,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A where not exists (select * from B where a = d);
@@ -822,6 +903,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: e
                 text: "e int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
         errors: []
     script:
       input: select * from A where not exists (select * from A, B where a = d);
@@ -911,6 +1001,15 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967297.1"
                 name: c_name
                 text: "c_name text"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: orders
+            columns: [o_custkey,o_totalprice]
+          - statement-id: 1
+            type: create
+            name: customer
+            columns: [c_custkey,c_name]
         errors: []
     script:
       input: select c_name, (select sum(o_totalprice) from orders where o_custkey = c_custkey) as total from customer;
@@ -1013,6 +1112,19 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967298.1"
                 name: g
                 text: "g int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: a
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: b
+            columns: [d,e]
+          - statement-id: 2
+            type: create
+            name: c
+            columns: [f,g]
         errors: []
     script:
       input: select * from A where exists (select * from B where a = d and exists (select * from C where f = d));
@@ -1109,6 +1221,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: region
                 text: "region text"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [product,amount,region]
         errors: []
     script:
       input: select product, total from (select product, sum(amount) as total from sales group by product) as s where total > 100;
@@ -1212,6 +1329,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: region
                 text: "region text"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [product,amount,region]
         errors: []
     script:
       input: with totals as (select product, sum(amount) as total from sales group by product) select product, total from totals;
@@ -1304,6 +1426,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: region
                 text: "region text"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [product,amount,region]
         errors: []
     script:
       input: with totals(item, revenue) as (select product, sum(amount) from sales group by product) select item, revenue from totals;
@@ -1396,6 +1523,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: status
                 text: "status text"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: orders
+            columns: [customer_id,amount,status]
         errors: []
     script:
       input: |-

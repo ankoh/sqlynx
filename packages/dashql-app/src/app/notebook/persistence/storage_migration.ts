@@ -38,6 +38,13 @@ export async function copyNotebook(
         fileCount++;
     }
 
+    // Catalog changes of executed statements
+    const catalogChangesSql = await source.loadNotebookCatalogChanges(notebookId);
+    if (catalogChangesSql != null) {
+        await target.saveNotebookCatalogChanges(notebookId, catalogChangesSql);
+        fileCount++;
+    }
+
     // Functions
     const functions = await source.loadNotebookFunctions(notebookId);
     if (functions != null) {
@@ -88,6 +95,12 @@ export async function cloneNotebook(
         const schema = rebaseNotebookAttachmentPaths(await source.loadNotebookSchema(sourceNotebookId), sourceNotebookId, newNotebookId);
         if (schema != null) {
             await target.saveNotebookSchema(newNotebookId, schema);
+            fileCount++;
+        }
+
+        const catalogChangesSql = await source.loadNotebookCatalogChanges(sourceNotebookId);
+        if (catalogChangesSql != null) {
+            await target.saveNotebookCatalogChanges(newNotebookId, catalogChangesSql);
             fileCount++;
         }
 

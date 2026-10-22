@@ -19,6 +19,8 @@ export type DashQLBindings = Pick<
     | 'plan'
     | 'processBatch'
     | 'parseVegaLiteToVisualize'
+    | 'appendCatalogChangesSql'
+    | 'qualifyCatalogChanges'
 >;
 
 export interface DashQLModuleOptions {
@@ -57,6 +59,15 @@ const PARSED_SCRIPT_TYPE = Symbol('PARSED_SCRIPT_TYPE');
 const PLAN_VIEW_MODEL_TYPE = Symbol('PLAN_VIEW_MODEL_TYPE');
 const SCRIPT_STATISTICS_TYPE = Symbol('SCRIPT_STATISTICS_TYPE');
 const SCRIPT_TYPE = Symbol('SCRIPT_TYPE');
+
+/// Pack catalog changes as `CatalogChanges`
+function packCatalogChanges(changes: buffers.catalog.CatalogChangeT[]): Uint8Array {
+    const list = new buffers.catalog.CatalogChangesT();
+    list.changes = changes;
+    const builder = new flatbuffers.Builder();
+    builder.finish(list.pack(builder));
+    return builder.asUint8Array();
+}
 
 /// Load the wasm binary next to this module
 async function loadDefaultWasm(): Promise<Uint8Array | URL> {
@@ -174,6 +185,17 @@ export class DashQL {
     /// Transcode a (constrained) Vega-Lite JSON spec into a VISUALIZE statement.
     /// Returns an empty string if the JSON is malformed. The source clause is derived from the
     /// spec's `data` member.
+    /// Append catalog changes to catalog changes SQL, returns the compacted SQL
+    public appendCatalogChangesSql(changesSql: string, changes: buffers.catalog.CatalogChangeT[]): string {
+        return this.bindings.appendCatalogChangesSql(changesSql, packCatalogChanges(changes));
+    }
+
+    /// Fill the missing database and schema names of catalog changes with the defaults of a connection
+    public qualifyCatalogChanges(changes: buffers.catalog.CatalogChangeT[], defaults: CatalogNameDefaults): buffers.catalog.CatalogChangeT[] {
+        const bytes = this.bindings.qualifyCatalogChanges(packCatalogChanges(changes), defaults.databaseName, defaults.schemaName);
+        return buffers.catalog.CatalogChanges.getRootAsCatalogChanges(new flatbuffers.ByteBuffer(bytes)).unpack().changes;
+    }
+
     public parseVegaLiteToVisualize(vegaLiteJson: string): string {
         return this.decoder.decode(this.bindings.parseVegaLiteToVisualize(this.encoder.encode(vegaLiteJson)));
     }
@@ -295,6 +317,14 @@ type NativeScriptSession = glue.ScriptSession;
 type NativeScript = glue.Script;
 type NativeCatalog = glue.Catalog;
 type NativePlanViewModel = glue.PlanViewModel;
+
+/// The names that qualify the relations of unqualified statements, they depend on the connection
+export interface CatalogNameDefaults {
+    /// The database of relations without a database name
+    databaseName: string;
+    /// The schema of relations without a schema name
+    schemaName: string;
+}
 
 export class DashQLScriptExecution {
     public readonly ptr: Ptr<typeof SCRIPT_EXECUTION_TYPE, NativeScriptExecution>;
@@ -717,6 +747,20 @@ export class DashQLCatalog {
     public dropDescriptor(id: number): void {
         assertUint32(id, 'catalogEntryId');
         this.ptr.assertNotNull().dropDescriptor(id);
+        this.deleteSnapshot();
+    }
+    /// Apply catalog changes to a descriptor entry, an unknown entry is created with the rank
+    public applyCatalogChanges(catalogEntryId: number, rank: number, changes: buffers.catalog.CatalogChangeT[]): void {
+        assertUint32(catalogEntryId, 'catalogEntryId');
+        assertUint32(rank, 'rank');
+        this.ptr.assertNotNull().applyCatalogChanges(catalogEntryId, rank, packCatalogChanges(changes));
+        this.deleteSnapshot();
+    }
+    /// Apply catalog changes SQL to a descriptor entry, an unknown entry is created with the rank
+    public applyCatalogChangesSql(catalogEntryId: number, rank: number, changesSql: string): void {
+        assertUint32(catalogEntryId, 'catalogEntryId');
+        assertUint32(rank, 'rank');
+        this.ptr.assertNotNull().applyCatalogChangesSql(catalogEntryId, rank, changesSql);
         this.deleteSnapshot();
     }
     /// Contains an entry id?

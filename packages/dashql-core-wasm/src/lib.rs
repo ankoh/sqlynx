@@ -10,6 +10,7 @@
 //! `Script`.
 
 use dashql_buffers::formatting::{FormattingConfigT, FormattingDialect, FormattingMode, KeywordCase};
+use dashql_core::catalog::changes::{append_catalog_changes_sql, parse_catalog_changes_sql, qualify_catalog_changes, CatalogNameDefaults};
 use dashql_core::catalog::Catalog as CoreCatalog;
 use dashql_core::completion::Completion;
 use dashql_core::error::Error;
@@ -83,6 +84,20 @@ impl Catalog {
     #[wasm_bindgen(js_name = dropDescriptor)]
     pub fn drop_descriptor(&self, id: u32) -> Result<(), JsError> {
         self.inner.borrow_mut().drop_descriptor(id).map_err(js_error)
+    }
+
+    /// Apply packed `CatalogChanges` to a descriptor entry, an unknown entry is created with the rank
+    #[wasm_bindgen(js_name = applyCatalogChanges)]
+    pub fn apply_catalog_changes(&self, id: u32, rank: u32, changes: &[u8]) -> Result<(), JsError> {
+        let changes = unpack_catalog_changes(changes)?;
+        self.inner.borrow_mut().apply_catalog_changes(id, rank, &changes).map_err(js_error)
+    }
+
+    /// Apply catalog changes SQL to a descriptor entry, an unknown entry is created with the rank
+    #[wasm_bindgen(js_name = applyCatalogChangesSql)]
+    pub fn apply_catalog_changes_sql(&self, id: u32, rank: u32, changes_sql: &str) -> Result<(), JsError> {
+        let changes = parse_catalog_changes_sql(changes_sql).map_err(js_error)?;
+        self.inner.borrow_mut().apply_catalog_changes(id, rank, &changes).map_err(js_error)
     }
 
     #[wasm_bindgen(js_name = containsEntryId)]
@@ -679,6 +694,31 @@ pub fn plan(sessions: &SessionList) -> Vec<u8> {
         })
         .collect();
     finish!(dashql_core::planner::plan(&inputs))
+}
+
+/// Read packed `CatalogChanges`
+fn unpack_catalog_changes(changes: &[u8]) -> Result<Vec<dashql_buffers::catalog::CatalogChangeT>, JsError> {
+    let changes = flatbuffers::root::<dashql_buffers::catalog::CatalogChanges>(changes)
+        .map_err(|e| JsError::new(&format!("invalid catalog changes: {e}")))?
+        .unpack();
+    Ok(changes.changes.unwrap_or_default())
+}
+
+/// Fill the missing database and schema names of packed `CatalogChanges`, returns packed `CatalogChanges`
+#[wasm_bindgen(js_name = qualifyCatalogChanges)]
+pub fn qualify_packed_catalog_changes(changes: &[u8], database_name: String, schema_name: String) -> Result<Vec<u8>, JsError> {
+    let mut changes = unpack_catalog_changes(changes)?;
+    qualify_catalog_changes(&mut changes, &CatalogNameDefaults { database_name, schema_name });
+    let mut list = dashql_buffers::catalog::CatalogChangesT::default();
+    list.changes = Some(changes);
+    Ok(finish!(list))
+}
+
+/// Append packed `CatalogChanges` to catalog changes SQL, returns the compacted SQL
+#[wasm_bindgen(js_name = appendCatalogChangesSql)]
+pub fn append_to_catalog_changes_sql(changes_sql: &str, changes: &[u8]) -> Result<String, JsError> {
+    let changes = unpack_catalog_changes(changes)?;
+    append_catalog_changes_sql(changes_sql, &changes).map_err(js_error)
 }
 
 /// Process a batch request into a `BatchResult`

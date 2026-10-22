@@ -2,6 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as React from 'react';
 
 import { findNotebookForAttachedDatabase, resolveNotebookExecutionDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
+import { APPLY_CATALOG_CHANGES } from './attached_database_state.js';
 import {
     createQueryResponseStreamMetrics,
     QUERY_CACHE_RECORDED,
@@ -264,6 +265,15 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                                     type: QUERY_STATEMENT_SUCCEEDED,
                                     value: [queryId, index, statementCount],
                                 }),
+                                // The catalog follows the DDL statements, a full refresh can be expensive
+                                onCatalogChanges: changes => {
+                                    connDispatch(connectionId, { type: APPLY_CATALOG_CHANGES, value: changes });
+                                    try {
+                                        args.onCatalogChanged?.();
+                                    } catch {
+                                        // Catalog observers must not interrupt query execution.
+                                    }
+                                },
                                 setResultStream: stream => {
                                     runtime.resultStream = stream;
                                 },

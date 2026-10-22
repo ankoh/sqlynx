@@ -46,6 +46,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select s.a, s.z, z from (select a, b as z from t) s
@@ -157,6 +174,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select z from (select b as z from t)
@@ -246,6 +280,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select s.p, s.b, s.a from (select a, b from t) s(p)
@@ -358,6 +409,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select s.p, s.q, s.r from (select a, b from t) s(p, q, r)
@@ -472,6 +540,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q.k from (select s.z as k from (select b as z from t) s) q
@@ -579,6 +664,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q.a, q.b from (select * from t) q
@@ -673,6 +775,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q.a, q.c from (select * from t, u) q
@@ -778,6 +897,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select * from t as s, (select 1) s
@@ -866,6 +1002,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a from t, (select a from u) s
@@ -965,6 +1118,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a from t, (select a from u)
@@ -1063,6 +1233,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select s.n from (select a + 1 as n from t) s
@@ -1162,6 +1349,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select s.p from (select a + 1 from t) s(p)
@@ -1263,6 +1467,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select s.b from (select b as z from t) s
@@ -1352,6 +1573,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select x.p, x.b, x.a from t as x(p)
@@ -1440,6 +1678,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select t.a, x.a from t as x
@@ -1519,6 +1774,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select r.k, r.l from (values (1, 2), (3, 4)) r(k, l)
@@ -1638,6 +1910,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select * from (values (1, 2)) r
@@ -1728,6 +2017,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: with c(p) as (select a from t) select x.q, x.p from c as x(q)
@@ -1829,6 +2135,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select c from t where a in (select c from u)
@@ -1925,6 +2248,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a from t where exists (select 1 from u where u.c = t.b)
@@ -2030,6 +2370,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select (select max(c) from u where u.a = t.a) from t
@@ -2132,6 +2489,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a from t where exists (select 1 from u where exists (select 1 from v where v.x = t.b))
@@ -2258,6 +2632,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a from t where exists (select a from u)
@@ -2350,6 +2741,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select 1 from t where exists (select a from u, u as u2)
@@ -2454,6 +2862,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select * from t, (select t.a as k) s
@@ -2541,6 +2966,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select s.k from t, lateral (select t.a as k) s
@@ -2630,6 +3072,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select * from lateral (select t.a as k) s, t
@@ -2717,6 +3176,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select (select s.k from (select t.a as k) s) from t
@@ -2813,6 +3289,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: with c as (select t.b as k) select c.k from t, c
@@ -2905,6 +3398,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select (with c as (select t.a as k) select c.k from c) from t
@@ -3004,6 +3514,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q.c, q.a from (select s.* from t, (select c from u) s) q
@@ -3119,6 +3646,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q.a, q.c from (select u.* from t, u) q
@@ -3220,6 +3764,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select m.* from missing m
@@ -3283,6 +3844,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q.a, q.c from (select * from (select c, a from u) s, t) q
@@ -3412,6 +3990,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: with c as (select a as k from t) select q.k from (select * from c) q
@@ -3517,6 +4112,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q.a, q.n from (select *, a + b as n from t) q
@@ -3624,6 +4236,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select id, x, y from v join w using (id)
@@ -3718,6 +4347,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select id from v left join w using (id)
@@ -3798,6 +4444,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select id from v natural join w
@@ -3878,6 +4541,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select v.id, w.id from v join w using (id)
@@ -3965,6 +4645,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a from t join u using (b)
@@ -4047,6 +4744,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select id from v join w using (id) join v as v2 on v2.id = v.id
@@ -4146,6 +4860,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select id from v join w on v.id = w.id
@@ -4238,6 +4969,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a + 1 as n from t order by n
@@ -4325,6 +5073,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select b as a from t order by a
@@ -4403,6 +5168,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select b as n from t order by n + 1
@@ -4488,6 +5270,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a from t order by b
@@ -4566,6 +5365,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select b as a from t group by a
@@ -4644,6 +5460,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select b as n from t group by n
@@ -4722,6 +5555,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select b as n, row_number() over (order by n) from t
@@ -4806,6 +5656,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a from t union select c from u order by a
@@ -4909,6 +5776,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q.a, q.c from (select a from t union select c from u) q
@@ -5030,6 +5914,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: with c(p, q) as (select case when a > 0 then 1 end, b from t) select c.q from c
@@ -5145,6 +6046,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: with recursive r(n) as (select 1 union all select n + 1 from r where n < 3) select n from r
@@ -5280,6 +6198,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select s.q from (select q from missing) s
@@ -5375,6 +6310,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select q from missing where id in (select q from missing2)
@@ -5480,6 +6432,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select * from missing m, (select m.q as k) s
@@ -5562,6 +6531,23 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967299.1"
                 name: y
                 text: "y int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: t
+            columns: [a,b]
+          - statement-id: 1
+            type: create
+            name: u
+            columns: [a,c]
+          - statement-id: 2
+            type: create
+            name: v
+            columns: [id,x]
+          - statement-id: 3
+            type: create
+            name: w
+            columns: [id,y]
         errors: []
     script:
       input: select a, b as n from t visualize using vegalite (mark => bar, encoding => (x => (field => a), y => (field => n)))

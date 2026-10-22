@@ -20,6 +20,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -83,6 +88,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -157,6 +167,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -282,6 +297,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -360,6 +380,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -447,6 +472,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -528,6 +558,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -616,6 +651,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -712,6 +752,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -797,6 +842,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -941,6 +991,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -1033,6 +1088,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -1121,6 +1181,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.2"
                 name: revenue
                 text: "revenue int"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: sales
+            columns: [category,revenue,date]
         errors: []
     script:
       input: |
@@ -1217,6 +1282,11 @@ analyzer-snapshots:
               - catalog-id: "256.65536.4294967296.1"
                 name: revenue
                 text: "revenue decimal"
+        catalog-changes:
+          - statement-id: 0
+            type: create
+            name: product_summary
+            columns: [product,revenue]
         errors: []
     script:
       input: |

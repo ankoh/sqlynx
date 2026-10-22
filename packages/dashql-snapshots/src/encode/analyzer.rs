@@ -3,8 +3,10 @@
 use super::{encode_location_text, Map};
 use crate::ryml::Node;
 use dashql_buffers::algebra::LiteralType;
+use dashql_buffers::catalog::CatalogChangeType;
 use dashql_buffers::parser::{Node as AstNode, SymbolSpan};
 use dashql_core::analyzer::*;
+use dashql_core::catalog::changes::{derive_catalog_change, CatalogChangeOptions};
 use dashql_core::catalog::{Catalog, ColumnLoc, QualifiedCatalogObjectId, TableDeclaration};
 use dashql_parser::parser::context::resolve_text_span;
 use dashql_parser::span::TextSpan;
@@ -74,6 +76,36 @@ fn encode_tables(e: &Encoder, tables: &[TableDeclaration]) -> Node {
     Node::seq(items)
 }
 
+/// The catalog changes of the statements, derived without defaults so names appear as written
+fn encode_catalog_changes(script: &AnalyzedScript) -> Option<Node> {
+    let options = CatalogChangeOptions::default();
+    let items: Vec<Node> = (0..script.parsed.statements.len())
+        .filter_map(|statement_id| {
+            let change = derive_catalog_change(script, statement_id, &options)?;
+            let mut m = Map::new();
+            m.int("statement-id", statement_id as i64);
+            let change_type = match change.change_type {
+                CatalogChangeType::CREATE_RELATION if change.if_not_exists => "create-if-not-exists",
+                CatalogChangeType::CREATE_RELATION => "create",
+                CatalogChangeType::DROP_RELATION => "drop",
+                _ => "none",
+            };
+            m.plain("type", change_type);
+            let name: Vec<&str> = [&change.database_name, &change.schema_name, &change.relation_name]
+                .into_iter()
+                .filter_map(|part| part.as_deref().filter(|p| !p.is_empty()))
+                .collect();
+            m.plain("name", &name.join("."));
+            if change.change_type == CatalogChangeType::CREATE_RELATION {
+                let columns = change.column_names.unwrap_or_default().into_iter().map(Node::auto).collect();
+                m.insert("columns", Node::flow_seq(columns));
+            }
+            Some(m.into_node())
+        })
+        .collect();
+    (!items.is_empty()).then(|| Node::seq(items))
+}
+
 fn boolean(value: bool) -> Node {
     Node::boolean(value)
 }
@@ -104,6 +136,9 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool, scope_catalog: Scop
     // Local declarations
     if !script.entry.table_declarations.is_empty() {
         out.insert("tables", encode_tables(&e, &script.entry.table_declarations));
+    }
+    if let Some(changes) = encode_catalog_changes(script) {
+        out.insert("catalog-changes", changes);
     }
 
     // Errors
@@ -634,8 +669,17 @@ fn encode_channel(channel: &VisEncodingChannel) -> Node {
 }
 
 /// The keys the analyzer snapshot test compares
-pub const COMPARED_KEYS: [&str; 8] =
-    ["errors", "tables", "table-refs", "inserts", "expressions", "constants", "name-scopes", "inferred-tables"];
+pub const COMPARED_KEYS: [&str; 9] = [
+    "errors",
+    "tables",
+    "catalog-changes",
+    "table-refs",
+    "inserts",
+    "expressions",
+    "constants",
+    "name-scopes",
+    "inferred-tables",
+];
 
 /// Analyze the scripts of an analyzer snapshot case like `AnalyzerSnapshotTest` does: the catalog
 /// script is analyzed and loaded with its entry id as rank, then the main script is analyzed.

@@ -1,4 +1,4 @@
-import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
+import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
@@ -122,6 +122,20 @@ export class NativeStorageBackend implements StorageBackend {
         await this.ensureDir('');
         const schemaFile = await this.abs(STORAGE_SCRIPT_SCHEMA);
         await writeTextFile(schemaFile, sql);
+    }
+
+    async loadNotebookCatalogChanges(_notebookId: string): Promise<string | null> {
+        const changesFile = await this.abs(STORAGE_CATALOG_CHANGES);
+        if (!(await exists(changesFile))) {
+            return null;
+        }
+        return await readTextFile(changesFile);
+    }
+
+    async saveNotebookCatalogChanges(_notebookId: string, sql: string): Promise<void> {
+        await this.ensureDir('');
+        const changesFile = await this.abs(STORAGE_CATALOG_CHANGES);
+        await writeTextFile(changesFile, sql);
     }
 
     async loadNotebookFunctions(_notebookId: string): Promise<string | null> {

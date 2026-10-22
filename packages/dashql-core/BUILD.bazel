@@ -125,6 +125,7 @@ DASHQL_CORE_UNIT_TESTS = [
     "analyzer_insert_test",
     "analyzer_name_resolution_test",
     "batch_test",
+    "catalog_changes_test",
     "catalog_descriptor_test",
     "catalog_test",
     "compiler_test",
