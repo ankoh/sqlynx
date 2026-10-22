@@ -14,6 +14,7 @@ import { NOTEBOOK_PATH, SELECT_NOTEBOOK, useRouteContext, useRouterNavigate } fr
 import { useVersionCheck } from '../../platform/version/version_check.js';
 import { useLocation } from 'react-router-dom';
 import { NotebookViewMode, useNotebookViewMode } from '../notebook/scripts/notebook_commands.js';
+import { FlavorLogo, useAppFlavor } from '../flavor/flavor_provider.js';
 
 const LOG_CTX = "navbar";
 
@@ -112,21 +113,20 @@ const BrandLogo = () => {
 
     return (
         <button type="button" className={styles.brand_logo} aria-label="Open notebook workbench" onClick={openWorkbench}>
-            <svg width="24px" height="24px" aria-hidden="true">
-                <use xlinkHref={`${symbols}#dashql`} />
-            </svg>
+            <FlavorLogo width="24px" height="24px" ariaHidden />
         </button>
     );
 };
 
-const BrandIdentity = () => (
-    <div className={styles.brand_identity} data-electron-drag-region>
-        <svg width="24px" height="24px" aria-hidden="true">
-            <use xlinkHref={`${symbols}#dashql`} />
-        </svg>
-        <span>DashQL</span>
-    </div>
-);
+const BrandIdentity = () => {
+    const flavor = useAppFlavor();
+    return (
+        <div className={styles.brand_identity} data-electron-drag-region>
+            <FlavorLogo width="24px" height="24px" ariaHidden />
+            <span>{flavor.displayName}</span>
+        </div>
+    );
+};
 
 export const CompactNavBar = (): React.ReactElement => {
     const route = useRouteContext();

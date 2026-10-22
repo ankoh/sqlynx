@@ -1,20 +1,18 @@
 import * as React from 'react';
 import * as styles from './file_dropzone.module.css';
-import symbols from '@ankoh/dashql-svg-symbols';
 
 import { DRAG_EVENT, DRAG_STOP_EVENT, DROP_EVENT, PlatformDragDropEventVariant } from '../../platform/events/event.js';
 import { PlatformFile } from '../../platform/file/file.js';
 import { usePlatformEventListener } from '../../platform/events/event_listener_provider.js';
 import { FileLoader } from './file_loader.js';
+import { FlavorLogo } from '../flavor/flavor_provider.js';
 
 function FileDropzoneArea() {
     return (
         <div className={styles.area_centered}>
             <div className={styles.area_container}>
                 <div className={styles.area_logo}>
-                    <svg width="180px" height="180px">
-                        <use xlinkHref={`${symbols}#dashql`} />
-                    </svg>
+                    <FlavorLogo width="180px" height="180px" />
                 </div>
             </div>
         </div>

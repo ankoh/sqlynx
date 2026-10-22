@@ -9,6 +9,7 @@ import { ParticleFlowBackground } from '../../../ui/particle_flow/particle_flow_
 import { formatBytes } from '../../../utils/format.js';
 import type { NotebookBundle } from '../persistence/notebook_bundle.js';
 import { CompactNavBar } from '../../ui/navbar.js';
+import { useAppFlavor } from '../../flavor/flavor_provider.js';
 import type { HttpNotebookLoadProgress, HttpNotebookLoadResult } from '../persistence/http_notebook_bundle.js';
 import * as styles from './notebook_import_card.module.css';
 
@@ -220,11 +221,12 @@ function FileReadyCard({ state, dependencies }: { state: FileReadyState; depende
 }
 
 function FileErrorCard({ state, dependencies }: { state: FileErrorState; dependencies: NotebookImportCardDependencies }): React.ReactElement {
+    const flavor = useAppFlavor();
     const summary = state.failedStage === 'reading'
-        ? 'DashQL could not read this file.'
+        ? `${flavor.displayName} could not read this file.`
         : state.failedStage === 'validating'
-            ? 'This file is not a valid DashQL notebook archive.'
-            : 'DashQL could not import this notebook.';
+            ? `This file is not a valid ${flavor.displayName} notebook archive.`
+            : `${flavor.displayName} could not import this notebook.`;
     return (
         <CardShell
             title="Notebook Import Failed"

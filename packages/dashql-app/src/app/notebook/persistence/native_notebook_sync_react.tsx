@@ -8,6 +8,7 @@ import { isNativePlatform } from '../../../platform/native_globals.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
 import { useStorage } from './storage_provider.js';
+import { getAppFlavor } from '../../flavor/flavor_resolution.js';
 import { NativeNotebookSyncService, nativeNotebookWatchForLocation } from './native_notebook_sync.js';
 import type { NotebookScriptsStorageSnapshot, NotebookScripts } from '../scripts/notebook_scripts.js';
 import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
@@ -26,9 +27,10 @@ interface NotebookReloadDecision {
 }
 
 async function confirmExternalReload(hasPendingWrites: boolean): Promise<NotebookReloadDecision> {
+    const appName = getAppFlavor().displayName;
     const message = hasPendingWrites
-        ? 'This notebook changed on disk while DashQL still has local changes waiting to be saved. Reload from disk and discard those pending local changes?'
-        : 'This notebook changed outside DashQL. Reload it from disk?';
+        ? `This notebook changed on disk while ${appName} still has local changes waiting to be saved. Reload from disk and discard those pending local changes?`
+        : `This notebook changed outside ${appName}. Reload it from disk?`;
     const reload = await globalThis.dashqlElectron!.confirm({message, title: 'Notebook changed on disk'});
     return { reload, discardPendingWrites: reload && hasPendingWrites };
 }

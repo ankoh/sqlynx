@@ -4,6 +4,8 @@ import { ConnectorConfigs, readConnectorConfigs } from '../notebook/connections/
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { Logger } from '../../platform/logger/logger.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
+import { AppFlavor, applyFlavorSettings } from '../flavor/flavors.js';
+import { useAppFlavor } from '../flavor/flavor_provider.js';
 
 const CONFIG_URL = new URL('../../../static/config.json', import.meta.url);
 
@@ -74,13 +76,14 @@ export interface AppConfigResult {
     traceId: number;
 }
 
-export async function downloadAppConfig(logger: Logger): Promise<AppConfigResult> {
+export async function downloadAppConfig(logger: Logger, flavor: AppFlavor): Promise<AppConfigResult> {
     const trace = createTrace();
     const traced = logger.withTrace(trace);
     try {
         const resp = await fetch(CONFIG_URL as unknown as string);
         const body = await resp.json();
         const config = readAppConfig(body);
+        config.settings = applyFlavorSettings(config.settings, flavor);
         traced.info("Loaded app config", {}, "app_config");
         return { config, traceId: trace.traceId };
     } catch (e: any) {
@@ -100,13 +103,14 @@ type Props = {
 
 export const AppConfigProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
+    const flavor = useAppFlavor();
     const configPromise = React.useRef<Promise<AppConfigResult>>(null);
     const [config, setConfig] = React.useState<AppConfig | null>(null);
     const [traceId, setTraceId] = React.useState<number | null>(null);
 
     React.useEffect(() => {
         if (!configPromise.current) {
-            configPromise.current = downloadAppConfig(logger);
+            configPromise.current = downloadAppConfig(logger, flavor);
             configPromise.current.then(result => {
                 setConfig(result.config);
                 setTraceId(result.traceId);

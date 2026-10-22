@@ -1,0 +1,11 @@
+/* Theme tokens of the sidb flavor, overriding the semantic tokens of globals.css.
+   Placeholder colors until the sidb brand palette exists. */
+:root[data-flavor="sidb"] {
+    --background_color_primary: hsl(165, 35%, 26%);
+    --background_color_80: hsl(165, 30%, 22%);
+    --background_color_100: hsl(165, 35%, 14%);
+
+    --button_hover_bg: hsl(165, 35%, 14%);
+    --button_hover_bg_inverted: hsl(165, 35%, 6%);
+    --button_hover_fg_inverted: hsl(165, 35%, 26%);
+}

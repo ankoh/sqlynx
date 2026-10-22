@@ -13,6 +13,8 @@ import { ComputeConnectionProvider } from '../compute/compute_connection_provide
 import { DashQLCoreProvider } from './providers/core_provider.js';
 import { FileDownloaderProvider } from '../platform/file/file_downloader_provider.js';
 import { FileDropzone } from './ui/file_dropzone.js';
+import { FlavorProvider, FlavorUrlKeeper } from './flavor/flavor_provider.js';
+import { applyFlavorToDocument, getAppFlavor } from './flavor/flavor_resolution.js';
 import { GitHubTheme } from '../theme/github_theme.js';
 import { HttpClientProvider } from '../platform/http/http_client_provider.js';
 import { AIClientProvider } from '../platform/ai/ai_client_provider.js';
@@ -49,8 +51,12 @@ import { NotebookExecutionProvider } from './notebook/scripts/notebook_execution
 import '../../static/fonts/fonts.css';
 import '../styles/colors.css';
 import '../styles/globals.css';
+import '../styles/flavors/sidb.css';
 
 const LOG_CTX = 'app';
+
+const APP_FLAVOR = getAppFlavor();
+applyFlavorToDocument(APP_FLAVOR);
 
 // Note that the order among connection providers is important and non-obvious.
 // For example:
@@ -155,31 +161,34 @@ const root = createRoot(element!, {
     onRecoverableError: logRecoverableReactError
 });
 root.render(
-    <Router>
-        <RouterReset />
-        <AppProviders>
-            <FileDropzone>
-                <NavBarContainer>
-                    <Routes>
-                        <Route index Component={NotebookPage} />
-                        <Route path="/notebook" Component={NotebookPage} />
-                        <Route path="/notebooks/:notebookId" Component={NotebookPage} />
-                        <Route path="/tool" element={<NavigateWithState to="/tool/format" />} />
-                        <Route path="/tool/format" Component={ToolsPage} />
-                        <Route path="/tool/hyperplan" Component={ToolsPage} />
-                        <Route path="/tool/sparkplan" Component={ToolsPage} />
-                        {isDebugBuild() && (
-                            <>
-                                <Route path="/demo/ui" Component={UIExperimentPage} />
-                                <Route path="/demo/plan" Component={HyperPlanDemoPage} />
-                                <Route path="/demo/json" Component={JsonViewerExperimentPage} />
-                                <Route path="/demo/prompt" Component={PromptDemoPage} />
-                            </>
-                        )}
-                        <Route path="*" element={<NavigateWithState to="/" />} />
-                    </Routes>
-                </NavBarContainer>
-            </FileDropzone>
-        </AppProviders>
-    </Router>
+    <FlavorProvider flavor={APP_FLAVOR}>
+        <Router>
+            <RouterReset />
+            <FlavorUrlKeeper />
+            <AppProviders>
+                <FileDropzone>
+                    <NavBarContainer>
+                        <Routes>
+                            <Route index Component={NotebookPage} />
+                            <Route path="/notebook" Component={NotebookPage} />
+                            <Route path="/notebooks/:notebookId" Component={NotebookPage} />
+                            <Route path="/tool" element={<NavigateWithState to="/tool/format" />} />
+                            <Route path="/tool/format" Component={ToolsPage} />
+                            <Route path="/tool/hyperplan" Component={ToolsPage} />
+                            <Route path="/tool/sparkplan" Component={ToolsPage} />
+                            {isDebugBuild() && (
+                                <>
+                                    <Route path="/demo/ui" Component={UIExperimentPage} />
+                                    <Route path="/demo/plan" Component={HyperPlanDemoPage} />
+                                    <Route path="/demo/json" Component={JsonViewerExperimentPage} />
+                                    <Route path="/demo/prompt" Component={PromptDemoPage} />
+                                </>
+                            )}
+                            <Route path="*" element={<NavigateWithState to="/" />} />
+                        </Routes>
+                    </NavBarContainer>
+                </FileDropzone>
+            </AppProviders>
+        </Router>
+    </FlavorProvider>
 );

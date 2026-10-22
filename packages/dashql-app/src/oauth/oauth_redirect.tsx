@@ -13,6 +13,7 @@ import { BASE64URL_CODEC } from '../utils/base64.js';
 import { Button, ButtonSize, ButtonVariant, IconButton } from '../ui/foundations/button.js';
 import { CopyToClipboardButton } from '../utils/clipboard.js';
 import { DASHQL_VERSION } from '../globals.js';
+import { FlavorProvider, useAppFlavor } from '../app/flavor/flavor_provider.js';
 import { GitHubTheme } from '../theme/github_theme.js';
 import { LogsOverlay } from '../ui/logs_overlay.js';
 import { Logger, stringifyError } from '../platform/logger/logger.js';
@@ -23,9 +24,11 @@ import { classNames } from '../utils/classnames.js';
 import { formatHHMMSS, formatTimeDifference } from '../utils/format.js';
 import { APP_EVENT_POST_MESSAGE_KIND, OAUTH_BROADCAST_CHANNEL } from '../platform/events/event.js';
 import { isAllowedOAuthCallbackUrl, validateOAuthRedirectState } from './oauth_redirect_utils.js';
+import { applyFlavorToDocument, getAppFlavor } from '../app/flavor/flavor_resolution.js';
 
 import '../../static/fonts/fonts.css';
 import '../styles/globals.css';
+import '../styles/flavors/sidb.css';
 
 const AUTO_TRIGGER_DELAY = 2000;
 const AUTO_TRIGGER_COUNTER_INTERVAL = 200;
@@ -74,6 +77,7 @@ function triggerFlow(state: OAuthState, eventBase64: string, deepLink: string, l
 
 const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProps) => {
     const logger = useLogger();
+    const flavor = useAppFlavor();
 
     const code = props.params.get('code') ?? undefined;
     const oauthError = props.params.get('error') ?? undefined;
@@ -313,11 +317,11 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                 <div className={baseStyles.banner_container}>
                     <div className={baseStyles.banner_logo}>
                         <svg width="100%" height="100%">
-                            <use xlinkHref={`${symbols}#dashql`} />
+                            <use xlinkHref={`${symbols}#${flavor.logoSymbol}`} />
                         </svg>
                     </div>
                     <div className={baseStyles.banner_text_container}>
-                        <div className={baseStyles.banner_title}>dashql</div>
+                        <div className={baseStyles.banner_title}>{flavor.displayName.toLowerCase()}</div>
                         <div className={baseStyles.app_version}>version {DASHQL_VERSION}</div>
                     </div>
                 </div>
@@ -379,16 +383,17 @@ interface OAuthFailedProps {
 }
 
 const OAuthFailed: React.FC<OAuthFailedProps> = (props: OAuthFailedProps) => {
+    const flavor = useAppFlavor();
     return (
         <div className={baseStyles.page}>
             <div className={baseStyles.banner_container}>
                 <div className={baseStyles.banner_logo}>
                     <svg width="100%" height="100%">
-                        <use xlinkHref={`${symbols}#dashql`} />
+                        <use xlinkHref={`${symbols}#${flavor.logoSymbol}`} />
                     </svg>
                 </div>
                 <div className={baseStyles.banner_text_container}>
-                    <div className={baseStyles.banner_title}>dashql</div>
+                    <div className={baseStyles.banner_title}>{flavor.displayName.toLowerCase()}</div>
                     <div className={baseStyles.app_version}>version {DASHQL_VERSION}</div>
                 </div>
             </div>
@@ -454,18 +459,23 @@ const RedirectPage: React.FC<RedirectPageProps> = (_props: RedirectPageProps) =>
     }
 };
 
+const APP_FLAVOR = getAppFlavor();
+applyFlavorToDocument(APP_FLAVOR);
+
 const element = document.getElementById('root');
 const root = createRoot(element!);
 root.render(
     <React.StrictMode>
         <BrowserRouter>
-            <GitHubTheme>
-                <LoggerProvider>
-                    <Routes>
-                        <Route path="*" element={<RedirectPage />} />
-                    </Routes>
-                </LoggerProvider>
-            </GitHubTheme>
+            <FlavorProvider flavor={APP_FLAVOR}>
+                <GitHubTheme>
+                    <LoggerProvider>
+                        <Routes>
+                            <Route path="*" element={<RedirectPage />} />
+                        </Routes>
+                    </LoggerProvider>
+                </GitHubTheme>
+            </FlavorProvider>
         </BrowserRouter>
     </React.StrictMode>,
 );
