@@ -59,15 +59,15 @@ export const ConnectorConfigTabs: React.FC<Props> = (props: Props) => {
         tabRenderers[connectorType] = () => {
             // Pass the session connection to the matching tab, or to all tabs when unconfigured
             // (since SWITCH_CONNECTOR_TYPE ensures the type matches the selected tab)
-            const databaseId = (isCurrentConnection || isUnconfigured) ? props.connectionId : null;
+            const connectionId = (isCurrentConnection || isUnconfigured) ? props.connectionId : null;
 
             switch (connectorType) {
                 case ConnectorType.TRINO:
-                    return <TrinoConnectorSettings connectionId={databaseId} />;
+                    return <TrinoConnectorSettings connectionId={connectionId} />;
                 case ConnectorType.SALESFORCE_DATA_CLOUD:
-                    return <SalesforceConnectorSettings connectionId={databaseId} />;
+                    return <SalesforceConnectorSettings connectionId={connectionId} />;
                 case ConnectorType.HYPER:
-                    return <HyperConnectorSettings connectionId={databaseId} />;
+                    return <HyperConnectorSettings connectionId={connectionId} />;
                 default:
                     throw new Error(`unsupported connector type ${connectorType}`);
             }

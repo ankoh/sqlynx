@@ -503,7 +503,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
 
     const rowProps = React.useMemo<ScriptFeedRowProps>(() => ({
         sessionId: props.sessionScripts.sessionId,
-        databaseId: props.conn?.connectionId ?? null,
+        connectionId: props.conn?.connectionId ?? null,
         connectionHealth: props.conn?.connectionHealth ?? null,
         connectionDetails: props.conn?.details ?? null,
         connectorType: props.sessionScripts.connectorInfo.connectorType,

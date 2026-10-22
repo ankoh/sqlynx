@@ -23,6 +23,7 @@ import {
 import { ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../connections/connector_info.js';
 import { ConnectionHealth, ConnectionStatus, DISCARD_CONNECTION_DRAFT, SET_CONNECTION_DRAFT, reduceConnectionState, type ConnectionState } from '../connections/connection_state.js';
 import { CONNECTOR_INFOS } from '../connections/connector_info.js';
+import { sessionDatabaseFromState } from '../connections/connection_registry.js';
 import { testSession, TEST_DATABASE_ID, TEST_SESSION_ID } from './session_test_backend.js';
 
 class NullLogger extends Logger {
@@ -93,7 +94,7 @@ describe('V2 storage writer flat mutations', () => {
                 oauthState: { accessToken: { accessToken: 'runtime-secret' } },
             } } },
         } as unknown as ConnectionState;
-        await writer.write(sessionId, { type: WRITE_SESSION_MANIFEST, value: [sessionId, databaseId, [state]] });
+        await writer.write(sessionId, { type: WRITE_SESSION_MANIFEST, value: [sessionId, databaseId, [sessionDatabaseFromState(state)]] });
         const saved = await backend.loadSession(sessionId);
         expect(saved.mainDatabase).toEqual({ databaseId, params: state.params });
         expect(JSON.stringify(saved)).not.toContain('runtime-secret');
@@ -116,7 +117,7 @@ describe('V2 storage writer flat mutations', () => {
             value: [sessionId, 'ffffffff-eeee-4ddd-8ccc-bbbbbbbbbbbb', [
                 state('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', ConnectorType.HYPER, { protocol: 'WASM' }),
                 state('ffffffff-eeee-4ddd-8ccc-bbbbbbbbbbbb', ConnectorType.TRINO, { endpoint: 'https://trino.example' }),
-            ]],
+            ].map(sessionDatabaseFromState)],
         });
 
         expect((await backend.loadSession(sessionId)).attachedDatabases).toEqual([

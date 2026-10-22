@@ -104,7 +104,7 @@ describe('V2 app state loader', () => {
             attachedDatabaseIds: [TEST_DATABASE_ID],
         });
         expect(result.connectionStates.size).toBe(2);
-        expect(result.sessionScripts.get(TEST_SESSION_ID)?.databaseId).toBe(remoteId);
+        expect(result.sessionScripts.get(TEST_SESSION_ID)?.connectionId).toBe(remoteId);
     });
 
     it('restores invalid drafts separately from committed settings without runtime OAuth state', async () => {
@@ -141,7 +141,7 @@ describe('V2 app state loader', () => {
             attachedDatabases: [{ databaseId: remoteId, params: { trino: { endpoint: 'https://trino.example' } } as any }],
         }));
         const result = await restoreAppState(core, backend, new NullLogger(), () => {}, processor);
-        expect(result.sessionScripts.get(TEST_SESSION_ID)?.databaseId).toBe(TEST_DATABASE_ID);
+        expect(result.sessionScripts.get(TEST_SESSION_ID)?.connectionId).toBe(TEST_DATABASE_ID);
     });
 
     it('restores saved Salesforce relations and functions into the main catalog on reopen', async () => {
@@ -276,7 +276,7 @@ describe('real-core startup catalog restoration', () => {
         expect(main.catalogFunctionScript.toString()).toBe(functions);
         expect(processor).toHaveBeenCalledTimes(1);
         expect(session.connectionCatalog).toBe(main.catalog);
-        expect(session.databaseId).toBe(remoteId);
+        expect(session.connectionId).toBe(remoteId);
         const entries = main.catalog.describeEntries().unpackAndDestroy().entries as dashql.buffers.catalog.CatalogEntryT[];
         expect(entries.map(entry => entry.catalogEntryId).sort((a, b) => a - b)).toEqual([
             main.catalogRelationScript.catalog_entry_id, main.catalogFunctionScript.catalog_entry_id,

@@ -1,6 +1,6 @@
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
 import { type ConnectionState } from '../../connections/connection_state.js';
-import { connectionLabel } from './connection_label.js';
+import { connectionLabel } from '../../connections/ui/connection_label.js';
 import {
     connectionDisplayOrder,
     flattenCatalogRows,

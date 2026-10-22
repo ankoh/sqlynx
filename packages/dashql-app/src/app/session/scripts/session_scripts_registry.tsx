@@ -4,11 +4,13 @@ import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptDa
 import { Dispatch } from '../../../utils/variant.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
 import { CONNECTOR_TYPES, ConnectorType } from '../../connections/connector_info.js';
+import { createDefaultConnectionParamsForConnector } from '../../connections/connection_params.js';
 import { useStorageWriter } from '../../storage/storage_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import {
     REPLACE_SESSION_SCRIPTS,
     DEBOUNCE_DURATION_SESSION_WRITE,
+    type SessionReplacement,
     groupSessionFunctionWrites,
     groupSessionWrites,
     WRITE_SESSION_FUNCTION_SCRIPT,
@@ -83,7 +85,7 @@ export function useSessionScriptsAllocator(): SessionScriptsAllocator {
                 scripts.sessionMetadata.originalFileName = `${scripts.connectorInfo.names.fileShort}`;
             }
 
-            addSessionScriptsForConnection(reg, state.databaseId, sessionId);
+            addSessionScriptsForConnection(reg, state.connectionId, sessionId);
             reg.sessionScriptsByConnectionType[state.connectorInfo.connectorType].push(sessionId);
             reg.sessionScriptsMap.set(sessionId, scripts);
             return { ...reg };
@@ -91,7 +93,7 @@ export function useSessionScriptsAllocator(): SessionScriptsAllocator {
 
         storage.write(groupSessionWrites(scripts.sessionId), {
             type: REPLACE_SESSION_SCRIPTS,
-            value: scripts
+            value: sessionReplacement(scripts),
         }, DEBOUNCE_DURATION_SESSION_WRITE);
         storage.write(groupSessionFunctionWrites(scripts.sessionId), {
             type: WRITE_SESSION_FUNCTION_SCRIPT,
@@ -99,6 +101,24 @@ export function useSessionScriptsAllocator(): SessionScriptsAllocator {
         }, DEBOUNCE_DURATION_SESSION_WRITE);
         return [sessionId, scripts];
     }, [setReg, storage]);
+}
+
+/// The write of a whole session, its script texts are read when the write runs
+export function sessionReplacement(scripts: SessionScripts): SessionReplacement {
+    return {
+        sessionId: scripts.sessionId,
+        name: scripts.name,
+        scripts: Object.values(scripts.scriptRefs).flatMap(ref => {
+            const script = scripts.scripts[ref.scriptId];
+            return script == null ? [] : [{ fileName: ref.fileName, readText: () => script.scriptSession.getText() }];
+        }),
+        mainDatabase: {
+            databaseId: scripts.connectionId,
+            params: createDefaultConnectionParamsForConnector(scripts.connectorInfo),
+        },
+        originalFileName: scripts.sessionMetadata.originalFileName,
+        settings: scripts.settings,
+    };
 }
 
 /// Record that a session analyzes its scripts with a connection (mutates the registry)
@@ -129,7 +149,7 @@ export function removeSessionScriptsFromRegistry(reg: SessionScriptsRegistry, se
     const entry = reg.sessionScriptsMap.get(sessionId);
     if (!entry) return reg;
     reg.sessionScriptsMap.delete(sessionId);
-    removeSessionScriptsForConnection(reg, entry.databaseId, sessionId);
+    removeSessionScriptsForConnection(reg, entry.connectionId, sessionId);
     const connectorType = entry.connectorInfo.connectorType;
     reg.sessionScriptsByConnectionType[connectorType] =
         reg.sessionScriptsByConnectionType[connectorType].filter(id => id !== sessionId);

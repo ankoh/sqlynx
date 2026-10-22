@@ -59,7 +59,7 @@ function fixture(entries = [
         return { unpackAndDestroy };
     });
     const session = {
-        sessionId: 'session', databaseId: 'connection', instance: { plan }, connectionCatalog: {},
+        sessionId: 'session', connectionId: 'connection', instance: { plan }, connectionCatalog: {},
         scriptRefs: Object.fromEntries(entries.map((entry, index) => [entry.file, { scriptId: index + 100 }])),
         scripts: Object.fromEntries(entries.map((entry, index) => [index + 100, {
             scriptKey: index + 100, fileName: entry.file, scriptSession: scriptSessions[index], latestQueryId: 50 + index,
@@ -192,7 +192,7 @@ describe('runSessionExecution', () => {
                     case 'catalog': f.graph.scripts[0].analyzedCatalogRevision = 0n; break;
                     case 'membership': delete f.session.scriptRefs['1_empty.sql']; break;
                     case 'session': f.session.scripts[102].scriptSession = f.session.scripts[101].scriptSession; break;
-                    case 'connection': f.getSession.mockReturnValue({ ...f.session, databaseId: 'other' }); break;
+                    case 'connection': f.getSession.mockReturnValue({ ...f.session, connectionId: 'other' }); break;
                     case 'missing': f.getSession.mockReturnValue(null); break;
                     case 'order': f.graph.nodes.reverse(); break;
                     case 'edge': f.graph.edges.push({ from: 3, to: 0 }); break;

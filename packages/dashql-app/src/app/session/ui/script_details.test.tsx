@@ -57,7 +57,7 @@ function scripts(): SessionScripts {
         }), startExecution: () => ({}),
     };
     return {
-        sessionId: 'session', name: 'Test', databaseId: 'database', settings: { cacheQueryResults: true }, instance: {} as any, sessionMetadata: {} as any,
+        sessionId: 'session', name: 'Test', connectionId: 'database', settings: { cacheQueryResults: true }, instance: {} as any, sessionMetadata: {} as any,
         connectorInfo: { connectorType: ConnectorType.TRINO } as any, connectionCatalog: {} as any,
         scripts: { 1: { scriptKey: 1, fileName: '01_first.sql', scriptSession, analysisOutdated: false, annotations: {}, latestQueryId: null } as any,
             2: { scriptKey: 2, fileName: '02_second.sql', scriptSession, analysisOutdated: false, annotations: {}, latestQueryId: null } as any },

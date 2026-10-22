@@ -30,8 +30,8 @@ import { StorageProvider, useStorageWriter } from '../storage/storage_provider.j
 import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from '../storage/session_test_backend.js';
 import type { StorageWriter } from '../storage/storage_writer.js';
 
-function database(databaseId: string, health: ConnectionHealth): ConnectionState {
-    return { connectionId: databaseId, connectionHealth: health } as ConnectionState;
+function database(connectionId: string, health: ConnectionHealth): ConnectionState {
+    return { connectionId: connectionId, connectionHealth: health } as ConnectionState;
 }
 
 function registry(attachedDatabaseId: string | null, mainDatabaseId = attachedDatabaseId ?? 'local'): ConnectionRegistry {

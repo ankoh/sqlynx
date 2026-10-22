@@ -10,10 +10,10 @@ import { cancelConnectionSetup, registerConnectionSetup } from '../connections/c
 const startupAttempts = new Map<string, AbortController>();
 
 // Settings can cancel the loader-owned attempt without creating a second setup controller.
-export function cancelInitialMemorySetup(databaseId: string): boolean {
-    const abort = startupAttempts.get(databaseId);
+export function cancelInitialMemorySetup(connectionId: string): boolean {
+    const abort = startupAttempts.get(connectionId);
     if (abort == null) return false;
-    cancelConnectionSetup(databaseId);
+    cancelConnectionSetup(connectionId);
     return true;
 }
 
@@ -56,9 +56,9 @@ export function useInitialMemorySetup(
         });
     }, [database, dispatch, logger, sessionId, setup]);
     React.useEffect(() => () => {
-        for (const [databaseId, abort] of attempts.current) {
+        for (const [connectionId, abort] of attempts.current) {
             abort.abort(new DOMException('App loader unmounted', 'AbortError'));
-            if (startupAttempts.get(databaseId) === abort) startupAttempts.delete(databaseId);
+            if (startupAttempts.get(connectionId) === abort) startupAttempts.delete(connectionId);
         }
     }, []);
 }

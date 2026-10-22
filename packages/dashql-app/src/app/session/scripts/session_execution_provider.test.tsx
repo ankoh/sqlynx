@@ -70,14 +70,14 @@ function fixture(sessionId: string, deferStream = false) {
         edges: [], diagnostics: [],
     }) }));
     const session = {
-        sessionId, databaseId: `${sessionId}-database`, instance: { plan }, connectionCatalog: {},
+        sessionId, connectionId: `${sessionId}-database`, instance: { plan }, connectionCatalog: {},
         scriptRefs: { '1_commands.sql': { scriptId: 1, fileName: '1_commands.sql' } },
         scripts: { 1: { scriptKey: 1, fileName: '1_commands.sql', scriptSession, latestQueryId: null } },
     } as unknown as SessionScripts;
     const database = {
-        connectionId: session.databaseId, active: false,
+        connectionId: session.connectionId, active: false,
         connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
-        connectionSignature: { signatureString: session.databaseId },
+        connectionSignature: { signatureString: session.connectionId },
         connectionHealth: ConnectionHealth.ONLINE, metrics: createConnectionMetrics(),
         details: { type: HYPER_CONNECTOR, value: { proto: {}, channel: { executeQuery } } },
         queriesActive: new Map(), queriesActiveOrdered: [],

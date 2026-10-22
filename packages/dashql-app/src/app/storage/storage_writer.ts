@@ -3,11 +3,7 @@ import * as dashql from '@ankoh/dashql-core';
 
 import { Logger, stringifyError } from '../../platform/logger/logger.js';
 import { VariantKind } from '../../utils/index.js';
-import { SessionScripts } from '../session/scripts/session_scripts.js';
-import { ConnectionState } from '../connections/connection_state.js';
-import { createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
-import type { SessionSettings } from '../session/scripts/session_settings.js';
-import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, ConnectionEntry, ConnectionParams, SessionRegistryBackend } from './storage_backend.js';
+import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, SessionSettings, AttachedDatabase, ConnectionEntry, ConnectionParams, SessionRegistryBackend } from './storage_backend.js';
 import { STORAGE_SCRIPTS_FOLDER, STORAGE_SESSION_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CONNECTIONS_FOLDER, isSessionRegistryBackend } from './storage_backend.js';
 import { SESSION_FORMAT_VERSION } from '../../migration/versions.js';
 
@@ -70,6 +66,21 @@ export interface SessionProperties {
     /// The session settings
     settings: SessionSettings;
 }
+/// A session that is written as a whole, its scripts first and its manifest last
+export interface SessionReplacement {
+    /// The session id
+    sessionId: string;
+    /// The session name, null keeps the name on disk
+    name: string | null;
+    /// The scripts, their text is read when the write runs
+    scripts: Array<{ fileName: string; readText: () => string }>;
+    /// The main database of a session that is not stored yet
+    mainDatabase: AttachedDatabase;
+    /// The file name the session was created from, if any
+    originalFileName: string | undefined;
+    /// The session settings
+    settings: SessionSettings;
+}
 export const WRITE_SESSION_CATALOG_SCRIPT = Symbol('WRITE_SESSION_CATALOG_SCRIPT');
 export const WRITE_SESSION_FUNCTION_SCRIPT = Symbol('WRITE_SESSION_FUNCTION_SCRIPT');
 export const WRITE_SESSION_CATALOG_CHANGES = Symbol('WRITE_SESSION_CATALOG_CHANGES');
@@ -84,12 +95,12 @@ export const DELETE_SCRIPT = Symbol('DELETE_SCRIPT');
 export const RENAME_SCRIPT = Symbol('RENAME_SCRIPT');
 
 export type StorageWriteTaskVariant =
-    | VariantKind<typeof WRITE_SESSION_MANIFEST, [string, string, ConnectionState[]]>
+    | VariantKind<typeof WRITE_SESSION_MANIFEST, [string, string, AttachedDatabase[]]>
     | VariantKind<typeof WRITE_SESSION_PROPERTIES, [string, SessionProperties]>
     | VariantKind<typeof WRITE_SESSION_CATALOG_SCRIPT, [string, dashql.DashQLScript]>
     | VariantKind<typeof WRITE_SESSION_FUNCTION_SCRIPT, [string, dashql.DashQLScript]>
     | VariantKind<typeof WRITE_SESSION_CATALOG_CHANGES, [string, string]>
-    | VariantKind<typeof REPLACE_SESSION_SCRIPTS, SessionScripts>
+    | VariantKind<typeof REPLACE_SESSION_SCRIPTS, SessionReplacement>
     | VariantKind<typeof WRITE_CONNECTION_ENTRY, ConnectionEntry>
     | VariantKind<typeof DELETE_CONNECTION_ENTRY, string>
     | VariantKind<typeof WRITE_CONNECTION_FILE, [string, string, string]>
@@ -573,18 +584,11 @@ export class StorageWriter {
                     sessionId,
                 }, LOG_CTX);
 
-                // Extract connection params, drafts are kept in the app manifest only
-                const persistedDatabases: Array<SessionData['attachedDatabases'][number]> = [];
-                for (const database of databases) {
-                    const params = database.params;
-                    if (params == null) continue;
-                    persistedDatabases.push({ databaseId: database.connectionId, params });
-                }
-                const mainDatabase = persistedDatabases.find(database => database.databaseId === mainDatabaseId);
+                const mainDatabase = databases.find(database => database.databaseId === mainDatabaseId);
                 if (mainDatabase == null) {
                     throw new Error(`main database ${mainDatabaseId} is not attached to session ${sessionId}`);
                 }
-                const attachedDatabases = persistedDatabases.filter(database => database.databaseId !== mainDatabaseId);
+                const attachedDatabases = databases.filter(database => database.databaseId !== mainDatabaseId);
 
                 // Load whatever is already on disk so we can (a) preserve the original createdAt
                 // instead of churning a fresh timestamp on every write, and (b) skip the write
@@ -620,7 +624,7 @@ export class StorageWriter {
                 if (existingSession != null && sessionManifestEquals(existingSession, connData)) {
                     this.logger.debug("Skipping session write: manifest unchanged", {
                         sessionId,
-                        databaseIds: databases.map(database => database.connectionId).join(','),
+                        databaseIds: databases.map(database => database.databaseId).join(','),
                     }, LOG_CTX);
                     break;
                 }
@@ -702,25 +706,20 @@ export class StorageWriter {
                 break;
             }
             case REPLACE_SESSION_SCRIPTS: {
-                const sessionScripts = task.value;
+                const session = task.value;
+                const sessionId = session.sessionId;
                 this.logger.info("Creating session", {
                     key,
-                    sessionId: sessionScripts.sessionId,
+                    sessionId,
                 }, LOG_CTX);
 
-                const sessionId = sessionScripts.sessionId;
-
-                for (const fileName in sessionScripts.scriptRefs) {
-                        const scriptRef = sessionScripts.scriptRefs[fileName];
-                        const scriptData = sessionScripts.scripts[scriptRef.scriptId];
-                        if (scriptData) {
-                            const sql = scriptData.scriptSession.getText();
-                            const t0 = new Date();
-                            await this.backend.saveScript(sessionId, scriptRef.fileName, sql);
-                            const t1 = new Date();
-                            this.registerWrite(`${sessionId}/scripts/${scriptRef.fileName}`, sql.length, t1.getTime() - t0.getTime());
-                            this.completedFileContents.set(`${sessionId}/scripts/${scriptRef.fileName}`, sql);
-                        }
+                for (const script of session.scripts) {
+                    const sql = script.readText();
+                    const t0 = new Date();
+                    await this.backend.saveScript(sessionId, script.fileName, sql);
+                    const t1 = new Date();
+                    this.registerWrite(`${sessionId}/scripts/${script.fileName}`, sql.length, t1.getTime() - t0.getTime());
+                    this.completedFileContents.set(`${sessionId}/scripts/${script.fileName}`, sql);
                 }
 
                 // Save session last so it never references content that doesn't exist yet.
@@ -741,28 +740,25 @@ export class StorageWriter {
                     existingName = existingSession.name;
                     existingMetadata = existingSession.metadata;
                 } catch {
-                    mainDatabase = {
-                        databaseId: sessionScripts.databaseId,
-                        params: createDefaultConnectionParamsForConnector(sessionScripts.connectorInfo),
-                    };
+                    mainDatabase = session.mainDatabase;
                     attachedDatabases = [];
                     createdAt = new Date().toISOString();
                 }
 
                 const sessionMetadata: StorageSessionMetadata = {
                     ...existingMetadata,
-                    originalFileName: sessionScripts.sessionMetadata.originalFileName,
+                    originalFileName: session.originalFileName,
                     createdAt,
                 };
 
                 const connData: SessionData = {
                     formatVersion: SESSION_FORMAT_VERSION,
-                    sessionId: sessionScripts.sessionId,
-                    ...(sessionScripts.name ? { name: sessionScripts.name } : existingName ? { name: existingName } : {}),
+                    sessionId,
+                    ...(session.name ? { name: session.name } : existingName ? { name: existingName } : {}),
                     mainDatabase,
                     attachedDatabases,
                     metadata: sessionMetadata,
-                    settings: sessionScripts.settings,
+                    settings: session.settings,
                 };
 
                 const sessionTimeBefore = new Date();

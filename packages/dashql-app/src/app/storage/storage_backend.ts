@@ -68,6 +68,7 @@ export type AppSettings = app_manifest.AppSettings;
 export type ConnectionEntry = app_manifest.ConnectionEntry;
 export type SessionData = app_session.SessionData;
 export type SessionMetadata = app_session.SessionMetadata;
+export type SessionSettings = app_session.SessionSettings;
 export type AttachedDatabase = app_session.AttachedDatabase;
 export type ConnectionParams = AttachedDatabase['params'];
 

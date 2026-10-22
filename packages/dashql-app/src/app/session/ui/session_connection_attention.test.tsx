@@ -39,8 +39,8 @@ describe('session connection attention', () => {
     });
 
     it('clears on session, main database, or health changes and ignores online requests', () => {
-        const render = (sessionId: string, health: ConnectionHealth, databaseId = 'main') =>
-            act(() => root.render(<Probe sessionId={sessionId} health={health} databaseId={databaseId} />));
+        const render = (sessionId: string, health: ConnectionHealth, connectionId = 'main') =>
+            act(() => root.render(<Probe sessionId={sessionId} health={health} databaseId={connectionId} />));
         render('a', ConnectionHealth.NOT_STARTED);
         act(() => signal.request('a'));
         render('b', ConnectionHealth.NOT_STARTED);

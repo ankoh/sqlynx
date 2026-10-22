@@ -41,7 +41,7 @@ export interface ScriptCardProps {
     sessionId: string;
     /// The connection fields of the card.
     /// The connection state itself changes with every query event of the session.
-    databaseId: string | null;
+    connectionId: string | null;
     connectionHealth: ConnectionHealth | null;
     connectionDetails: ConnectionState['details'] | null;
     connectorType: ConnectorType;
@@ -213,9 +213,9 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
     const cancelEntryOperation = React.useCallback(() => {
         if (entryStatus?.kind === EntryStatusKind.Query && props.scriptData?.latestQueryId != null) {
             if (sessionExecution.busy) sessionExecution.stop();
-            else if (props.databaseId != null) cancelQuery(props.databaseId, props.scriptData.latestQueryId);
+            else if (props.connectionId != null) cancelQuery(props.connectionId, props.scriptData.latestQueryId);
         }
-    }, [cancelQuery, entryStatus?.kind, props.databaseId, props.scriptData?.latestQueryId, sessionExecution.busy, sessionExecution.stop]);
+    }, [cancelQuery, entryStatus?.kind, props.connectionId, props.scriptData?.latestQueryId, sessionExecution.busy, sessionExecution.stop]);
 
     const acceptDiff = React.useCallback(() => {
         if (scriptKey != null) props.onAcceptDiff(scriptKey);
@@ -313,7 +313,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
                         onClick={() => {
                             if (queryActive && props.scriptData?.latestQueryId != null) {
                                 if (sessionExecution.busy) sessionExecution.stop();
-                                else if (props.databaseId != null) cancelQuery(props.databaseId, props.scriptData.latestQueryId);
+                                else if (props.connectionId != null) cancelQuery(props.connectionId, props.scriptData.latestQueryId);
                             } else {
                                 props.onExecute(props.scriptFileName);
                             }
@@ -476,7 +476,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
 
 export interface ScriptFeedRowProps {
     sessionId: string;
-    databaseId: string | null;
+    connectionId: string | null;
     connectionHealth: ConnectionHealth | null;
     connectionDetails: ConnectionState['details'] | null;
     connectorType: ConnectorType;
@@ -624,7 +624,7 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                 <ScriptCard
                     key={entry?.scriptId}
                     sessionId={props.sessionId}
-                    databaseId={props.databaseId}
+                    connectionId={props.connectionId}
                     connectionHealth={props.connectionHealth}
                     connectionDetails={props.connectionDetails}
                     connectorType={props.connectorType}

@@ -19,7 +19,7 @@ export function useSessionScriptsSetup(): SessionScriptsSetup {
             sessionId,
             name: name ?? null,
             settings: createDefaultSessionSettings(database.connectorInfo),
-            databaseId: database.connectionId,
+            connectionId: database.connectionId,
             connectionCatalog: database.catalog,
             scripts: {},
             scriptRefs: {},

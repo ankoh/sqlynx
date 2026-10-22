@@ -48,7 +48,7 @@ export interface SessionScripts {
     /// The session settings.
     settings: SessionSettings;
     /// Attached database whose catalog backs script analysis.
-    databaseId: string;
+    connectionId: string;
     /// The session metadata
     sessionMetadata: SessionMetadataType;
     /// The connector info

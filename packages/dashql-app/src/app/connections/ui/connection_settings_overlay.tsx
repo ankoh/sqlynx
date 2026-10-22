@@ -123,10 +123,10 @@ interface FooterProps {
 
 /// The sessions that use the connection and the outcome of saving it
 function ConnectionSaveFooter(props: FooterProps): React.ReactElement | null {
-    const databaseId = props.connectionId;
+    const connectionId = props.connectionId;
     const sessionIds = useConnectionRegistrySelector(React.useCallback(
-        registry => databaseId == null ? '' : findSessionsForConnection(registry, databaseId).join(','),
-        [databaseId],
+        registry => connectionId == null ? '' : findSessionsForConnection(registry, connectionId).join(','),
+        [connectionId],
     ));
     const sessionCount = sessionIds === '' ? 0 : sessionIds.split(',').length;
     const label = props.renderSessionName ?? ((sessionId: string) => sessionId);

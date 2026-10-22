@@ -1,4 +1,4 @@
-import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
+import { ConnectionHealth, type ConnectionState } from '../connection_state.js';
 import { canRefreshConnection } from './connection_refresh.js';
 
 function database(overrides: Partial<ConnectionState> = {}): ConnectionState {

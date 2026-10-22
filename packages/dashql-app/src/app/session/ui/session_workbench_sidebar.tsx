@@ -61,6 +61,7 @@ import {
     useAttachedDatabaseStateAllocator,
     useDynamicConnectionDispatch,
     type ConnectionRegistry,
+    sessionDatabaseFromState,
 } from '../../connections/connection_registry.js';
 import {
     createDefaultHyperWasmConnectionState,
@@ -100,9 +101,9 @@ import {
 } from '../scripts/session_scripts_registry.js';
 import { useSessionScriptsSetup } from '../scripts/session_scripts_setup.js';
 import { BundledSessionsOverlay } from '../../ui/bundled_sessions_overlay.js';
-import { connectionLabel, isHyperWasmConnection } from './connection_label.js';
+import { connectionLabel, isHyperWasmConnection } from '../../connections/ui/connection_label.js';
 import { useAppFlavor } from '../../flavor/flavor_provider.js';
-import { canRefreshConnection } from './connection_refresh.js';
+import { canRefreshConnection } from '../../connections/ui/connection_refresh.js';
 import { SessionURLShareOverlay } from './session_url_share_overlay.js';
 import { SessionFileSaveOverlay } from './session_file_save_overlay.js';
 import { isCatalogRefreshRunning } from '../../connections/catalog_update_state.js';
@@ -367,9 +368,9 @@ interface ConnectionTreeRowProps {
     rows: ConnectionTreeRow[];
     expanded: ReadonlySet<string>;
     onToggle: (key: string) => void;
-    onOpenSettings: (databaseId: string, anchor: HTMLButtonElement) => void;
-    describeUsage?: (databaseId: string) => ConnectionUsage;
-    onDelete?: (databaseId: string) => void;
+    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement) => void;
+    describeUsage?: (connectionId: string) => ConnectionUsage;
+    onDelete?: (connectionId: string) => void;
 }
 
 /// How sessions use a connection
@@ -455,16 +456,16 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
 
 interface ConnectionTreeProps {
     databases: ConnectionState[];
-    onOpenSettings: (databaseId: string, anchor: HTMLButtonElement) => void;
+    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement) => void;
     /// Describe how sessions use a connection
-    describeUsage?: (databaseId: string) => ConnectionUsage;
+    describeUsage?: (connectionId: string) => ConnectionUsage;
     /// Delete a connection that no session uses
-    onDelete?: (databaseId: string) => void;
+    onDelete?: (connectionId: string) => void;
     /// Is a connection expanded initially?
     initiallyExpanded?: (database: ConnectionState, databaseCount: number) => boolean;
 }
 
-const connectionKey = (databaseId: string) => `attached-database:${databaseId}`;
+const connectionKey = (connectionId: string) => `attached-database:${connectionId}`;
 
 /// Keep the identity of an array as long as its elements are identical
 function useShallowStableArray<T>(values: T[]): T[] {
@@ -479,46 +480,46 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({ databases, onOpe
     // The database states change with every query event while the catalogs rarely change.
     // A catalog caches its snapshot until it is modified (which destroys the snapshot), so the snapshot identity
     // tells us when the trees must be rebuilt. Never keep a reader of a snapshot that is no longer current.
-    const databaseIds = useShallowStableArray(databases.map(database => database.connectionId));
+    const connectionIds = useShallowStableArray(databases.map(database => database.connectionId));
     const snapshots = useShallowStableArray(databases.map(database => database.catalog.createSnapshot()));
-    const catalogTrees = React.useMemo(() => databaseIds.map((databaseId, i) => {
+    const catalogTrees = React.useMemo(() => connectionIds.map((connectionId, i) => {
         const reader = snapshots[i].read();
         return {
-            databaseId,
+            connectionId,
             reader,
-            roots: createCatalogTree(reader, `${connectionKey(databaseId)}/catalog`),
+            roots: createCatalogTree(reader, `${connectionKey(connectionId)}/catalog`),
         };
-    }), [databaseIds, snapshots]);
+    }), [connectionIds, snapshots]);
     const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(() => {
         const initial = new Set<string>();
         catalogTrees.forEach((tree, i) => {
             if (!initiallyExpanded(databases[i], databases.length)) return;
-            initial.add(connectionKey(tree.databaseId));
+            initial.add(connectionKey(tree.connectionId));
             for (const root of tree.roots) initial.add(root.key);
         });
         return initial;
     });
-    const knownDatabaseIds = React.useRef(new Set(databaseIds));
+    const knownConnectionIds = React.useRef(new Set(connectionIds));
     React.useEffect(() => {
-        const nextDatabaseIds = new Set(databaseIds);
+        const nextConnectionIds = new Set(connectionIds);
         setExpanded(current => {
             const next = new Set([...current].filter(key => {
-                const databaseId = key.split(':', 2)[1]?.split('/', 1)[0];
-                return databaseId == null || nextDatabaseIds.has(databaseId);
+                const connectionId = key.split(':', 2)[1]?.split('/', 1)[0];
+                return connectionId == null || nextConnectionIds.has(connectionId);
             }));
             catalogTrees.forEach((tree, i) => {
-                if (knownDatabaseIds.current.has(tree.databaseId)) return;
+                if (knownConnectionIds.current.has(tree.connectionId)) return;
                 if (initiallyExpanded(databases[i], databases.length)) {
-                    next.add(connectionKey(tree.databaseId));
+                    next.add(connectionKey(tree.connectionId));
                     for (const root of tree.roots) next.add(root.key);
                 }
             });
             return next;
         });
-        knownDatabaseIds.current = nextDatabaseIds;
-    }, [databaseIds]);
+        knownConnectionIds.current = nextConnectionIds;
+    }, [connectionIds]);
     const catalogRows = React.useMemo(() => catalogTrees.map(tree => (
-        expanded.has(connectionKey(tree.databaseId))
+        expanded.has(connectionKey(tree.connectionId))
             ? flattenCatalogRows(tree.reader, tree.roots, expanded)
             : []
     )), [catalogTrees, expanded]);
@@ -580,9 +581,9 @@ export function listedConnections(
 ): ConnectionState[] {
     const listed = [...currentSessionConnections];
     const seen = new Set(listed.map(database => database.connectionId));
-    for (const [databaseId, database] of registry.connections) {
-        if (seen.has(databaseId)) continue;
-        const sessions = findSessionsForConnection(registry as ConnectionRegistry, databaseId);
+    for (const [connectionId, database] of registry.connections) {
+        if (seen.has(connectionId)) continue;
+        const sessions = findSessionsForConnection(registry as ConnectionRegistry, connectionId);
         if (sessions.length === 0 ? database.active : sessions.some(sessionId => sessionIds.has(sessionId))) {
             listed.push(database);
         }
@@ -942,10 +943,10 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         if (route.sessionSetupStatus !== SessionSetupStatus.CONFIGURING
             || route.sessionId !== props.sessionScripts.sessionId) return;
         const mapping = databaseRegistry.attachedDatabasesBySession.get(route.sessionId);
-        const databaseId = mapping?.mainDatabaseId ?? null;
-        if (databaseId != null) {
+        const connectionId = mapping?.mainDatabaseId ?? null;
+        if (connectionId != null) {
             connectionSettingsAnchorRef.current = document.querySelector('[aria-label="Create session"]');
-            setConnectionOverlayDatabaseId(databaseId);
+            setConnectionOverlayDatabaseId(connectionId);
         }
     }, [databaseRegistry.attachedDatabasesBySession, props.sessionScripts.sessionId, route.sessionId, route.sessionSetupStatus]);
 
@@ -954,8 +955,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         const items: SessionItem[] = [];
         for (const [sessionId, scripts] of scriptsRegistry.sessionScriptsMap) {
             const mapping = databaseRegistry.attachedDatabasesBySession.get(sessionId);
-            const databaseId = mapping?.mainDatabaseId;
-            const database = databaseId == null ? null : databaseRegistry.connections.get(databaseId);
+            const connectionId = mapping?.mainDatabaseId;
+            const database = connectionId == null ? null : databaseRegistry.connections.get(connectionId);
             if (database == null) continue;
             const location = storageReader.getSessionLocation(sessionId);
             const path = displayPath(sessionId, location);
@@ -1000,9 +1001,9 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         [databaseRegistry, scriptsRegistry, sessionConnectionRows],
     );
     const connectionCount = connectionRows.length;
-    const describeUsage = React.useCallback((databaseId: string): ConnectionUsage => ({
-        sessionCount: connectionRefCount(databaseRegistry, databaseId),
-        usedHere: sessionConnectionRows.some(database => database.connectionId === databaseId),
+    const describeUsage = React.useCallback((connectionId: string): ConnectionUsage => ({
+        sessionCount: connectionRefCount(databaseRegistry, connectionId),
+        usedHere: sessionConnectionRows.some(database => database.connectionId === connectionId),
     }), [sessionConnectionRows, databaseRegistry]);
     const initiallyExpanded = React.useCallback((database: ConnectionState, _count: number) => (
         sessionConnectionRows.includes(database)
@@ -1040,7 +1041,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         setupSessionScripts(sessionId, database);
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
-            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [database]] },
+            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionDatabaseFromState(database)]] },
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
@@ -1057,11 +1058,11 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     }, [allocateConnection, databaseRegistry.connectionsBySignature, dependencies, props.sessionScripts.instance]);
 
     /// Delete a connection that no session uses
-    const deleteConnection = React.useCallback((databaseId: string) => {
-        const database = databaseRegistry.connections.get(databaseId);
-        if (database == null || connectionRefCount(databaseRegistry, databaseId) > 0) return;
+    const deleteConnection = React.useCallback((connectionId: string) => {
+        const database = databaseRegistry.connections.get(connectionId);
+        if (database == null || connectionRefCount(databaseRegistry, connectionId) > 0) return;
         if (!window.confirm(`Delete the connection "${connectionLabel(database)}"?`)) return;
-        databaseDispatch(databaseId, { type: DELETE_CONNECTION, value: null });
+        databaseDispatch(connectionId, { type: DELETE_CONNECTION, value: null });
     }, [databaseDispatch, databaseRegistry]);
 
     const createSession = React.useCallback((connector: ConnectorType) => {
@@ -1076,7 +1077,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         setupSessionScripts(sessionId, database);
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
-            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [database]] },
+            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionDatabaseFromState(database)]] },
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
@@ -1162,8 +1163,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         // Connections outlive the sessions that reference them, only the session's own
         // computations are dropped.
         const mapping = databaseRegistry.attachedDatabasesBySession.get(item.sessionId);
-        for (const databaseId of mapping == null ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds]) {
-            const database = databaseRegistry.connections.get(databaseId);
+        for (const connectionId of mapping == null ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds]) {
+            const database = databaseRegistry.connections.get(connectionId);
             if (database == null) continue;
             for (const queryId of findSessionQueries(database, item.sessionId)) {
                 computationDispatch({ type: DELETE_COMPUTATION, value: [queryId] });
@@ -1364,9 +1365,9 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                         describeUsage={describeUsage}
                         onDelete={deleteConnection}
                         initiallyExpanded={initiallyExpanded}
-                        onOpenSettings={(databaseId, anchor) => {
+                        onOpenSettings={(connectionId, anchor) => {
                             connectionSettingsAnchorRef.current = anchor;
-                            setConnectionOverlayDatabaseId(databaseId);
+                            setConnectionOverlayDatabaseId(connectionId);
                         }}
                     />}
                 </div>

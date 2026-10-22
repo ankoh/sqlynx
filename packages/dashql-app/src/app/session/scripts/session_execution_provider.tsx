@@ -47,7 +47,7 @@ export function SessionExecutionProvider(props: React.PropsWithChildren) {
     React.useEffect(() => {
         for (const [id, controller] of runs.current) {
             const session = registry.sessionScriptsMap.get(id);
-            if (!session || connections.connections.get(session.databaseId)?.connectionHealth !== ConnectionHealth.ONLINE) {
+            if (!session || connections.connections.get(session.connectionId)?.connectionHealth !== ConnectionHealth.ONLINE) {
                 controller.abort();
             }
         }
@@ -61,13 +61,13 @@ export function SessionExecutionProvider(props: React.PropsWithChildren) {
     const start = React.useCallback((sessionId: string, modifySessionScripts: ModifySessionScripts) => {
         const { registry, connections, executeQuery, cancelQuery } = latest.current;
         const session = registry.sessionScriptsMap.get(sessionId);
-        if (!session || runs.current.has(sessionId) || runningDatabases.current.has(session.databaseId)
+        if (!session || runs.current.has(sessionId) || runningDatabases.current.has(session.connectionId)
             || Object.keys(session.scriptRefs).length === 0) return;
-        const connection = connections.connections.get(session.databaseId);
+        const connection = connections.connections.get(session.connectionId);
         if (connection?.connectionHealth !== ConnectionHealth.ONLINE || connection.queriesActive.size > 0) return;
         const controller = new AbortController();
         runs.current.set(sessionId, controller);
-        runningDatabases.current.add(session.databaseId);
+        runningDatabases.current.add(session.connectionId);
         void runSessionExecution({
             session,
             getSession: () => latest.current.registry.sessionScriptsMap.get(sessionId) ?? null,
@@ -80,7 +80,7 @@ export function SessionExecutionProvider(props: React.PropsWithChildren) {
             onState: state => setStates(previous => new Map(previous).set(sessionId, state)),
         }).finally(() => {
             runs.current.delete(sessionId);
-            runningDatabases.current.delete(session.databaseId);
+            runningDatabases.current.delete(session.connectionId);
         });
     }, []);
     const stop = React.useCallback((id: string) => runs.current.get(id)?.abort(), []);

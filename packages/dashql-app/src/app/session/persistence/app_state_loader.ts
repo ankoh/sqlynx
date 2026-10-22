@@ -99,7 +99,7 @@ async function restoreSessionScripts(
             sessionId,
             name,
             settings,
-            databaseId,
+            connectionId: databaseId,
             sessionMetadata,
             connectorInfo,
             connectionCatalog,
@@ -573,7 +573,7 @@ export function mergeRestoredSessionIntoScripts(
     restored: RestoredSession,
 ): SessionScriptsRegistry {
     reg.sessionScriptsMap.set(restored.sessionId, restored.sessionScripts);
-    addSessionScriptsForConnection(reg, restored.sessionScripts.databaseId, restored.sessionId);
+    addSessionScriptsForConnection(reg, restored.sessionScripts.connectionId, restored.sessionId);
     reg.sessionScriptsByConnectionType[restored.sessionScripts.connectorInfo.connectorType].push(restored.sessionId);
     return { ...reg };
 }

@@ -65,7 +65,7 @@ function state(names = ['1_alpha.sql', '2_beta.sql', '3_gamma.sql']): SessionScr
         refs[name] = createScriptRef(scriptKey, name);
     }
     return {
-        instance: dql, sessionId: crypto.randomUUID(), name: 'Test', databaseId: crypto.randomUUID(), settings: { cacheQueryResults: false },
+        instance: dql, sessionId: crypto.randomUUID(), name: 'Test', connectionId: crypto.randomUUID(), settings: { cacheQueryResults: false },
         sessionMetadata: createEmptyMetadata(), connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
         connectionCatalog: catalog, scripts, scriptRefs: refs,
         scriptFocus: { fileName: names[1] ?? names[0] ?? '' }, semanticUserFocus: null,

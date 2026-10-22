@@ -43,7 +43,7 @@ export async function runSessionExecution(args: {
     maxConcurrentQueries?: number;
 }): Promise<void> {
     const { session, signal } = args;
-    const { databaseId, sessionId, instance, connectionCatalog } = session;
+    const { connectionId, sessionId, instance, connectionCatalog } = session;
     if (isSessionExecutionRunning(session)) return;
     let active = activeSessions.get(instance);
     if (!active) activeSessions.set(instance, active = new Set());
@@ -71,7 +71,7 @@ export async function runSessionExecution(args: {
             if (cancellations.has(queryId)) continue;
             // Catch immediately: cancellation can reject before execution has drained.
             try {
-                cancellations.set(queryId, args.cancelQuery(databaseId, queryId).catch(() => {}));
+                cancellations.set(queryId, args.cancelQuery(connectionId, queryId).catch(() => {}));
             } catch {
                 cancellations.set(queryId, Promise.resolve());
             }
@@ -136,7 +136,7 @@ export async function runSessionExecution(args: {
         // Validate after notifications, but before the first backend call. Later edits belong to the next run.
         const validate = (checkVersions = true) => {
             const live = args.getSession();
-            if (!live || live.sessionId !== sessionId || live.databaseId !== databaseId
+            if (!live || live.sessionId !== sessionId || live.connectionId !== connectionId
                 || live.instance !== instance || live.connectionCatalog !== connectionCatalog
                 || graph.scripts.length !== scripts.length
                 || getSortedScriptFileNames(live.scriptRefs).join('\0') !== files.join('\0')) {
@@ -205,7 +205,7 @@ export async function runSessionExecution(args: {
         const cancelActive = () => {
             for (const queryId of activeExecutions.keys()) {
                 if (cancellations.has(queryId)) continue;
-                try { cancellations.set(queryId, args.cancelQuery(databaseId, queryId).catch(() => {})); }
+                try { cancellations.set(queryId, args.cancelQuery(connectionId, queryId).catch(() => {})); }
                 catch { cancellations.set(queryId, Promise.resolve()); }
             }
         };
@@ -230,7 +230,7 @@ export async function runSessionExecution(args: {
             emit({ activeScriptKey: script.scriptKey, activeFileName: files[scriptIndex],
                 activeStatementIndex: statementIndex + 1, activeStatementCount: statementIndexes[scriptIndex].length });
             running++;
-            const [queryId, execution] = args.executeQuery(databaseId, {
+            const [queryId, execution] = args.executeQuery(connectionId, {
                 query: String(node.sql ?? ''), cacheable: false, throwOnError: true, abortSignal: signal,
                 analyzeResults: output, publishResults: output, replaceComputationId: output ? previousQueryId : undefined,
                 projection: output ? projectionForVisualizeQuery(visualization) : undefined, onResultsReady: release,
@@ -295,7 +295,7 @@ export async function runSessionExecution(args: {
     } catch (error) {
         for (const queryId of activeExecutions.keys()) {
             if (cancellations.has(queryId)) continue;
-            try { cancellations.set(queryId, args.cancelQuery(databaseId, queryId).catch(() => {})); }
+            try { cancellations.set(queryId, args.cancelQuery(connectionId, queryId).catch(() => {})); }
             catch { cancellations.set(queryId, Promise.resolve()); }
         }
         await Promise.allSettled(activeExecutions.values());

@@ -12,7 +12,7 @@ interface ConnectionAttention {
 
 export const SessionConnectionAttentionContext = React.createContext<ConnectionAttention | null>(null);
 
-export function useSessionConnectionAttention(sessionId: string | null, databaseId: string | null, health: ConnectionHealth | undefined): ConnectionAttention {
+export function useSessionConnectionAttention(sessionId: string | null, connectionId: string | null, health: ConnectionHealth | undefined): ConnectionAttention {
     const shared = React.useContext(SessionConnectionAttentionContext);
     const [active, setActive] = React.useState(false);
     const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -24,7 +24,7 @@ export function useSessionConnectionAttention(sessionId: string | null, database
             if (timer.current != null) clearTimeout(timer.current);
             timer.current = null;
         };
-    }, [sessionId, databaseId, health]);
+    }, [sessionId, connectionId, health]);
     const request = React.useCallback((targetSessionId: string) => {
         if (targetSessionId !== sessionId || health === ConnectionHealth.ONLINE || timer.current != null) return;
         setActive(true);

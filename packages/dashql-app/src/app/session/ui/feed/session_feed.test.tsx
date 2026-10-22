@@ -306,7 +306,7 @@ describe('Session feed composer', () => {
             scriptRefs[fileName] = { scriptId: i + 1, fileName };
         });
         return {
-            sessionId: 'session', name: null, databaseId: 'database', settings: { cacheQueryResults: false }, instance: {} as any, sessionMetadata: {} as any,
+            sessionId: 'session', name: null, connectionId: 'database', settings: { cacheQueryResults: false }, instance: {} as any, sessionMetadata: {} as any,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], connectionCatalog: {} as any,
             scripts, scriptRefs, scriptFocus: { fileName: fileNames[fileNames.length - 1] ?? '' }, semanticUserFocus: null,
         };

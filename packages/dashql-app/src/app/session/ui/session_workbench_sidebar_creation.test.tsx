@@ -230,7 +230,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
             value: '00000000-0000-4000-8000-000000000001',
         });
         expect(state.write).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
-            value: ['00000000-0000-4000-8000-000000000001', 'local-database', [state.local]],
+            value: ['00000000-0000-4000-8000-000000000001', 'local-database', [{ databaseId: 'local-database', params: state.local!.params }]],
         }));
         expect(state.overlayProps?.isOpen).toBe(false);
         if (connector === 'Hyper') {

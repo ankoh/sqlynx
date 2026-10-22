@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { AppLoadingStatus } from '../router/app_loading_status.js';
 import { OPEN_LINK_SESSION, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../router/router.js';
-import { resolveSessionExecutionDatabase, useAttachConnection, useConnectionDispatch, useConnectionRegistry, useAttachedDatabaseStateAllocator } from '../connections/connection_registry.js';
-import { isHyperWasmConnection } from '../session/ui/connection_label.js';
+import { resolveSessionExecutionDatabase, useAttachConnection, useConnectionDispatch, useConnectionRegistry, useAttachedDatabaseStateAllocator, sessionDatabaseFromState } from '../connections/connection_registry.js';
+import { isHyperWasmConnection } from '../connections/ui/connection_label.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
@@ -362,7 +362,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
                     setupSessionScripts(sessionId, database, 'Default');
                     void storageWriter.write(groupSessionManifestWrites(sessionId), {
                         type: WRITE_SESSION_MANIFEST,
-                        value: [sessionId, database.connectionId, [database]],
+                        value: [sessionId, database.connectionId, [sessionDatabaseFromState(database)]],
                     });
                 }
                 navigate({

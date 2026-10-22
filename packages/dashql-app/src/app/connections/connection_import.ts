@@ -63,7 +63,7 @@ export function decodeConnectionFromProto(conn: connection.Connection, sessionId
     }
 }
 
-export function restoreConnectionState(instance: dashql.DashQL, databaseId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap, paramsDraft?: ConnectionParams): ConnectionState {
+export function restoreConnectionState(instance: dashql.DashQL, connectionId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap, paramsDraft?: ConnectionParams): ConnectionState {
     const hasher = new DefaultHasher();
     computeConnectionSignatureFromDetails(details, hasher);
     const sig = newConnectionSignature(hasher, connSigs, null);
@@ -89,7 +89,7 @@ export function restoreConnectionState(instance: dashql.DashQL, databaseId: stri
     const restoredCatalogFunctionScript = catalogFunctionScript;
 
     const state: ConnectionState = {
-        connectionId: databaseId,
+        connectionId: connectionId,
         instance,
         active: true,
         connectionStatus: ConnectionStatus.NOT_STARTED,

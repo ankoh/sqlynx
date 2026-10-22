@@ -48,7 +48,7 @@ function fixture(entries: Array<[string, string]>) {
     }
     let live: SessionScripts = {
         instance: dql, sessionId: crypto.randomUUID(), name: 'Execution integration', settings: { cacheQueryResults: false },
-        databaseId: crypto.randomUUID(), sessionMetadata: createEmptyMetadata(),
+        connectionId: crypto.randomUUID(), sessionMetadata: createEmptyMetadata(),
         connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], connectionCatalog: catalog,
         scripts, scriptRefs, scriptFocus: { fileName: entries[0]?.[0] ?? '' }, semanticUserFocus: null,
     };
@@ -61,9 +61,9 @@ function fixture(entries: Array<[string, string]>) {
     const modifySessionScripts = vi.fn<ModifySessionScripts>(action => { apply(action); });
     const calls: Array<{ databaseId: string; queryId: number; sql: string }> = [];
     let nextQueryId = 0;
-    const executeQuery = vi.fn<QueryExecutor>((databaseId, args) => {
+    const executeQuery = vi.fn<QueryExecutor>((connectionId, args) => {
         const queryId = ++nextQueryId;
-        calls.push({ databaseId, queryId, sql: args.query });
+        calls.push({ databaseId: connectionId, queryId, sql: args.query });
         return [queryId, Promise.resolve(args.analyzeResults ? tableFromArrays({ value: [1] }) : null)];
     });
     const cancelQuery = vi.fn<CancelQuery>(async () => {});
@@ -107,9 +107,9 @@ describe('session execution with real core planning', () => {
             f.script('10_query.sql').scriptSession,
         ]);
         expect(f.calls).toEqual([
-            { databaseId: f.getSession().databaseId, queryId: 1, sql: 'create table items (id int)' },
-            { databaseId: f.getSession().databaseId, queryId: 2, sql: 'insert into items values (7)' },
-            { databaseId: f.getSession().databaseId, queryId: 3, sql: 'select id from items' },
+            { databaseId: f.getSession().connectionId, queryId: 1, sql: 'create table items (id int)' },
+            { databaseId: f.getSession().connectionId, queryId: 2, sql: 'insert into items values (7)' },
+            { databaseId: f.getSession().connectionId, queryId: 3, sql: 'select id from items' },
         ]);
         const graph = f.graphs[0];
         expect(graph.valid).toBe(true);
@@ -136,7 +136,7 @@ describe('session execution with real core planning', () => {
         ]);
         const initial = f.getSession();
         const executor = f.executeQuery.getMockImplementation()!;
-        f.executeQuery.mockImplementation((databaseId, args) => {
+        f.executeQuery.mockImplementation((connectionId, args) => {
             expect(f.getSession()).not.toBe(initial);
             for (const script of Object.values(f.getSession().scripts)) {
                 expect(script.analysisOutdated).toBe(false);
@@ -147,7 +147,7 @@ describe('session execution with real core planning', () => {
                 });
             }
             expect(f.script('1_create.sql').annotations.tableDefs).toEqual(['items']);
-            return executor(databaseId, args);
+            return executor(connectionId, args);
         });
         await f.run();
 
@@ -229,8 +229,8 @@ describe('session execution with real core planning', () => {
             + 'select embedding, cluster_id, label from embeddings visualize using umap '
             + '(vector => embedding, category => cluster_id, label => label, neighbors => 7, min_dist => 0.2, metric => euclidean);']]);
         const executor = f.executeQuery.getMockImplementation()!;
-        f.executeQuery.mockImplementation((databaseId, args) => {
-            const execution = executor(databaseId, args);
+        f.executeQuery.mockImplementation((connectionId, args) => {
+            const execution = executor(connectionId, args);
             if (!args.analyzeResults) {
                 f.apply({ type: SET_SCRIPT_TEXT, value: { scriptKey: f.script('1_umap.sql').scriptKey,
                     text: 'select other from embeddings visualize using umap (vector => other);' } });
@@ -264,13 +264,13 @@ describe('session execution with real core planning', () => {
     it('clears live visualization metadata when the captured output is not VISUALIZE', async () => {
         const f = fixture([['1_query.sql', 'create table items (id int); select 1;']]);
         const executor = f.executeQuery.getMockImplementation()!;
-        f.executeQuery.mockImplementation((databaseId, args) => {
+        f.executeQuery.mockImplementation((connectionId, args) => {
             if (!args.analyzeResults) {
                 f.apply({ type: SET_SCRIPT_TEXT, value: { scriptKey: f.script('1_query.sql').scriptKey,
                     text: 'select 2 visualize using table ();' } });
                 expect(f.script('1_query.sql').annotations.visualizeQuery?.renderer).toBe('table');
             }
-            return executor(databaseId, args);
+            return executor(connectionId, args);
         });
         await f.run();
 

@@ -5,8 +5,8 @@ import { ConnectorType } from '../../connections/connector_info.js';
 
 // removeSessionScriptsFromRegistry only reads sessionScriptsMap and entry.connectorInfo.connectorType, so a
 // tiny stand-in SessionScripts is enough — no Wasm needed.
-function scripts(sessionId: string, connectorType: ConnectorType, databaseId: string = `connection-${sessionId}`): SessionScripts {
-    return { sessionId, databaseId, connectorInfo: { connectorType } } as unknown as SessionScripts;
+function scripts(sessionId: string, connectorType: ConnectorType, connectionId: string = `connection-${sessionId}`): SessionScripts {
+    return { sessionId, connectionId, connectorInfo: { connectorType } } as unknown as SessionScripts;
 }
 
 function registry(entries: Array<[string, ConnectorType]>): SessionScriptsRegistry {

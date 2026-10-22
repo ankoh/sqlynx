@@ -20,8 +20,8 @@ interface Props {
 
 export const ConnectionConfigCard: React.FC<Props> = (props: Props) => {
     const [registry] = useConnectionRegistry();
-    const databaseId = registry.attachedDatabasesBySession.get(props.sessionId)?.mainDatabaseId ?? null;
-    const [conn, _modifyConn] = useConnectionById(databaseId);
+    const connectionId = registry.attachedDatabasesBySession.get(props.sessionId)?.mainDatabaseId ?? null;
+    const [conn, _modifyConn] = useConnectionById(connectionId);
 
     // Default to TRINO or first available connector
     const defaultConnectorType = conn?.connectorInfo.connectorType ?? ConnectorType.TRINO;
@@ -65,7 +65,7 @@ export const ConnectionConfigCard: React.FC<Props> = (props: Props) => {
             <div className={`${baseStyles.card_section} ${styles.card_body}`}>
                 <ConnectorConfigTabs
                     className={styles.content_sized_tabs}
-                     connectionId={databaseId}
+                     connectionId={connectionId}
                     selectedConnectorType={selectedConnectorType}
                     setSelectedConnectorType={setSelectedConnectorType}
                     lockConnectorType={!!props.onSkip}

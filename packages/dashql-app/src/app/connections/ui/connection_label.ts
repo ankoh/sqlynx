@@ -1,6 +1,6 @@
-import type { ConnectionState } from '../../connections/connection_state.js';
-import { HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connections/connector_info.js';
-import { getConnectionInfoFromParams, type ConnectionParams } from '../../connections/connection_params.js';
+import type { ConnectionState } from '../connection_state.js';
+import { HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
+import { getConnectionInfoFromParams, type ConnectionParams } from '../connection_params.js';
 
 export function isHyperWasmConnection(database: ConnectionState): boolean {
     return database.details.type === HYPER_CONNECTOR &&
