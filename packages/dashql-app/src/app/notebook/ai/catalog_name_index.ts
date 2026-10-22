@@ -1,5 +1,7 @@
 import * as core from '@ankoh/dashql-core';
 
+import { isSystemSchema } from '../connections/system_schemas.js';
+
 /// Shorter words are never treated as identifiers in natural language
 const MIN_IDENTIFIER_LENGTH = 3;
 
@@ -55,10 +57,9 @@ export interface IdentifierMatch {
 /// An index without names
 export const EMPTY_CATALOG_NAME_INDEX: CatalogNameIndex = { keys: [], byKey: new Map(), columnsByTable: new Map() };
 
-/// Build the name index of a catalog snapshot
-export function buildCatalogNameIndex(reader: core.DashQLCatalogSnapshotReader): CatalogNameIndex {
-    const catalog = reader.catalogReader;
-    const entry = new core.buffers.catalog.FlatCatalogEntry();
+/// Build the name index of a catalog, skipping the schemas of the database system.
+/// Reads a fresh snapshot, the cached one misses the scripts that script sessions loaded into the catalog since.
+export function buildCatalogNameIndex(catalog: core.DashQLCatalog): CatalogNameIndex {
     const byKey = new Map<string, CatalogName[]>();
     const columnsByTable = new Map<string, Set<string>>();
     const add = (name: CatalogName) => {
@@ -70,23 +71,35 @@ export function buildCatalogNameIndex(reader: core.DashQLCatalogSnapshotReader):
             names.push(name);
         }
     };
-    const tableNames: string[] = [];
-    for (let i = 0; i < catalog.tablesLength(); ++i) {
-        const name = reader.readName(catalog.tables(i, entry)!.nameId());
-        tableNames.push(name);
-        if (name.length > 0) {
+    const snapshot = catalog.createUncachedSnapshot();
+    try {
+        const reader = snapshot.read();
+        const flat = reader.catalogReader;
+        const entry = new core.buffers.catalog.FlatCatalogEntry();
+        // Every level references its parent by the index into the flat array of the level above
+        const systemSchemas: boolean[] = [];
+        for (let i = 0; i < flat.schemasLength(); ++i) {
+            systemSchemas.push(isSystemSchema(reader.readName(flat.schemas(i, entry)!.nameId())));
+        }
+        const tableNames: (string | null)[] = [];
+        for (let i = 0; i < flat.tablesLength(); ++i) {
+            const table = flat.tables(i, entry)!;
+            const name = reader.readName(table.nameId());
+            if (systemSchemas[table.flatParentIdx()] || name.length === 0) {
+                tableNames.push(null);
+                continue;
+            }
+            tableNames.push(name);
             add({ name, kind: CatalogNameKind.Table, table: null });
         }
-    }
-    for (let i = 0; i < catalog.columnsLength(); ++i) {
-        const column = catalog.columns(i, entry)!;
-        const name = reader.readName(column.nameId());
-        const table = tableNames[column.flatParentIdx()] ?? null;
-        if (name.length === 0) {
-            continue;
-        }
-        add({ name, kind: CatalogNameKind.Column, table });
-        if (table != null) {
+        for (let i = 0; i < flat.columnsLength(); ++i) {
+            const column = flat.columns(i, entry)!;
+            const table = tableNames[column.flatParentIdx()];
+            const name = reader.readName(column.nameId());
+            if (table == null || name.length === 0) {
+                continue;
+            }
+            add({ name, kind: CatalogNameKind.Column, table });
             const tableKey = table.toLowerCase();
             let columns = columnsByTable.get(tableKey);
             if (columns == null) {
@@ -95,6 +108,8 @@ export function buildCatalogNameIndex(reader: core.DashQLCatalogSnapshotReader):
             }
             columns.add(name.toLowerCase());
         }
+    } finally {
+        snapshot.destroy();
     }
     const keys = [...byKey.keys()].sort();
     return { keys, byKey, columnsByTable };

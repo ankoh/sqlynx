@@ -110,19 +110,21 @@ export const NotebookComposer: React.FC<NotebookComposerProps> = (props) => {
     }, [setMode]);
 
     // The catalog names that are highlighted and completed in natural language.
-    // Rebuilt only when the catalog changes, the snapshot is cached by the catalog.
+    // Rebuilt whenever the revision of the catalog moves, null forces a rebuild.
     const [identifierIndex, setIdentifierIndex] = React.useState<CatalogNameIndex>(EMPTY_CATALOG_NAME_INDEX);
-    const indexedSnapshot = React.useRef<core.DashQLCatalogSnapshot | null>(null);
-    const refreshIdentifierIndex = React.useCallback(() => {
-        const snapshot = props.catalog.createSnapshot();
-        if (snapshot === indexedSnapshot.current) return;
-        indexedSnapshot.current = snapshot;
-        const index = buildCatalogNameIndex(snapshot.read());
-        logger.debug('Built the catalog name index of the composer', { names: String(index.keys.length) }, LOG_CTX);
+    const indexedRevision = React.useRef<bigint | null>(null);
+    const refreshIdentifierIndex = React.useCallback((revision: bigint | null) => {
+        if (revision != null && revision === indexedRevision.current) return;
+        indexedRevision.current = revision;
+        const index = buildCatalogNameIndex(props.catalog);
+        logger.debug('Built the catalog name index of the composer', {
+            names: String(index.keys.length),
+            catalogRevision: revision?.toString() ?? null,
+        }, LOG_CTX);
         setIdentifierIndex(index);
     }, [props.catalog, logger]);
     React.useEffect(() => {
-        if (props.aiAvailable) refreshIdentifierIndex();
+        if (props.aiAvailable) refreshIdentifierIndex(null);
     }, [props.aiAvailable, refreshIdentifierIndex]);
 
     // Every edit of the draft re-evaluates the mode.
@@ -131,12 +133,9 @@ export const NotebookComposer: React.FC<NotebookComposerProps> = (props) => {
     const latest = React.useRef({ aiAvailable: props.aiAvailable, refreshIdentifierIndex });
     latest.current = { aiAvailable: props.aiAvailable, refreshIdentifierIndex };
     const handleEditorUpdate = React.useCallback((update: core.buffers.editor.EditorUpdateT) => {
-        const prev = lastUpdate.current;
         lastUpdate.current = update;
         if (!latest.current.aiAvailable) return;
-        if (prev == null || prev.catalogRevision !== update.catalogRevision) {
-            latest.current.refreshIdentifierIndex();
-        }
+        latest.current.refreshIdentifierIndex(update.catalogRevision);
         if (!update.textChanged || modeOverridden.current) return;
         const cursor = update.primarySelection != null ? Number(update.primarySelection.head) : null;
         const evidence = assessSql(update, cursor);

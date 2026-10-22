@@ -406,8 +406,12 @@ describe('Notebook feed composer', () => {
 
     // A catalog without tables and a connection without relations, enough to build the AI prompt
     const emptyCatalog = {
-        createSnapshot: () => ({
-            read: () => ({ catalogReader: { tablesLength: () => 0, columnsLength: () => 0 }, readName: () => '' }),
+        createUncachedSnapshot: () => ({
+            read: () => ({
+                catalogReader: { schemasLength: () => 0, tablesLength: () => 0, columnsLength: () => 0 },
+                readName: () => '',
+            }),
+            destroy: () => { },
         }),
     };
     const aiConn = { ...onlineConn, catalogRelationScript: { toString: () => '' } };

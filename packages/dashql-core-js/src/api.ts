@@ -747,6 +747,14 @@ export class DashQLCatalog {
         );
         return this.snapshot;
     }
+    /// Export a fresh catalog snapshot that the caller owns and destroys.
+    /// The cached snapshot of createSnapshot misses scripts that script sessions loaded into the catalog since.
+    public createUncachedSnapshot(): DashQLCatalogSnapshot {
+        const bytes = this.ptr.assertNotNull().flatten();
+        return new DashQLCatalogSnapshot(
+            new FlatBufferPtr(FLAT_CATALOG_TYPE, this.ptr.api, bytes, () => new buffers.catalog.FlatCatalog()),
+        );
+    }
     /// Add a script in the registry (throws exception on error)
     public loadScript(script: DashQLScript, rank: number) {
         this.deleteSnapshot();

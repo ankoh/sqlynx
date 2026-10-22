@@ -6,17 +6,13 @@ import type { AttachedDatabaseState } from '../connections/attached_database_sta
 import type { NotebookScripts } from '../scripts/notebook_scripts.js';
 import { ConnectorType } from '../connections/connector_info.js';
 import { quoteIdentifier } from '../connections/catalog_sql_generator.js';
+import { isSystemSchema } from '../connections/system_schemas.js';
 import { verifyScript } from '../scripts/scratch_script_verify.js';
 
 const LOG_CTX = 'sql_generation';
 
 /// The schema context is cut off after this many characters to stay within the context window of small models
 const SCHEMA_CONTEXT_BUDGET = 100_000;
-
-/// Schemas of the database system that the model should not query
-const SYSTEM_SCHEMAS = new Set(['information_schema', 'pg_catalog']);
-/// Prefixes of schemas of the database system, e.g. pg_toast or pg_temp_3
-const SYSTEM_SCHEMA_PREFIXES = ['pg_toast', 'pg_temp'];
 
 /// A request to translate a question into SQL
 export interface SqlGenerationInput {
@@ -40,12 +36,6 @@ export function describeSqlDialect(connectorType: ConnectorType): string {
         case ConnectorType.TRINO:
             return 'Trino';
     }
-}
-
-/// Is a schema part of the database system rather than of the user?
-export function isSystemSchema(schemaName: string): boolean {
-    const lower = schemaName.toLowerCase();
-    return SYSTEM_SCHEMAS.has(lower) || SYSTEM_SCHEMA_PREFIXES.some(prefix => lower.startsWith(prefix));
 }
 
 /// The relations of a connection, split by owner
@@ -174,6 +164,10 @@ export function buildSqlGenerationMessages(input: SqlGenerationInput): ChatMessa
         'Return only the SQL query: no explanation, no comments, no markdown code fences.',
         'Use only the tables and columns of the schema that the user provides and quote identifiers where needed.',
         'Prefer read-only queries.',
+        'When you create a table, declare only column names and types:',
+        '- no primary keys',
+        '- no indexes',
+        '- no column constraints such as NOT NULL, UNIQUE, CHECK, DEFAULT or REFERENCES',
     ].join('\n');
     const user = [
         'Schema:',

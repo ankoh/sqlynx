@@ -8,6 +8,7 @@ import type { EditorView } from '@codemirror/view';
 import { NotebookComposer, NotebookComposerVariant } from './notebook_composer.js';
 import { ComposerInputMode } from './composer_input_mode.js';
 import { LoggerProvider } from '../../../../platform/logger/logger_provider.js';
+import * as identifierStyles from '../../scripts/editor/nl_identifier_plugin.module.css';
 import { DashQLCompletionStartEffect, DashQLProcessorPlugin } from '../../scripts/editor/dashql_processor.js';
 
 declare const DASHQL_PRECOMPILED: Promise<Uint8Array>;
@@ -174,6 +175,20 @@ describe('Notebook composer', () => {
             act(() => press(editor, 'Enter'));
             expect(onSend).toHaveBeenCalledExactlyOnceWith('select 1', ComposerInputMode.Sql);
             expect(editor.state.doc.toString()).toBe('');
+        });
+
+        it('highlights tables that notebook scripts load into the catalog later', async () => {
+            const editor = await render(NotebookComposerVariant.Docked, true);
+            catalog.createSnapshot();
+            const session = dql.createScriptSession(catalog);
+            session.replaceText(session.getTextVersion(), 'create table orders (amount int)');
+            session.analyze();
+            session.loadIntoCatalog(1);
+            act(() => type(editor, 'total amount of orders '));
+            await vi.waitFor(() => expect(Array.from(editor.contentDOM.querySelectorAll(
+                `.${identifierStyles.identifier_table}, .${identifierStyles.identifier_column}`)).map(e => e.textContent))
+                .toEqual(['amount', 'orders']));
+            session.destroy();
         });
 
         it('sends a question and clears it right away', async () => {

@@ -8,11 +8,11 @@ import {
     extractSql,
     generateSqlFromPrompt,
     findSqlProblems,
-    isSystemSchema,
     promptComment,
     validateSqlAnswer,
 } from './sql_generation.js';
 import { ConnectorType } from '../connections/connector_info.js';
+import { isSystemSchema } from '../connections/system_schemas.js';
 import type { AIClient } from '../../../platform/ai/ai_client.js';
 import { Logger } from '../../../platform/logger/logger.js';
 
@@ -53,6 +53,7 @@ describe('SQL generation', () => {
         });
         expect(messages.map(message => message.role)).toEqual(['system', 'user']);
         expect(messages[0].content).toContain('single SQL query in the Trino dialect');
+        expect(messages[0].content).toContain('- no primary keys\n- no indexes\n- no column constraints');
         expect(messages[1].content).toBe([
             'Schema:',
             'CREATE TABLE "customers" ("id" INTEGER);',

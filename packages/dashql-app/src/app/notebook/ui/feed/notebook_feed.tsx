@@ -530,8 +530,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                 prompt: question,
                 dialect,
                 schema: buildSchemaContext(conn, notebookScripts, logger),
-                mentionedIdentifiers: collectMentionedIdentifiers(
-                    buildCatalogNameIndex(notebookScripts.connectionCatalog.createSnapshot().read()), question),
+                mentionedIdentifiers: collectMentionedIdentifiers(buildCatalogNameIndex(notebookScripts.connectionCatalog), question),
             }, sql => findSqlProblems(notebookScripts.instance, notebookScripts.connectionCatalog, sql), controller.signal);
         } catch (e: unknown) {
             if (controller.signal.aborted) return;

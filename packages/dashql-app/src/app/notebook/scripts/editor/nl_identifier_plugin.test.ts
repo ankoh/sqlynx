@@ -24,7 +24,7 @@ beforeAll(async () => {
     ].join('\n'));
     schema.analyze();
     catalog.loadScript(schema, 0);
-    index = buildCatalogNameIndex(catalog.createSnapshot().read());
+    index = buildCatalogNameIndex(catalog);
 });
 afterAll(() => {
     catalog.destroy();
