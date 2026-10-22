@@ -35,22 +35,16 @@ describe('V2 session ZIP import', () => {
         });
     });
 
-    it('reads the catalog files of bundles exported by older versions', async () => {
-        const bundle = await readSessionBundleFromZip(await zip({
-            [STORAGE_SESSION_FILE]: JSON.stringify(testSession()),
-            'dashql-relations.sql': 'schema',
-            'dashql-functions.sql': 'functions',
-        }));
-        expect(bundle.schemaSql).toBe('schema');
-        expect(bundle.functionsSql).toBe('functions');
-    });
-
-    it('reads the notebook metadata of bundles exported by older versions', async () => {
+    it('migrates bundles exported by older versions', async () => {
         const bundle = await readSessionBundleFromZip(await zip({
             'dashql-notebook.json': JSON.stringify({ ...testSession(), formatVersion: 2, sessionId: undefined, notebookId: TEST_SESSION_ID }),
+            'dashql-relations.sql': 'schema',
+            'dashql-functions.sql': 'functions',
             'scripts/01_query.sql': 'SELECT 1',
         }));
         expect(bundle.session).toEqual(testSession());
+        expect(bundle.schemaSql).toBe('schema');
+        expect(bundle.functionsSql).toBe('functions');
         expect(bundle.scripts).toEqual([{ name: '01_query.sql', sql: 'SELECT 1' }]);
     });
 

@@ -13,7 +13,6 @@ import type { StorageBackend, SessionEntry, SessionData, SessionRegistryBackend,
 import { StorageBackendType, STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, isSessionRegistryBackend } from './storage_backend.js';
 import { connectionParamsEqual } from '../connections/connection_params.js';
 import { dedupeAttachedDatabases, patchSessionConnection, upsertConnectionEntry } from './storage_writer.js';
-import { applyConnectionMigration, planConnectionMigration, type MigratingSession } from './connection_migration.js';
 import { validateSessionData, describeInvalidSession, isValidUuid, SessionValidationError, type InvalidSession } from './session_validation.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../connections/catalog_update_state.js';
 import { beginCatalogBatch, invalidateCatalogBatch, publishCatalogBatch, type BatchProcessor, type CatalogBatchEntry } from '../connections/catalog_batch.js';
@@ -543,25 +542,6 @@ async function flushRestoreWrites(ctx: RestoreContext): Promise<void> {
     }
 }
 
-/// Make the connections of sessions global, once.
-/// Sessions of older versions own their connections, the migration moves them into the app manifest
-/// and consolidates connections with equal params.
-async function migrateConnections(registry: SessionRegistryBackend, sessionEntries: SessionEntry[], logger: Logger): Promise<void> {
-    const sessions: MigratingSession[] = [];
-    for (const entry of sessionEntries) {
-        if (!isValidUuid(entry.path)) continue;
-        try {
-            const data = await registry.loadSession(entry.path);
-            if (validateSessionData(data).ok) {
-                sessions.push({ sessionId: entry.path, data });
-            }
-        } catch {
-            // Unreadable sessions register their connections when they become readable again
-        }
-    }
-    await applyConnectionMigration(registry, planConnectionMigration(sessions), logger);
-}
-
 /// The connection references + session a single session restored into.
 export interface RestoredSession {
     /// The session id
@@ -732,12 +712,7 @@ export async function restoreAppState(
         const sessionEntries = await backend.listSessions('dashql-manifest.json');
         let connectionEntries: ConnectionEntry[] = [];
         if (ctx.registry != null) {
-            let manifest = await ctx.registry.loadManifest();
-            if (manifest.connections === undefined) {
-                logger.info("Migrating the connections of sessions", { sessionCount: sessionEntries.length.toString() }, LOG_CTX);
-                await migrateConnections(ctx.registry, sessionEntries, logger);
-                manifest = await ctx.registry.loadManifest();
-            }
+            const manifest = await ctx.registry.loadManifest();
             connectionEntries = manifest.connections ?? [];
         }
         const manifestDuration = performance.now() - manifestStartTime;

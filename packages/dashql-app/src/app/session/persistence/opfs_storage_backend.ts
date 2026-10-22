@@ -1,28 +1,11 @@
-import { type SessionRegistryBackend, type ConnectionEntry, STORAGE_CONNECTIONS_FOLDER, type SessionData, type ScriptData, type SessionEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, LEGACY_STORAGE_SESSIONS_FOLDER, STORAGE_SESSIONS_FOLDER, STORAGE_SESSION_FILE, STORAGE_SESSION_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
+import { type SessionRegistryBackend, type ConnectionEntry, STORAGE_CONNECTIONS_FOLDER, type SessionData, type ScriptData, type SessionEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_SESSIONS_FOLDER, STORAGE_SESSION_FILE, STORAGE_SESSION_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeSessionIndex } from './session_index.js';
-import { migrateSessionData, migrateSessionFiles, SESSION_FILE_RENAMES, type SessionFileRename } from './session_file_migration.js';
+import { STORAGE_VERSION } from '../../../migration/versions.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
 /// The name of the web lock that guards the manifest
-const OPFS_MANIFEST_LOCK = 'dashql-manifest';
-/// The manifest key that listed the sessions when sessions were called notebooks
-const LEGACY_MANIFEST_SESSIONS_KEY = 'notebooks';
-
-/// Copy the files and folders of a directory into another one, existing files are overwritten.
-/// OPFS cannot move directories everywhere, the content is copied.
-async function copyDirectory(from: FileSystemDirectoryHandle, to: FileSystemDirectoryHandle): Promise<void> {
-    for await (const [name, handle] of from.entries()) {
-        if (handle.kind === 'directory') {
-            await copyDirectory(handle as FileSystemDirectoryHandle, await to.getDirectoryHandle(name, { create: true }));
-        } else {
-            const content = await (await (handle as FileSystemFileHandle).getFile()).arrayBuffer();
-            const writable = await (await to.getFileHandle(name, { create: true })).createWritable();
-            await writable.write(content);
-            await writable.close();
-        }
-    }
-}
+export const OPFS_MANIFEST_LOCK = 'dashql-manifest';
 
 /// Origin Private File System storage backend.
 ///
@@ -34,16 +17,8 @@ async function copyDirectory(from: FileSystemDirectoryHandle, to: FileSystemDire
 /// Every per-session method is keyed by the bare session UUID.
 export class OPFSStorageBackend implements SessionRegistryBackend {
     private rootHandle: FileSystemDirectoryHandle | null = null;
-    /// The renames that bring a session folder to the current file layout
-    private readonly fileRenames: readonly SessionFileRename[];
-    /// The sessions whose files were migrated by this backend
-    private readonly migratedSessions = new Set<string>();
     /// The latest manifest mutation, every read-modify-write of the manifest chains onto it
     private manifestChain: Promise<void> = Promise.resolve();
-
-    constructor(fileRenames: readonly SessionFileRename[] = SESSION_FILE_RENAMES) {
-        this.fileRenames = fileRenames;
-    }
 
     getBackendType(): StorageBackendType {
         return StorageBackendType.OPFS;
@@ -51,59 +26,6 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
 
     async initialize(): Promise<void> {
         this.rootHandle = await navigator.storage.getDirectory();
-        await this.migrateLegacyLayout(this.rootHandle);
-    }
-
-    /// Bring an OPFS root of the time when sessions were called notebooks to the current layout.
-    ///
-    /// The session folders move from `notebooks/<uuid>` to `sessions/<uuid>` and the manifest lists
-    /// them as `sessions` instead of `notebooks`. The files inside a folder are renamed when the
-    /// session is loaded. A legacy folder is removed only after it was copied completely and the
-    /// manifest is rewritten last, so an interrupted migration simply runs again.
-    private async migrateLegacyLayout(root: FileSystemDirectoryHandle): Promise<void> {
-        await this.withManifestLock(async () => {
-            await this.migrateLegacySessionFolders(root);
-            let manifest: Record<string, unknown>;
-            try {
-                const file = await (await root.getFileHandle(STORAGE_MANIFEST_FILE, { create: false })).getFile();
-                manifest = JSON.parse(await file.text());
-            } catch (error) {
-                if ((error as any).name === 'NotFoundError') {
-                    return;
-                }
-                throw error;
-            }
-            if (Array.isArray(manifest?.[LEGACY_MANIFEST_SESSIONS_KEY]) && !Array.isArray(manifest.sessions)) {
-                const { [LEGACY_MANIFEST_SESSIONS_KEY]: sessions, ...rest } = manifest;
-                await this.writeManifest(root, { sessions, ...rest } as StorageManifest);
-            }
-        });
-    }
-
-    /// Move the session folders from `notebooks/<uuid>` to `sessions/<uuid>`
-    private async migrateLegacySessionFolders(root: FileSystemDirectoryHandle): Promise<void> {
-        let legacyFolder: FileSystemDirectoryHandle;
-        try {
-            legacyFolder = await root.getDirectoryHandle(LEGACY_STORAGE_SESSIONS_FOLDER, { create: false });
-        } catch (error) {
-            if ((error as any).name === 'NotFoundError') {
-                return;
-            }
-            throw error;
-        }
-        const sessionsFolder = await root.getDirectoryHandle(STORAGE_SESSIONS_FOLDER, { create: true });
-        const sessionIds: string[] = [];
-        for await (const [name, handle] of legacyFolder.entries()) {
-            if (handle.kind === 'directory') {
-                sessionIds.push(name);
-            }
-        }
-        for (const sessionId of sessionIds) {
-            const source = await legacyFolder.getDirectoryHandle(sessionId, { create: false });
-            await copyDirectory(source, await sessionsFolder.getDirectoryHandle(sessionId, { create: true }));
-            await legacyFolder.removeEntry(sessionId, { recursive: true });
-        }
-        await root.removeEntry(LEGACY_STORAGE_SESSIONS_FOLDER, { recursive: true });
     }
 
     /// Run a manifest operation exclusively.
@@ -179,37 +101,12 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
         }
     }
 
-    /// Bring the files of a session to the current layout, once per session
-    private async migrateSessionFiles(sessionId: string, sessionDir: FileSystemDirectoryHandle): Promise<void> {
-        if (this.migratedSessions.has(sessionId)) return;
-        await migrateSessionFiles({
-            exists: async name => {
-                try {
-                    await sessionDir.getFileHandle(name, { create: false });
-                    return true;
-                } catch {
-                    return false;
-                }
-            },
-            // OPFS cannot rename files everywhere, the content is copied
-            rename: async (from, to) => {
-                const content = await (await (await sessionDir.getFileHandle(from)).getFile()).arrayBuffer();
-                const writable = await (await sessionDir.getFileHandle(to, { create: true })).createWritable();
-                await writable.write(content);
-                await writable.close();
-                await sessionDir.removeEntry(from);
-            },
-        }, this.fileRenames);
-        this.migratedSessions.add(sessionId);
-    }
-
     async loadSession(sessionId: string): Promise<SessionData> {
         const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), false);
-        await this.migrateSessionFiles(sessionId, sessionDir);
         const metaFile = await sessionDir.getFileHandle(STORAGE_SESSION_FILE);
         const file = await metaFile.getFile();
         const text = await file.text();
-        const data: SessionData = migrateSessionData(JSON.parse(text));
+        const data: SessionData = JSON.parse(text);
 
         // sessionId is required - will throw if missing
         if (!data.sessionId) {
@@ -817,10 +714,11 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
         }
     }
 
+    /// Write the manifest. The storage is migrated at app start, the manifest is at the current version.
     private async writeManifest(root: FileSystemDirectoryHandle, manifest: StorageManifest): Promise<void> {
         const indexFile = await root.getFileHandle(STORAGE_MANIFEST_FILE, { create: true });
         const writable = await indexFile.createWritable();
-        await writable.write(JSON.stringify(manifest, null, 2));
+        await writable.write(JSON.stringify({ ...manifest, storageVersion: STORAGE_VERSION }, null, 2));
         await writable.close();
     }
 

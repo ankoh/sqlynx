@@ -9,7 +9,7 @@ import { createDefaultConnectionParamsForConnector } from '../connections/connec
 import type { SessionSettings } from '../scripts/session_settings.js';
 import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, ConnectionEntry, ConnectionParams, SessionRegistryBackend } from './storage_backend.js';
 import { STORAGE_SCRIPTS_FOLDER, STORAGE_SESSION_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CONNECTIONS_FOLDER, isSessionRegistryBackend } from './storage_backend.js';
-import { SESSION_FORMAT_VERSION } from './session_file_migration.js';
+import { SESSION_FORMAT_VERSION } from '../../../migration/versions.js';
 
 const LOG_CTX = 'storage_writer';
 

@@ -323,27 +323,6 @@ describe('global connections', () => {
         }));
     }
 
-    it('migrates equal connections into one shared connection', async () => {
-        const backend = new SessionTestBackend();
-        seed(backend, TEST_SESSION_ID, TEST_DATABASE_ID, trino('https://trino'));
-        seed(backend, OTHER_SESSION_ID, OTHER_DATABASE_ID, trino('https://trino'), trino('https://draft'));
-        backend.schemas.set(TEST_SESSION_ID, 'CREATE TABLE db.public.shared(id integer);');
-        const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
-        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
-
-        expect([...restored.connectionStates.keys()]).toEqual([TEST_DATABASE_ID]);
-        const connection = restored.connectionStates.get(TEST_DATABASE_ID)!;
-        expect(connection.paramsDraft).toEqual(trino('https://draft'));
-        expect(restored.attachedDatabasesBySession.get(OTHER_SESSION_ID)!.mainDatabaseId).toBe(TEST_DATABASE_ID);
-        expect(restored.sessionScripts.get(OTHER_SESSION_ID)!.connectionCatalog).toBe(connection.catalog);
-        expect(restored.sessionScriptsByConnection.get(TEST_DATABASE_ID)).toEqual([TEST_SESSION_ID, OTHER_SESSION_ID]);
-        expect(connection.catalogRelationScript.toString()).toBe('CREATE TABLE db.public.shared(id integer);');
-        // The app manifest owns the connection, the sessions keep copies without drafts
-        expect(backend.connections).toMatchObject([{ id: TEST_DATABASE_ID, aliases: [OTHER_DATABASE_ID], paramsDraft: trino('https://draft') }]);
-        expect(backend.sessions.get(OTHER_SESSION_ID)!.mainDatabase).toEqual({ databaseId: TEST_DATABASE_ID, params: trino('https://trino') });
-        for (const session of restored.sessionScripts.values()) destroySessionScripts(session);
-    });
-
     it('lets the app manifest win over stale session copies and resolves aliases', async () => {
         const backend = new SessionTestBackend();
         backend.connections = [{ id: TEST_DATABASE_ID, params: trino('https://saved'), aliases: [OTHER_DATABASE_ID] }];

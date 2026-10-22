@@ -10,10 +10,6 @@ export const STORAGE_MANIFEST_FILE = 'dashql-manifest.json';
 export const STORAGE_SESSIONS_FOLDER = 'sessions';
 export const STORAGE_SESSION_FILE = 'dashql-session.json';
 export const STORAGE_SESSION_INDEX_FILE = 'dashql-session-index.json';
-/// The names of the session folder and files of older versions, when sessions were called notebooks
-export const LEGACY_STORAGE_SESSIONS_FOLDER = 'notebooks';
-export const LEGACY_STORAGE_SESSION_FILE = 'dashql-notebook.json';
-export const LEGACY_STORAGE_SESSION_INDEX_FILE = 'dashql-notebook-index.json';
 export const STORAGE_SCRIPTS_FOLDER = 'scripts';
 export const STORAGE_ATTACHMENTS_FOLDER = 'attachments';
 export const STORAGE_CACHE_FOLDER = 'cache';
@@ -32,9 +28,6 @@ export const STORAGE_CONNECTIONS_FOLDER = 'connections';
 export const STORAGE_CATALOG_RELATIONS = 'dashql-catalog-relations.sql';
 /// The functions of the catalog
 export const STORAGE_CATALOG_FUNCTIONS = 'dashql-catalog-functions.sql';
-/// The names of the catalog files of older versions, the file migration renames them
-export const LEGACY_STORAGE_CATALOG_RELATIONS = 'dashql-relations.sql';
-export const LEGACY_STORAGE_CATALOG_FUNCTIONS = 'dashql-functions.sql';
 /// The catalog changes of executed statements since the last catalog refresh
 export const STORAGE_CATALOG_CHANGES = 'dashql-catalog-changes.sql';
 export const STORAGE_SCRIPT_EXTENSION = '.sql';

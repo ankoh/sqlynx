@@ -11,7 +11,7 @@ import type {
 } from './storage_backend.js';
 import { StorageBackendType, validateDataFileName } from './storage_backend.js';
 import type { CacheFileStat } from './query_result_cache_eviction.js';
-import { SESSION_FORMAT_VERSION } from './session_file_migration.js';
+import { SESSION_FORMAT_VERSION } from '../../../migration/versions.js';
 
 export class SessionTestBackend implements StorageBackend {
     readonly sessions = new Map<string, SessionData>();

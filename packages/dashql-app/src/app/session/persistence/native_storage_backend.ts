@@ -1,15 +1,6 @@
 import { type StorageBackend, type SessionData, type ScriptData, type SessionEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_SESSION_FILE, STORAGE_SESSION_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeSessionIndex } from './session_index.js';
-import { migrateSessionData, migrateSessionFiles, sessionFileNames, SESSION_FILE_RENAMES, type SessionFileRename } from './session_file_migration.js';
-
-/// How a native backend treats the files of older versions
-export interface NativeStorageOptions {
-    /// The renames that bring the session folder to the current file layout
-    fileRenames?: readonly SessionFileRename[];
-    /// Rename the files of older versions when loading the session? Off for folders that must stay untouched.
-    migrateFiles?: boolean;
-}
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
 import { exists, join, mkdir, readDir, readFile, readTextFile, remove, rename, stat, writeFile, writeTextFile } from '../../../platform/electron_fs.js';
@@ -31,15 +22,9 @@ const GITIGNORE_FILE = '.gitignore';
 export class NativeStorageBackend implements StorageBackend {
     /// The absolute directory on disk that holds this session's files
     private readonly dir: string;
-    /// The renames that bring the session folder to the current file layout
-    private readonly fileRenames: readonly SessionFileRename[];
-    /// Were the files of the session migrated? Set from the start if the folder must stay untouched.
-    private filesMigrated: boolean;
 
-    constructor(dir: string, options: NativeStorageOptions = {}) {
+    constructor(dir: string) {
         this.dir = dir;
-        this.fileRenames = options.fileRenames ?? SESSION_FILE_RENAMES;
-        this.filesMigrated = !(options.migrateFiles ?? true);
     }
 
     getBackendType(): StorageBackendType {
@@ -93,34 +78,18 @@ export class NativeStorageBackend implements StorageBackend {
 
     // ---- Per-session operations ---------------------------------------------------------------
 
-    /// Bring the files of the session folder to the current layout, once
-    private async migrateSessionFiles(): Promise<void> {
-        if (this.filesMigrated) return;
-        await migrateSessionFiles({
-            exists: async name => exists(await this.abs(name)),
-            rename: async (from, to) => rename(await this.abs(from), await this.abs(to)),
-        }, this.fileRenames);
-        this.filesMigrated = true;
-    }
-
-    /// Read a file of the session folder, a folder that is not migrated may still use an older name
+    /// Read a file of the session folder, null if it does not exist
     private async readSessionFile(fileName: string): Promise<string | null> {
-        for (const name of sessionFileNames(fileName, this.fileRenames)) {
-            const path = await this.abs(name);
-            if (await exists(path)) {
-                return await readTextFile(path);
-            }
-        }
-        return null;
+        const path = await this.abs(fileName);
+        return await exists(path) ? await readTextFile(path) : null;
     }
 
     async loadSession(sessionId: string): Promise<SessionData> {
-        await this.migrateSessionFiles();
         const text = await this.readSessionFile(STORAGE_SESSION_FILE);
         if (text == null) {
             throw new Error(`Missing ${STORAGE_SESSION_FILE} in ${this.dir}`);
         }
-        return migrateSessionData(JSON.parse(text) as SessionData);
+        return JSON.parse(text) as SessionData;
     }
 
     async saveSessionManifest(_sessionId: string, data: SessionData): Promise<void> {

@@ -16,6 +16,10 @@
       "$ref": "#/definitions/AppSettings",
       "description": "Persisted app-level settings"
     },
+    "storageVersion": {
+      "type": "integer",
+      "description": "The version of the storage, absent before storage versions existed (version 1). The app migrates older versions at startup, see packages/dashql-app/src/migration, and refuses newer ones."
+    },
     "connections": {
       "type": "array",
       "items": {

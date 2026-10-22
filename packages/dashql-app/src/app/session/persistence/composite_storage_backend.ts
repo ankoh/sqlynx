@@ -12,7 +12,6 @@ import {
     type StorageManifest,
     StorageBackendType,
     STORAGE_MANIFEST_FILE,
-    STORAGE_SESSION_FILE,
 } from './storage_backend.js';
 import { type CacheFileStat } from './query_result_cache_eviction.js';
 import { NativeStorageBackend } from './native_storage_backend.js';
@@ -22,10 +21,13 @@ import { copySession, verifySession } from './storage_migration.js';
 import { validateSessionData, describeSessionValidationError } from './session_validation.js';
 import {
     readSessionBundle,
+    readSessionBundleHead,
     writeSessionBundle,
     type SessionBundle,
 } from './session_bundle.js';
 import type { Logger } from '../../../platform/logger/logger.js';
+import { NativeFolder, OverlayFolder } from '../../../migration/migration_folder.js';
+import { migrateSessionFolder } from '../../../migration/session_migration.js';
 
 const LOG_CTX = 'composite_storage_backend';
 
@@ -384,27 +386,22 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
     }
 
     /// Read and validate a selected native folder without creating or modifying anything in it.
+    ///
+    /// A folder of an older version is migrated in memory, the folder itself is migrated once it is
+    /// registered.
     async prepareNativeSession(dir: string): Promise<PreparedNativeSession> {
         await this.ensureScope(dir);
-        // The files of older versions are read under their old names, they are renamed once the folder is registered
-        const native = new NativeStorageBackend(dir, { migrateFiles: false });
-        let session: SessionData;
-        try {
-            session = await native.loadSession(dir);
-        } catch {
-            throw new Error(`No dashql session found in ${dir} (expected ${STORAGE_SESSION_FILE})`);
-        }
-
-        const validation = validateSessionData(session);
-        if (!validation.ok) {
-            throw new Error(`Session in ${dir} is invalid: ${describeSessionValidationError(validation.error)}`);
-        }
+        const head = await readSessionBundleHead(new OverlayFolder(new NativeFolder(dir)), `Invalid session folder ${dir}`);
 
         let bundle: SessionBundle;
         try {
             // Native reads do not require initialize(); avoiding it keeps a missing selected folder
             // from being created as a side effect of validation.
-            bundle = await readSessionBundle(dir, native, true);
+            const native = new NativeStorageBackend(dir);
+            const scripts = await native.loadScripts(dir);
+            const data = await Promise.all((await native.listDataFiles(dir))
+                .map(async file => ({ name: file.name, bytes: await native.loadDataFile(dir, file.name) })));
+            bundle = { ...head, scripts, data };
         } catch (error) {
             throw new Error(`Failed to read session in ${dir}: ${(error as Error)?.message ?? String(error)}`);
         }
@@ -473,6 +470,7 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         if (!validation.ok) {
             throw new Error(`Session in ${prepared.dir} is invalid: ${describeSessionValidationError(validation.error)}`);
         }
+        await migrateSessionFolder(new NativeFolder(prepared.dir));
         const native = new NativeStorageBackend(prepared.dir);
         await native.regenerateSessionIndex(sessionId);
         await this.upsertSessionEntry({

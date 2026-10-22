@@ -1,18 +1,12 @@
-import type { SessionData, ScriptData } from './storage_backend.js';
+import type { ScriptData } from './storage_backend.js';
 import {
-    STORAGE_SESSION_FILE,
-    LEGACY_STORAGE_SESSION_FILE,
     STORAGE_ATTACHMENTS_FOLDER,
     validateDataFileName,
     STORAGE_SCRIPTS_FOLDER,
-    LEGACY_STORAGE_CATALOG_FUNCTIONS,
-    LEGACY_STORAGE_CATALOG_RELATIONS,
-    STORAGE_CATALOG_FUNCTIONS,
-    STORAGE_CATALOG_RELATIONS,
 } from './storage_backend.js';
 import type { SessionBundle } from './session_bundle.js';
-import { describeSessionValidationError, validateSessionData } from './session_validation.js';
-import { migrateSessionData } from './session_file_migration.js';
+import { readSessionBundleHead } from './session_bundle.js';
+import { MemoryFolder } from '../../../migration/migration_folder.js';
 
 interface BrowserFolderEntry {
     path: string;
@@ -88,36 +82,15 @@ export async function readSessionBundleFromBrowserFolder(
 
     }
 
-    // Folders of older versions name the session file differently
-    const manifestKey = [STORAGE_SESSION_FILE, LEGACY_STORAGE_SESSION_FILE]
-        .map(destinationKey)
-        .find(key => destinations.has(key));
-    if (manifestKey === undefined) {
-        throw new Error(`Invalid session folder: missing ${STORAGE_SESSION_FILE}`);
-    }
-
     const contents = new Map<string, string>();
     await Promise.all([...destinations].map(async ([key, entry]) => {
         if (classifyBundlePath(entry.path) === 'data') return;
         contents.set(key, await entry.file.text());
     }));
 
-    let parsedSession: unknown;
-    try {
-        parsedSession = JSON.parse(contents.get(manifestKey)!);
-    } catch {
-        throw new Error(`Invalid session folder: invalid ${STORAGE_SESSION_FILE}`);
-    }
-    if (parsedSession == null || typeof parsedSession !== 'object' || Array.isArray(parsedSession)) {
-        throw new Error(`Invalid session folder: invalid ${STORAGE_SESSION_FILE}`);
-    }
-    const session = migrateSessionData(parsedSession as SessionData);
-    const validation = validateSessionData(session);
-    if (!validation.ok) {
-        throw new Error(
-            `Invalid session folder: invalid ${STORAGE_SESSION_FILE}: ${describeSessionValidationError(validation.error)}`,
-        );
-    }
+    // The top-level files are migrated in memory, the scripts and attachments are read as they are
+    const head = await readSessionBundleHead(
+        new MemoryFolder([...contents].filter(([key]) => isTopLevelFile(key))), 'Invalid session folder');
 
     const scripts: ScriptData[] = [...destinations]
         .filter(([, entry]) => classifyBundlePath(entry.path) === 'script')
@@ -128,10 +101,7 @@ export async function readSessionBundleFromBrowserFolder(
         .sort((a, b) => NATURAL_SORT.compare(a.name, b.name));
 
     return {
-        session,
-        // Folders of older versions name the catalog files differently
-        schemaSql: getOptionalContent(contents, STORAGE_CATALOG_RELATIONS) ?? getOptionalContent(contents, LEGACY_STORAGE_CATALOG_RELATIONS),
-        functionsSql: getOptionalContent(contents, STORAGE_CATALOG_FUNCTIONS) ?? getOptionalContent(contents, LEGACY_STORAGE_CATALOG_FUNCTIONS),
+        ...head,
         scripts,
         data: await Promise.all([...destinations.values()]
             .filter(entry => classifyBundlePath(entry.path) === 'data')
@@ -170,12 +140,7 @@ function classifyBundlePath(path: string): 'accept' | 'script' | 'data' | 'ignor
         validateDataFileName(parts[1]);
         return 'data';
     }
-    if (key === destinationKey(STORAGE_SESSION_FILE)
-        || key === destinationKey(LEGACY_STORAGE_SESSION_FILE)
-        || key === destinationKey(STORAGE_CATALOG_RELATIONS)
-        || key === destinationKey(STORAGE_CATALOG_FUNCTIONS)
-        || key === destinationKey(LEGACY_STORAGE_CATALOG_RELATIONS)
-        || key === destinationKey(LEGACY_STORAGE_CATALOG_FUNCTIONS)) {
+    if (isTopLevelFile(key)) {
         return 'accept';
     }
 
@@ -193,10 +158,12 @@ function classifyBundlePath(path: string): 'accept' | 'script' | 'data' | 'ignor
     return 'script';
 }
 
-function destinationKey(path: string): string {
-    return path.normalize('NFC').toLowerCase();
+/// Is the path a top-level file of the session folder? Older versions name the files differently,
+/// the session migration needs any of them.
+function isTopLevelFile(key: string): boolean {
+    return !key.includes('/') && key.startsWith('dashql-');
 }
 
-function getOptionalContent(contents: Map<string, string>, path: string): string | null {
-    return contents.get(destinationKey(path)) ?? null;
+function destinationKey(path: string): string {
+    return path.normalize('NFC').toLowerCase();
 }

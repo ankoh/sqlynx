@@ -14,7 +14,7 @@ const REMOTE_DATABASE_ID = '66666666-7777-8888-9999-aaaaaaaaaaaa';
 
 function session(extra: Partial<SessionData> = {}): SessionData {
     return {
-        formatVersion: 3,
+        formatVersion: 4,
         sessionId: UUID,
         mainDatabase: { databaseId: DATABASE_ID, params: { hyper: {} } as any },
         attachedDatabases: [],
@@ -73,7 +73,7 @@ describe('validateSessionData', () => {
     });
 
     it('rejects missing, older, and unknown format versions', () => {
-        for (const formatVersion of [undefined, 1, 2, 4]) {
+        for (const formatVersion of [undefined, 1, 2, 3, 5]) {
             expect(validateSessionData(session({ formatVersion } as any))).toEqual({
                 ok: false,
                 error: SessionValidationError.UnsupportedFormatVersion,

@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { Logger } from '../../../platform/logger/logger.js';
-import { applyConnectionMigration, planConnectionMigration, type MigratingSession } from './connection_migration.js';
-import { SessionTestBackend, testSession } from './session_test_backend.js';
-import { STORAGE_CATALOG_RELATIONS, type ConnectionParams } from './storage_backend.js';
-
-class NullLogger extends Logger {
-    public destroy(): void {}
-    protected flushPendingRecords(): void {}
-}
+import { planConnectionMigration, type MigratingSession } from './v3_global_connections.js';
+import { testSession } from '../../app/session/persistence/session_test_backend.js';
+import type { ConnectionParams } from '../../app/session/persistence/storage_backend.js';
 
 const SESSION_A = '11111111-0000-4000-8000-00000000000a';
 const SESSION_B = '11111111-0000-4000-8000-00000000000b';
@@ -31,7 +25,7 @@ function session(sessionId: string, databaseId: string, params: ConnectionParams
     };
 }
 
-describe('connection migration', () => {
+describe('global connections migration', () => {
     it('consolidates databases with equal params under the first id', () => {
         const plan = planConnectionMigration([
             session(SESSION_A, DB_A, WASM),
@@ -87,20 +81,5 @@ describe('connection migration', () => {
             }),
         }]);
         expect(plan.rewrites.get(SESSION_A)!.attachedDatabases).toEqual([{ databaseId: DB_C, params: trino('https://trino') }]);
-    });
-
-    it('commits once, copies catalogs and rewrites sessions', async () => {
-        const backend = new SessionTestBackend();
-        const sessions = [session(SESSION_A, DB_A, WASM), session(SESSION_B, DB_B, WASM)];
-        for (const { sessionId, data } of sessions) backend.sessions.set(sessionId, data);
-        backend.schemas.set(SESSION_A, 'CREATE TABLE a(id int);');
-        const plan = planConnectionMigration(sessions);
-        await expect(applyConnectionMigration(backend, plan, new NullLogger())).resolves.toBe(true);
-        expect(backend.connections?.map(entry => entry.id)).toEqual([DB_A]);
-        expect(backend.connectionFiles.get(`${DB_A}/${STORAGE_CATALOG_RELATIONS}`)).toBe('CREATE TABLE a(id int);');
-        expect(backend.sessions.get(SESSION_B)!.mainDatabase.databaseId).toBe(DB_A);
-        // A second migration finds the committed connections and changes nothing
-        await expect(applyConnectionMigration(backend, planConnectionMigration([]), new NullLogger())).resolves.toBe(false);
-        expect(backend.connections?.map(entry => entry.id)).toEqual([DB_A]);
     });
 });

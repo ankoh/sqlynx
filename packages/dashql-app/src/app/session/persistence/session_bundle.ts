@@ -1,9 +1,12 @@
 import type { DashQL, FlatBufferPtr, buffers } from '@ankoh/dashql-core';
 import type { DataFileData, SessionData, ScriptData, StorageBackend } from './storage_backend.js';
-import { STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, StorageBackendType, validateDataFileName } from './storage_backend.js';
+import { STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, STORAGE_SESSION_FILE, StorageBackendType, validateDataFileName } from './storage_backend.js';
+import type { MigrationFolder } from '../../../migration/migration_folder.js';
+import { migrateSessionFolder, SessionMigrationResult } from '../../../migration/session_migration.js';
 import {
     describeSessionValidationError,
     isValidUuid,
+    SessionValidationError,
     validateSessionData,
 } from './session_validation.js';
 
@@ -15,6 +18,44 @@ export interface SessionBundle {
     functionsSql: string | null;
     scripts: ScriptData[];
     data?: DataFileData[];
+}
+
+/// The top-level files of a session bundle
+export type SessionBundleHead = Pick<SessionBundle, 'session' | 'schemaSql' | 'functionsSql'>;
+
+/// Migrate the top-level files of a session to the current format and read them.
+///
+/// The folder is usually held in memory, e.g. the files of an import or an `OverlayFolder` over a
+/// folder that must stay untouched. Errors start with `errorPrefix`, e.g. "Invalid ZIP".
+export async function readSessionBundleHead(folder: MigrationFolder, errorPrefix: string): Promise<SessionBundleHead> {
+    const migration = await migrateSessionFolder(folder);
+    if (migration === SessionMigrationResult.Missing) {
+        throw new Error(`${errorPrefix}: missing ${STORAGE_SESSION_FILE}`);
+    }
+    const text = await folder.readText(STORAGE_SESSION_FILE);
+    if (text == null) {
+        // Metadata of an unsupported version under an older name
+        throw new Error(`${errorPrefix}: invalid ${STORAGE_SESSION_FILE}: ${describeSessionValidationError(SessionValidationError.UnsupportedFormatVersion)}`);
+    }
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(text);
+    } catch {
+        throw new Error(`${errorPrefix}: invalid ${STORAGE_SESSION_FILE}`);
+    }
+    if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error(`${errorPrefix}: invalid ${STORAGE_SESSION_FILE}`);
+    }
+    const session = parsed as SessionData;
+    const validation = validateSessionData(session);
+    if (!validation.ok) {
+        throw new Error(`${errorPrefix}: invalid ${STORAGE_SESSION_FILE}: ${describeSessionValidationError(validation.error)}`);
+    }
+    return {
+        session,
+        schemaSql: await folder.readText(STORAGE_CATALOG_RELATIONS),
+        functionsSql: await folder.readText(STORAGE_CATALOG_FUNCTIONS),
+    };
 }
 
 export interface SessionCatalogValidationResult {

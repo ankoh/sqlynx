@@ -1,19 +1,20 @@
-import type { Logger } from '../../../platform/logger/logger.js';
-import { stringifyError } from '../../../platform/logger/logger.js';
-import { connectionParamsEqual, connectionParamsKey, connectionParamsWithoutDraftRows } from '../connections/connection_params.js';
-import type { AttachedDatabaseRole } from '../connections/attached_database_registry.js';
-import {
-    type ConnectionEntry,
-    type ConnectionParams,
-    type SessionData,
-    type SessionRegistryBackend,
-    STORAGE_CATALOG_CHANGES,
-    STORAGE_CATALOG_FUNCTIONS,
-    STORAGE_CATALOG_RELATIONS,
-} from './storage_backend.js';
-import { dedupeAttachedDatabases } from './storage_writer.js';
+import { stringifyError } from '../../platform/logger/logger.js';
+import { connectionParamsEqual, connectionParamsKey, connectionParamsWithoutDraftRows } from '../../app/session/connections/connection_params.js';
+import type { AttachedDatabaseRole } from '../../app/session/connections/attached_database_registry.js';
+import type { ConnectionEntry, ConnectionParams, SessionData } from '../../app/session/persistence/storage_backend.js';
+import { dedupeAttachedDatabases } from '../../app/session/persistence/storage_writer.js';
+import { isValidUuid } from '../../app/session/persistence/session_validation.js';
+import type { MigrationFolder } from '../migration_folder.js';
+import { migrateSessionFolder } from '../session_migration.js';
+import type { StorageMigrationStep } from '../storage_migration.js';
+import { listSessionFolders, readManifestJson, writeManifestJson } from '../storage_root.js';
 
-const LOG_CTX = 'connection_migration';
+const LOG_CTX = 'storage_migration';
+
+/// The session format version the step reads and writes
+const SESSION_FORMAT_VERSION = 4;
+/// The catalog files that a session copies into the folder of a connection
+const CATALOG_FILES = ['dashql-catalog-relations.sql', 'dashql-catalog-functions.sql', 'dashql-catalog-changes.sql'];
 
 /// A session that takes part in the migration
 export interface MigratingSession {
@@ -153,55 +154,78 @@ export function planConnectionMigration(sessions: readonly MigratingSession[]): 
     return { entries, rewrites, catalogSources };
 }
 
-/// Apply a migration plan.
+/// Does the metadata of format version 4 hold the databases that the plan reads?
+function hasDatabases(data: Record<string, unknown>): boolean {
+    const isDatabase = (value: unknown) => value != null && typeof value === 'object'
+        && typeof (value as { databaseId?: unknown }).databaseId === 'string'
+        && (value as { params?: unknown }).params != null && typeof (value as { params?: unknown }).params === 'object';
+    return data.formatVersion === SESSION_FORMAT_VERSION
+        && isDatabase(data.mainDatabase)
+        && Array.isArray(data.attachedDatabases) && data.attachedDatabases.every(isDatabase);
+}
+
+/// Sessions own their connections up to storage version 2. The step moves the connections into the
+/// app manifest and consolidates connections with equal params, see `planConnectionMigration`.
 ///
 /// The catalogs are copied first, writing the connections into the manifest is the commit point.
-/// A crash before it repeats the migration, the copies are idempotent. The sessions are rewritten
-/// last and best effort, the load resolves stale references through the aliases.
-/// Returns false if another writer migrated the connections in the meantime.
-/// The storage that a migration writes
-export type ConnectionMigrationBackend = Pick<SessionRegistryBackend,
-    'updateConnections' | 'saveConnectionFile' | 'saveSessionManifest'
-    | 'loadSessionSchema' | 'loadSessionFunctions' | 'loadSessionCatalogChanges'>;
-
-export async function applyConnectionMigration(backend: ConnectionMigrationBackend, plan: ConnectionMigrationPlan, logger: Logger): Promise<boolean> {
-    for (const [connectionId, sessionId] of plan.catalogSources) {
-        try {
-            const [relations, functions, changes] = await Promise.all([
-                backend.loadSessionSchema(sessionId),
-                backend.loadSessionFunctions(sessionId),
-                backend.loadSessionCatalogChanges(sessionId),
-            ]);
-            if (relations != null) await backend.saveConnectionFile(connectionId, STORAGE_CATALOG_RELATIONS, relations);
-            if (functions != null) await backend.saveConnectionFile(connectionId, STORAGE_CATALOG_FUNCTIONS, functions);
-            if (changes != null) await backend.saveConnectionFile(connectionId, STORAGE_CATALOG_CHANGES, changes);
-        } catch (error) {
-            // The catalog is a cache, the next refresh describes the relations anyway
-            logger.warn('Failed to copy the catalog of a connection', { connectionId, sessionId, error: stringifyError(error) }, LOG_CTX);
+/// The sessions are rewritten last and best effort, the load resolves stale references through the
+/// aliases. Sessions that cannot be read register their connections when they become readable again.
+export const globalConnections: StorageMigrationStep = {
+    version: 3,
+    description: 'Move the connections of the sessions into the app manifest',
+    async migrate({ root, logger }) {
+        const manifest = await readManifestJson(root);
+        if (manifest == null || manifest.connections !== undefined) {
+            return;
         }
-    }
 
-    let committed = false;
-    await backend.updateConnections(connections => {
-        if (connections != null) return null;
-        committed = true;
-        return plan.entries;
-    });
-    if (!committed) {
-        logger.info('Connections were migrated concurrently', {}, LOG_CTX);
-        return false;
-    }
-    logger.info('Migrated connections', {
-        connections: plan.entries.length.toString(),
-        sessions: plan.rewrites.size.toString(),
-    }, LOG_CTX);
-
-    for (const [sessionId, data] of plan.rewrites) {
-        try {
-            await backend.saveSessionManifest(sessionId, data);
-        } catch (error) {
-            logger.warn('Failed to rewrite the connections of a session', { sessionId, error: stringifyError(error) }, LOG_CTX);
+        const sessions: MigratingSession[] = [];
+        const folders = new Map<string, MigrationFolder>();
+        for (const { sessionId, folder } of await listSessionFolders(root, manifest)) {
+            if (!isValidUuid(sessionId)) continue;
+            try {
+                await migrateSessionFolder(folder, SESSION_FORMAT_VERSION);
+                const text = await folder.readText('dashql-session.json');
+                const data = text == null ? null : JSON.parse(text) as Record<string, unknown>;
+                if (data != null && hasDatabases(data)) {
+                    sessions.push({ sessionId, data: data as unknown as SessionData });
+                    folders.set(sessionId, folder);
+                }
+            } catch (error) {
+                logger.warn('Skipping the connections of an unreadable session', { sessionId, error: stringifyError(error) }, LOG_CTX);
+            }
         }
-    }
-    return true;
-}
+        const plan = planConnectionMigration(sessions);
+
+        for (const [connectionId, sessionId] of plan.catalogSources) {
+            try {
+                const connectionDir = await (await root.getDirectoryHandle('connections', { create: true }))
+                    .getDirectoryHandle(connectionId, { create: true });
+                for (const name of CATALOG_FILES) {
+                    const text = await folders.get(sessionId)!.readText(name);
+                    if (text == null) continue;
+                    const writable = await (await connectionDir.getFileHandle(name, { create: true })).createWritable();
+                    await writable.write(text);
+                    await writable.close();
+                }
+            } catch (error) {
+                // The catalog is a cache, the next refresh describes the relations anyway
+                logger.warn('Failed to copy the catalog of a connection', { connectionId, sessionId, error: stringifyError(error) }, LOG_CTX);
+            }
+        }
+
+        await writeManifestJson(root, { ...manifest, connections: plan.entries });
+        logger.info('Migrated connections', {
+            connections: plan.entries.length.toString(),
+            sessions: plan.rewrites.size.toString(),
+        }, LOG_CTX);
+
+        for (const [sessionId, data] of plan.rewrites) {
+            try {
+                await folders.get(sessionId)!.writeText('dashql-session.json', JSON.stringify(data, null, 2));
+            } catch (error) {
+                logger.warn('Failed to rewrite the connections of a session', { sessionId, error: stringifyError(error) }, LOG_CTX);
+            }
+        }
+    },
+};

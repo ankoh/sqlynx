@@ -5,6 +5,8 @@ import { OPFSStorageBackend } from './opfs_storage_backend.js';
 import { CompositeStorageBackend } from './composite_storage_backend.js';
 import { type SessionLocation } from './session_locator.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
+import { stringifyError } from '../../../platform/logger/logger.js';
+import { migrateStorage } from '../../../migration/storage_migration.js';
 import type { DashQL } from '@ankoh/dashql-core';
 import { restoreAppState, type RestoredAppState, type AppStateRestorationProgress } from './app_state_loader.js';
 
@@ -43,6 +45,14 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({ backend: provi
 
         const initBackend = async () => {
             const initStartTime = performance.now();
+
+            // The storage is brought to the current version before anything reads it
+            try {
+                await migrateStorage(logger);
+            } catch (error) {
+                logger.error("Failed to migrate the storage", { error: stringifyError(error) }, "storage_provider");
+                return;
+            }
 
             logger.info("Initializing storage backend", {}, "storage_provider");
             const opfsBackend = new OPFSStorageBackend();

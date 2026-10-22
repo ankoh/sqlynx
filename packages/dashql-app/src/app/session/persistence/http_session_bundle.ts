@@ -11,8 +11,6 @@ import {
     STORAGE_ATTACHMENTS_FOLDER,
     STORAGE_SESSION_INDEX_FILE,
     STORAGE_SCRIPTS_FOLDER,
-    LEGACY_STORAGE_CATALOG_FUNCTIONS,
-    LEGACY_STORAGE_CATALOG_RELATIONS,
     STORAGE_CATALOG_FUNCTIONS,
     STORAGE_CATALOG_RELATIONS,
 } from './storage_backend.js';
@@ -96,13 +94,11 @@ export async function readSessionBundleFromHttp(
     };
     reportFileProgress();
 
-    // Sessions published by older versions name the catalog files differently
-    const fetchCatalogFile = async (name: string, legacyName: string) =>
-        await fetchBestEffortText(httpClient, new URL(name, baseUrl), MAX_SCRIPT_BYTES, signal)
-        ?? await fetchBestEffortText(httpClient, new URL(legacyName, baseUrl), MAX_SCRIPT_BYTES, signal);
+    const fetchCatalogFile = async (name: string) =>
+        await fetchBestEffortText(httpClient, new URL(name, baseUrl), MAX_SCRIPT_BYTES, signal);
     const optional = await Promise.all([
-        trackFile(fetchCatalogFile(STORAGE_CATALOG_RELATIONS, LEGACY_STORAGE_CATALOG_RELATIONS)),
-        trackFile(fetchCatalogFile(STORAGE_CATALOG_FUNCTIONS, LEGACY_STORAGE_CATALOG_FUNCTIONS)),
+        trackFile(fetchCatalogFile(STORAGE_CATALOG_RELATIONS)),
+        trackFile(fetchCatalogFile(STORAGE_CATALOG_FUNCTIONS)),
     ]);
 
     const scripts: ScriptData[] = (await Promise.all(index.scripts.map(async script => {
