@@ -15,7 +15,7 @@ import { WebFileDownloader } from '../../../../platform/file/web_file_downloader
 import { NotebookTestBackend } from '../../persistence/notebook_test_backend.js';
 import { NotebookFeed, type NotebookFeedDependencies } from './notebook_feed.js';
 import { NotebookComposerVariant, type NotebookComposerProps } from './notebook_composer.js';
-import { ComposerInputMode } from './composer_input_mode.js';
+import { ComposerInputMode } from '../../ai/input_mode.js';
 import { CREATE_SCRIPT, SET_SCRIPT_TEXT, type NotebookScripts } from '../../scripts/notebook_scripts.js';
 import { CONNECTOR_INFOS } from '../../connections/connector_info.js';
 

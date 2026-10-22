@@ -479,21 +479,6 @@
     gap: 8px;
 }
 
-.feed_generation_error {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 8px 8px 55px;
-    color: var(--fgColor-danger, #cf222e);
-    font-size: var(--font_size_small);
-}
-
-.feed_generation_error_message {
-    flex: 1;
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
 .feed_script_editor {
     padding: 0;
     width: 100%;

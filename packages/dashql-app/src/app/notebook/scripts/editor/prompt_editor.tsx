@@ -8,10 +8,8 @@ import { defaultKeymap, history, historyKeymap, insertNewlineAndIndent } from '@
 
 import { CodeMirrorSearchExtensions } from './codemirror.js';
 import { DashQLExtensions, DashQLFocusCompletionEffect } from './dashql_extension.js';
-import { DashQLCompletionAbortEffect, DashQLCompletionDisabled, DashQLProcessorPlugin, DashQLProcessorUpdateOut, DashQLUpdateEffect } from './dashql_processor.js';
-import { NLIdentifierExtensions, NLIdentifierIndex, NLIdentifierIndexEffect } from './nl_identifier_plugin.js';
+import { DashQLCompletionAbortEffect, DashQLProcessorPlugin, DashQLProcessorUpdateOut, DashQLUpdateEffect } from './dashql_processor.js';
 import { replaceScriptSessionText } from '../notebook_scripts.js';
-import type { CatalogNameIndex } from '../../ai/catalog_name_index.js';
 
 /// Callbacks of the prompt editor, read through a ref so the editor extensions are built only once.
 interface PromptEditorCallbacks {
@@ -26,8 +24,6 @@ interface PromptEditorCallbacks {
 /// The SQL assistance: completion, highlighting and auto-closing.
 /// An empty prompt shows its placeholder rather than a completion hint.
 const SQL_ASSIST_EXTENSIONS = DashQLExtensions.filter(extension => extension !== DashQLFocusCompletionEffect && extension !== DashQLProcessorPlugin);
-/// The assistance for natural language: no SQL completion, catalog identifiers are highlighted and completed
-const NATURAL_LANGUAGE_EXTENSIONS = [DashQLCompletionDisabled.of(true), ...NLIdentifierExtensions];
 
 /// Create CodeMirror extensions for a prompt editor.
 /// This is a minimal setup without line numbers and gutters that grows with its content.
@@ -45,9 +41,8 @@ function createPromptExtensions(configurable: Extension[], callbacks: React.RefO
         themes.xcode.xcodeLight,
         drawSelection(),
         history(),
-        // The processor keeps running in every mode, the script session tells SQL from natural language
+        // The processor keeps running with any assistance, the editor updates of the script session are reported
         DashQLProcessorPlugin,
-        NLIdentifierIndex,
         ...CodeMirrorSearchExtensions,
         // Below the completion keymap (Prec.highest), above the default Enter binding
         Prec.high(keymap.of([
@@ -88,10 +83,8 @@ export interface PromptEditorProps {
     onTextChange?: (text: string) => void;
     /// Called with every editor update of the script session, e.g. to tell SQL from natural language
     onEditorUpdate?: (update: dashql.buffers.editor.EditorUpdateT) => void;
-    /// Does the prompt hold natural language rather than SQL?
-    naturalLanguage?: boolean;
-    /// The catalog names that are highlighted and completed in natural language
-    identifierIndex?: CatalogNameIndex;
+    /// Replaces the SQL assistance, e.g. to assist natural language
+    assist?: Extension;
     /// Receives the CodeMirror view once it is mounted
     setView?: (view: EditorView | null) => void;
 }
@@ -117,15 +110,12 @@ export const PromptEditor: React.FC<PromptEditorProps> = (props) => {
         }
         const configurable = [
             compartments.placeholder.of(placeholder(props.placeholder)),
-            compartments.assist.of(props.naturalLanguage ? NATURAL_LANGUAGE_EXTENSIONS : SQL_ASSIST_EXTENSIONS),
+            compartments.assist.of(props.assist ?? SQL_ASSIST_EXTENSIONS),
         ];
         const view = new EditorView({
             state: EditorState.create({ extensions: createPromptExtensions(configurable, callbacks) }),
             parent: editorNode,
         });
-        if (props.identifierIndex != null) {
-            view.dispatch({ effects: NLIdentifierIndexEffect.of(props.identifierIndex) });
-        }
         setEditorView(view);
         return () => {
             view.destroy();
@@ -139,23 +129,16 @@ export const PromptEditor: React.FC<PromptEditorProps> = (props) => {
     }, [editorView, props.placeholder]);
     React.useEffect(() => {
         if (editorView == null) return;
-        const naturalLanguage = props.naturalLanguage ?? false;
-        const current = compartments.assist.get(editorView.state);
-        const next = naturalLanguage ? NATURAL_LANGUAGE_EXTENSIONS : SQL_ASSIST_EXTENSIONS;
-        if (current === next) return;
+        const next = props.assist ?? SQL_ASSIST_EXTENSIONS;
+        if (compartments.assist.get(editorView.state) === next) return;
         editorView.dispatch({
             effects: [
                 compartments.assist.reconfigure(next),
-                // A SQL completion makes no sense in natural language
-                ...(naturalLanguage ? [DashQLCompletionAbortEffect.of(null)] : []),
+                // A SQL completion makes no sense with a different assistance
+                ...(props.assist != null ? [DashQLCompletionAbortEffect.of(null)] : []),
             ],
         });
-    }, [editorView, props.naturalLanguage]);
-    React.useEffect(() => {
-        if (editorView == null || props.identifierIndex == null) return;
-        if (editorView.state.field(NLIdentifierIndex) === props.identifierIndex) return;
-        editorView.dispatch({ effects: NLIdentifierIndexEffect.of(props.identifierIndex) });
-    }, [editorView, props.identifierIndex]);
+    }, [editorView, props.assist]);
 
     // Forward the view
     React.useEffect(() => {

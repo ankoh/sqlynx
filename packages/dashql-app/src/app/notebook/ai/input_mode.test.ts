@@ -1,7 +1,7 @@
 import * as core from '@ankoh/dashql-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { assessSql, ComposerInputMode, decideMode } from './composer_input_mode.js';
+import { assessSql, ComposerInputMode, decideMode } from './input_mode.js';
 
 declare const DASHQL_PRECOMPILED: Promise<Uint8Array>;
 

@@ -3,8 +3,8 @@ import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { buildCatalogNameIndex, CatalogNameIndex } from '../../ai/catalog_name_index.js';
-import { NLIdentifierExtensions, NLIdentifierHintField, NLIdentifierIndex, NLIdentifierIndexEffect } from './nl_identifier_plugin.js';
+import { buildCatalogNameIndex, CatalogNameIndex } from '../catalog_name_index.js';
+import { NLIdentifierExtensions, NLIdentifierHintField, NLIdentifierIndex } from './nl_identifier_plugin.js';
 
 import * as styles from './nl_identifier_plugin.module.css';
 
@@ -35,10 +35,9 @@ describe('Natural language identifiers', () => {
     let view: EditorView;
     beforeEach(() => {
         view = new EditorView({
-            state: EditorState.create({ extensions: [NLIdentifierIndex, ...NLIdentifierExtensions] }),
+            state: EditorState.create({ extensions: [NLIdentifierIndex.of(index), ...NLIdentifierExtensions] }),
             parent: document.body,
         });
-        view.dispatch({ effects: NLIdentifierIndexEffect.of(index) });
     });
     afterEach(() => view.destroy());
 

@@ -6,9 +6,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import type { EditorView } from '@codemirror/view';
 
 import { NotebookComposer, NotebookComposerVariant } from './notebook_composer.js';
-import { ComposerInputMode } from './composer_input_mode.js';
+import { ComposerInputMode } from '../../ai/input_mode.js';
 import { LoggerProvider } from '../../../../platform/logger/logger_provider.js';
-import * as identifierStyles from '../../scripts/editor/nl_identifier_plugin.module.css';
+import * as identifierStyles from '../../ai/editor/nl_identifier_plugin.module.css';
 import { DashQLCompletionStartEffect, DashQLProcessorPlugin } from '../../scripts/editor/dashql_processor.js';
 
 declare const DASHQL_PRECOMPILED: Promise<Uint8Array>;

@@ -1,4 +1,4 @@
-import { EditorState, Prec, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
+import { EditorState, Extension, Facet, Prec, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, KeyBinding, ViewPlugin, ViewUpdate, WidgetType, keymap } from '@codemirror/view';
 
 import {
@@ -9,7 +9,8 @@ import {
     isIdentifierCandidate,
     lookupIdentifier,
     lookupPrefix,
-} from '../../ai/catalog_name_index.js';
+} from '../catalog_name_index.js';
+import { DashQLCompletionDisabled } from '../../scripts/editor/dashql_processor.js';
 
 import * as styles from './nl_identifier_plugin.module.css';
 
@@ -23,19 +24,9 @@ const WORD_CHAR = /[\p{L}\p{N}_$]/u;
 /// The first character of an identifier word
 const WORD_START = /[\p{L}_]/u;
 
-/// Effect to replace the catalog name index
-export const NLIdentifierIndexEffect = StateEffect.define<CatalogNameIndex>();
-
-/// The catalog name index of the editor.
-/// Lives outside the mode-dependent extensions so the index survives switching the input mode.
-export const NLIdentifierIndex = StateField.define<CatalogNameIndex>({
-    create: () => EMPTY_CATALOG_NAME_INDEX,
-    update: (index, tr) => {
-        for (const effect of tr.effects) {
-            if (effect.is(NLIdentifierIndexEffect)) index = effect.value;
-        }
-        return index;
-    },
+/// The catalog name index of the editor, replaced by reconfiguring the editor
+export const NLIdentifierIndex = Facet.define<CatalogNameIndex, CatalogNameIndex>({
+    combine: values => values[0] ?? EMPTY_CATALOG_NAME_INDEX,
 });
 
 /// A completion hint shown as ghost text after the cursor
@@ -85,7 +76,7 @@ export function computeNLIdentifierHint(state: EditorState): NLIdentifierHint | 
     if (word.length === 0 || !WORD_START.test(word[0])) {
         return null;
     }
-    const index = state.field(NLIdentifierIndex);
+    const index = state.facet(NLIdentifierIndex);
 
     // A qualified word completes the columns of its table
     let qualifier: string | null = null;
@@ -141,7 +132,7 @@ export const NLIdentifierHintField = StateField.define<NLIdentifierHint | null>(
         if (tr.docChanged) {
             return tr.isUserEvent('input.type') ? computeNLIdentifierHint(tr.state) : null;
         }
-        if (tr.selection != null || tr.startState.field(NLIdentifierIndex) !== tr.state.field(NLIdentifierIndex)) {
+        if (tr.selection != null || tr.startState.facet(NLIdentifierIndex) !== tr.state.facet(NLIdentifierIndex)) {
             return null;
         }
         return hint;
@@ -173,7 +164,7 @@ const ColumnDecoration = Decoration.mark({ class: styles.identifier_column });
 function buildHighlights(state: EditorState): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const selection = state.selection.main;
-    for (const match of findIdentifierMatches(state.field(NLIdentifierIndex), state.doc.toString())) {
+    for (const match of findIdentifierMatches(state.facet(NLIdentifierIndex), state.doc.toString())) {
         // The word the user is still typing is not finished
         if (selection.empty && selection.head > match.from && selection.head <= match.to) {
             continue;
@@ -190,7 +181,7 @@ const NLIdentifierHighlights = ViewPlugin.fromClass(class {
         this.decorations = buildHighlights(view.state);
     }
     update(update: ViewUpdate) {
-        if (update.docChanged || update.selectionSet || update.startState.field(NLIdentifierIndex) !== update.state.field(NLIdentifierIndex)) {
+        if (update.docChanged || update.selectionSet || update.startState.facet(NLIdentifierIndex) !== update.state.facet(NLIdentifierIndex)) {
             this.decorations = buildHighlights(update.state);
         }
     }
@@ -225,9 +216,14 @@ const KEYBINDINGS: KeyBinding[] = [
 ];
 
 /// Highlights and completes catalog identifiers in natural language text.
-/// Requires the NLIdentifierIndex field.
+/// Reads the names from the NLIdentifierIndex facet.
 export const NLIdentifierExtensions = [
     NLIdentifierHintField,
     NLIdentifierHighlights,
     Prec.highest(keymap.of(KEYBINDINGS)),
 ];
+
+/// The assistance for natural language: no SQL completion, the names of the index are highlighted and completed
+export function naturalLanguageAssist(index: CatalogNameIndex): Extension {
+    return [DashQLCompletionDisabled.of(true), NLIdentifierIndex.of(index), ...NLIdentifierExtensions];
+}

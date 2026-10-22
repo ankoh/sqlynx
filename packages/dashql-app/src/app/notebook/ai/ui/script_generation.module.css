@@ -1,0 +1,14 @@
+.generation_error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px 8px 55px;
+    color: var(--fgColor-danger, #cf222e);
+    font-size: var(--font_size_small);
+}
+
+.generation_error_message {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}

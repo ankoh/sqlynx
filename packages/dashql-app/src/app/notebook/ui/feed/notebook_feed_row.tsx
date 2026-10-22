@@ -31,18 +31,11 @@ import { ScriptEditor } from '../script_editor.js';
 import { ScriptStatisticsBar } from '../script_statistics_bar.js';
 import { formatScriptEditor, formattingDialectForConnector, isScriptFormattable } from '../script_format.js';
 import { FeedEntryFooter } from './feed_entry_footer.js';
-import { DashQLGenerationPlaceholder, DashQLGenerationPlaceholderEffect } from '../../scripts/editor/dashql_generation_placeholder.js';
+import { GenerationError, GenerationStopButton, isGenerating, useGenerationPlaceholder } from '../../ai/ui/script_generation.js';
+import type { ScriptGeneration } from '../../ai/use_sql_generations.js';
 import { ScriptActionMenu } from '../script_action_menu.js';
 
 const DragHandleIcon: Icon = SymbolIcon('drag_handle_16');
-
-/// The translation of a question into the SQL of a script
-export interface ScriptGeneration {
-    /// Aborts the translation
-    controller: AbortController;
-    /// The error of a failed translation, null while it runs
-    error: string | null;
-}
 
 export interface ScriptCardProps {
     notebookId: string;
@@ -221,15 +214,6 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
         }
     }, [cancelQuery, entryStatus?.kind, props.databaseId, props.scriptData?.latestQueryId, notebookExecution.busy, notebookExecution.stop]);
 
-    // A question is being translated into the SQL of the script
-    const generating = props.generation != null && props.generation.error == null;
-    const stopGeneration = React.useCallback(() => {
-        if (scriptKey != null) props.onStopGeneration(scriptKey);
-    }, [scriptKey, props.onStopGeneration]);
-    const dismissGeneration = React.useCallback(() => {
-        if (scriptKey != null) props.onDismissGeneration(scriptKey);
-    }, [scriptKey, props.onDismissGeneration]);
-
     const acceptDiff = React.useCallback(() => {
         if (scriptKey != null) props.onAcceptDiff(scriptKey);
     }, [scriptKey, props.onAcceptDiff]);
@@ -239,13 +223,9 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
 
     const [isEditing, setIsEditing] = React.useState(false);
     const [editorView, setEditorView] = React.useState<EditorView | null>(null);
-    // The editor marks where the generated SQL will appear.
-    // Synced after every render, the script editor replaces its state when the script session changes.
-    React.useEffect(() => {
-        const shown = editorView?.state?.field(DashQLGenerationPlaceholder, false);
-        if (shown === undefined || shown === generating) return;
-        editorView!.dispatch({ effects: DashQLGenerationPlaceholderEffect.of(generating) });
-    });
+    // A question is being translated into the SQL of the script
+    const generating = isGenerating(props.generation);
+    useGenerationPlaceholder(editorView, generating);
     const formattingDialect = formattingDialectForConnector(props.connectorType);
     // Formattability only depends on the text, cursor moves bump the state revision but not the text version
     const isFormattable = React.useMemo(
@@ -317,14 +297,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
             <div className={styles.feed_entry_cell} data-result-card={hasFooterContent ? '' : undefined}>
                 <div className={styles.feed_entry_action_bar}>
                     {generating ? (
-                        <IconButton
-                            variant={ButtonVariant.Invisible}
-                            size={ButtonSize.Small}
-                            aria-label={`Stop generating ${displayName} query`}
-                            onClick={stopGeneration}
-                        >
-                            <SquareFillIcon size={14} />
-                        </IconButton>
+                        <GenerationStopButton scriptKey={scriptKey} displayName={displayName} onStop={props.onStopGeneration} />
                     ) : (
                     <ExecuteConnectionGuard notebookId={props.notebookId} blocked={!queryActive && props.connectionHealth !== ConnectionHealth.ONLINE}>
                     <IconButton
@@ -453,19 +426,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
                             </div>
                         )}
                     </div>
-                    {props.generation?.error != null && (
-                        <div className={styles.feed_generation_error} role="alert">
-                            <span className={styles.feed_generation_error_message}>{props.generation.error}</span>
-                            <IconButton
-                                variant={ButtonVariant.Invisible}
-                                size={ButtonSize.Small}
-                                aria-label="Dismiss the error"
-                                onClick={dismissGeneration}
-                            >
-                                <CrossIcon size={14} />
-                            </IconButton>
-                        </div>
-                    )}
+                    <GenerationError scriptKey={scriptKey} generation={props.generation} onDismiss={props.onDismissGeneration} />
                 </div>
                 {hasFooterContent && (
                     <div className={styles.feed_entry_footer}>

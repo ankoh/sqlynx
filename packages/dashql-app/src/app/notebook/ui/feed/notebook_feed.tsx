@@ -34,7 +34,7 @@ import { VerticalScrollShadows } from '../../../../ui/foundations/vertical_scrol
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';
 import { useNotebookFeedLayout } from './notebook_feed_layout.js';
-import { ScriptFeedRow, type ScriptFeedRowProps, type ScriptGeneration } from './notebook_feed_row.js';
+import { ScriptFeedRow, type ScriptFeedRowProps } from './notebook_feed_row.js';
 import { getKeywordCase } from '../script_format.js';
 import { reorderFeedEntries } from './notebook_feed_drag.js';
 import type { DataFile } from '../../persistence/storage_backend.js';
@@ -45,10 +45,10 @@ import { ChevronDownIcon, ChevronUpIcon, PlusIcon } from '../../../../ui/foundat
 import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
 import { NotebookConnectionAttentionContext } from '../notebook_connection_attention.js';
 import { NotebookComposer, NotebookComposerVariant } from './notebook_composer.js';
-import { ComposerInputMode } from './composer_input_mode.js';
+import { ComposerInputMode } from '../../ai/input_mode.js';
 import { useAIClient } from '../../../../platform/ai/ai_client_provider.js';
-import { buildSchemaContext, describeSqlDialect, findSqlProblems, generateSqlFromPrompt, promptComment } from '../../ai/sql_generation.js';
-import { buildCatalogNameIndex, collectMentionedIdentifiers } from '../../ai/catalog_name_index.js';
+import { generateSqlFromPrompt } from '../../ai/sql_generation.js';
+import { useSqlGenerations } from '../../ai/use_sql_generations.js';
 
 export interface NotebookFeedProps {
     notebookScripts: NotebookScripts;
@@ -473,96 +473,28 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         dependencies.runNotebookScript(conn.databaseId, next, scriptData, executeQuery, props.modifyNotebookScripts, logger);
     }, [connectionAttention, executeQuery, logger, props.modifyNotebookScripts]);
 
-    // The running and failed translations of questions into SQL by script key
-    const [generations, setGenerations] = React.useState<ReadonlyMap<number, ScriptGeneration>>(() => new Map());
-    const generationsRef = React.useRef(generations);
-    generationsRef.current = generations;
-    const setGeneration = React.useCallback((scriptKey: number, generation: ScriptGeneration | null) => {
-        setGenerations(prev => {
-            const next = new Map(prev);
-            if (generation == null) next.delete(scriptKey);
-            else next.set(scriptKey, generation);
-            return next;
-        });
-    }, []);
-    const handleStopGeneration = React.useCallback((scriptKey: number) => {
-        const generation = generationsRef.current.get(scriptKey);
-        if (generation == null) return;
-        generation.controller.abort();
-        setGeneration(scriptKey, null);
-        logger.info('Stopped translating a question into SQL', { scriptKey: String(scriptKey) }, LOG_CTX);
-    }, [logger, setGeneration]);
-    const handleDismissGeneration = React.useCallback((scriptKey: number) => setGeneration(scriptKey, null), [setGeneration]);
-    // A deleted script stops its translation, so does leaving the feed
-    React.useEffect(() => {
-        for (const [scriptKey, generation] of generationsRef.current) {
-            if (props.notebookScripts.scripts[scriptKey] == null) {
-                generation.controller.abort();
-                setGeneration(scriptKey, null);
-                logger.info('Stopped translating a question of a deleted script', { scriptKey: String(scriptKey) }, LOG_CTX);
-            }
-        }
-    }, [props.notebookScripts.scripts, logger, setGeneration]);
-    React.useEffect(() => () => {
-        for (const generation of generationsRef.current.values()) generation.controller.abort();
-    }, []);
-
-    // A question becomes a script with the question as comment right away.
-    // The translated SQL is appended once the AI provider answers, then the script runs.
+    // A question becomes a script that receives its SQL from the AI provider
     const aiClient = dependencies.useAIClient();
-    const translateQuestion = React.useCallback(async (question: string) => {
-        if (aiClient == null) {
-            logger.error('Cannot translate a question without an AI provider', {}, LOG_CTX);
-            return;
-        }
-        const appended = await appendScript(promptComment(question));
-        if (appended == null) return;
-        const scriptKey = appended.scriptData.scriptKey;
-        const controller = new AbortController();
-        setGeneration(scriptKey, { controller, error: null });
-
-        const { notebookScripts, conn } = latest.current;
-        const dialect = describeSqlDialect(notebookScripts.connectorInfo.connectorType);
-        logger.info('Translating a question into SQL', { scriptKey: String(scriptKey), characters: String(question.length), dialect }, LOG_CTX);
-        let sql: string;
-        try {
-            sql = await dependencies.generateSqlFromPrompt(aiClient, {
-                prompt: question,
-                dialect,
-                schema: buildSchemaContext(conn, notebookScripts, logger),
-                mentionedIdentifiers: collectMentionedIdentifiers(buildCatalogNameIndex(notebookScripts.connectionCatalog), question),
-            }, sql => findSqlProblems(notebookScripts.instance, notebookScripts.connectionCatalog, sql), controller.signal);
-        } catch (e: unknown) {
-            if (controller.signal.aborted) return;
-            logger.error('Translating a question into SQL failed', { scriptKey: String(scriptKey), error: stringifyError(e) }, LOG_CTX);
-            setGeneration(scriptKey, { controller, error: stringifyError(e) });
-            return;
-        }
-        if (controller.signal.aborted) return;
-        setGeneration(scriptKey, null);
-        logger.info('Translated a question into SQL', { scriptKey: String(scriptKey), characters: String(sql.length) }, LOG_CTX);
-
-        // Keep whatever the user wrote into the script meanwhile, the SQL goes below
-        const current = latest.current.notebookScripts.scripts[scriptKey];
-        if (current == null) return;
-        const text = `${current.scriptSession.getText().trimEnd()}\n${sql}`;
-        const result = props.modifyNotebookScripts({ type: SET_SCRIPT_TEXT, value: { scriptKey, text } });
-        if (!result) return;
-        const next = await result;
-        const scriptData = next?.scripts[scriptKey];
-        if (next != null && scriptData != null) runAppendedScript(next, scriptData);
-    }, [aiClient, appendScript, runAppendedScript, logger, setGeneration, props.modifyNotebookScripts]);
+    const sqlGenerations = useSqlGenerations({
+        aiClient,
+        notebookScripts: props.notebookScripts,
+        conn: props.conn,
+        modifyNotebookScripts: props.modifyNotebookScripts,
+        appendScript,
+        runScript: runAppendedScript,
+        generateSqlFromPrompt: dependencies.generateSqlFromPrompt,
+    });
 
     const handleComposerSend = React.useCallback((text: string, mode: ComposerInputMode) => {
         if (mode === ComposerInputMode.Ai) {
-            void translateQuestion(text);
+            void sqlGenerations.translate(text);
             return;
         }
         logger.debug('Running the composer draft as SQL', { characters: String(text.length) }, LOG_CTX);
         void appendScript(text).then(appended => {
             if (appended != null) runAppendedScript(appended.next, appended.scriptData);
         });
-    }, [translateQuestion, appendScript, runAppendedScript, logger]);
+    }, [sqlGenerations.translate, appendScript, runAppendedScript, logger]);
     React.useEffect(() => {
         if (!pendingScrollToEndRef.current || entries.length === 0) return;
         pendingScrollToEndRef.current = false;
@@ -598,9 +530,9 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         onAcceptDiff: handleAcceptDiff,
         onRejectDiff: handleRejectDiff,
         collapsedResults,
-        generations,
-        onStopGeneration: handleStopGeneration,
-        onDismissGeneration: handleDismissGeneration,
+        generations: sqlGenerations.generations,
+        onStopGeneration: sqlGenerations.stop,
+        onDismissGeneration: sqlGenerations.dismiss,
         onToggleResultExpanded: handleToggleResultExpanded,
         onAutoCollapseResult: handleAutoCollapseResult,
         onResetAutoCollapsedResult: handleResetAutoCollapsedResult,
@@ -609,7 +541,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         onCreate: handleCreate,
         onEditorView: handleEditorView,
         onRowHeightChange: feedLayout.rowHeights.setRowHeight,
-    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, generations, handleStopGeneration, handleDismissGeneration, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
+    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, sqlGenerations.generations, sqlGenerations.stop, sqlGenerations.dismiss, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
     const getScrollElement = React.useCallback(() => feedLayout.listRef.current?.element ?? null, [feedLayout.listRef]);
 
     // An empty notebook greets the user with the composer in place of the feed.
