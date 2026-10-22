@@ -7,7 +7,8 @@ import { XIcon, TrashIcon, SyncIcon } from '../../../../ui/foundations/symbol_ic
 
 import { ButtonVariant, ButtonSize, IconButton } from '../../../../ui/foundations/button.js';
 import { CacheFileStat } from '../query_result_cache_eviction.js';
-import { STORAGE_CACHE_EXTENSION } from '../storage_backend.js';
+import { cacheFileHash, clearQueryResultCache, markDeletedQueryResults } from '../query_result_cache_clear.js';
+import { useDynamicAttachedDatabaseDispatch } from '../../connections/attached_database_registry.js';
 import { formatBytes } from '../../../../utils/format.js';
 import { formatRelativeTime } from '../../../../utils/time_format.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';
@@ -20,10 +21,6 @@ const LOG_CTX = 'query_cache_view';
 export const ROW_HEIGHT = 32;
 
 /// Strip the `.arrow` extension so the row shows the bare content hash (the cache key).
-function hashOf(name: string): string {
-    return name.endsWith(STORAGE_CACHE_EXTENSION) ? name.slice(0, -STORAGE_CACHE_EXTENSION.length) : name;
-}
-
 export interface QueryCacheRowProps {
     entries: CacheFileStat[];
     deleteEntry: (name: string) => void;
@@ -37,7 +34,7 @@ export const QueryCacheRow = (props: RowComponentProps<QueryCacheRowProps>) => {
         return <div style={props.style} />;
     }
 
-    const hash = hashOf(entry.name);
+    const hash = cacheFileHash(entry.name);
     return (
         <div className={styles.stat_row} style={props.style}>
             <div className={styles.stat_row_main}>
@@ -77,6 +74,10 @@ export function QueryCacheView(props: { notebookId: string | null; onClose: () =
     const logger = useLogger();
     const storageReader = useStorageReader();
     const { notebookId } = props;
+    // The finished queries of the notebook learn about deleted results, the registry is read after the delete
+    const [databaseRegistry, databaseDispatch] = useDynamicAttachedDatabaseDispatch();
+    const databaseRegistryRef = React.useRef(databaseRegistry);
+    databaseRegistryRef.current = databaseRegistry;
 
     const [entries, setEntries] = React.useState<CacheFileStat[]>([]);
 
@@ -105,12 +106,32 @@ export function QueryCacheView(props: { notebookId: string | null; onClose: () =
             return;
         }
         try {
-            await storageReader.backend.deleteQueryResultCache(notebookId, hashOf(name));
+            const hash = cacheFileHash(name);
+            await storageReader.backend.deleteQueryResultCache(notebookId, hash);
+            markDeletedQueryResults(databaseRegistryRef.current, databaseDispatch, notebookId, [hash]);
         } catch (e: any) {
             logger.warn('failed to delete query result cache entry', { error: String(e?.message ?? e) }, LOG_CTX);
         }
         await refresh();
-    }, [notebookId, storageReader, logger, refresh]);
+    }, [notebookId, storageReader, logger, refresh, databaseDispatch]);
+
+    const clearAll = React.useCallback(async () => {
+        if (notebookId == null) {
+            return;
+        }
+        try {
+            const hashes = await clearQueryResultCache(storageReader.backend, notebookId);
+            const queries = markDeletedQueryResults(databaseRegistryRef.current, databaseDispatch, notebookId, hashes);
+            logger.info('cleared the query result cache', {
+                notebookId,
+                entries: String(hashes.length),
+                queries: String(queries),
+            }, LOG_CTX);
+        } catch (e: any) {
+            logger.warn('failed to clear the query result cache', { error: String(e?.message ?? e) }, LOG_CTX);
+        }
+        await refresh();
+    }, [notebookId, storageReader, logger, refresh, databaseDispatch]);
 
     // Aggregate totals for the header summary.
     const totalBytes = React.useMemo(() => entries.reduce((sum, e) => sum + e.size, 0), [entries]);
@@ -146,6 +167,14 @@ export function QueryCacheView(props: { notebookId: string | null; onClose: () =
                         onClick={() => void refresh()}
                     >
                         <SyncIcon />
+                    </IconButton>
+                    <IconButton
+                        variant={ButtonVariant.Invisible}
+                        aria-label="Clear the query cache"
+                        disabled={entries.length === 0}
+                        onClick={() => void clearAll()}
+                    >
+                        <TrashIcon />
                     </IconButton>
                     <IconButton
                         variant={ButtonVariant.Invisible}
