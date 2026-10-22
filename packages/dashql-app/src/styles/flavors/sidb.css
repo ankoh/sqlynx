@@ -1,32 +1,38 @@
-/* Theme tokens of the sidb flavor ("Studio Ember"), overriding the semantic tokens of globals.css.
-   The backdrop is a desaturated slate grey, the greys of the pages are neutral.
-   Ember is the accent on light surfaces, Glow the accent on dark ones. */
+/* Theme tokens of the sidb flavor ("Petrol"), overriding the semantic tokens of globals.css.
+   The backdrop is a dark Petrol, the greys of the pages carry a faint Petrol tint and the paper is Salt.
+   Verdigris is the accent on light surfaces, Lagoon the accent on dark ones. */
 :root[data-flavor="sidb"] {
-    --sidb_ink: #1b2e36;
-    --sidb_dark: #1b2e36;
-    --sidb_si_on_light: #e0391a;
+    --sidb_paper: #f2f7f6;
+    --sidb_ink: #0a1f24;
+    --sidb_dark: #0f3b44;
+    --sidb_accent: #3fd6c0;
+    --sidb_si_on_light: #0b8576;
+    --sidb_si_on_dark: #3fd6c0;
 
-    --neutral_tint: 0;
+    --neutral_hue: 186;
+    --neutral_tint: 1;
 
     --font_family: 'Instrument Sans', sans-serif;
     --font_family_mono: 'JetBrains Mono', monospace;
 
     --base_color: var(--sidb_ink);
 
-    --background_color_primary: hsl(200, 4%, 37%);
-    --background_color_80: hsl(200, 4%, 33%);
-    --background_color_100: hsl(200, 5%, 25%);
+    --background_color_primary: hsl(190, 46%, 24%);
+    --background_color_80: hsl(190, 46%, 16%);
+    --background_color_100: hsl(191, 40%, 10%);
+
+    --stage_color: var(--sidb_paper);
 
     --button_fg: var(--sidb_ink);
     --button_hover_bg: var(--sidb_dark);
-    --button_hover_bg_inverted: hsl(198, 34%, 8%);
-    --button_hover_fg_inverted: hsl(200, 4%, 37%);
+    --button_hover_bg_inverted: hsl(191, 58%, 6%);
+    --button_hover_fg_inverted: hsl(190, 46%, 24%);
 
     --button_primary_bg: var(--sidb_si_on_light);
-    --button_primary_bg_hover: hsl(10, 79%, 42%);
-    --button_primary_bg_disabled: hsl(12, 70%, 78%);
+    --button_primary_bg_hover: hsl(173, 85%, 22%);
+    --button_primary_bg_disabled: hsl(172, 30%, 74%);
 
     --focus_outline_color: var(--sidb_si_on_light);
 
-    --nav_tab_bg_active: hsla(200, 4%, 50%, 35%);
+    --nav_tab_bg_active: hsla(186, 40%, 50%, 30%);
 }
