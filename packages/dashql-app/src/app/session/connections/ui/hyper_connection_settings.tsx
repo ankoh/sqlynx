@@ -53,21 +53,8 @@ export interface HyperConnectionPageState {
     queryParameters: KeyValueListElement[];
 };
 
-function readHyperConnectionMetadata(params: connection.HyperConnectionParams | undefined): Record<string, string> {
-    const metadata = params?.metadata as unknown;
-    if (!metadata || typeof metadata !== "object") return {};
-
-    // Read sessions written before Hyper metadata was aligned with its flat-map schema.
-    const legacyMetadata = metadata as { details?: unknown; data?: unknown };
-    const nested = legacyMetadata.details ?? legacyMetadata.data;
-    if (nested && typeof nested === "object") {
-        return nested as Record<string, string>;
-    }
-    return metadata as Record<string, string>;
-}
-
 export function buildHyperConnectionPageState(params: connection.HyperConnectionParams | undefined): HyperConnectionPageState {
-    const metadata = readHyperConnectionMetadata(params);
+    const metadata = params?.metadata ?? {};
     return {
         protocol: params?.protocol ?? "WASM",
         endpoint: params?.endpoint ?? "http://localhost:7484",

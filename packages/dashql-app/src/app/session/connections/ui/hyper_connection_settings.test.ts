@@ -44,19 +44,6 @@ describe('Hyper connection settings', () => {
         expect(setupParams.metadata).toEqual(params.metadata);
     });
 
-    it('reads metadata persisted with the legacy details wrapper', () => {
-        const params = {
-            protocol: 'V3_GRPC',
-            endpoint: 'https://hyper.example.com:443',
-            tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' },
-            metadata: { details: { 'ctx-tenant-id': 'tenant-123' } },
-        } as unknown as connection.HyperConnectionParams;
-
-        const setupParams = buildHyperConnectionSetupParams(buildHyperConnectionPageState(params));
-
-        expect(setupParams.metadata).toEqual({ 'ctx-tenant-id': 'tenant-123' });
-    });
-
     it('selects WASM by default', () => {
         expect(buildHyperConnectionPageState(undefined).protocol).toBe('WASM');
     });

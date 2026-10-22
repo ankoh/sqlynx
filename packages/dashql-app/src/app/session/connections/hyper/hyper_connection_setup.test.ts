@@ -68,33 +68,4 @@ describe('Hyper connection setup', () => {
         params.metadata!['ctx-tenant-id'] = 'edited-after-setup';
         expect(await capturedContext!.getRequestMetadata()).toEqual({ 'ctx-tenant-id': 'tenant-123' });
     });
-
-    it('normalizes metadata persisted with the legacy details wrapper', async () => {
-        let capturedContext: HyperDatabaseConnectionContext | null = null;
-        const client: HyperDatabaseClient = {
-            connect: vi.fn(async (_params, context) => {
-                capturedContext = context;
-                return { close: vi.fn() } as unknown as HyperDatabaseChannel;
-            }),
-        };
-        const params = {
-            protocol: 'V3_GRPC',
-            endpoint: 'https://hyper.example.com:443',
-            tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' },
-            metadata: { details: { 'ctx-tenant-id': 'tenant-123' } },
-        } as unknown as connection.HyperConnectionParams;
-
-        await setupHyperConnection(
-            vi.fn(),
-            new TestLogger(),
-            params,
-            {},
-            client,
-            null,
-            vi.fn(),
-            new AbortController().signal,
-        );
-
-        expect(await capturedContext!.getRequestMetadata()).toEqual({ 'ctx-tenant-id': 'tenant-123' });
-    });
 });
