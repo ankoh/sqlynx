@@ -10,6 +10,8 @@ import { ConnectionHealth } from '../../connections/attached_database_state.js';
 import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
 import { AnchorSide } from '../../../../ui/foundations/anchored_position.js';
 import { NotebookConnectionAttentionContext } from '../notebook_connection_attention.js';
+import { FlavorProvider } from '../../../flavor/flavor_provider.js';
+import { SIDB_FLAVOR } from '../../../flavor/flavors.js';
 import * as styles from './notebook_feed_page.module.css';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -354,6 +356,25 @@ describe('NotebookFeedPage', () => {
 
         act(() => header.querySelector<HTMLButtonElement>('[aria-label="Storage"]')!.click());
         expect(state.storageProps).toMatchObject({ notebookId: 'notebook', isOpen: true });
+    });
+
+    it('hides the archive export when the flavor does not support it', () => {
+        act(() => root.render(
+            <FlavorProvider flavor={SIDB_FLAVOR}>
+                <NotebookFeedPage
+                    notebookScripts={scripts()}
+                    modifyNotebookScripts={vi.fn()}
+                    connection={{ databaseId: 'database' } as any}
+                    active
+                    dependencies={dependencies}
+                />
+            </FlavorProvider>,
+        ));
+
+        const header = container.querySelector('header')!;
+        expect(header.querySelector('[aria-label="Share as URL"]')).not.toBeNull();
+        expect(header.querySelector('[aria-label="Export .dashql"]')).toBeNull();
+        expect(header.querySelector('[aria-label="Storage"]')).not.toBeNull();
     });
 
     it('keeps the single action header when dashboards are disabled', () => {

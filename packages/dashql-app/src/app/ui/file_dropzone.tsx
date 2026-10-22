@@ -12,7 +12,7 @@ function FileDropzoneArea() {
         <div className={styles.area_centered}>
             <div className={styles.area_container}>
                 <div className={styles.area_logo}>
-                    <FlavorLogo width="180px" height="180px" />
+                    <FlavorLogo width={180} />
                 </div>
             </div>
         </div>

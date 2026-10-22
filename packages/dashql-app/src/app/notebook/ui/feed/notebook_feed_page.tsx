@@ -29,6 +29,7 @@ import { ConnectionSettingsOverlay } from '../../connections/ui/connection_setti
 import { CONNECTION_HEALTH_COLORS } from '../../connections/ui/connection_status.js';
 import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
 import { ExecuteConnectionGuard, NotebookConnectionAttentionContext, useNotebookConnectionAttention } from '../notebook_connection_attention.js';
+import { useAppFlavor } from '../../../flavor/flavor_provider.js';
 
 const FileZipIcon = SymbolIcon('file_zip_16');
 const CloseIcon = SymbolIcon('x_16');
@@ -91,6 +92,7 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
     const exportTriggerRef = React.useRef<HTMLButtonElement>(null);
     const [shareOpen, setShareOpen] = React.useState(false);
     const [exportOpen, setExportOpen] = React.useState(false);
+    const archiveExport = useAppFlavor().features.notebookArchiveExport;
     const [storageOpen, setStorageOpen] = React.useState(false);
     const [connectionOpen, setConnectionOpen] = React.useState(false);
     const connectionTriggerRef = React.useRef<HTMLButtonElement>(null);
@@ -229,22 +231,26 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                         <span className={styles.action_label}>Share as URL</span>
                     </dependencies.Button>
                     <dependencies.NotebookURLShareOverlay notebookId={props.notebookScripts.notebookId} isOpen={shareOpen} setIsOpen={setShareOpen} anchorRef={shareTriggerRef} />
-                    <dependencies.Button ref={exportTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={FileZipIcon} aria-label="Export .dashql" aria-expanded={exportOpen} onClick={() => {
-                        setShareOpen(false);
-                        setConnectionOpen(false);
-                        setStorageOpen(false);
-                        setExportOpen(value => !value);
-                    }}>
-                        <span className={styles.action_label}>Export .dashql</span>
-                    </dependencies.Button>
-                    <dependencies.NotebookFileSaveOverlay
-                        isOpen={exportOpen}
-                        setIsOpen={setExportOpen}
-                        anchorRef={exportTriggerRef}
-                        conn={props.connection}
-                        notebookScripts={props.notebookScripts}
-                        fileName={props.notebookScripts.name ?? props.notebookScripts.notebookMetadata.originalFileName ?? 'notebook'}
-                    />
+                    {archiveExport && (
+                        <>
+                            <dependencies.Button ref={exportTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={FileZipIcon} aria-label="Export .dashql" aria-expanded={exportOpen} onClick={() => {
+                                setShareOpen(false);
+                                setConnectionOpen(false);
+                                setStorageOpen(false);
+                                setExportOpen(value => !value);
+                            }}>
+                                <span className={styles.action_label}>Export .dashql</span>
+                            </dependencies.Button>
+                            <dependencies.NotebookFileSaveOverlay
+                                isOpen={exportOpen}
+                                setIsOpen={setExportOpen}
+                                anchorRef={exportTriggerRef}
+                                conn={props.connection}
+                                notebookScripts={props.notebookScripts}
+                                fileName={props.notebookScripts.name ?? props.notebookScripts.notebookMetadata.originalFileName ?? 'notebook'}
+                            />
+                        </>
+                    )}
                     <dependencies.NotebookStorageOverlay
                         notebookId={props.notebookScripts.notebookId}
                         isOpen={storageOpen}

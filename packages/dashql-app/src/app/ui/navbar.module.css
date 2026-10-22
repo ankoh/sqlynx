@@ -52,7 +52,7 @@
     justify-content: center;
     color: white;
     fill: white;
-    width: 32px;
+    min-width: 32px;
     height: 32px;
     padding: 4px;
     border: 0;

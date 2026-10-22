@@ -93,6 +93,7 @@ import {
 import { useNotebookScriptsSetup } from '../scripts/notebook_scripts_setup.js';
 import { BundledNotebooksOverlay } from '../../ui/bundled_notebooks_overlay.js';
 import { attachedDatabaseLabel, isHyperWasmAttachedDatabase } from './attached_database_label.js';
+import { useAppFlavor } from '../../flavor/flavor_provider.js';
 import { canRefreshAttachedDatabase } from './attached_database_refresh.js';
 import { NotebookURLShareOverlay } from './notebook_url_share_overlay.js';
 import { NotebookFileSaveOverlay } from './notebook_file_save_overlay.js';
@@ -542,6 +543,7 @@ const NotebookRowMenu: React.FC<NotebookRowMenuProps> = ({ item, onDuplicate, on
     const [open, setOpen] = React.useState(false);
     const [shareOpen, setShareOpen] = React.useState(false);
     const [exportOpen, setExportOpen] = React.useState(false);
+    const archiveExport = useAppFlavor().features.notebookArchiveExport;
     const [storageOpen, setStorageOpen] = React.useState(false);
     const triggerRef = React.useRef<HTMLButtonElement>(null);
 
@@ -607,22 +609,25 @@ const NotebookRowMenu: React.FC<NotebookRowMenuProps> = ({ item, onDuplicate, on
                             />
                         </ActionList.ItemText>
                     </ActionList.ListItem>
-                    <ActionList.ListItem onClick={(event) => {
-                        event.stopPropagation();
-                        setExportOpen(value => !value);
-                    }}>
-                        <ActionList.Leading><FileZipIcon size={16} /></ActionList.Leading>
-                        <ActionList.ItemText>
-                            Export .dashql
-                            <dependencies.NotebookFileSaveOverlay
-                                isOpen={exportOpen}
-                                setIsOpen={setExportOpen}
-                                conn={item.database}
-                                notebookScripts={item.scripts}
-                                fileName={item.scripts.name ?? item.scripts.notebookMetadata.originalFileName ?? 'notebook'}
-                            />
-                        </ActionList.ItemText>
-                    </ActionList.ListItem>
+                    {/* The list takes elements only, the fragment wraps the optional item */}
+                    <>{archiveExport && (
+                        <ActionList.ListItem onClick={(event) => {
+                            event.stopPropagation();
+                            setExportOpen(value => !value);
+                        }}>
+                            <ActionList.Leading><FileZipIcon size={16} /></ActionList.Leading>
+                            <ActionList.ItemText>
+                                Export .dashql
+                                <dependencies.NotebookFileSaveOverlay
+                                    isOpen={exportOpen}
+                                    setIsOpen={setExportOpen}
+                                    conn={item.database}
+                                    notebookScripts={item.scripts}
+                                    fileName={item.scripts.name ?? item.scripts.notebookMetadata.originalFileName ?? 'notebook'}
+                                />
+                            </ActionList.ItemText>
+                        </ActionList.ListItem>
+                    )}</>
                     <ActionList.ListItem onClick={() => { setOpen(false); onDuplicate(); }}>
                         <ActionList.Leading><CopyIcon size={16} /></ActionList.Leading>
                         <ActionList.ItemText>Duplicate</ActionList.ItemText>

@@ -36,12 +36,14 @@ export function FlavorUrlKeeper() {
     return null;
 }
 
-/// The logo of the app flavor
-export function FlavorLogo(props: { width: string; height: string; ariaHidden?: boolean }) {
-    const flavor = useAppFlavor();
+/// The logo of the app flavor, sized by either its height or its width
+export function FlavorLogo(props: { height?: number; width?: number; ariaHidden?: boolean }) {
+    const logo = useAppFlavor().logo;
+    const height = props.height ?? (props.width ?? 0) / logo.aspectRatio;
+    const width = props.width ?? height * logo.aspectRatio;
     return (
-        <svg width={props.width} height={props.height} aria-hidden={props.ariaHidden}>
-            <use xlinkHref={`${symbols}#${flavor.logoSymbol}`} />
+        <svg width={`${width}px`} height={`${height}px`} aria-hidden={props.ariaHidden}>
+            <use xlinkHref={`${symbols}#${logo.symbol}`} />
         </svg>
     );
 }

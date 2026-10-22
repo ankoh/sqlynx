@@ -53,8 +53,8 @@ describe('App flavor branding', () => {
         const doc = createDocument();
         applyFlavorToDocument(SIDB_FLAVOR, doc);
         expect(doc.documentElement.dataset.flavor).toBe('sidb');
-        expect(doc.title).toBe('sidb');
-        expect(doc.querySelector('meta[name="apple-mobile-web-app-title"]')?.getAttribute('content')).toBe('sidb');
+        expect(doc.title).toBe('SIDB');
+        expect(doc.querySelector('meta[name="apple-mobile-web-app-title"]')?.getAttribute('content')).toBe('SIDB');
         const links = [...doc.head.querySelectorAll('link')].map(l => [l.rel, l.getAttribute('href')]);
         expect(links).toEqual([
             ['manifest', '/static/favicons/dashql/site.webmanifest'],

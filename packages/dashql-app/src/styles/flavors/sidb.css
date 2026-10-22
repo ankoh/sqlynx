@@ -1,11 +1,14 @@
 /* Theme tokens of the sidb flavor, overriding the semantic tokens of globals.css.
-   Placeholder colors until the sidb brand palette exists. */
+   The backdrop is a neutral dark grey, the blue accent comes from the SIDB wordmark. */
 :root[data-flavor="sidb"] {
-    --background_color_primary: hsl(165, 35%, 26%);
-    --background_color_80: hsl(165, 30%, 22%);
-    --background_color_100: hsl(165, 35%, 14%);
+    --background_color_primary: hsl(0, 0%, 28%);
+    --background_color_80: hsl(0, 0%, 22%);
+    --background_color_100: hsl(0, 0%, 14%);
 
-    --button_hover_bg: hsl(165, 35%, 14%);
-    --button_hover_bg_inverted: hsl(165, 35%, 6%);
-    --button_hover_fg_inverted: hsl(165, 35%, 26%);
+    --button_fg: hsl(0, 0%, 20%);
+    --button_hover_bg: hsl(0, 0%, 14%);
+    --button_hover_bg_inverted: hsl(0, 0%, 6%);
+    --button_hover_fg_inverted: hsl(0, 0%, 30%);
+
+    --nav_tab_bg_active: hsla(0, 0%, 44%, 40%);
 }

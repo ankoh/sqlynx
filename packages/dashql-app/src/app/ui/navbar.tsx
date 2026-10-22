@@ -100,7 +100,11 @@ const VersionButton = (_props: {}) => {
     );
 };
 
+/// The height of a wordmark in the navbar, a bit smaller than square logos to match the cap height of text
+const WORDMARK_HEIGHT = 18;
+
 const BrandLogo = () => {
+    const flavor = useAppFlavor();
     const route = useRouteContext();
     const navigate = useRouterNavigate();
     const { setMode } = useNotebookViewMode();
@@ -113,7 +117,7 @@ const BrandLogo = () => {
 
     return (
         <button type="button" className={styles.brand_logo} aria-label="Open notebook workbench" onClick={openWorkbench}>
-            <FlavorLogo width="24px" height="24px" ariaHidden />
+            <FlavorLogo height={flavor.logo.wordmark ? WORDMARK_HEIGHT : 24} ariaHidden />
         </button>
     );
 };
@@ -122,8 +126,12 @@ const BrandIdentity = () => {
     const flavor = useAppFlavor();
     return (
         <div className={styles.brand_identity} data-electron-drag-region>
-            <FlavorLogo width="24px" height="24px" ariaHidden />
-            <span>{flavor.displayName}</span>
+            {flavor.logo.wordmark
+                ? <FlavorLogo height={WORDMARK_HEIGHT} ariaHidden />
+                : <>
+                    <FlavorLogo height={24} ariaHidden />
+                    <span>{flavor.displayName}</span>
+                </>}
         </div>
     );
 };

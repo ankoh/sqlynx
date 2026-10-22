@@ -16,6 +16,7 @@ import { isCatalogRefreshRunning } from '../connections/catalog_update_state.js'
 import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status_indicator.js';
 import type { NotebookFileTreeNavigationLevel } from './notebook_file_tree.js';
 import { getHyperConnectionDetails } from '../connections/hyper/hyper_connection_state.js';
+import { useAppFlavor } from '../../flavor/flavor_provider.js';
 
 export interface ConnectionCommandListDependencies {
     StatusIndicator: typeof StatusIndicator;
@@ -114,6 +115,7 @@ export const NotebookCommandList: React.FC<{
 }> = (props) => {
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
     const [fileSaveIsOpen, openFileSave] = React.useState<boolean>(false);
+    const archiveExport = useAppFlavor().features.notebookArchiveExport;
     const ArrowDownIcon = SymbolIcon('arrow_down_16');
     const ArrowUpIcon = SymbolIcon('arrow_up_16');
     const ArrowLeftIcon = SymbolIcon('arrow_left_16');
@@ -179,21 +181,23 @@ export const NotebookCommandList: React.FC<{
                     <NotebookURLShareOverlay isOpen={linkSharingIsOpen} setIsOpen={openLinkSharing} />
                 </ActionList.ItemText>
             </ActionList.ListItem>
-            <ActionList.ListItem onClick={() => openFileSave(s => !s)}>
-                <ActionList.Leading>
-                    <FileZipIcon />
-                </ActionList.Leading>
-                <ActionList.ItemText>
-                    Save .{DASHQL_ARCHIVE_FILENAME_EXT}
-                    <NotebookFileSaveOverlay
-                        isOpen={fileSaveIsOpen}
-                        setIsOpen={openFileSave}
-                        conn={props.conn}
-                        notebookScripts={props.notebookScripts}
-                    />
-                </ActionList.ItemText>
-                <ActionList.Trailing>Ctrl + S</ActionList.Trailing>
-            </ActionList.ListItem>
+            {archiveExport && (
+                <ActionList.ListItem onClick={() => openFileSave(s => !s)}>
+                    <ActionList.Leading>
+                        <FileZipIcon />
+                    </ActionList.Leading>
+                    <ActionList.ItemText>
+                        Save .{DASHQL_ARCHIVE_FILENAME_EXT}
+                        <NotebookFileSaveOverlay
+                            isOpen={fileSaveIsOpen}
+                            setIsOpen={openFileSave}
+                            conn={props.conn}
+                            notebookScripts={props.notebookScripts}
+                        />
+                    </ActionList.ItemText>
+                    <ActionList.Trailing>Ctrl + S</ActionList.Trailing>
+                </ActionList.ListItem>
+            )}
         </>
     );
 };

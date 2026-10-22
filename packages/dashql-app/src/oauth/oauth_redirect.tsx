@@ -13,7 +13,7 @@ import { BASE64URL_CODEC } from '../utils/base64.js';
 import { Button, ButtonSize, ButtonVariant, IconButton } from '../ui/foundations/button.js';
 import { CopyToClipboardButton } from '../utils/clipboard.js';
 import { DASHQL_VERSION } from '../globals.js';
-import { FlavorProvider, useAppFlavor } from '../app/flavor/flavor_provider.js';
+import { FlavorLogo, FlavorProvider, useAppFlavor } from '../app/flavor/flavor_provider.js';
 import { GitHubTheme } from '../theme/github_theme.js';
 import { LogsOverlay } from '../ui/logs_overlay.js';
 import { Logger, stringifyError } from '../platform/logger/logger.js';
@@ -75,9 +75,31 @@ function triggerFlow(state: OAuthState, eventBase64: string, deepLink: string, l
     }
 }
 
+/// The banner with the logo and the app version.
+/// A wordmark replaces both the logo and the name.
+const OAuthBanner: React.FC = () => {
+    const flavor = useAppFlavor();
+    return (
+        <div className={baseStyles.banner_container}>
+            {!flavor.logo.wordmark && (
+                <div className={baseStyles.banner_logo}>
+                    <svg width="100%" height="100%">
+                        <use xlinkHref={`${symbols}#${flavor.logo.symbol}`} />
+                    </svg>
+                </div>
+            )}
+            <div className={baseStyles.banner_text_container}>
+                <div className={baseStyles.banner_title}>
+                    {flavor.logo.wordmark ? <FlavorLogo height={26} /> : flavor.displayName.toLowerCase()}
+                </div>
+                <div className={baseStyles.app_version}>version {DASHQL_VERSION}</div>
+            </div>
+        </div>
+    );
+};
+
 const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProps) => {
     const logger = useLogger();
-    const flavor = useAppFlavor();
 
     const code = props.params.get('code') ?? undefined;
     const oauthError = props.params.get('error') ?? undefined;
@@ -314,17 +336,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     return (
         <div className={baseStyles.page}>
             <div className={classNames(baseStyles.banner_and_content_container, styles.banner_and_content_container)}>
-                <div className={baseStyles.banner_container}>
-                    <div className={baseStyles.banner_logo}>
-                        <svg width="100%" height="100%">
-                            <use xlinkHref={`${symbols}#${flavor.logoSymbol}`} />
-                        </svg>
-                    </div>
-                    <div className={baseStyles.banner_text_container}>
-                        <div className={baseStyles.banner_title}>{flavor.displayName.toLowerCase()}</div>
-                        <div className={baseStyles.app_version}>version {DASHQL_VERSION}</div>
-                    </div>
-                </div>
+                <OAuthBanner />
                 <div className={baseStyles.content_container}>
                     <div className={baseStyles.card}>
                         <div className={baseStyles.card_header}>
@@ -383,20 +395,9 @@ interface OAuthFailedProps {
 }
 
 const OAuthFailed: React.FC<OAuthFailedProps> = (props: OAuthFailedProps) => {
-    const flavor = useAppFlavor();
     return (
         <div className={baseStyles.page}>
-            <div className={baseStyles.banner_container}>
-                <div className={baseStyles.banner_logo}>
-                    <svg width="100%" height="100%">
-                        <use xlinkHref={`${symbols}#${flavor.logoSymbol}`} />
-                    </svg>
-                </div>
-                <div className={baseStyles.banner_text_container}>
-                    <div className={baseStyles.banner_title}>{flavor.displayName.toLowerCase()}</div>
-                    <div className={baseStyles.app_version}>version {DASHQL_VERSION}</div>
-                </div>
-            </div>
+            <OAuthBanner />
             <div className={baseStyles.card}>
                 <div className={baseStyles.card_header}>
                     <div>Authorization Failed</div>
