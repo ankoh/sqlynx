@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as styles from './session_page.module.css';
 
 import { useSessionScripts } from '../scripts/session_scripts_registry.js';
-import { useAttachedDatabaseState } from '../connections/attached_database_registry.js';
+import { useAttachedDatabaseState } from '../../connections/attached_database_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useRouteContext } from '../../router/router.js';
 

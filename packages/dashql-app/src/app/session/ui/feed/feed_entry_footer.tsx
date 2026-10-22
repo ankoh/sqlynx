@@ -3,7 +3,7 @@ import * as styles from './feed_entry_footer.module.css';
 
 import icons from '@ankoh/dashql-svg-symbols';
 
-import { QueryExecutionState } from '../../connections/query_execution_state.js';
+import { QueryExecutionState } from '../../../connections/query_execution_state.js';
 import { QueryResultView } from '../../compute/ui/query_result/query_result_view.js';
 import { TableColumnHeader } from '../../compute/ui/query_result/data_table_cell.js';
 import { VerticalTabs, VerticalTabVariant, type VerticalTabProps } from '../../../../ui/foundations/vertical_tabs.js';

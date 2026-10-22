@@ -6,8 +6,8 @@ import { SessionFeedPage, type SessionFeedPageDependencies } from './session_fee
 import { SessionViewMode } from '../../scripts/session_commands.js';
 import { SegmentedControl } from '../../../../ui/foundations/segmented_control.js';
 import { Button } from '../../../../ui/foundations/button.js';
-import { ConnectionHealth } from '../../connections/attached_database_state.js';
-import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
+import { ConnectionHealth } from '../../../connections/attached_database_state.js';
+import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
 import { AnchorSide } from '../../../../ui/foundations/anchored_position.js';
 import { SessionConnectionAttentionContext } from '../session_connection_attention.js';
 import { FlavorProvider } from '../../../flavor/flavor_provider.js';

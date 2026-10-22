@@ -4,7 +4,7 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { QueryExecutionStatus } from '../../connections/query_execution_state.js';
+import { QueryExecutionStatus } from '../../../connections/query_execution_state.js';
 import { QueryResultDownloadButton } from '../../compute/ui/query_result/query_result_download_button.js';
 import { FeedEntryFooter, type FeedEntryFooterDependencies } from './feed_entry_footer.js';
 

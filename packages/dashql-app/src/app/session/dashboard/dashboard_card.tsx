@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { QueryResultView } from '../compute/ui/query_result/query_result_view.js';
 import { TableColumnHeader } from '../compute/ui/query_result/data_table_cell.js';
 import { VisualizationDispatch } from '../compute/ui/visualization/visualization_dispatch.js';
-import { useQueryState } from '../connections/query_executor.js';
+import { useQueryState } from '../../connections/query_executor.js';
 import type { ScriptData } from '../scripts/session_scripts.js';
 import { scriptDisplayName, type ResolvedVisualizeQuery } from '../scripts/script_types.js';
 import { ScriptEditor } from '../ui/script_editor.js';

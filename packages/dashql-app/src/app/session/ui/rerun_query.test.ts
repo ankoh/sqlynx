@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { tableFromArrays, type Table } from 'apache-arrow';
 
 import { ANALYZE_OUTDATED_SCRIPT, REGISTER_QUERY, REGISTER_SCRIPT_RESULT, reduceSessionScripts, type SessionScripts, type ScriptData } from '../scripts/session_scripts.js';
-import { ConnectorType } from '../connections/connector_info.js';
+import { ConnectorType } from '../../connections/connector_info.js';
 import * as dashql from '@ankoh/dashql-core';
 import { registerSessionScriptQuery, runSessionScript } from './rerun_query.js';
 

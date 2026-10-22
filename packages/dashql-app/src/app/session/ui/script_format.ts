@@ -4,7 +4,7 @@ import type { EditorView } from '@codemirror/view';
 
 import type { ScriptData } from '../scripts/session_scripts.js';
 import type { AppSettings } from '../../config/app_config.js';
-import { ConnectorType } from '../connections/connector_info.js';
+import { ConnectorType } from '../../connections/connector_info.js';
 
 const DEFAULT_FORMAT_WIDTH = 80;
 const DEFAULT_FORMAT_INDENTATION = 4;

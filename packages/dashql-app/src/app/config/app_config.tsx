@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ConnectorConfigs, readConnectorConfigs } from '../session/connections/connector_configs.js';
+import { ConnectorConfigs, readConnectorConfigs } from '../connections/connector_configs.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { Logger } from '../../platform/logger/logger.js';
 import { createTrace } from '../../platform/logger/trace_context.js';

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as styles from './session_feed.module.css';
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
-import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
+import type { AttachedDatabaseState } from '../../../connections/attached_database_state.js';
+import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
 import type { DataFile } from '../../../storage/storage_backend.js';
 import type { StorageReader } from '../../../storage/storage_provider.js';
 import { useFileDownloader } from '../../../../platform/file/file_downloader_provider.js';

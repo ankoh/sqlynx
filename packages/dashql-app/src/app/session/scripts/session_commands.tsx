@@ -1,16 +1,16 @@
 import * as React from 'react';
 
-import { ConnectionHealth, printConnectionHealth } from '../connections/attached_database_state.js';
-import { ConnectorInfo } from '../connections/connector_info.js';
+import { ConnectionHealth, printConnectionHealth } from '../../connections/attached_database_state.js';
+import { ConnectorInfo } from '../../connections/connector_info.js';
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
 import { getSelectedScriptRef, SELECT_NEXT_SCRIPT, SELECT_PREV_SCRIPT } from './session_scripts.js';
-import { useCatalogLoaderQueue } from '../connections/catalog_loader.js';
-import { useAttachedDatabaseState } from '../connections/attached_database_registry.js';
+import { useCatalogLoaderQueue } from '../../connections/catalog_loader.js';
+import { useAttachedDatabaseState } from '../../connections/attached_database_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
-import { useQueryExecutor } from '../connections/query_executor.js';
+import { useQueryExecutor } from '../../connections/query_executor.js';
 import { useRouteContext } from '../../router/router.js';
 import { useSessionScripts } from './session_scripts_registry.js';
-import { isCatalogRefreshRunning } from '../connections/catalog_update_state.js';
+import { isCatalogRefreshRunning } from '../../connections/catalog_update_state.js';
 import { runSessionScript } from '../ui/rerun_query.js';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppConfig } from '../../config/app_config.js';

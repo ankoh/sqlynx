@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as detailStyles from './script_details.module.css';
 
-import { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import { CatalogScriptCard } from './catalog_script_card.js';
 import { STORAGE_CATALOG_RELATIONS } from '../../storage/storage_backend.js';
 

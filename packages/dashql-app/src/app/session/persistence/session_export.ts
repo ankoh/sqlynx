@@ -12,7 +12,7 @@ import {
     STORAGE_CATALOG_RELATIONS,
 } from '../../storage/storage_backend.js';
 import { BASE64URL_CODEC } from '../../../utils/base64.js';
-import { sanitizeConnectionParamsForSharing } from '../connections/connection_params.js';
+import { sanitizeConnectionParamsForSharing } from '../../connections/connection_params.js';
 import { readSessionBundle, regenerateSessionDatabaseIds, rebaseSessionAttachmentPaths } from '../../storage/session_bundle.js';
 
 /// The target platform a shared session link points at.

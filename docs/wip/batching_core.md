@@ -200,6 +200,6 @@ single-descriptor migration. Verification uses Bazel targets, as required by rep
 - `packages/dashql-core/src/catalog/descriptor.rs` and `catalog/mod.rs`: validation and receiver publication.
 - `packages/dashql-core-js/src/batch.ts` and `api.ts`: public API and buffer ownership.
 - `packages/dashql-core-js/src/batch_worker.ts` and `batch_worker_client.ts`: persistent worker transport.
-- `packages/dashql-app/src/app/session/connections/catalog_batch.ts`: application commit boundary.
-- `packages/dashql-app/src/app/session/connections/catalog_loader.tsx`: refresh queue and supersession.
+- `packages/dashql-app/src/app/connections/catalog_batch.ts`: application commit boundary.
+- `packages/dashql-app/src/app/connections/catalog_loader.tsx`: refresh queue and supersession.
 - `packages/dashql-app/src/app/session/persistence/app_state_loader.ts`: startup restoration.

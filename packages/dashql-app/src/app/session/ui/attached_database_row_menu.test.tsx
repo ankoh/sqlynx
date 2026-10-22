@@ -3,7 +3,7 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
 
 const refreshCatalog = vi.fn();
 

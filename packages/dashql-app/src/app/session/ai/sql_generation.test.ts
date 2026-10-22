@@ -11,8 +11,8 @@ import {
     promptComment,
     validateSqlAnswer,
 } from './sql_generation.js';
-import { ConnectorType } from '../connections/connector_info.js';
-import { isSystemSchema } from '../connections/system_schemas.js';
+import { ConnectorType } from '../../connections/connector_info.js';
+import { isSystemSchema } from '../../connections/system_schemas.js';
 import type { AIClient } from '../../../platform/ai/ai_client.js';
 import { Logger } from '../../../platform/logger/logger.js';
 

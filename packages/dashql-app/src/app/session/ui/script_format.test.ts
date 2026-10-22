@@ -2,7 +2,7 @@ import * as dashql from '@ankoh/dashql-core';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { ConnectorType } from '../connections/connector_info.js';
+import { ConnectorType } from '../../connections/connector_info.js';
 import { createScriptFormatConfig, formatScriptEditor, formattingDialectForConnector, isScriptFormattable, measureScriptFormatWidth } from './script_format.js';
 
 declare const DASHQL_PRECOMPILED: Promise<Uint8Array>;

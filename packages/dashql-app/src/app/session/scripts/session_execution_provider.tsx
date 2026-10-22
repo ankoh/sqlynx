@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { ConnectionHealth } from '../connections/attached_database_state.js';
-import { ConnectorType, HYPER_CONNECTOR } from '../connections/connector_info.js';
-import { useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
-import { useCancelQuery, useQueryExecutor } from '../connections/query_executor.js';
+import { ConnectionHealth } from '../../connections/attached_database_state.js';
+import { ConnectorType, HYPER_CONNECTOR } from '../../connections/connector_info.js';
+import { useAttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
+import { useCancelQuery, useQueryExecutor } from '../../connections/query_executor.js';
 import { useSessionScriptsRegistry, type ModifySessionScripts } from './session_scripts_registry.js';
 import { runSessionExecution, type SessionExecutionState } from './session_execution.js';
 

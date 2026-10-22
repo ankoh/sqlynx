@@ -1,10 +1,10 @@
 import { STORAGE_CACHE_EXTENSION, type StorageBackend } from '../../storage/storage_backend.js';
-import { QUERY_CACHE_DELETED } from '../connections/query_execution_state.js';
+import { QUERY_CACHE_DELETED } from '../../connections/query_execution_state.js';
 import {
     resolveSessionAttachedDatabases,
     type AttachedDatabaseRegistry,
     type DynamicAttachedDatabaseDispatch,
-} from '../connections/attached_database_registry.js';
+} from '../../connections/attached_database_registry.js';
 
 /// The content hash of a cached query result file
 export function cacheFileHash(name: string): string {

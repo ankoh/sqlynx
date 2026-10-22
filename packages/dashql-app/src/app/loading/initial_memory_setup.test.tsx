@@ -4,8 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Logger } from '../../platform/logger/logger.js';
-import { ConnectionHealth, type AttachedDatabaseState } from '../session/connections/attached_database_state.js';
-import type { HyperSetupApi } from '../session/connections/hyper/hyper_connection_setup.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import type { HyperSetupApi } from '../connections/hyper/hyper_connection_setup.js';
 import { cancelInitialMemorySetup, useInitialMemorySetup } from './initial_memory_setup.js';
 
 describe('initial Memory setup', () => {

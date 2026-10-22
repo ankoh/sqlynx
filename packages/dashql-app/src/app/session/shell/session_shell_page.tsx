@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as styles from './session_shell_page.module.css';
 
-import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { useCancelQuery, useQueryExecutor, useQueryState } from '../connections/query_executor.js';
+import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { useCancelQuery, useQueryExecutor, useQueryState } from '../../connections/query_executor.js';
 import { SessionViewMode, useSessionViewMode } from '../scripts/session_commands.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../platform/logger/logger.js';

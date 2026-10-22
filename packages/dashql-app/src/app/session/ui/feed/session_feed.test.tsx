@@ -4,11 +4,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as dashql from '@ankoh/dashql-core';
 import { ScriptFeedRow, type ScriptFeedRowDependencies } from './session_feed_row.js';
-import { ConnectorType } from '../../connections/connector_info.js';
-import { ConnectionHealth } from '../../connections/attached_database_state.js';
+import { ConnectorType } from '../../../connections/connector_info.js';
+import { ConnectionHealth } from '../../../connections/attached_database_state.js';
 import { SessionConnectionAttentionContext } from '../session_connection_attention.js';
 import { SessionDataCard, type SessionDataCardProps } from './session_data_card.js';
-import { HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
+import { HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../../connections/connector_info.js';
 import { LoggerProvider } from '../../../../platform/logger/logger_provider.js';
 import { FileDownloaderProvider } from '../../../../platform/file/file_downloader_provider.js';
 import { WebFileDownloader } from '../../../../platform/file/web_file_downloader.js';
@@ -17,7 +17,7 @@ import { SessionFeed, type SessionFeedDependencies } from './session_feed.js';
 import { SessionComposerVariant, type SessionComposerProps } from './session_composer.js';
 import { ComposerInputMode } from '../../ai/input_mode.js';
 import { CREATE_SCRIPT, SET_SCRIPT_TEXT, type SessionScripts } from '../../scripts/session_scripts.js';
-import { CONNECTOR_INFOS } from '../../connections/connector_info.js';
+import { CONNECTOR_INFOS } from '../../../connections/connector_info.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 

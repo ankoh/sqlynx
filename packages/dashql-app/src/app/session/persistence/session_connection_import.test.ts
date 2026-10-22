@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { sanitizeConnectionParamsForSharing } from '../connections/connection_params.js';
+import { sanitizeConnectionParamsForSharing } from '../../connections/connection_params.js';
 import {
     applyConnectionImportPlan,
     connectionImportQuestions,

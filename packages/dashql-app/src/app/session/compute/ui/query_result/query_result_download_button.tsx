@@ -2,7 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as React from 'react';
 import * as styles from './query_result_download_button.module.css';
 
-import { QueryExecutionStatus, type QueryExecutionState } from '../../../connections/query_execution_state.js';
+import { QueryExecutionStatus, type QueryExecutionState } from '../../../../connections/query_execution_state.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../../../ui/foundations/button.js';
 import * as ActionList from '../../../../../ui/foundations/action_list.js';
 import { AnchorAlignment, AnchorSide } from '../../../../../ui/foundations/anchored_position.js';

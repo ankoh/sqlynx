@@ -6,7 +6,7 @@ import { AnchoredOverlay } from '../ui/foundations/anchored_overlay.js';
 import { OverlaySize } from '../ui/foundations/overlay.js';
 import { VerticalTabs, VerticalTabVariant } from '../ui/foundations/vertical_tabs.js';
 import { LogViewer } from '../ui/logs/log_viewer.js';
-import { QueryViewer } from '../app/session/connections/ui/query_viewer.js';
+import { QueryViewer } from '../app/connections/ui/query_viewer.js';
 import * as styles from './shell_navbar.module.css';
 
 enum TabKey {

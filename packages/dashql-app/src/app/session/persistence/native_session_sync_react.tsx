@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { connectionRefCount, useAttachedDatabaseRegistry, type AttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
-import { catalogFileMatchesStorage, attachedDatabaseCatalogMatchesStorage, replaceAttachedDatabaseCatalogFromStorage } from '../connections/attached_database_state.js';
+import { connectionRefCount, useAttachedDatabaseRegistry, type AttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
+import { catalogFileMatchesStorage, attachedDatabaseCatalogMatchesStorage, replaceAttachedDatabaseCatalogFromStorage } from '../../connections/attached_database_state.js';
 import { useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { sessionScriptsMatchStorageSnapshot, replaceSessionScriptsFromStorage } from '../scripts/session_scripts.js';
 import { isNativePlatform } from '../../../platform/native_globals.js';
@@ -11,7 +11,7 @@ import { useStorage } from '../../storage/storage_provider.js';
 import { getAppFlavor } from '../../flavor/flavor_resolution.js';
 import { NativeSessionSyncService, nativeSessionWatchForLocation } from './native_session_sync.js';
 import type { SessionScriptsStorageSnapshot, SessionScripts } from '../scripts/session_scripts.js';
-import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import { DEBOUNCE_DURATION_SESSION_WRITE, groupConnectionFileWrites, WRITE_CONNECTION_FILE, type StorageWriter } from '../../storage/storage_writer.js';
 import {
     STORAGE_SCRIPTS_FOLDER,

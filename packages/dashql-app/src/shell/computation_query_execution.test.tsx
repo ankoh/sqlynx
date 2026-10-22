@@ -2,7 +2,7 @@ import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 
-import { AttachedDatabaseRegistry, useAttachedDatabaseRegistry } from '../app/session/connections/attached_database_registry.js';
+import { AttachedDatabaseRegistry, useAttachedDatabaseRegistry } from '../app/connections/attached_database_registry.js';
 import { useCreateComputeQueryExecution } from '../compute/computation_query_execution.js';
 import { TABLE_AGGREGATION_TASK, type TaskVariant } from '../compute/computation_scheduler.js';
 import { QueryExecutionStatus, QueryType } from '../query/query_execution_state.js';

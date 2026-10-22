@@ -5,7 +5,7 @@ import { useLogger } from '../../platform/logger/logger_provider.js';
 import { TracedLogger, stringifyError } from '../../platform/logger/logger.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
 import { decodedContentLength } from '../../utils/content_length.js';
-import { disposeCatalogBatchWorker, initializeCatalogBatchWorker } from '../session/connections/catalog_batch.js';
+import { disposeCatalogBatchWorker, initializeCatalogBatchWorker } from '../connections/catalog_batch.js';
 
 // Load the WebAssembly asset through the core package export.
 // eslint-disable-next-line import/no-unresolved -- resolved by bundler

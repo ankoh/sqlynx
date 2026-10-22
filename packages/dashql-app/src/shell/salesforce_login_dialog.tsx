@@ -5,9 +5,9 @@ import { Overlay, OverlaySize } from '../ui/foundations/overlay.js';
 import { useFocusTrap } from '../ui/foundations/focus.js';
 import { TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../ui/foundations/text_field.js';
 import { IndicatorStatus } from '../ui/foundations/status_indicator.js';
-import { ConnectionHealth } from '../app/session/connections/attached_database_state.js';
-import { SalesforceConnectionSettingsPage } from '../app/session/connections/ui/salesforce_connection_settings.js';
-import { collectSalesforceAuthInfo } from '../app/session/connections/salesforce/salesforce_api_client.js';
+import { ConnectionHealth } from '../app/connections/attached_database_state.js';
+import { SalesforceConnectionSettingsPage } from '../app/connections/ui/salesforce_connection_settings.js';
+import { collectSalesforceAuthInfo } from '../app/connections/salesforce/salesforce_api_client.js';
 import type { SalesforceLoginHistoryEntry } from './salesforce_login_history.js';
 import * as styles from './salesforce_login_dialog.module.css';
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ConnectionHealth } from '../connections/attached_database_state.js';
+import { ConnectionHealth } from '../../connections/attached_database_state.js';
 import { Tooltip } from '../../../ui/foundations/tooltip.js';
 
 export const CONNECTION_ATTENTION_DURATION_MS = 900;

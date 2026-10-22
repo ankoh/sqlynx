@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import { SessionScripts } from './session_scripts.js';
 import { useSessionScriptsAllocator } from './session_scripts_registry.js';
 import { createEmptyMetadata } from './script_types.js';

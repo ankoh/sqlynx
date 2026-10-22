@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { AIClient } from '../../../platform/ai/ai_client.js';
-import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import type { ModifySessionScripts } from '../scripts/session_scripts_registry.js';
 import { SET_SCRIPT_TEXT, type SessionScripts, type ScriptData } from '../scripts/session_scripts.js';
 import { buildCatalogNameIndex, collectMentionedIdentifiers } from './catalog_name_index.js';

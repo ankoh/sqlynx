@@ -10,12 +10,12 @@ import { SessionScripts } from '../scripts/session_scripts.js';
 import { SymbolIcon } from '../../../ui/foundations/symbol_icon.js';
 import { SessionFileSaveOverlay } from './session_file_save_overlay.js';
 import { SessionURLShareOverlay } from './session_url_share_overlay.js';
-import { ConnectionHealth, AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { CONNECTION_HEALTH_COLORS } from '../connections/ui/connection_status.js';
-import { isCatalogRefreshRunning } from '../connections/catalog_update_state.js';
+import { ConnectionHealth, AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { CONNECTION_HEALTH_COLORS } from '../../connections/ui/connection_status.js';
+import { isCatalogRefreshRunning } from '../../connections/catalog_update_state.js';
 import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status_indicator.js';
 import type { SessionFileTreeNavigationLevel } from './session_file_tree.js';
-import { getHyperConnectionDetails } from '../connections/hyper/hyper_connection_state.js';
+import { getHyperConnectionDetails } from '../../connections/hyper/hyper_connection_state.js';
 import { useAppFlavor } from '../../flavor/flavor_provider.js';
 
 export interface ConnectionCommandListDependencies {

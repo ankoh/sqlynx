@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionCommands, type SessionCommandsDependencies } from './session_commands.js';
-import { ConnectionHealth } from '../connections/attached_database_state.js';
+import { ConnectionHealth } from '../../connections/attached_database_state.js';
 import { SessionConnectionAttentionContext } from '../ui/session_connection_attention.js';
 
 describe('global session execution feedback', () => {

@@ -5,11 +5,11 @@ import { Route, Routes, Navigate, BrowserRouter, HashRouter, useLocation } from 
 import { AppConfigProvider } from './config/app_config.js';
 import { AppLoader } from './loading/app_loader.js';
 import { AppSettingsSync } from './config/app_settings_sync.js';
-import { CatalogLoaderProvider } from './session/connections/catalog_loader.js';
+import { SessionCatalogLoaderProvider } from './session/scripts/session_catalog_loader.js';
 import { ComputationRegistry } from '../compute/computation_registry.js';
 import { ComputationScheduler } from '../compute/computation_scheduler.js';
-import { AttachedDatabaseRegistry } from './session/connections/attached_database_registry.js';
-import { ConnectionPersistenceProvider } from './session/connections/connection_persistence.js';
+import { AttachedDatabaseRegistry } from './connections/attached_database_registry.js';
+import { ConnectionPersistenceProvider } from './connections/connection_persistence.js';
 import { ComputeConnectionProvider } from '../compute/compute_connection_provider.js';
 import { DashQLCoreProvider } from './providers/core_provider.js';
 import { FileDownloaderProvider } from '../platform/file/file_downloader_provider.js';
@@ -19,8 +19,8 @@ import { applyFlavorToDocument, getAppFlavor } from './flavor/flavor_resolution.
 import { GitHubTheme } from '../theme/github_theme.js';
 import { HttpClientProvider } from '../platform/http/http_client_provider.js';
 import { AIClientProvider } from '../platform/ai/ai_client_provider.js';
-import { HyperConnector } from './session/connections/hyper/hyper_connector.js';
-import { HyperDatabaseClientProvider } from './session/connections/hyper/hyperdb_grpc_client_provider.js';
+import { HyperConnector } from './connections/hyper/hyper_connector.js';
+import { HyperDatabaseClientProvider } from './connections/hyper/hyperdb_grpc_client_provider.js';
 import { HyperPlanDemoPage } from './ui/demos/plan_demo.js';
 import { JsonViewerExperimentPage } from './ui/demos/json_demo.js';
 import { LoggerToast } from '../ui/logger/logger_toast.js';
@@ -29,11 +29,11 @@ import { PlatformEventListenerProvider } from '../platform/events/event_listener
 import { PlatformTypeProvider } from '../platform/platform_type.js';
 import { ProcessProvider } from '../platform/process.js';
 import { PromptDemoPage } from './ui/demos/prompt_demo.js';
-import { QueryExecutorProvider } from './session/connections/query_executor.js';
+import { QueryExecutorProvider } from './connections/query_executor.js';
 import { RouterReset } from './router/router_reset.js';
-import { SalesforceConnector } from './session/connections/salesforce/salesforce_connector.js';
+import { SalesforceConnector } from './connections/salesforce/salesforce_connector.js';
 import { StorageProvider } from './storage/storage_provider.js';
-import { TrinoConnector } from './session/connections/trino/trino_connector.js';
+import { TrinoConnector } from './connections/trino/trino_connector.js';
 import { ToolsPage } from './ui/tools/tools_page.js';
 import { UIExperimentPage } from './ui/demos/ui_demo.js';
 import { VersionCheck } from '../platform/version/version_check.js';
@@ -45,7 +45,7 @@ import { stringifyError } from '../platform/logger/logger.js';
 import { EmbeddedDatabaseProvider } from '../platform/database/embedded_database_provider.js';
 import { isDebugBuild } from '../globals.js';
 import { NativeSessionSync } from './session/persistence/native_session_sync_react.js';
-import { SessionComputeQueryExecutionProvider } from './session/connections/computation_query_execution.js';
+import { SessionComputeQueryExecutionProvider } from './connections/computation_query_execution.js';
 import { SessionImportProvider } from './session/persistence/session_import_provider.js';
 import { SessionExecutionProvider } from './session/scripts/session_execution_provider.js';
 
@@ -61,7 +61,7 @@ applyFlavorToDocument(APP_FLAVOR);
 
 // Note that the order among connection providers is important and non-obvious.
 // For example:
-// - CatalogLoaderProvider requires SessionScriptsRegistryProvider to mark connection scripts as outdated.
+// - SessionCatalogLoaderProvider requires SessionScriptsRegistryProvider to mark connection scripts as outdated.
 const SessionProviders = (props: { children: React.ReactElement }) => (
     <AttachedDatabaseRegistry>
         <ConnectionPersistenceProvider>
@@ -75,7 +75,7 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
                                     <SessionScriptsRegistryProvider>
                                         <SessionExecutionProvider>
                                             <NativeSessionSync />
-                                            <CatalogLoaderProvider>
+                                            <SessionCatalogLoaderProvider>
                                                 <SessionImportProvider>
                                                     <SessionCommands>
                                                         <AppLoader>
@@ -83,7 +83,7 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
                                                         </AppLoader>
                                                     </SessionCommands>
                                                 </SessionImportProvider>
-                                            </CatalogLoaderProvider>
+                                            </SessionCatalogLoaderProvider>
                                         </SessionExecutionProvider>
                                     </SessionScriptsRegistryProvider>
                                 </QueryExecutorProvider>

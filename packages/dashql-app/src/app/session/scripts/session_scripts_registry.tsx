@@ -3,7 +3,7 @@ import * as React from 'react';
 import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptData, destroySessionScripts, reduceSessionScripts } from './session_scripts.js';
 import { Dispatch } from '../../../utils/variant.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
-import { CONNECTOR_TYPES, ConnectorType } from '../connections/connector_info.js';
+import { CONNECTOR_TYPES, ConnectorType } from '../../connections/connector_info.js';
 import { useStorageWriter } from '../../storage/storage_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import {

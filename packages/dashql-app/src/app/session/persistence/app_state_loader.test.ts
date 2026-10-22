@@ -2,12 +2,12 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import * as dashql from '@ankoh/dashql-core';
 import * as flatbuffers from 'flatbuffers';
 import * as buffers from '@ankoh/dashql-core/buffers';
-import type { BatchProcessor } from '../connections/catalog_batch.js';
+import type { BatchProcessor } from '../../connections/catalog_batch.js';
 import type { BatchRequest } from '@ankoh/dashql-core';
 
 import type { DashQL } from '@ankoh/dashql-core';
 import { Logger } from '../../../platform/logger/logger.js';
-import { ConnectorType } from '../connections/connector_info.js';
+import { ConnectorType } from '../../connections/connector_info.js';
 import { destroyRestoredSession, restoreAppState } from './app_state_loader.js';
 import { destroySessionScripts } from '../scripts/session_scripts.js';
 import type { StorageBackend } from '../../storage/storage_backend.js';

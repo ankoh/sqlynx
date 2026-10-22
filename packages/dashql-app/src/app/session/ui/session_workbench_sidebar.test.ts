@@ -1,5 +1,5 @@
-import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../connections/connector_info.js';
-import { type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
+import { type AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import { attachedDatabaseLabel } from './attached_database_label.js';
 import {
     attachedDatabaseDisplayOrder,

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as styles from './tab_header.module.css';
 
-import { QueryExecutionState, QueryExecutionStatus } from '../connections/query_execution_state.js';
+import { QueryExecutionState, QueryExecutionStatus } from '../../connections/query_execution_state.js';
 import { useComputationRegistry } from '../../../compute/computation_registry.js';
 
 interface TabHeaderProps {

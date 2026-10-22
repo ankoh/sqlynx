@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
-import { QueryExecutionStatus } from '../connections/query_execution_state.js';
+import { QueryExecutionStatus } from '../../connections/query_execution_state.js';
 import {
     ShellQueryResultOverlay,
     type ShellQueryResultOverlayDependencies,

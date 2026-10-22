@@ -2,10 +2,10 @@ import * as React from 'react';
 
 import type { Logger } from '../../platform/logger/logger.js';
 import { stringifyError } from '../../platform/logger/logger.js';
-import type { DynamicAttachedDatabaseDispatch } from '../session/connections/attached_database_registry.js';
-import { ConnectionHealth, type AttachedDatabaseState } from '../session/connections/attached_database_state.js';
-import type { HyperSetupApi } from '../session/connections/hyper/hyper_connection_setup.js';
-import { cancelConnectionSetup, registerConnectionSetup } from '../session/connections/connection_setup_cancellation.js';
+import type { DynamicAttachedDatabaseDispatch } from '../connections/attached_database_registry.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import type { HyperSetupApi } from '../connections/hyper/hyper_connection_setup.js';
+import { cancelConnectionSetup, registerConnectionSetup } from '../connections/connection_setup_cancellation.js';
 
 const startupAttempts = new Map<string, AbortController>();
 

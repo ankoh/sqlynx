@@ -2,9 +2,9 @@ import * as React from 'react';
 
 import { createQueryExecutionMetrics } from '../query/query_execution_state.js';
 import type { QueryExecutionHistoryState } from '../query/query_execution_state.js';
-import { CONNECTOR_INFOS, ConnectorType } from '../app/session/connections/connector_info.js';
-import { ConnectionHealth, ConnectionStatus, type AttachedDatabaseState } from '../app/session/connections/attached_database_state.js';
-import { useAttachedDatabaseRegistrySetter } from '../app/session/connections/attached_database_registry.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../app/connections/connector_info.js';
+import { ConnectionHealth, ConnectionStatus, type AttachedDatabaseState } from '../app/connections/attached_database_state.js';
+import { useAttachedDatabaseRegistrySetter } from '../app/connections/attached_database_registry.js';
 import { ShellQueryExecutionTracker } from './query_execution.js';
 
 export const SHELL_DATABASE_ID = 'shell';

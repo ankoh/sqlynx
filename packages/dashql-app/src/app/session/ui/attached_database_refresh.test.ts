@@ -1,4 +1,4 @@
-import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import { canRefreshAttachedDatabase } from './attached_database_refresh.js';
 
 function database(overrides: Partial<AttachedDatabaseState> = {}): AttachedDatabaseState {

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConnectionHealth } from '../connections/attached_database_state.js';
+import { ConnectionHealth } from '../../connections/attached_database_state.js';
 import { CONNECTION_ATTENTION_DURATION_MS, SessionConnectionAttentionContext, useSessionConnectionAttention } from './session_connection_attention.js';
 
 describe('session connection attention', () => {

@@ -3,7 +3,7 @@ import * as styles from './session_feed_page.module.css';
 
 import { FileDirectoryIcon, LinkIcon, PaperAirplaneIcon, SquareFillIcon, SymbolIcon, ThreeBarsIcon } from '../../../../ui/foundations/symbol_icon.js';
 
-import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../../../connections/attached_database_state.js';
 import {
     SELECT_SCRIPT,
     type SessionScripts,
@@ -25,9 +25,10 @@ import { useSessionExecution } from '../../scripts/session_execution_provider.js
 import { IndicatorStatus, StatusIndicator } from '../../../../ui/foundations/status_indicator.js';
 import { AnchoredOverlay } from '../../../../ui/foundations/anchored_overlay.js';
 import { AnchorAlignment, AnchorSide } from '../../../../ui/foundations/anchored_position.js';
-import { ConnectionSettingsOverlay } from '../../connections/ui/connection_settings_overlay.js';
-import { CONNECTION_HEALTH_COLORS } from '../../connections/ui/connection_status.js';
-import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
+import { ConnectionSettingsOverlay } from '../../../connections/ui/connection_settings_overlay.js';
+import { renderSessionName } from '../session_name.js';
+import { CONNECTION_HEALTH_COLORS } from '../../../connections/ui/connection_status.js';
+import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
 import { ExecuteConnectionGuard, SessionConnectionAttentionContext, useSessionConnectionAttention } from '../session_connection_attention.js';
 import { useAppFlavor } from '../../../flavor/flavor_provider.js';
 
@@ -221,7 +222,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                     </dependencies.Button>
                     <dependencies.ConnectionSettingsOverlay databaseId={props.connection?.databaseId ?? null}
                         isOpen={connectionOpen} onClose={() => setConnectionOpen(false)} anchorRef={connectionTriggerRef}
-                        side={AnchorSide.OutsideBottom} />
+                        side={AnchorSide.OutsideBottom} renderSessionName={renderSessionName} />
                     <dependencies.Button ref={shareTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={LinkIcon} aria-label="Share as URL" aria-expanded={shareOpen} onClick={() => {
                         setExportOpen(false);
                         setConnectionOpen(false);

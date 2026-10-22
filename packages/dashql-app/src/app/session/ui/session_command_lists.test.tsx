@@ -7,8 +7,8 @@ vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
 const commandDispatch = vi.fn();
 
-import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR } from '../connections/connector_info.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR } from '../../connections/connector_info.js';
 import { ConnectionCommandList, type ConnectionCommandListDependencies } from './session_command_lists.js';
 
 const dependencies: ConnectionCommandListDependencies = {

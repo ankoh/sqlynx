@@ -1,7 +1,7 @@
 // @vitest-environment node
 import * as arrow from 'apache-arrow';
 
-import { QueryExecutor } from '../connections/query_executor.js';
+import { QueryExecutor } from '../../connections/query_executor.js';
 import {
     createSessionShellEnvironment,
 } from './session_shell_environment.js';

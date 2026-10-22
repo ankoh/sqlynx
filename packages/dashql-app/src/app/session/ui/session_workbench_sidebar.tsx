@@ -47,7 +47,7 @@ import { SessionSetupStatus } from '../../router/session_setup_status.js';
 import {
     AttachedDatabaseState,
     DELETE_ATTACHED_DATABASE,
-} from '../connections/attached_database_state.js';
+} from '../../connections/attached_database_state.js';
 import {
     connectionRefCount,
     detachSession,
@@ -61,15 +61,16 @@ import {
     useAttachedDatabaseStateAllocator,
     useDynamicAttachedDatabaseDispatch,
     type AttachedDatabaseRegistry,
-} from '../connections/attached_database_registry.js';
+} from '../../connections/attached_database_registry.js';
 import {
     createDefaultHyperWasmAttachedDatabaseState,
     createConnectionStateFromParams,
     createDefaultConnectionParamsForConnector,
-} from '../connections/connection_params.js';
-import { CONNECTOR_INFOS, ConnectorType } from '../connections/connector_info.js';
-import { ConnectionSettingsOverlay } from '../connections/ui/connection_settings_overlay.js';
-import { useCatalogLoaderQueue } from '../connections/catalog_loader.js';
+} from '../../connections/connection_params.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../../connections/connector_info.js';
+import { ConnectionSettingsOverlay } from '../../connections/ui/connection_settings_overlay.js';
+import { renderSessionName } from './session_name.js';
+import { useCatalogLoaderQueue } from '../../connections/catalog_loader.js';
 import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status_indicator.js';
 import { observeSize } from '../../../ui/foundations/size_observer.js';
 import { VerticalScrollShadows } from '../../../ui/foundations/vertical_scroll_shadows.js';
@@ -104,7 +105,7 @@ import { useAppFlavor } from '../../flavor/flavor_provider.js';
 import { canRefreshAttachedDatabase } from './attached_database_refresh.js';
 import { SessionURLShareOverlay } from './session_url_share_overlay.js';
 import { SessionFileSaveOverlay } from './session_file_save_overlay.js';
-import { isCatalogRefreshRunning } from '../connections/catalog_update_state.js';
+import { isCatalogRefreshRunning } from '../../connections/catalog_update_state.js';
 import * as styles from './session_workbench_sidebar.module.css';
 import * as actionMenuStyles from './action_menu.module.css';
 import { useDashQLCoreSetup } from '../../providers/core_provider.js';
@@ -1375,6 +1376,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                 isOpen={connectionOverlayDatabaseId != null}
                 onClose={closeConnectionOverlay}
                 anchorRef={connectionSettingsAnchorRef}
+                renderSessionName={renderSessionName}
             />
         </nav>
     );

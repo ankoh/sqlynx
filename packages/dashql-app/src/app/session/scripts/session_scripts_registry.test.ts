@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SessionScriptsRegistry, addSessionScriptsForConnection, removeSessionScriptsFromRegistry } from './session_scripts_registry.js';
 import { SessionScripts } from './session_scripts.js';
-import { ConnectorType } from '../connections/connector_info.js';
+import { ConnectorType } from '../../connections/connector_info.js';
 
 // removeSessionScriptsFromRegistry only reads sessionScriptsMap and entry.connectorInfo.connectorType, so a
 // tiny stand-in SessionScripts is enough — no Wasm needed.

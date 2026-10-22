@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
-import { AttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
+import { AttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
 import { SessionTestBackend } from '../../storage/session_test_backend.js';
 import { StorageProvider } from '../../storage/storage_provider.js';
 import { REGISTER_QUERY, RENAME_SESSION, type SessionScripts } from './session_scripts.js';

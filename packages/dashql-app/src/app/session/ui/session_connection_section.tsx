@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import type { SessionScripts } from '../scripts/session_scripts.js';
 import * as ActionList from '../../../ui/foundations/action_list.js';
 import { ConnectionCommandList } from './session_command_lists.js';

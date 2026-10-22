@@ -22,9 +22,9 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-import { ConnectionHealth, AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, AttachedDatabaseState } from '../../../connections/attached_database_state.js';
 import { getSelectedScriptRef, getSelectedScriptRefs, getSortedScriptFileNames, SessionScripts, type ScriptData, SELECT_SCRIPT, CREATE_SCRIPT, DELETE_SCRIPT, RENAME_SCRIPT, REORDER_SCRIPTS, SET_SCRIPT_TEXT, ACCEPT_PENDING_DIFF, REJECT_PENDING_DIFF } from '../../scripts/session_scripts.js';
-import { useQueryExecutor } from '../../connections/query_executor.js';
+import { useQueryExecutor } from '../../../connections/query_executor.js';
 import { type ModifySessionScripts } from '../../scripts/session_scripts_registry.js';
 import { type KeyEventHandler, useKeyEvents } from '../../../../utils/key_events.js';
 import { TabKey as DetailsTabKey } from '../script_details.js';
@@ -42,7 +42,7 @@ import { stringifyError } from '../../../../platform/logger/logger.js';
 import { SessionDataCard } from './session_data_card.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundations/button.js';
 import { ChevronDownIcon, ChevronUpIcon, PlusIcon } from '../../../../ui/foundations/symbol_icon.js';
-import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
+import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
 import { SessionConnectionAttentionContext } from '../session_connection_attention.js';
 import { SessionComposer, SessionComposerVariant } from './session_composer.js';
 import { ComposerInputMode } from '../../ai/input_mode.js';

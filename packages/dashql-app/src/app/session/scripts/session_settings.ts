@@ -1,6 +1,6 @@
 import type * as app_session from '@ankoh/dashql-jsonschema/app_session.js';
 
-import type { ConnectorInfo } from '../connections/connector_info.js';
+import type { ConnectorInfo } from '../../connections/connector_info.js';
 
 export type SessionSettings = app_session.SessionSettings;
 

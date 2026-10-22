@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { AppLoadingStatus } from '../router/app_loading_status.js';
 import { OPEN_LINK_SESSION, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../router/router.js';
-import { resolveSessionExecutionDatabase, useAttachConnection, useAttachedDatabaseDispatch, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator } from '../session/connections/attached_database_registry.js';
+import { resolveSessionExecutionDatabase, useAttachConnection, useAttachedDatabaseDispatch, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator } from '../connections/attached_database_registry.js';
 import { isHyperWasmAttachedDatabase } from '../session/ui/attached_database_label.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
@@ -33,10 +33,10 @@ import {
 import { stringifyError } from '../../platform/logger/logger.js';
 import { SessionImportCard } from '../session/ui/session_import_card.js';
 import { IndicatorStatus } from '../../ui/foundations/status_indicator.js';
-import { createDefaultHyperWasmAttachedDatabaseState } from '../session/connections/connection_params.js';
+import { createDefaultHyperWasmAttachedDatabaseState } from '../connections/connection_params.js';
 import { useAppSettingsReady } from '../config/app_settings_sync.js';
 import { InvalidSessionRegistryProvider } from '../session/persistence/invalid_session_registry.js';
-import { useHyperSetup } from '../session/connections/hyper/hyper_connection_setup.js';
+import { useHyperSetup } from '../connections/hyper/hyper_connection_setup.js';
 import { useInitialMemorySetup } from './initial_memory_setup.js';
 import { SessionSetupStatus } from '../router/session_setup_status.js';
 import { NarrowScreenWarning, useNarrowScreenWarning } from '../ui/narrow_screen_warning.js';

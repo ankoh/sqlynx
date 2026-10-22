@@ -2,11 +2,11 @@ import * as core from '@ankoh/dashql-core';
 
 import type { AIClient, ChatMessage, CompletionValidation } from '../../../platform/ai/ai_client.js';
 import type { Logger } from '../../../platform/logger/logger.js';
-import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import type { SessionScripts } from '../scripts/session_scripts.js';
-import { ConnectorType } from '../connections/connector_info.js';
-import { quoteIdentifier } from '../connections/catalog_sql_generator.js';
-import { isSystemSchema } from '../connections/system_schemas.js';
+import { ConnectorType } from '../../connections/connector_info.js';
+import { quoteIdentifier } from '../../connections/catalog_sql_generator.js';
+import { isSystemSchema } from '../../connections/system_schemas.js';
 import { verifyScript } from '../scripts/scratch_script_verify.js';
 
 const LOG_CTX = 'sql_generation';

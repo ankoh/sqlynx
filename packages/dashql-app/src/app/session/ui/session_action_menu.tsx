@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ThreeBarsIcon } from '../../../ui/foundations/symbol_icon.js';
 
-import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import type { ModifySessionScripts } from '../scripts/session_scripts_registry.js';
 import type { SessionScripts } from '../scripts/session_scripts.js';
 import * as ActionList from '../../../ui/foundations/action_list.js';

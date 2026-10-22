@@ -3,7 +3,7 @@ import * as Immutable from 'immutable';
 
 import { DashQLCompletionState, DashQLPendingDiff, DashQLProcessorUpdateOut } from './editor/dashql_processor.js';
 import { deriveFocusFromCompletionCandidates, deriveFocusFromEditorUpdate, SemanticUserFocus } from './focus.js';
-import { ConnectorInfo, ConnectorType } from '../connections/connector_info.js';
+import { ConnectorInfo, ConnectorType } from '../../connections/connector_info.js';
 import { VariantKind } from '../../../utils/index.js';
 import {
     DEBOUNCE_DURATION_SCRIPT_WRITE,

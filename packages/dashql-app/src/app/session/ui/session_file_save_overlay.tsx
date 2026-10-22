@@ -5,19 +5,19 @@ import { DownloadIcon, FileIcon } from '../../../ui/foundations/symbol_icon.js';
 
 import { AnchorAlignment } from '../../../ui/foundations/anchored_position.js';
 import { AnchoredOverlay } from '../../../ui/foundations/anchored_overlay.js';
-import { AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import { SessionExportSettings, SessionExportSettingsView } from './session_export_settings_view.js';
 import { SessionScripts } from '../scripts/session_scripts.js';
 import { classNames } from '../../../utils/classnames.js';
 import { exportSessionAsSharedZip } from '../persistence/session_export.js';
-import { connectionParamsHaveLoginHint, getConnectionParamsFromStateDetails } from '../connections/connection_params.js';
+import { connectionParamsHaveLoginHint, getConnectionParamsFromStateDetails } from '../../connections/connection_params.js';
 import { formatBytes } from '../../../utils/format.js';
 import { useFileDownloader } from '../../../platform/file/file_downloader_provider.js';
 import { useStorageReader } from '../../storage/storage_provider.js';
 import { StorageBackend } from '../../storage/storage_backend.js';
 import { IconButton } from '../../../ui/foundations/button.js';
 import { DASHQL_ARCHIVE_FILENAME_EXT } from '../../../globals.js';
-import { resolveSessionAttachedDatabases, useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
+import { resolveSessionAttachedDatabases, useAttachedDatabaseRegistry } from '../../connections/attached_database_registry.js';
 
 async function packAndCompressFile(
     backend: StorageBackend,

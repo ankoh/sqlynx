@@ -1,4 +1,4 @@
-import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../connections/catalog_update_state.js';
+import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../connections/catalog_update_state.js';
 import { DashQLShell, DashQLShellEnvironment, DashQLShellOptions } from '../../../shell/api.js';
 
 export interface SessionShellCatalog {

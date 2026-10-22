@@ -1,6 +1,6 @@
 import * as core from '@ankoh/dashql-core';
 
-import { isSystemSchema } from '../connections/system_schemas.js';
+import { isSystemSchema } from '../../connections/system_schemas.js';
 
 /// Shorter words are never treated as identifiers in natural language
 const MIN_IDENTIFIER_LENGTH = 3;

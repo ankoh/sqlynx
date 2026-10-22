@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { QueryExecutionStatus } from '../connections/query_execution_state.js';
+import { QueryExecutionStatus } from '../../connections/query_execution_state.js';
 import { deriveEntryStatus, getQueryStatusText } from './entry_status_model.js';
 
 describe('getQueryStatusText', () => {

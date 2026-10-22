@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { QueryExecutionState } from '../../../connections/query_execution_state.js';
+import { QueryExecutionState } from '../../../../connections/query_execution_state.js';
 import { ResolvedVisualizeQuery } from '../../../scripts/script_types.js';
 import { VegaLiteView } from './vegalite_view.js';
 import { UmapView } from './umap/umap_view.js';

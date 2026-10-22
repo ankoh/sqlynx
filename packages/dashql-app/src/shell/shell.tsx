@@ -12,7 +12,7 @@ import { LoggerToast } from '../ui/logger/logger_toast.js';
 import { ShellNavBar } from './shell_navbar.js';
 import { ShellPage } from './shell_page.js';
 import { ShellConnectionProvider } from './shell_connection.js';
-import { AttachedDatabaseRegistry } from '../app/session/connections/attached_database_registry.js';
+import { AttachedDatabaseRegistry } from '../app/connections/attached_database_registry.js';
 import { ComputationRegistry } from '../compute/computation_registry.js';
 import { ComputationScheduler } from '../compute/computation_scheduler.js';
 import { DashQLCoreProvider } from '../app/providers/core_provider.js';

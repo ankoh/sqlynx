@@ -8,7 +8,7 @@ import { XIcon, TrashIcon, SyncIcon } from '../../../../ui/foundations/symbol_ic
 import { ButtonVariant, ButtonSize, IconButton } from '../../../../ui/foundations/button.js';
 import { CacheFileStat } from '../../../storage/query_result_cache_eviction.js';
 import { cacheFileHash, clearQueryResultCache, markDeletedQueryResults } from '../query_result_cache_clear.js';
-import { useDynamicAttachedDatabaseDispatch } from '../../connections/attached_database_registry.js';
+import { useDynamicAttachedDatabaseDispatch } from '../../../connections/attached_database_registry.js';
 import { formatBytes } from '../../../../utils/format.js';
 import { formatRelativeTime } from '../../../../utils/time_format.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';

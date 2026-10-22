@@ -1,4 +1,4 @@
-import { QueryExecutionState, QueryExecutionStatus, queryIsDone } from '../connections/query_execution_state.js';
+import { QueryExecutionState, QueryExecutionStatus, queryIsDone } from '../../connections/query_execution_state.js';
 import { IndicatorStatus } from '../../../ui/foundations/status_indicator.js';
 
 /// Which source produced the status shown in the bar.
