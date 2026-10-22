@@ -1,12 +1,12 @@
 :root {
     --vtabs_body_background: transparent;
     --vtabs_tabs_background: transparent;
-    --vtabs_tabs_background_active: rgba(208,215,222,0.32);
+    --vtabs_tabs_background_active: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
     --vtabs_tabs_foreground_active: var(--base_color_black);
-    --vtabs_tabs_background_hover: rgba(208,215,222,0.32);
-    --vtables_handle_background: #f6f8fa;
-    --vtables_handle_foreground: hsl(210deg 17.5% 74.31%);
-    --vtables_handle_dragging_background: rgba(208,215,222,0.32);
+    --vtabs_tabs_background_hover: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
+    --vtables_handle_background: hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%);
+    --vtables_handle_foreground: hsl(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 74.3%);
+    --vtables_handle_dragging_background: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
 }
 
 .container {
@@ -71,7 +71,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f6f8fa;
+    background-color: hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%);
     border-top: 1px solid var(--border_color_primary);
     border-bottom: 1px solid var(--border_color_primary);
     z-index: 1;
@@ -176,7 +176,7 @@
 }
 
 .stacked_tab_split_number {
-    font-family: 'Roboto Mono', monospace;
+    font-family: var(--font_family_mono);
     font-size: 12px;
     font-weight: 500;
     line-height: 1;

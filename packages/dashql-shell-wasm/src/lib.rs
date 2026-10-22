@@ -207,6 +207,12 @@ impl Shell {
         self.inner.resize(terminal_columns);
     }
 
+    /// The color of the terminal prompt as 0xRRGGBB, bold in the default foreground color if undefined
+    #[wasm_bindgen(js_name = setTerminalPromptColor)]
+    pub fn set_terminal_prompt_color(&mut self, rgb: Option<u32>) {
+        self.inner.set_terminal_prompt_color(rgb.map(|rgb| [(rgb >> 16) as u8, (rgb >> 8) as u8, rgb as u8]));
+    }
+
     /// The `KeywordCase` of completions (1 is upper case)
     #[wasm_bindgen(js_name = setKeywordCase)]
     pub fn set_keyword_case(&mut self, keyword_case: u32) {

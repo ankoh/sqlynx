@@ -1,6 +1,6 @@
 :root {
     --stat_cell_height: 32px;
-    --storage_writer_header_color: hsl(208.5, 24.69%, 31.76%);
+    --storage_writer_header_color: hsl(var(--neutral_hue), calc(24.7% * var(--neutral_tint)), 31.8%);
 }
 
 .overlay {
@@ -67,7 +67,7 @@
 .stat_header_row {
     grid-row: 2;
     border-bottom: 1px solid var(--border_color_primary);
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: var(--font_size_caption);
     font-weight: 500;
     color: var(--storage_writer_header_color);
@@ -82,7 +82,7 @@
     border-radius: 0 0 var(--border_radius) var(--border_radius);
     position: relative;
 
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: var(--font_size_caption);
 }
 
@@ -92,7 +92,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6e7781;
+    color: hsl(var(--neutral_hue), calc(7.9% * var(--neutral_tint)), 46.9%);
     font-size: var(--font_size_body);
 }
 

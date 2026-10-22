@@ -284,6 +284,13 @@ describe('DashQL shell Wasm', () => {
         expect(output).toContain(VT100.FOREGROUND_SILVER + 't' + VT100.RESET_ATTRIBUTES);
     });
 
+    it('renders the terminal prompt in its color in Wasm', () => {
+        shell.setTerminalPromptColor(0x6eff46);
+        expect(shell.openTerminal('db> ').data).toContain('\x1b[1;38;2;110;255;70mdb> ' + VT100.RESET_ATTRIBUTES);
+        shell.setTerminalPromptColor(null);
+        expect(shell.openTerminal('db> ').data).toContain(VT100.BOLD + 'db> ' + VT100.RESET_ATTRIBUTES);
+    });
+
     it('passes query effects to the environment', async () => {
         executeQuery = async query => {
             expect(query).toBe('CREATE TABLE foo(a INT)');

@@ -1,10 +1,10 @@
 :root {
-    --editor_header_bg: hsl(210, 29%, 97%);
-    /* --editor_gutter_bg: rgb(246, 248, 250); */
+    --editor_header_bg: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
+    /* --editor_gutter_bg: hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%); */
     --editor_gutter_bg: white;
-    --editor_colref_bg: hsl(210, 24%, 88%);
-    --editor_deco_focused_bg: hsl(210, 24%, 90%);
-    --editor_deco_cursor_bg: hsl(210, 24%, 80%);
+    --editor_colref_bg: hsl(var(--neutral_hue), calc(24% * var(--neutral_tint)), 88%);
+    --editor_deco_focused_bg: hsl(var(--neutral_hue), calc(24% * var(--neutral_tint)), 90%);
+    --editor_deco_cursor_bg: hsl(var(--neutral_hue), calc(24% * var(--neutral_tint)), 80%);
 
     --editor_bg: rgb(255, 255, 255);
 }

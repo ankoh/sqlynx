@@ -1,5 +1,5 @@
 :root {
-    --notebook_details_actionbar_background: hsl(210, 29%, 98%);
+    --notebook_details_actionbar_background: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 98%);
 }
 
 .entry_body_container {

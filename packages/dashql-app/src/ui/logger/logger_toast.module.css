@@ -16,7 +16,7 @@
     column-gap: 12px;
     padding: 14px 16px;
     border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.18), 0 2px 6px rgba(31, 35, 40, 0.1);
+    box-shadow: 0 8px 24px hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.18), 0 2px 6px hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.1);
     animation: toast_slide_in 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
     pointer-events: auto;
     backdrop-filter: blur(8px);
@@ -66,7 +66,7 @@
     display: grid;
     grid-template-columns: max-content 1fr;
     column-gap: 8px;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
 }
 .toast_kv_key {
 }

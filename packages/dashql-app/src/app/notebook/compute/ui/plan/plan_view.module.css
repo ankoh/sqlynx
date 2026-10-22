@@ -23,7 +23,7 @@
 
 .edge {
     fill: none;
-    stroke: hsl(210, 13%, 74%);
+    stroke: hsl(var(--neutral_hue), calc(13% * var(--neutral_tint)), 74%);
     stroke-linecap: round;
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
@@ -35,12 +35,12 @@
 }
 
 .edgeBadge rect {
-    stroke: hsl(210, 13%, 74%);
+    stroke: hsl(var(--neutral_hue), calc(13% * var(--neutral_tint)), 74%);
     stroke-width: 1px;
 }
 
 .edgeBadge text {
-    font-family: "Roboto Mono", monospace;
+    font-family: var(--font_family_mono);
     font-size: 9px;
     font-weight: 600;
     text-anchor: middle;
@@ -49,7 +49,7 @@
 
 .crossEdge {
     fill: none;
-    stroke: hsl(210, 13%, 74%);
+    stroke: hsl(var(--neutral_hue), calc(13% * var(--neutral_tint)), 74%);
     stroke-width: 1px;
     stroke-dasharray: 6 4;
     stroke-linecap: round;
@@ -95,14 +95,14 @@
 .pipeline {
     display: none;
     fill: rgba(220, 220, 220, 0.5);
-    stroke: hsl(210, 13%, 74%);
+    stroke: hsl(var(--neutral_hue), calc(13% * var(--neutral_tint)), 74%);
     stroke-width: 1px;
 }
 
 .pipeline[data-status="2"], .pipeline[data-status="4"] { display: inline; }
 
 .operator {
-    --operator_border_color: hsl(210, 13%, 74%);
+    --operator_border_color: hsl(var(--neutral_hue), calc(13% * var(--neutral_tint)), 74%);
     --operator_background: white;
     cursor: pointer;
 }
@@ -116,26 +116,26 @@
 }
 .operator_port_border {
     fill: none;
-    stroke: hsl(210, 13%, 74%);
+    stroke: hsl(var(--neutral_hue), calc(13% * var(--neutral_tint)), 74%);
     stroke-width: 1px;
 }
 .operator_port_mask {
     fill: var(--operator_background);
 }
 .operator_port_dot {
-    fill: hsl(210, 13%, 74%);
+    fill: hsl(var(--neutral_hue), calc(13% * var(--neutral_tint)), 74%);
 }
 .operator text {
-    font-family: "Roboto Mono", monospace;
+    font-family: var(--font_family_mono);
     font-size: 0.85rem;
     text-anchor: middle;
     pointer-events: none;
 }
 .operator_symbol {
-    color: hsl(210, 18%, 24%);
+    color: hsl(var(--neutral_hue), calc(18% * var(--neutral_tint)), 24%);
     pointer-events: none;
 }
-.operator:hover { --operator_background: hsl(210, 30%, 98%); }
+.operator:hover { --operator_background: hsl(var(--neutral_hue), calc(30% * var(--neutral_tint)), 98%); }
 .operator[data-selected="true"],
 .operator:focus-visible {
     --operator_background: hsl(211, 100%, 97%);
@@ -186,7 +186,7 @@
     display: flex;
     align-items: center;
     max-width: calc(100% - 16px);
-    color: hsl(210, 10%, 32%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 32%);
     font-size: 10px;
     line-height: 12px;
     white-space: nowrap;
@@ -224,7 +224,7 @@
     bottom: 100%;
     width: 1px;
     height: 5px;
-    background: hsl(210, 10%, 32%);
+    background: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 32%);
     content: "";
 }
 
@@ -246,4 +246,4 @@
     border-bottom: 1px solid var(--border_color_primary);
 }
 .inspector_header[data-single-line="true"] { padding-bottom: 12px; }
-.inspector_header span { color: hsl(210, 10%, 42%); font-size: 0.8rem; }
+.inspector_header span { color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 42%); font-size: 0.8rem; }

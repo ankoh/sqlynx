@@ -84,33 +84,33 @@
 
 .header_title_label {
     font-weight: 500;
-    color: hsl(210, 10%, 40%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 40%);
 }
 .header_title_label:not(:first-child) {
     font-weight: 500;
-    color: hsl(210, 10%, 40%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 40%);
     margin-left: 8px;
 }
 
 .header_title_equal {
     font-weight: 400;
-    color: hsl(210, 10%, 55%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 55%);
 }
 
 .header_title_index {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: hsl(210, 10%, 30%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 30%);
 }
 
 .header_title_dot {
     font-weight: 400;
-    color: hsl(210, 10%, 55%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 55%);
 }
 
 .header_title_field {
     font-weight: 600;
-    color: hsl(210, 10%, 30%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 30%);
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -146,7 +146,7 @@
 
 .plan_error {
     padding: 16px;
-    color: hsl(210, 10%, 40%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 40%);
     font-size: 0.9rem;
 }
 
@@ -164,11 +164,11 @@
 }
 
 .pretty_toggle_button[aria-pressed='false']:hover:not(:disabled) {
-    background-color: #f0f2f4;
+    background-color: hsl(var(--neutral_hue), calc(15.4% * var(--neutral_tint)), 94.9%);
 }
 
 .pretty_toggle_button[aria-pressed='false']:active:not(:disabled) {
-    background-color: #e8ecef;
+    background-color: hsl(var(--neutral_hue), calc(17.9% * var(--neutral_tint)), 92.4%);
 }
 
 .codemirror_container :global(.cm-editor) {

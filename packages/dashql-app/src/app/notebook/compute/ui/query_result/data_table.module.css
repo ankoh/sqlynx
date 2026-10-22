@@ -1,7 +1,7 @@
 .root {
     --data_table_bg: white;
-    --data_table_bg_focus_primary: hsl(207.69, 20.63%, 94.59%);
-    --data_table_bg_focus_secondary: hsl(207.69, 20.63%, 97.59%);
+    --data_table_bg_focus_primary: hsl(var(--neutral_hue), calc(20.6% * var(--neutral_tint)), 94.6%);
+    --data_table_bg_focus_secondary: hsl(var(--neutral_hue), calc(20.6% * var(--neutral_tint)), 97.6%);
 
     width: 100%;
     height: 100%;
@@ -74,7 +74,7 @@
 }
 
 .header_cell_clickable:hover {
-    background-color: hsl(210, 20%, 96%);
+    background-color: hsl(var(--neutral_hue), calc(20% * var(--neutral_tint)), 96%);
 }
 
 .header_cell_rightmost {
@@ -178,13 +178,13 @@
     border-bottom: 1px solid rgb(210, 210, 210);
     box-sizing: border-box;
     background-color: white;
-    color: hsl(210, 10%, 40%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 40%);
     cursor: pointer;
 }
 
 .plots_toggle:hover,
 .plots_toggle:focus-visible {
-    background-color: hsl(210, 29%, 97%);
+    background-color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
     color: var(--base_color_black);
     outline: none;
 }
@@ -255,7 +255,7 @@
 }
 
 .data_cell_null {
-    color: hsl(208.5deg, 14.69%, 78.76%);
+    color: hsl(var(--neutral_hue), calc(14.7% * var(--neutral_tint)), 78.8%);
 }
 
 .data_cell_rightmost {
@@ -291,6 +291,6 @@
     line-height: 1.4;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    background: hsl(210, 15%, 93%);
-    color: hsl(210, 10%, 38%);
+    background: hsl(var(--neutral_hue), calc(15% * var(--neutral_tint)), 93%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 38%);
 }

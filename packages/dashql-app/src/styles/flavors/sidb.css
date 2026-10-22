@@ -1,14 +1,32 @@
-/* Theme tokens of the sidb flavor, overriding the semantic tokens of globals.css.
-   The backdrop is a neutral dark grey, the blue accent comes from the SIDB wordmark. */
+/* Theme tokens of the sidb flavor ("Studio Ember"), overriding the semantic tokens of globals.css.
+   The backdrop is a desaturated slate grey, the greys of the pages are neutral.
+   Ember is the accent on light surfaces, Glow the accent on dark ones. */
 :root[data-flavor="sidb"] {
-    --background_color_primary: hsl(0, 0%, 28%);
-    --background_color_80: hsl(0, 0%, 22%);
-    --background_color_100: hsl(0, 0%, 14%);
+    --sidb_ink: #1b2e36;
+    --sidb_dark: #1b2e36;
+    --sidb_si_on_light: #e0391a;
 
-    --button_fg: hsl(0, 0%, 20%);
-    --button_hover_bg: hsl(0, 0%, 14%);
-    --button_hover_bg_inverted: hsl(0, 0%, 6%);
-    --button_hover_fg_inverted: hsl(0, 0%, 30%);
+    --neutral_tint: 0;
 
-    --nav_tab_bg_active: hsla(0, 0%, 44%, 40%);
+    --font_family: 'Instrument Sans', sans-serif;
+    --font_family_mono: 'JetBrains Mono', monospace;
+
+    --base_color: var(--sidb_ink);
+
+    --background_color_primary: hsl(200, 4%, 37%);
+    --background_color_80: hsl(200, 4%, 33%);
+    --background_color_100: hsl(200, 5%, 25%);
+
+    --button_fg: var(--sidb_ink);
+    --button_hover_bg: var(--sidb_dark);
+    --button_hover_bg_inverted: hsl(198, 34%, 8%);
+    --button_hover_fg_inverted: hsl(200, 4%, 37%);
+
+    --button_primary_bg: var(--sidb_si_on_light);
+    --button_primary_bg_hover: hsl(10, 79%, 42%);
+    --button_primary_bg_disabled: hsl(12, 70%, 78%);
+
+    --focus_outline_color: var(--sidb_si_on_light);
+
+    --nav_tab_bg_active: hsla(200, 4%, 50%, 35%);
 }

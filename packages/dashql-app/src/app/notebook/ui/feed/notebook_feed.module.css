@@ -2,9 +2,9 @@
 
 :root {
     --notebook_feed_preview_background: transparent;
-    --notebook_feed_entry_headerbar_background: hsl(210, 29%, 98%);
+    --notebook_feed_entry_headerbar_background: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 98%);
     --notebook_feed_entry_footer_background: transparent;
-    --notebook_feed_script_accent: hsl(213, 24%, 64%);
+    --notebook_feed_script_accent: hsl(var(--neutral_hue), calc(24% * var(--neutral_tint)), 64%);
     --notebook_feed_server_accent: hsl(267, 12%, 61%);
 }
 
@@ -90,9 +90,9 @@
     right: var(--feed-scrollbar-inset, 0px);
     background: linear-gradient(
         to bottom,
-        hsla(210, 29%, 97%, 0) 0%,
-        hsla(210, 29%, 97%, 0.7) 20px,
-        hsl(210, 29%, 97%) 40px
+        hsla(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%, 0) 0%,
+        hsla(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%, 0.7) 20px,
+        hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%) 40px
     );
     pointer-events: none;
 }
@@ -140,7 +140,7 @@
 }
 
 .feed_data_toggle:focus-visible {
-    outline: 2px solid var(--focus_outline_color, #0969da);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: -2px;
 }
 
@@ -335,7 +335,7 @@
 .feed_cell_separator:hover .feed_cell_add {
     color: var(--base_color_neutral_9);
     border-color: var(--border_color_primary);
-    background-color: rgba(208, 215, 222, 0.32);
+    background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
 }
 
 .feed_cell_separator:focus-visible {
@@ -343,7 +343,7 @@
 }
 
 .feed_cell_separator:focus-visible .feed_cell_add {
-    outline: 2px solid var(--focus_outline_color, #0969da);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: 2px;
 }
 
@@ -380,7 +380,7 @@
 }
 
 .feed_entry_drag_handle:focus-visible {
-    outline: 2px solid var(--focus_outline_color, #0969da);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: 2px;
 }
 

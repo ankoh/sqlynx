@@ -94,7 +94,7 @@
 .status_error {
     font-size: var(--font_size_small);
     font-weight: 300;
-    color: #8c959f;
+    color: hsl(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%);
     word-break: break-word;
     min-width: 0;
 }
@@ -139,7 +139,7 @@
 .auth_hint {
     grid-column: 1 / span 2;
     font-size: var(--font_size_small);
-    color: #8c959f;
+    color: hsl(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%);
 }
 
 .grid_column_1 {

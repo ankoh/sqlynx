@@ -45,6 +45,7 @@ declare module '@ankoh/dashql-shell-js' {
         free(): void;
         resize(terminalColumns: number): void;
         setKeywordCase(keywordCase: number): void;
+        setTerminalPromptColor(rgb?: number): void;
         setSessionRelations(enabled: boolean): number;
         setCommands(commands: string): number;
         setPrompt(text: string): ShellPromptResult;

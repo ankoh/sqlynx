@@ -134,8 +134,8 @@
     padding: 2px 6px;
     border: 0;
     border-radius: 3px;
-    background: hsl(210, 15%, 93%);
-    color: hsl(210, 10%, 40%);
+    background: hsl(var(--neutral_hue), calc(15% * var(--neutral_tint)), 93%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 40%);
     cursor: pointer;
     font: inherit;
 }

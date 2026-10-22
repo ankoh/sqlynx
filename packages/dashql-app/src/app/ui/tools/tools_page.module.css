@@ -1,10 +1,10 @@
 :root {
     --tools_header_background: white;
-    --tools_body_background: hsl(210, 29%, 97%);
-    --tools_body_sidebar: linear-gradient(to right, hsl(210, 29%, 94%), hsl(210, 29%, 97%));
-    --tools_tabs_background_active: hsl(210, 20%, 92%);
+    --tools_body_background: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
+    --tools_body_sidebar: linear-gradient(to right, hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 94%), hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%));
+    --tools_tabs_background_active: hsl(var(--neutral_hue), calc(20% * var(--neutral_tint)), 92%);
     --tools_tabs_foreground_active: var(--base_color_black);
-    --tools_tabs_background_hover: hsl(210, 20%, 92%);
+    --tools_tabs_background_hover: hsl(var(--neutral_hue), calc(20% * var(--neutral_tint)), 92%);
     --tools_max_width: 1104px;
 }
 
@@ -105,7 +105,7 @@
 }
 
 .tool_entry_label {
-    font-family: 'Roboto';
+    font-family: var(--font_family);
     font-size: 0.9rem;
     font-weight: 400;
     white-space: nowrap;
@@ -156,7 +156,7 @@
     align-items: center;
     border-radius: 10px;
     border: 1px solid var(--border_color_primary);
-    background-color: hsl(210, 29%, 97%);
+    background-color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
 }
 
 .tool_header_icon {
@@ -200,7 +200,7 @@
     padding: 12px 14px;
     border: 1px dashed var(--border_color_primary);
     border-radius: var(--border_radius);
-    background-color: hsl(210, 29%, 98%);
+    background-color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 98%);
     font-size: 0.95rem;
     line-height: 1.45;
 }

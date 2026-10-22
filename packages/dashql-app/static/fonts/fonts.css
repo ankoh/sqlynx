@@ -79,3 +79,63 @@
 }
 
 /* -------------------------------------------------------------------- */
+
+/* The fonts of the sidb flavor. Browsers only download a face when the page uses it. */
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: url(./InstrumentSans-Regular.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-weight: 500;
+    src: url(./InstrumentSans-Medium.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-weight: 600;
+    src: url(./InstrumentSans-SemiBold.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: url(./InstrumentSans-Bold.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 400;
+    src: url(./JetBrainsMono-Regular.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 500;
+    src: url(./JetBrainsMono-Medium.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 600;
+    src: url(./JetBrainsMono-SemiBold.ttf) format('truetype');
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 700;
+    src: url(./JetBrainsMono-Bold.ttf) format('truetype');
+}
+
+/* -------------------------------------------------------------------- */

@@ -67,11 +67,11 @@
 .param_label {
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--text_color_secondary, #6e7781);
+    color: var(--text_color_secondary, hsl(var(--neutral_hue), calc(7.9% * var(--neutral_tint)), 46.9%));
 }
 
 .param_value {
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 0.8rem;
     min-width: 0;
     white-space: normal;
@@ -85,7 +85,7 @@
     min-width: 0;
     width: 100%;
     box-sizing: border-box;
-    font-family: 'Roboto';
+    font-family: var(--font_family);
     font-size: 0.9rem;
     padding: 6px 10px;
     border: 1px solid var(--border_color_primary);
@@ -96,9 +96,9 @@
 
 .name_input:focus {
     outline: none;
-    border-color: var(--focus_border_color, #0969da);
+    border-color: var(--focus_border_color);
 }
 
 .name_input::placeholder {
-    color: var(--text_color_secondary, #6e7781);
+    color: var(--text_color_secondary, hsl(var(--neutral_hue), calc(7.9% * var(--neutral_tint)), 46.9%));
 }

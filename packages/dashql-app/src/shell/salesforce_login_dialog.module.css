@@ -3,7 +3,7 @@
     height: min(600px, 80vh);
     max-height: min(600px, 80vh);
     overflow: hidden;
-    color: #24292f;
+    color: hsl(var(--neutral_hue), calc(13.3% * var(--neutral_tint)), 16.3%);
     background: white;
     border-radius: inherit;
     container-type: inline-size;
@@ -25,7 +25,7 @@
     border: 1px solid transparent;
     border-radius: var(--border_radius);
     background: transparent;
-    color: #24292f;
+    color: hsl(var(--neutral_hue), calc(13.3% * var(--neutral_tint)), 16.3%);
     cursor: pointer;
 }
 
@@ -37,7 +37,7 @@
 
 .history_button:focus-visible,
 .history_overlay button:focus-visible {
-    outline: 2px solid #0969da;
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: 1px;
 }
 
@@ -52,7 +52,7 @@
     border: 1px solid var(--border_color_primary);
     border-radius: 12px;
     background: white;
-    box-shadow: 0 1px 3px rgba(31, 35, 40, 0.12), 0 8px 24px rgba(66, 74, 83, 0.12);
+    box-shadow: 0 1px 3px hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.12), 0 8px 24px hsla(var(--neutral_hue), calc(11.4% * var(--neutral_tint)), 29.2%, 0.12);
 }
 
 .history_header {
@@ -98,7 +98,7 @@
     border: 1px solid transparent;
     border-radius: var(--border_radius);
     background: transparent;
-    color: #24292f;
+    color: hsl(var(--neutral_hue), calc(13.3% * var(--neutral_tint)), 16.3%);
     text-align: left;
     cursor: pointer;
     flex: 1;
@@ -106,7 +106,7 @@
 
 .history_select_button:hover {
     border-color: var(--border_color_primary);
-    background: rgba(208, 215, 222, 0.32);
+    background: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
 }
 
 .history_delete_button {
@@ -127,7 +127,7 @@
 
 .history_delete_button:hover:not(:disabled) {
     border-color: var(--border_color_primary);
-    background: rgba(208, 215, 222, 0.32);
+    background: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
 }
 
 .history_delete_button:disabled {
@@ -150,15 +150,15 @@
 }
 
 .history_name {
-    font-family: 'Roboto';
+    font-family: var(--font_family);
     font-size: 13px;
-    color: hsl(210, 12%, 16%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 16%);
 }
 
 .history_url {
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 12px;
-    color: hsl(210, 12%, 45%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 45%);
 }
 
 .history_state,
@@ -169,7 +169,7 @@
 }
 
 .history_state {
-    color: hsl(210, 12%, 45%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 45%);
 }
 
 .history_error {

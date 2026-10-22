@@ -3,7 +3,7 @@
     height: 8px;
     overflow: hidden;
     border-radius: 999px;
-    background-color: rgba(208, 215, 222, 0.6);
+    background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.6);
 }
 
 .fill {

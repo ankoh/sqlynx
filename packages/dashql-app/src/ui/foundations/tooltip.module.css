@@ -12,7 +12,7 @@
     color: white;
     text-align: center;
     word-wrap: break-word;
-    background-color: hsl(210deg, 12%, 24%);
+    background-color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 24%);
     border-radius: 6px;
     border: 0;
     opacity: 0;

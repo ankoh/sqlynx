@@ -291,6 +291,23 @@ fn renders_inline_dot_command_hint() {
 }
 
 #[test]
+fn renders_terminal_prompt_in_its_color() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 10, false);
+    session.set_terminal_prompt_color(Some([110, 255, 70]));
+    let output = text(&session.open_terminal(b"db> ").data);
+    assert!(output.contains("\x1b[1;38;2;110;255;70mdb> \x1b[0m"), "{output}");
+
+    // Continuation lines carry the prompt color as well
+    let output = text(&session.consume_terminal_input(PromptInputKey::Text, b"SELECT 1 FROM t", &catalog).data);
+    assert!(output.contains("\x1b[1;38;2;110;255;70m -> \x1b[0m"), "{output}");
+
+    session.set_terminal_prompt_color(None);
+    let output = text(&session.open_terminal(b"db> ").data);
+    assert!(output.contains(&format!("{}db> {}", vt100::BOLD, vt100::RESET_ATTRIBUTES)), "{output}");
+}
+
+#[test]
 fn renders_registered_dot_command_names_in_bold() {
     let catalog = Catalog::new();
     let mut session = ShellSession::new(&catalog, 100, false);

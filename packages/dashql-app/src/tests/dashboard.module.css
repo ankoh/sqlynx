@@ -10,7 +10,7 @@
     overflow: hidden;
     background: var(--base_color_neutral_0);
     color: var(--base_color_black);
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font_family);
 }
 
 .header {
@@ -39,7 +39,7 @@
 }
 
 .product {
-    font-family: 'Roboto Mono', monospace;
+    font-family: var(--font_family_mono);
     font-size: 0.9rem;
     line-height: 1;
 }
@@ -59,7 +59,7 @@
     border-radius: 999px;
     background: var(--base_color_neutral_0);
     color: var(--base_color_neutral_6);
-    font: var(--font_size_micro)/1.2 'Roboto Mono', monospace;
+    font: var(--font_size_micro)/1.2 var(--font_family_mono);
 }
 
 .badge {
@@ -82,7 +82,7 @@
 }
 
 .metric strong {
-    font: 500 var(--font_size_body)/1.2 'Roboto Mono', monospace;
+    font: 500 var(--font_size_body)/1.2 var(--font_family_mono);
 }
 
 .metric span {
@@ -203,7 +203,7 @@
 
 .panel_count {
     color: var(--base_color_neutral_6);
-    font: var(--font_size_micro)/1.2 'Roboto Mono', monospace;
+    font: var(--font_size_micro)/1.2 var(--font_family_mono);
 }
 
 .run_button {
@@ -256,7 +256,7 @@
 
 .file_name {
     overflow: hidden;
-    font: var(--font_size_caption)/1.4 'Roboto Mono', monospace;
+    font: var(--font_size_caption)/1.4 var(--font_family_mono);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -297,7 +297,7 @@
 .count,
 .meta {
     color: var(--base_color_neutral_6);
-    font: var(--font_size_micro)/1.4 'Roboto Mono', monospace;
+    font: var(--font_size_micro)/1.4 var(--font_family_mono);
 }
 
 .test_list {
@@ -350,7 +350,7 @@
 .details h2 {
     margin: 1px 0 6px;
     overflow-wrap: anywhere;
-    font: 500 var(--font_size_body)/1.5 'Roboto Mono', monospace;
+    font: 500 var(--font_size_body)/1.5 var(--font_family_mono);
     user-select: text;
 }
 
@@ -371,11 +371,11 @@
 .error_test {
     margin-bottom: 8px;
     color: var(--base_color_neutral_7);
-    font: var(--font_size_caption)/1.4 'Roboto Mono', monospace;
+    font: var(--font_size_caption)/1.4 var(--font_family_mono);
 }
 
 .error_message {
-    font: 500 var(--font_size_body)/1.5 'Roboto Mono', monospace;
+    font: 500 var(--font_size_body)/1.5 var(--font_family_mono);
     overflow-wrap: anywhere;
 }
 
@@ -385,7 +385,7 @@
     overflow: auto;
     border-top: 1px solid var(--base_color_red_2);
     color: var(--base_color_red_7);
-    font: var(--font_size_caption)/1.55 'Roboto Mono', monospace;
+    font: var(--font_size_caption)/1.55 var(--font_family_mono);
     white-space: pre-wrap;
 }
 

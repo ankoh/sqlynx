@@ -40,14 +40,18 @@ import { NotebookSetupStatus } from '../router/notebook_setup_status.js';
 import { NarrowScreenWarning, useNarrowScreenWarning } from '../ui/narrow_screen_warning.js';
 
 async function loadFonts(): Promise<void> {
+    // The font families are theme tokens that the app flavor may override
+    const style = getComputedStyle(document.documentElement);
+    const family = style.getPropertyValue('--font_family').trim() || "'Roboto'";
+    const familyMono = style.getPropertyValue('--font_family_mono').trim() || "'Roboto Mono'";
     await Promise.all([
-        document.fonts.load("300 16px 'Roboto'"),
-        document.fonts.load("400 16px 'Roboto'"),
-        document.fonts.load("500 16px 'Roboto'"),
-        document.fonts.load("700 16px 'Roboto'"),
-        document.fonts.load("400 16px 'Roboto Mono'"),
-        document.fonts.load("500 16px 'Roboto Mono'"),
-        document.fonts.load("700 16px 'Roboto Mono'"),
+        document.fonts.load(`300 16px ${family}`),
+        document.fonts.load(`400 16px ${family}`),
+        document.fonts.load(`500 16px ${family}`),
+        document.fonts.load(`700 16px ${family}`),
+        document.fonts.load(`400 16px ${familyMono}`),
+        document.fonts.load(`500 16px ${familyMono}`),
+        document.fonts.load(`700 16px ${familyMono}`),
     ]);
 }
 

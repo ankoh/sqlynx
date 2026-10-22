@@ -35,7 +35,7 @@
 .card_content {
     min-height: 312px;
     z-index: 1;
-    box-shadow: var(--shadow_medium, 0 8px 24px rgba(31, 35, 40, 0.14));
+    box-shadow: var(--shadow_medium, 0 8px 24px hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.14));
 }
 
 .card_header {
@@ -78,7 +78,7 @@
     min-width: 0;
     margin: 0;
     overflow: hidden;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: var(--font_size_small);
     font-weight: 500;
     text-overflow: ellipsis;
@@ -141,7 +141,7 @@
 
 .drag_handle:focus-visible,
 .resize_handle:focus-visible {
-    outline: 2px solid var(--focus_outline_color, #0969da);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: -2px;
 }
 
@@ -162,7 +162,7 @@
 
 .empty_state strong {
     color: var(--base_color_neutral_8);
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
 }
 
 @media only screen and (max-width: 799px) {

@@ -1,7 +1,7 @@
 .overlay {
     width: 100%;
     background: white;
-    color: hsl(210, 12%, 16%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 16%);
 }
 
 .overlay header {
@@ -57,7 +57,7 @@
 .addButton:hover,
 .addButton:focus-visible {
     border-color: var(--border_color_primary);
-    background-color: rgba(208, 215, 222, 0.32);
+    background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
 }
 
 .status {

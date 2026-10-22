@@ -1,11 +1,11 @@
 :root {
-    --notebook_sidebar_background: hsla(210, 29%, 97%, 0.97);
+    --notebook_sidebar_background: hsla(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%, 0.97);
 }
 
 .page {
     --notebook_header_height: 44px;
     --notebook_navigation_sidebar_width: 260px;
-    --notebook_feed_background_color: hsl(210, 29%, 97%);
+    --notebook_feed_background_color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
     width: 100%;
     height: 100%;
     display: grid;
@@ -115,7 +115,7 @@
     }
     0%, 100% {
         border-color: transparent;
-        background-color: hsl(210, 29%, 97%);
+        background-color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
     }
 }
 

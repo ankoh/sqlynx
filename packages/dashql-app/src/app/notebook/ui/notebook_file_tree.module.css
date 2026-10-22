@@ -51,7 +51,7 @@
 .folder_name_input:focus-visible,
 .rename_folder_button:focus-visible,
 .add_folder_button:focus-visible {
-    outline: 2px solid var(--color-accent-fg, #0969da);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: -2px;
 }
 
@@ -89,7 +89,7 @@
     flex: 0 0 auto;
     margin-left: 6px;
     margin-right: 8px;
-    color: var(--color-fg-muted, #57606a);
+    color: var(--color-fg-muted, hsl(var(--neutral_hue), calc(9.8% * var(--neutral_tint)), 37.8%));
 }
 
 .folder_edit {
@@ -121,19 +121,19 @@
 }
 
 .script_name_input {
-    font-family: 'Roboto Mono', monospace;
+    font-family: var(--font_family_mono);
     font-size: 0.8rem;
 }
 
 .item_button:hover,
 .item_button_selected {
     border: 1px solid var(--border_color_primary);
-    background-color: rgba(208, 215, 222, 0.32);
+    background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
 }
 
 .item_icon {
     flex: 0 0 auto;
-    color: hsl(210, 10%, 30%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 30%);
 }
 
 .item_label {
@@ -149,7 +149,7 @@
 }
 
 .script_button {
-    font-family: 'Roboto Mono', monospace;
+    font-family: var(--font_family_mono);
     font-size: 0.8rem;
 }
 
@@ -163,7 +163,7 @@
     padding: 4px 12px;
     border: 1px solid transparent;
     border-radius: var(--border_radius);
-    color: var(--color-fg-muted, #57606a);
+    color: var(--color-fg-muted, hsl(var(--neutral_hue), calc(9.8% * var(--neutral_tint)), 37.8%));
     background: transparent;
     font: inherit;
     font-size: 0.9rem;
@@ -174,7 +174,7 @@
 .add_folder_button:hover {
     border-color: var(--border_color_primary);
     color: inherit;
-    background: rgba(208, 215, 222, 0.32);
+    background: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
 }
 
 @media only screen and (max-width: 700px) {

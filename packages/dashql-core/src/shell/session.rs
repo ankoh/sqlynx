@@ -149,9 +149,15 @@ impl Default for PromptLayout {
     }
 }
 
-fn append_prompt_prefix(output: &mut Vec<u8>, prefix: &[u8], columns: usize, layout: &mut PromptLayout) {
+fn append_prompt_prefix(
+    output: &mut Vec<u8>,
+    prefix: &[u8],
+    prefix_style: &[u8],
+    columns: usize,
+    layout: &mut PromptLayout,
+) {
     if !prefix.is_empty() {
-        push(output, vt100::BOLD);
+        output.extend_from_slice(prefix_style);
     }
     let utf8 = std::str::from_utf8(prefix).ok();
     let mut offset = 0;
@@ -192,6 +198,7 @@ fn advance_prompt_prefix(prefix: &[u8], columns: usize, layout: &mut PromptLayou
 fn break_prompt_line(
     output: Option<&mut Vec<u8>>,
     continuation: &[u8],
+    prefix_style: &[u8],
     active_style: &[u8],
     columns: usize,
     layout: &mut PromptLayout,
@@ -205,7 +212,7 @@ fn break_prompt_line(
             append_cursor_move(output, 1, Command::CursorDown);
             layout.rows += 1;
             layout.column = 0;
-            append_prompt_prefix(output, continuation, columns, layout);
+            append_prompt_prefix(output, continuation, prefix_style, columns, layout);
             if !active_style.is_empty() {
                 output.extend_from_slice(active_style);
             }
@@ -226,14 +233,14 @@ fn layout_prompt(text: &[u8], initial: &[u8], continuation: &[u8], columns: usiz
     let mut offset = 0;
     while offset < text.len() {
         if text[offset] == b'\n' {
-            break_prompt_line(None, continuation, &[], columns, &mut layout);
+            break_prompt_line(None, continuation, &[], &[], columns, &mut layout);
             offset += 1;
             continue;
         }
         let next = next_cluster(utf8, offset);
         let width = display_width(&text[offset..next]);
         if layout.column != 0 && layout.column + width > columns {
-            break_prompt_line(None, continuation, &[], columns, &mut layout);
+            break_prompt_line(None, continuation, &[], &[], columns, &mut layout);
         }
         layout.column += width;
         offset = next;
@@ -246,11 +253,12 @@ fn render_highlighted_prompt(
     highlighted: &[u8],
     initial: &[u8],
     continuation: &[u8],
+    prefix_style: &[u8],
     columns: usize,
 ) -> PromptLayout {
     let columns = columns.max(1);
     let mut layout = PromptLayout::default();
-    append_prompt_prefix(output, initial, columns, &mut layout);
+    append_prompt_prefix(output, initial, prefix_style, columns, &mut layout);
     let mut active_style: Vec<u8> = Vec::new();
     let utf8 = std::str::from_utf8(highlighted).ok();
     let mut offset = 0;
@@ -266,7 +274,7 @@ fn render_highlighted_prompt(
             }
         }
         if highlighted[offset] == b'\n' {
-            break_prompt_line(Some(output), continuation, &active_style, columns, &mut layout);
+            break_prompt_line(Some(output), continuation, prefix_style, &active_style, columns, &mut layout);
             offset += 1;
             continue;
         }
@@ -274,7 +282,7 @@ fn render_highlighted_prompt(
         let grapheme = &highlighted[offset..next];
         let width = display_width(grapheme);
         if layout.column != 0 && layout.column + width > columns {
-            break_prompt_line(Some(output), continuation, &active_style, columns, &mut layout);
+            break_prompt_line(Some(output), continuation, prefix_style, &active_style, columns, &mut layout);
         }
         output.extend_from_slice(grapheme);
         layout.column += width;
@@ -499,6 +507,8 @@ pub struct ShellSession {
     terminal_prompt: Vec<u8>,
     /// The prefix of continuation lines, with `->` below the `>` of the prompt
     terminal_continuation: Vec<u8>,
+    /// The SGR sequence of the prompt and continuation prefixes
+    terminal_prompt_style: Vec<u8>,
     /// The number of terminal rows of the rendered prompt
     terminal_prompt_rows: usize,
     /// The prompt row of the cursor
@@ -529,6 +539,7 @@ impl ShellSession {
             commands: Vec::new(),
             terminal_prompt: Vec::new(),
             terminal_continuation: b"     -> ".to_vec(),
+            terminal_prompt_style: vt100::BOLD.as_bytes().to_vec(),
             terminal_prompt_rows: 1,
             terminal_prompt_cursor_row: 0,
             terminal_action: PromptInputAction::None,
@@ -560,6 +571,14 @@ impl ShellSession {
     /// Set the keyword case of completions, `KeywordCase` as in the C ABI (1 is upper case)
     pub fn set_keyword_case(&mut self, keyword_case: u32) {
         self.keyword_case = keyword_case;
+    }
+
+    /// Set the color of the terminal prompt, bold in the default foreground color if none
+    pub fn set_terminal_prompt_color(&mut self, rgb: Option<[u8; 3]>) {
+        self.terminal_prompt_style = match rgb {
+            Some([r, g, b]) => format!("\x1b[1;38;2;{r};{g};{b}m").into_bytes(),
+            None => vt100::BOLD.as_bytes().to_vec(),
+        };
     }
 
     fn upper_keywords(&self) -> bool {
@@ -1498,8 +1517,14 @@ impl ShellSession {
             push(&mut output, vt100::CARRIAGE_RETURN);
         }
 
-        let rendered_layout =
-            render_highlighted_prompt(&mut output, &highlighted, &terminal_prompt, &continuation, terminal_columns);
+        let rendered_layout = render_highlighted_prompt(
+            &mut output,
+            &highlighted,
+            &terminal_prompt,
+            &continuation,
+            &self.terminal_prompt_style,
+            terminal_columns,
+        );
         self.terminal_prompt_rows = rendered_layout.rows;
 
         let cursor = self.prompt.cursor_byte_offset();

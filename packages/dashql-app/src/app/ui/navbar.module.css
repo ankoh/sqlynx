@@ -4,9 +4,9 @@
     --nav_bar_height: 40px;
     --nav_bar_border: 1px solid var(--border_color_primary);
     --nav_tab_bg: transparent;
-    /* --nav_tab_bg_active: hsla(210deg, 12%, 36%, 40%); */
-    /* --nav_tab_bg_active: hsla(210deg, 12%, 44%, 30%); */
-    --nav_tab_bg_active: hsla(210deg, 12%, 44%, 40%);
+    /* --nav_tab_bg_active: hsla(var(--neutral_hue), calc(12% * var(--neutral_tint)), 36%, 40%); */
+    /* --nav_tab_bg_active: hsla(var(--neutral_hue), calc(12% * var(--neutral_tint)), 44%, 30%); */
+    --nav_tab_bg_active: hsla(var(--neutral_hue), calc(12% * var(--neutral_tint)), 44%, 40%);
     --nav_tab_fg: white;
     --nav_tab_fg_active: white;
     --nav_tab_border: 1px solid black;
@@ -83,7 +83,7 @@
     padding-left: 4px;
     color: white;
     fill: currentColor;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: var(--font_size_title);
     font-weight: 400;
 }
@@ -137,7 +137,7 @@
 }
 
 .tab_button:focus-visible {
-    outline: 2px solid var(--focus_outline_color, #0969da);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: 1px;
 }
 
@@ -151,7 +151,7 @@
 
     text-decoration: none;
     color: var(--nav_tab_fg) !important;
-    font-family: 'Roboto';
+    font-family: var(--font_family);
 
     width: 100%;
     height: 100%;
@@ -165,7 +165,7 @@
     column-gap: 8px;
 }
 .tab_button_text {
-    font-family: 'Roboto';
+    font-family: var(--font_family);
     font-weight: 300 !important;
     font-size: var(--font_size_body);
     margin-top: 1px;

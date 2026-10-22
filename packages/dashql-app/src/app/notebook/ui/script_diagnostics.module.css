@@ -62,12 +62,12 @@
 }
 
 .item:hover {
-    background-color: rgba(208,215,222,0.32);
+    background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
     border-color: var(--border_color_primary);
 }
 
 .item:focus-visible {
-    outline: 2px solid var(--focus_outline_color, #0969da);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: -2px;
 }
 

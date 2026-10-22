@@ -197,6 +197,21 @@ export async function loadWebglRenderer(terminal: Terminal): Promise<boolean> {
     }
 }
 
+/// The color of the shell prompt as 0xRRGGBB, from the `--shell_prompt_color` theme token of an element.
+/// Null if the theme leaves it unset, the prompt is then bold in the default foreground color.
+export function resolveShellPromptColor(element: HTMLElement): number | null {
+    const token = getComputedStyle(element).getPropertyValue('--shell_prompt_color').trim();
+    if (token === '' || !CSS.supports('color', token)) return null;
+    // Let the browser resolve the color to rgb()
+    const probe = document.createElement('span');
+    probe.style.color = token;
+    element.appendChild(probe);
+    const color = getComputedStyle(probe).color;
+    probe.remove();
+    const match = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(color);
+    return match == null ? null : (Number(match[1]) << 16) | (Number(match[2]) << 8) | Number(match[3]);
+}
+
 export async function embedDashQLShell(options: BrowserShellOptions): Promise<BrowserShellController> {
     const [{ Terminal }, { FitAddon }] = await Promise.all([
         import('@xterm/xterm'),
@@ -210,6 +225,7 @@ export async function embedDashQLShell(options: BrowserShellOptions): Promise<Br
     let disposed = false;
     let pendingPrompts: string[] = [];
     const prompt = options.prompt ?? 'dashql> ';
+    const promptColor = resolveShellPromptColor(options.container);
     const terminal: Terminal = new Terminal({
         allowProposedApi: false,
         allowTransparency: true,
@@ -341,6 +357,7 @@ export async function embedDashQLShell(options: BrowserShellOptions): Promise<Br
         if (text.length > 0) consume(DashQLShellPromptInput.TEXT, text);
     });
 
+    shell.setTerminalPromptColor(promptColor);
     terminal.write(options.greeter == null
         ? shell.openTerminal(prompt).data
         : formatTerminalGreeter(options.greeter) + shell.openTerminal(prompt).data);
@@ -359,6 +376,7 @@ export async function embedDashQLShell(options: BrowserShellOptions): Promise<Br
             activeQuery?.abort();
             shell = nextShell;
             shell.importHistory(history);
+            shell.setTerminalPromptColor(promptColor);
             terminal.write(shell.openTerminal(prompt).data);
             syncSize();
         },

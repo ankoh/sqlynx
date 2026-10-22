@@ -22,7 +22,7 @@
 .hint_ctrl_label {
     font-size: 0.4rem;
     font-weight: 500;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     line-height: 10px;
     padding: 0px 1px;
 }

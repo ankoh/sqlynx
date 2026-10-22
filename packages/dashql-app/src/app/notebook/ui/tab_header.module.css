@@ -8,7 +8,7 @@
     padding: 0 4px 0px 8px;
     font-size: var(--font_size_small);
     border-bottom: 1px solid rgb(210, 210, 210);
-    color: hsl(210, 12%, 36%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 36%);
     flex-shrink: 0;
 }
 
@@ -27,7 +27,7 @@
     background: none;
     /* Reset only the button's font family/weight — NOT font-size or color. Both `font` (shorthand)
        and `color: inherit` would pull in the larger/darker inherited button values and clobber the
-       inherited 0.8rem + hsl(210,12%,36%), making the clickable footer header render larger and
+       inherited 0.8rem + hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 36%), making the clickable footer header render larger and
        darker than the inert Details header. */
     font-family: inherit;
     font-weight: inherit;
@@ -51,7 +51,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: hsl(210, 10%, 44%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 44%);
 }
 
 /* In the clickable feed header, the title/count live inside the inner button. Let the button span

@@ -47,8 +47,8 @@
 }
 
 .mode {
-    color: #656d76;
-    font-family: 'Roboto Mono', monospace;
+    color: hsl(var(--neutral_hue), calc(7.8% * var(--neutral_tint)), 42.9%);
+    font-family: var(--font_family_mono);
     font-size: 0.75rem;
     letter-spacing: 0.04em;
 }
@@ -67,7 +67,7 @@
 .error {
     margin: 0;
     padding: 16px;
-    color: #656d76;
+    color: hsl(var(--neutral_hue), calc(7.8% * var(--neutral_tint)), 42.9%);
     font-size: 0.9rem;
 }
 

@@ -1,7 +1,7 @@
 :root {
-    --umap_panel_border: hsl(210deg 17.5% 84.31%);
-    --umap_panel_fg: hsl(208.5deg 24.69% 31.76%);
-    --umap_panel_muted: hsl(210, 10%, 55%);
+    --umap_panel_border: hsl(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%);
+    --umap_panel_fg: hsl(var(--neutral_hue), calc(24.7% * var(--neutral_tint)), 31.8%);
+    --umap_panel_muted: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 55%);
     --umap_card_bg: hsla(0, 0%, 100%, 0.92);
 }
 

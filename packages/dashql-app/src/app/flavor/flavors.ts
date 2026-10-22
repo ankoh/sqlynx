@@ -49,7 +49,7 @@ export const DASHQL_FLAVOR: AppFlavor = {
 export const SIDB_FLAVOR: AppFlavor = {
     id: 'sidb',
     displayName: 'SIDB',
-    logo: { symbol: 'sidb', aspectRatio: 4330 / 1496, wordmark: true },
+    logo: { symbol: 'sidb', aspectRatio: 2231 / 688, wordmark: true },
     favicon: new URL('../../../static/favicons/sidb/favicon.svg?no-inline', import.meta.url),
     features: {
         notebookArchiveExport: false,

@@ -1,7 +1,11 @@
 :root {
-    --base_color: hsl(210, 12%, 16%);
-    --background_color_primary: hsl(208.5, 24.69%, 31.76%);
-    --border_color_primary: hsl(210deg 17.5% 84.31%);
+    /* The greys of the app carry a slight tint of this hue. Flavors can shift the hue or drop the tint with 0. */
+    --neutral_hue: 210;
+    --neutral_tint: 1;
+
+    --base_color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 16%);
+    --background_color_primary: hsl(var(--neutral_hue), calc(24.7% * var(--neutral_tint)), 31.8%);
+    --border_color_primary: hsl(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%);
     --border_radius: 8px;
 
     --font_size_badge: 0.65rem;
@@ -14,18 +18,25 @@
     --font_size_editor: 0.95rem;
     --font_size_title: 1rem;
 
+    --font_family: 'Roboto';
+    --font_family_mono: 'Roboto Mono', monospace;
+
     --navbar_hover_background_color: rgba(0, 0, 0, 0.2);
     --shell_background_color: rgba(0, 0, 0, 0.2);
 
-    --button_fg: hsl(210, 24%, 22%);
+    --button_fg: hsl(var(--neutral_hue), calc(24% * var(--neutral_tint)), 22%);
     --button_fg_inverted: rgb(255, 255, 255);
     --button_hover_fg: rgb(255, 255, 255);
-    --button_hover_fg_inverted: hsl(210, 24%, 32%);
-    --button_hover_bg: hsl(210deg, 12%, 16%);
-    --button_hover_bg_inverted: hsl(210deg, 12%, 6%);
+    --button_hover_fg_inverted: hsl(var(--neutral_hue), calc(24% * var(--neutral_tint)), 32%);
+    --button_hover_bg: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 16%);
+    --button_hover_bg_inverted: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 6%);
 
-    --background_color_80: hsl(210deg, 12%, 24%);
-    --background_color_100: hsl(210deg, 12%, 16%);
+    --button_primary_bg: #1f883d;
+    --button_primary_bg_hover: #1a7f37;
+    --button_primary_bg_disabled: #94d3a2;
+
+    --background_color_80: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 24%);
+    --background_color_100: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 16%);
     --background: radial-gradient(circle at 50% 50%, var(--background_color_80) 20%, transparent 80%),
         conic-gradient(
             from 45deg at 50% 50%,
@@ -38,24 +49,30 @@
 
     /* Backdrop of pages with a lot of empty space, like the notebook feed: a soft light in the middle,
        a faint dot grid, and a vignette that fades the grid out toward the edges. Centered in the element it paints. */
-    --stage_color: hsl(210, 29%, 97%);
-    --stage_light: radial-gradient(ellipse 65% 70% at 50% 50%, hsl(210, 30%, 98.1%) 0%, var(--stage_color) 60%);
-    --stage_dot_grid: radial-gradient(circle, hsla(210, 24%, 30%, 0.1) 0.8px, transparent 1.3px) center / 22px 22px;
-    --stage_vignette: radial-gradient(ellipse 70% 75% at 50% 50%, hsla(210, 27%, 96.1%, 0) 45%, hsl(210, 27%, 96.1%) 100%);
+    --stage_color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
+    --stage_light: radial-gradient(ellipse 65% 70% at 50% 50%, hsl(var(--neutral_hue), calc(30% * var(--neutral_tint)), 98.1%) 0%, var(--stage_color) 60%);
+    --stage_dot_grid: radial-gradient(circle, hsla(var(--neutral_hue), calc(24% * var(--neutral_tint)), 30%, 0.1) 0.8px, transparent 1.3px) center / 22px 22px;
+    --stage_vignette: radial-gradient(ellipse 70% 75% at 50% 50%, hsla(var(--neutral_hue), calc(27% * var(--neutral_tint)), 96.1%, 0) 45%, hsl(var(--neutral_hue), calc(27% * var(--neutral_tint)), 96.1%) 100%);
     --stage_background: var(--stage_vignette), var(--stage_dot_grid), var(--stage_light), var(--stage_color);
+
+    /* The accent of focus rings and focused borders */
+    --focus_outline_color: #0969da;
+    --focus_border_color: var(--focus_outline_color);
 
     --logo_color_salesforce: rgb(0, 161, 224);
 
-    --log_border_color: rgb(208, 215, 222);
+    /* --shell_prompt_color: the color of the shell prompt, bold in the terminal foreground color if unset */
 
-    --shadow_small: 0 1px 0 rgba(31, 35, 40, 0.04);
-    --shadow_medium: 0 3px 6px rgba(140, 149, 159, 0.15);
-    --shadow_large: 0 8px 24px rgba(140, 149, 159, 0.2);
-    --shadow_extra_large: 0 12px 28px rgba(140, 149, 159, 0.3);
+    --log_border_color: hsl(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%);
+
+    --shadow_small: 0 1px 0 hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.04);
+    --shadow_medium: 0 3px 6px hsla(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%, 0.15);
+    --shadow_large: 0 8px 24px hsla(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%, 0.2);
+    --shadow_extra_large: 0 12px 28px hsla(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%, 0.3);
 }
 
 :root {
-    font-family: 'Roboto';
+    font-family: var(--font_family);
     color: var(--base_color);
 }
 

@@ -27,7 +27,7 @@
 }
 
 .details dt {
-    color: hsl(210, 12%, 45%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 45%);
     font-size: 0.8rem;
     font-weight: 500;
 }
@@ -40,7 +40,7 @@
 }
 
 .mono {
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
 }
 
 .status {

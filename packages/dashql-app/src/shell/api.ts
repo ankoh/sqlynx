@@ -315,6 +315,11 @@ export class DashQLShell {
         this.alive().resize(terminalColumns);
     }
 
+    /// Set the color of the terminal prompt as 0xRRGGBB, bold in the default foreground color if null
+    setTerminalPromptColor(rgb: number | null): void {
+        this.alive().setTerminalPromptColor(rgb ?? undefined);
+    }
+
     setKeywordCase(keywordCase: dashql.buffers.formatting.KeywordCase): void {
         this.alive().setKeywordCase(keywordCase);
     }

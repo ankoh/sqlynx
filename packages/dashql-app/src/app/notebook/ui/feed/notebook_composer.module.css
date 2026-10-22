@@ -16,7 +16,7 @@
 
 .composer_editor {
     padding: 10px 12px 4px 12px;
-    font-family: 'Roboto Mono', monospace;
+    font-family: var(--font_family_mono);
     font-size: 12px;
     line-height: 18px;
 }

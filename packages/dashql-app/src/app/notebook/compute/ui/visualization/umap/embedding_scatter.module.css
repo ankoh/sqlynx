@@ -87,7 +87,7 @@
     z-index: 2;
 }
 
-/* Default-variant buttons ship a greyish (#f6f8fa) fill; force white so the controls read as
+/* Default-variant buttons ship a greyish (hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%)) fill; force white so the controls read as
    crisp overlay buttons on top of the scatter. */
 .controls button {
     background-color: white;

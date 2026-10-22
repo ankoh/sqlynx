@@ -13,7 +13,7 @@
     padding: var(--toggle-padding);
     border: 1px solid transparent;
     border-radius: 999px;
-    background-color: #d0d7de;
+    background-color: hsl(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%);
     cursor: pointer;
     transition: background-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
 }
@@ -36,7 +36,7 @@
 
 .root:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.35);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus_outline_color) 35%, transparent);
 }
 
 .handle {

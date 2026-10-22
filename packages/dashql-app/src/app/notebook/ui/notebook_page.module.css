@@ -25,7 +25,7 @@
     overflow: hidden;
     border-radius: 12px;
     color: #e6edf3;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 13px;
     line-height: 1.2;
     white-space: pre-wrap;

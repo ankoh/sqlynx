@@ -85,10 +85,60 @@ export default vite.defineConfig(({ mode, command }) => {
         },
     };
 
+    // Vite serves excluded dependencies in node_modules with `?v=<browserHash>` as immutable, and its watcher ignores
+    // node_modules. The core is such a dependency but changes with every core build, so the browser would keep running a
+    // cached core next to the new app sources and the new core wasm. Resolve the core without the version query, which
+    // serves it with no-cache like a source file, and reload the page after a core build.
+    let coreRealPath: string | null = null;
+    const getCoreRealPath = () => coreRealPath ??= nodeFs.realpathSync(CORE_PATH);
+    const serveCoreFromBazel = {
+        name: 'dashql-serve-core-from-bazel',
+        apply: 'serve' as const,
+        enforce: 'pre' as const,
+        resolveId(id: string, importer: string | undefined): string | undefined {
+            const coreDir = getCoreRealPath();
+            const [file, query] = id.split('?', 2);
+            let resolved: string;
+            if (file.startsWith(CORE_PATH + path.sep) || file.startsWith(coreDir + path.sep)) {
+                resolved = file;
+            } else if (file.startsWith('.') && importer?.startsWith(coreDir + path.sep)) {
+                resolved = path.resolve(path.dirname(importer.split('?', 1)[0]), file);
+            } else {
+                return;
+            }
+            if (!nodeFs.existsSync(resolved)) return;
+            resolved = nodeFs.realpathSync(resolved);
+            return query ? `${resolved}?${query}` : resolved;
+        },
+        configureServer(server: vite.ViteDevServer): void {
+            const coreDir = getCoreRealPath();
+            let reload: ReturnType<typeof setTimeout> | null = null;
+            const onCoreChanged = (curr: nodeFs.Stats, prev: nodeFs.Stats) => {
+                if (curr.mtimeMs === prev.mtimeMs) return;
+                // A build replaces the whole package, wait until it settles
+                if (reload != null) clearTimeout(reload);
+                reload = setTimeout(() => {
+                    reload = null;
+                    const moduleGraph = server.environments.client.moduleGraph;
+                    for (const mod of moduleGraph.idToModuleMap.values()) {
+                        if (mod.file?.startsWith(coreDir + path.sep)) moduleGraph.invalidateModule(mod);
+                    }
+                    server.ws.send({ type: 'full-reload' });
+                }, 500);
+            };
+            const watched = [path.join(coreDir, 'index.js'), path.join(coreDir, 'wasm', 'dashql_core.wasm')];
+            for (const file of watched) nodeFs.watchFile(file, { interval: 1000 }, onCoreChanged);
+            server.httpServer?.on('close', () => {
+                for (const file of watched) nodeFs.unwatchFile(file, onCoreChanged);
+            });
+        },
+    };
+
     return {
         plugins: [
             react(),
             ...(mode === 'pages' ? [precompressWasm] : []),
+            serveCoreFromBazel,
             // In the Bazel sandbox, HTML entry files are symlinks to the execroot. Rolldown
             // follows them during input resolution, causing vite:build-html to compute the
             // output fileName as a deep ../../execroot/... traversal, which Rolldown rejects.
@@ -264,8 +314,8 @@ export default vite.defineConfig(({ mode, command }) => {
         optimizeDeps: {
             include: ['react', 'react-dom', 'react-router-dom'],
             exclude: [
-                // Served straight from bazel-bin. A pre-bundled copy is not rebuilt when the core changes, it only
-                // depends on the lockfile and the config, and would miss new exports.
+                // Served straight from bazel-bin (see dashql-serve-core-from-bazel). A pre-bundled copy is not rebuilt
+                // when the core changes, it only depends on the lockfile and the config, and would miss new exports.
                 '@ankoh/dashql-core',
                 '@ankoh/dashql-core/buffers',
                 '@ankoh/dashql-core/browser-worker',

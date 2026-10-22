@@ -1,8 +1,8 @@
 :root {
-    --stats_bar_fg: hsl(210, 29%, 85%);
-    --stats_bg: hsl(210, 29%, 95%);
-    --stats_separator_color: hsl(210deg 17.5% 78.31%);
-    --stats_value_fg: hsl(208.5deg 24.69% 31.76%);
+    --stats_bar_fg: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 85%);
+    --stats_bg: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 95%);
+    --stats_separator_color: hsl(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 78.3%);
+    --stats_value_fg: hsl(var(--neutral_hue), calc(24.7% * var(--neutral_tint)), 31.8%);
 }
 
 .container {

@@ -174,7 +174,7 @@
 
 .notebook_path {
     color: var(--base_color_neutral_6);
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 11px;
 }
 
@@ -290,7 +290,7 @@
 }
 
 .catalog_row .tree_entry_name {
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 11px;
 }
 

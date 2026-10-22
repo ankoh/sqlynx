@@ -63,6 +63,11 @@ impl Shell {
         self.session.resize(terminal_columns);
     }
 
+    /// Set the color of the terminal prompt, bold in the default foreground color if none
+    pub fn set_terminal_prompt_color(&mut self, rgb: Option<[u8; 3]>) {
+        self.session.set_terminal_prompt_color(rgb);
+    }
+
     /// `dashql_shell_keyword_case_set`
     pub fn set_keyword_case(&mut self, keyword_case: u32) {
         self.session.set_keyword_case(keyword_case);

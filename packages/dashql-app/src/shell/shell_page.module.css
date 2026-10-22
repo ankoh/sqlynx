@@ -42,7 +42,7 @@
     left: 12px;
     max-width: calc(100% - 24px);
     color: #e6edf3;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 13px;
     line-height: 1.2;
     white-space: pre-wrap;
@@ -75,6 +75,6 @@
 
 .unsupported p {
     max-width: 420px;
-    color: #9da7b3;
+    color: hsl(var(--neutral_hue), calc(12.6% * var(--neutral_tint)), 65.9%);
     line-height: 1.5;
 }

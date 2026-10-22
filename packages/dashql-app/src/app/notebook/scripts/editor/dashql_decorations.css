@@ -50,7 +50,7 @@
     background: color-mix(in srgb, #aa0d91 7%, var(--notebook_feed_preview_background, #f7f7f7));
     color: #aa0d91;
     cursor: pointer;
-    font-family: 'Roboto Mono', monospace;
+    font-family: var(--font_family_mono);
     font-size: 0.72rem;
     line-height: 1.35;
     letter-spacing: 0;
@@ -76,7 +76,7 @@
     background: transparent;
     color: #aa0d91;
     cursor: pointer;
-    font-family: 'Roboto Mono', monospace;
+    font-family: var(--font_family_mono);
     font-size: 0.85rem;
     line-height: 1;
 }
@@ -86,11 +86,11 @@
 }
 
 .dashql-story-fold-control:focus-visible {
-    outline: 2px solid var(--focus_border_color, #0969da);
+    outline: 2px solid var(--focus_border_color);
     outline-offset: -1px;
 }
 
 .dashql-story-sql-control:focus-visible {
-    outline: 2px solid var(--focus_border_color, #0969da);
+    outline: 2px solid var(--focus_border_color);
     outline-offset: 2px;
 }

@@ -7,6 +7,7 @@ import {
     formatTerminalGreeter,
     isTerminalCancelData,
     loadWebglRenderer,
+    resolveShellPromptColor,
     sanitizeTerminalText,
     TerminalQueryProgress,
     terminalPromptInputForKey,
@@ -89,6 +90,22 @@ describe('browser shell input', () => {
 });
 
 describe('browser shell renderer', () => {
+    it('resolves the prompt color from the theme token', () => {
+        const element = document.createElement('div');
+        document.body.appendChild(element);
+        try {
+            expect(resolveShellPromptColor(element)).toBeNull();
+            element.style.setProperty('--shell_prompt_color', '#6eff46');
+            expect(resolveShellPromptColor(element)).toBe(0x6eff46);
+            element.style.setProperty('--shell_prompt_color', 'hsl(0, 100%, 50%)');
+            expect(resolveShellPromptColor(element)).toBe(0xff0000);
+            element.style.setProperty('--shell_prompt_color', 'not-a-color');
+            expect(resolveShellPromptColor(element)).toBeNull();
+        } finally {
+            element.remove();
+        }
+    });
+
     it('formats a custom greeter with a blank line before the prompt', () => {
         expect(formatTerminalGreeter(['Hyper Web Shell', 'Enter .help for usage hints.'])).toBe(
             VT100.ENABLE_AUTO_WRAP + VT100.BOLD + 'Hyper Web Shell' + VT100.RESET_ATTRIBUTES + VT100.NEW_LINE +

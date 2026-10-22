@@ -15,7 +15,7 @@
     grid-row: 2;
     grid-column: 1;
     font-size: 0.8rem;;
-    color: #656d76;
+    color: hsl(var(--neutral_hue), calc(7.8% * var(--neutral_tint)), 42.9%);
     align-self: start;
     margin-top: 2px;
 }
@@ -80,7 +80,7 @@
 .path_side_by_side {
     grid-row: 1;
     grid-column: 1;
-    color: #57606a;
+    color: hsl(var(--neutral_hue), calc(9.8% * var(--neutral_tint)), 37.8%);
     font-family: monospace;
     font-size: 12px;
 }
@@ -90,7 +90,7 @@
     grid-column: 1;
     width: 100% !important;
     margin-left: 0;
-    color: #57606a;
+    color: hsl(var(--neutral_hue), calc(9.8% * var(--neutral_tint)), 37.8%);
     font-family: monospace;
     font-size: 12px;
 }

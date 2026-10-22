@@ -15,14 +15,14 @@
 }
 
 .cm-editor * {
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
 }
 
 .cm-panel.cm-search {
     padding: 8px 42px 8px 8px;
-    color: #24292f;
-    background-color: #f6f8fa;
-    font-family: 'Roboto';
+    color: hsl(var(--neutral_hue), calc(13.3% * var(--neutral_tint)), 16.3%);
+    background-color: hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%);
+    font-family: var(--font_family);
     line-height: 34px;
 }
 
@@ -42,13 +42,13 @@
     border: 1px solid var(--border_color_primary);
     border-radius: 6px;
     outline: none;
-    box-shadow: inset 0 1px 0 rgba(208, 215, 222, 0.2);
+    box-shadow: inset 0 1px 0 hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.2);
     font: inherit;
 }
 
 .cm-panel.cm-search .cm-textfield:focus-visible {
-    border-color: #0969da;
-    outline: 2px solid #0969da;
+    border-color: var(--focus_outline_color);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: -1px;
 }
 
@@ -59,8 +59,8 @@
     min-width: max-content;
     height: 28px;
     padding: 0 8px;
-    color: #24292f;
-    background: #f6f8fa;
+    color: hsl(var(--neutral_hue), calc(13.3% * var(--neutral_tint)), 16.3%);
+    background: hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%);
     border: 1px solid var(--border_color_primary);
     border-radius: 6px;
     cursor: pointer;
@@ -76,12 +76,12 @@
 }
 
 .cm-panel.cm-search .cm-button:active {
-    background-color: #eaeef2;
+    background-color: hsl(var(--neutral_hue), calc(23.5% * var(--neutral_tint)), 93.3%);
 }
 
 .cm-panel.cm-search .cm-button:focus-visible,
 .cm-panel.cm-search [name='close']:focus-visible {
-    outline: 2px solid #0969da;
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: -1px;
 }
 
@@ -95,7 +95,7 @@
 }
 
 .cm-panel.cm-search input[type='checkbox'] {
-    accent-color: #0969da;
+    accent-color: var(--focus_outline_color);
 }
 
 .cm-panel.cm-search [name='close'] {
@@ -106,7 +106,7 @@
     width: 28px;
     height: 28px;
     padding: 0;
-    color: #57606a;
+    color: hsl(var(--neutral_hue), calc(9.8% * var(--neutral_tint)), 37.8%);
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 6px;
@@ -117,12 +117,12 @@
 }
 
 .cm-panel.cm-search [name='close']:hover {
-    background-color: rgba(208, 215, 222, 0.32);
+    background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
     border-color: var(--border_color_primary);
 }
 
 .cm-panel.cm-search [name='close']:active {
-    background-color: rgba(208, 215, 222, 0.48);
+    background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.48);
 }
 
 @media (max-width: 640px) {

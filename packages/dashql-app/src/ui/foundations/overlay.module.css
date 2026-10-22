@@ -1,6 +1,6 @@
 .overlay {
     background-color: #ffffff;
-    box-shadow: 0 1px 3px rgba(31,35,40,0.12), 0 8px 24px rgba(66,74,83,0.12);
+    box-shadow: 0 1px 3px hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.12), 0 8px 24px hsla(var(--neutral_hue), calc(11.4% * var(--neutral_tint)), 29.2%, 0.12);
     position: absolute;
     min-width: 192px;
     /* Never grow beyond the window. Keeps 16px breathing room on each side

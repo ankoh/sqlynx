@@ -23,7 +23,7 @@
 .title {
     flex: 0 0 auto;
     margin: 0;
-    color: hsl(210, 10%, 30%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 30%);
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1;
@@ -65,7 +65,7 @@
 
 .url_label {
     flex: 0 0 auto;
-    color: hsl(210, 10%, 40%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 40%);
     font-weight: 600;
 }
 
@@ -79,17 +79,17 @@
 }
 
 .url {
-    font-family: 'Roboto Mono', monospace;
-    color: hsl(210, 10%, 20%);
+    font-family: var(--font_family_mono);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 20%);
 }
 
 .url_placeholder {
-    color: hsl(210, 10%, 55%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 55%);
 }
 
 .url_length {
     flex: 0 0 auto;
-    color: hsl(210, 10%, 40%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 40%);
     font-variant-numeric: tabular-nums;
 }
 

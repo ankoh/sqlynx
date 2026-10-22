@@ -1,14 +1,14 @@
 :root {
-    --base_color_neutral_0: #f6f8fa;
-    --base_color_neutral_1: #eaeef2;
-    --base_color_neutral_2: #d0d7de;
-    --base_color_neutral_3: #afb8c1;
-    --base_color_neutral_4: #8c959f;
-    --base_color_neutral_5: #6e7781;
-    --base_color_neutral_6: #57606a;
-    --base_color_neutral_7: #424a53;
-    --base_color_neutral_8: #32383f;
-    --base_color_neutral_9: #24292f;
+    --base_color_neutral_0: hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%);
+    --base_color_neutral_1: hsl(var(--neutral_hue), calc(23.5% * var(--neutral_tint)), 93.3%);
+    --base_color_neutral_2: hsl(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%);
+    --base_color_neutral_3: hsl(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 72.2%);
+    --base_color_neutral_4: hsl(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%);
+    --base_color_neutral_5: hsl(var(--neutral_hue), calc(7.9% * var(--neutral_tint)), 46.9%);
+    --base_color_neutral_6: hsl(var(--neutral_hue), calc(9.8% * var(--neutral_tint)), 37.8%);
+    --base_color_neutral_7: hsl(var(--neutral_hue), calc(11.4% * var(--neutral_tint)), 29.2%);
+    --base_color_neutral_8: hsl(var(--neutral_hue), calc(11.5% * var(--neutral_tint)), 22.2%);
+    --base_color_neutral_9: hsl(var(--neutral_hue), calc(13.3% * var(--neutral_tint)), 16.3%);
 
     --base_color_blue_0: #ddf4ff;
     --base_color_blue_1: #b6e3ff;
@@ -98,6 +98,6 @@
     --base_color_coral_8: #691105;
     --base_color_coral_9: #510901;
 
-    --base_color_black: #1f2328;
+    --base_color_black: hsl(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%);
     --base_color_white: #ffffff;
 }

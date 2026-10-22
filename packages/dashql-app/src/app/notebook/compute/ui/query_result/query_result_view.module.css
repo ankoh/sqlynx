@@ -31,6 +31,6 @@
     left: calc(50% - 1px);
     height: 24px;
     width: 2px;
-    background-color: hsl(208.5deg, 24.69%, 31.76%);
+    background-color: hsl(var(--neutral_hue), calc(24.7% * var(--neutral_tint)), 31.8%);
     border-radius: 8px;
 }

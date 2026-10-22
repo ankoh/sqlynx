@@ -28,7 +28,7 @@
 }
 
 .connector_name {
-    font-family: 'Roboto';
+    font-family: var(--font_family);
     font-size: 1rem;
     font-weight: 500;
 }
@@ -86,11 +86,11 @@
 .embedded_label {
     font-size: 0.75rem;
     font-weight: 500;
-    color: #59636e;
+    color: hsl(var(--neutral_hue), calc(10.6% * var(--neutral_tint)), 39%);
 }
 
 .status_error {
     font-size: 0.8rem;
     font-weight: 300;
-    color: #8c959f;
+    color: hsl(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%);
 }

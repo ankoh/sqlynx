@@ -48,7 +48,7 @@
 /* The actual CodeMirror content area */
 .prompt_editor_content {
     width: 100%;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 0.95rem;
     line-height: 1.5;
 }
@@ -94,7 +94,7 @@
 .prompt_hint kbd {
     display: inline-block;
     padding: 2px 6px;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 0.7rem;
     line-height: 1;
     color: rgba(255, 255, 255, 0.8);

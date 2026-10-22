@@ -88,7 +88,7 @@
 }
 
 .engine_argument_token {
-    color: #8c959f;
+    color: hsl(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%);
     font-family: monospace;
     font-size: 12px;
 }

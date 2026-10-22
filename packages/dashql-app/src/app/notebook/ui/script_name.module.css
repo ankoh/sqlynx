@@ -1,9 +1,9 @@
 :root {
-    --script_name_background: hsl(210deg 28.57% 95.25%);
+    --script_name_background: hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 95.2%);
 }
 
 .container {
-    font-family: "Roboto Mono";
+    font-family: var(--font_family_mono);
     font-size: var(--font_size_small);
 }
 

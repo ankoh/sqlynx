@@ -9,7 +9,7 @@
     grid-column: 1 / span 3;
     font-size: 0.75rem;
     font-weight: 500;
-    color: #656d76;
+    color: hsl(var(--neutral_hue), calc(7.8% * var(--neutral_tint)), 42.9%);
     padding: 4px 20px;
     margin-top: 8px;
 }
@@ -45,7 +45,7 @@
     cursor: not-allowed;
 }
 .item_container:hover {
-    background-color: rgba(208,215,222,0.32);
+    background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
     border: 1px solid var(--border_color_primary);
 }
 .leading_container {
@@ -74,7 +74,7 @@
     grid-column: 3;
     font-size: 0.85rem;
     display: inline-flex;
-    color: #656d76;
+    color: hsl(var(--neutral_hue), calc(7.8% * var(--neutral_tint)), 42.9%);
 }
 .divider {
     border-bottom: 1px solid var(--border_color_primary);

@@ -21,7 +21,7 @@
 .restart_text {
     font-size: 0.9rem;
     line-height: 1.4;
-    color: var(--text_color_secondary, #57606a);
+    color: var(--text_color_secondary, hsl(var(--neutral_hue), calc(9.8% * var(--neutral_tint)), 37.8%));
 }
 
 .header_container {
@@ -88,8 +88,8 @@
     font-size: 0.75rem;
     padding: 1px 6px;
     border-radius: 8px;
-    color: var(--text_color_secondary, #57606a);
-    background-color: var(--bg_color_secondary, #f6f8fa);
+    color: var(--text_color_secondary, hsl(var(--neutral_hue), calc(9.8% * var(--neutral_tint)), 37.8%));
+    background-color: var(--bg_color_secondary, hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%));
 }
 
 
@@ -143,7 +143,7 @@
 .update_channel_action_status {
 }
 .update_channel_action_status_disabled {
-    /* color: hsl(212, 8%, 73%); */
+    /* color: hsl(var(--neutral_hue), calc(8% * var(--neutral_tint)), 73%); */
     margin-right: 2px;
 }
 .update_channel_action_progress {

@@ -2,7 +2,7 @@
     position: fixed;
     inset: 0;
     z-index: 1100;
-    background: rgba(31, 35, 40, 0.28);
+    background: hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.28);
     backdrop-filter: blur(1px);
 }
 
@@ -17,7 +17,7 @@
     border-right: 1px solid var(--border_color_primary);
     border-radius: 0 var(--border_radius) var(--border_radius) 0;
     overflow: hidden;
-    box-shadow: 8px 0 28px rgba(31, 35, 40, 0.16);
+    box-shadow: 8px 0 28px hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.16);
     animation: notebook-drawer-in 160ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 

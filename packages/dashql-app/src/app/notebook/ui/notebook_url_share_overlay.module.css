@@ -26,7 +26,7 @@
 .sharing_url_stats {
     font-size: 0.8rem;
     font-weight: 500;
-    color: #8c959f;
+    color: hsl(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%);
     text-align: right;
     margin-right: 4px;
 }

@@ -43,13 +43,13 @@
     align-self: center;
 
     border-radius: 3px;
-    background-color: hsl(210deg, 12%, 44%);
+    background-color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 44%);
     width: 20px;
     height: 12px;
     color: white;
     text-align: center;
 
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
     font-size: 0.5rem;
     font-weight: 500;
     line-height: 12px;
@@ -61,7 +61,7 @@
 
     padding-left: 4px;
     padding-right: 8px;
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
 }
 
 .info_container {

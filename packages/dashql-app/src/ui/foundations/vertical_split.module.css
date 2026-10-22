@@ -43,7 +43,7 @@
 }
 
 .separator:focus-visible .handle {
-    outline: 2px solid var(--focus_outline_color, #0969da);
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: 3px;
 }
 

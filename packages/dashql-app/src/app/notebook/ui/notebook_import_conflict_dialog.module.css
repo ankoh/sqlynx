@@ -3,7 +3,7 @@
     overflow: hidden;
     border-radius: inherit;
     background: white;
-    color: hsl(210, 12%, 16%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 16%);
 }
 
 .header {
@@ -12,7 +12,7 @@
     display: flex;
     align-items: center;
     border-bottom: 1px solid var(--border_color_primary);
-    background: hsl(210, 29%, 97%);
+    background: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
 }
 
 .header h2 {
@@ -45,7 +45,7 @@
 }
 
 .details dt {
-    color: hsl(210, 12%, 45%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 45%);
     font-size: 0.8rem;
     font-weight: 500;
 }
@@ -58,11 +58,11 @@
 }
 
 .uuid {
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
 }
 
 .path {
-    font-family: 'Roboto Mono';
+    font-family: var(--font_family_mono);
 }
 
 .actions {

@@ -6,7 +6,7 @@
 :root {
     /* Background of the selected segment in the invisible variant (mirrors the active-tab
        background of the vertical tab bar). */
-    --segmented_control_invisible_selected_background: rgba(208,215,222,0.32);
+    --segmented_control_invisible_selected_background: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
 }
 
 .segmented_control {
@@ -21,7 +21,7 @@
     margin: 0;
     font-size: 14px;
     list-style: none;
-    background-color: #f6f8fa;
+    background-color: hsl(var(--neutral_hue), calc(28.6% * var(--neutral_tint)), 97.3%);
     border: 1px solid var(--border_color_primary);
     border-radius: var(--segmented-control-outer-radius);
 }
@@ -140,7 +140,7 @@
     font-family: inherit;
     font-size: inherit;
     font-weight: 400;
-    color: #24292f;
+    color: hsl(var(--neutral_hue), calc(13.3% * var(--neutral_tint)), 16.3%);
     cursor: pointer;
     background-color: transparent;
     border: none;
@@ -149,20 +149,20 @@
 }
 
 .button:focus-visible {
-    outline: 2px solid #0969da;
+    outline: 2px solid var(--focus_outline_color);
     outline-offset: -1px;
     box-shadow: none;
 }
 
 .button[aria-disabled='true']:not([aria-current='true']) {
     cursor: not-allowed;
-    color: #8c959f;
+    color: hsl(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%);
     background-color: transparent;
 }
 
 .button[aria-disabled='true'] .leading_visual,
 .button[aria-disabled='true'] .icon_button {
-    color: #8c959f;
+    color: hsl(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%);
 }
 
 .icon_button {
@@ -195,7 +195,7 @@
     padding-left: var(--segmented-control-button-inner-padding);
     background-color: #ffffff;
     border-color: var(--border_color_primary);
-    box-shadow: 0 1px 0 rgba(31,35,40,0.04);
+    box-shadow: 0 1px 0 hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.04);
 }
 
 /* Hover state */
@@ -205,7 +205,7 @@
 
 /* Active state */
 .button:not([aria-current='true'], [aria-disabled='true']):active .content {
-    background-color: #eaeef2;
+    background-color: hsl(var(--neutral_hue), calc(23.5% * var(--neutral_tint)), 93.3%);
 }
 
 /* ==================== Text ==================== */
@@ -239,7 +239,7 @@
 
 .leading_visual {
     display: inline-flex;
-    color: #656d76;
+    color: hsl(var(--neutral_hue), calc(7.8% * var(--neutral_tint)), 42.9%);
 }
 
 /* ==================== Counter ==================== */
@@ -251,8 +251,8 @@
     font-size: 12px;
     font-weight: 600;
     line-height: 1;
-    color: #24292f;
-    background-color: rgba(175,184,193,0.2);
+    color: hsl(var(--neutral_hue), calc(13.3% * var(--neutral_tint)), 16.3%);
+    background-color: hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 72.2%, 0.2);
     border-radius: 20px;
     min-height: 20px;
 }

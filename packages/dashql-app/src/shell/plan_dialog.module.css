@@ -23,7 +23,7 @@
 .title {
     flex: 0 0 auto;
     margin: 0;
-    color: hsl(210, 10%, 30%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 30%);
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1;

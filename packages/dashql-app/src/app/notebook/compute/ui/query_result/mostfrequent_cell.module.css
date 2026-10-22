@@ -63,7 +63,7 @@
     font-weight: 400;
     pointer-events: none;
     color: white;
-    background-color: hsl(208.5deg 20.69% 30.76%);
+    background-color: hsl(var(--neutral_hue), calc(20.7% * var(--neutral_tint)), 30.8%);
     z-index: 3;
     padding: 0px 4px 0px 4px;
     border-radius: 3px;
@@ -77,7 +77,7 @@
     font-weight: 400;
     pointer-events: none;
     color: white;
-    background-color: hsl(208.5deg 20.69% 30.76% / 0.7);
+    background-color: hsla(var(--neutral_hue), calc(20.7% * var(--neutral_tint)), 30.8%, 0.7);
     z-index: 3;
     padding: 0px 4px 0px 4px;
     border-radius: 3px;

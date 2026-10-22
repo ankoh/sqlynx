@@ -6,7 +6,7 @@
     height: 40px;
     font-size: var(--font_size_small);
     border-bottom: 1px solid var(--log_border_color);
-    color: hsl(210, 12%, 36%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 36%);
 }
 
 .status_bar_collapsed {
@@ -54,7 +54,7 @@
 
 .status_bar_spinner {
     flex-shrink: 0;
-    color: hsl(210, 10%, 40%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 40%);
 }
 
 /* The message truncates so a long log line never wraps the bar onto a second row. */

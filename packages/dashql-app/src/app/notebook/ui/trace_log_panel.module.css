@@ -7,7 +7,7 @@
     padding: 0 4px 0px 8px;
     font-size: var(--font_size_small);
     border-bottom: 1px solid rgb(210, 210, 210);
-    color: hsl(210, 12%, 36%);
+    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 36%);
     flex-shrink: 0;
 }
 
@@ -35,7 +35,7 @@
     flex-shrink: 0;
     margin-left: auto;
     padding-right: 8px;
-    color: hsl(210, 10%, 60%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 60%);
 }
 
 /* Fill mode (Details Status tab): the viewer takes the tab body minus the header. min-height:0 so
@@ -52,6 +52,6 @@
     display: flex;
     align-items: center;
     padding: 0 12px;
-    color: hsl(210, 10%, 60%);
+    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 60%);
     font-size: var(--font_size_small);
 }

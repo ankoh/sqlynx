@@ -101,7 +101,7 @@ const VersionButton = (_props: {}) => {
 };
 
 /// The height of a wordmark in the navbar, a bit smaller than square logos to match the cap height of text
-const WORDMARK_HEIGHT = 18;
+const WORDMARK_HEIGHT = 16;
 
 const BrandLogo = () => {
     const flavor = useAppFlavor();
