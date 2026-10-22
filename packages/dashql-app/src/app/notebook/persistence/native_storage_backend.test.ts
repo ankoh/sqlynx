@@ -81,4 +81,17 @@ describe('NativeStorageBackend V2 flat storage', () => {
         fsStore.dirs.add(`${DIR}/attachments/nested`);
         await expect(backend.listDataFiles(TEST_NOTEBOOK_ID)).rejects.toThrow('nested data');
     });
+    it('migrates the files of the notebook folder once when loading it', async () => {
+        const renaming = new NativeStorageBackend(DIR, [{ from: 'old.sql', to: 'new.sql' }]);
+        await renaming.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook());
+        fsStore.files.set(`${DIR}/old.sql`, 'content');
+        expect(await renaming.loadNotebook(TEST_NOTEBOOK_ID)).toEqual(testNotebook());
+        expect(fsStore.files.has(`${DIR}/old.sql`)).toBe(false);
+        expect(fsStore.files.get(`${DIR}/new.sql`)).toBe('content');
+
+        // The backend migrates the folder once
+        fsStore.files.set(`${DIR}/old.sql`, 'later');
+        await renaming.loadNotebook(TEST_NOTEBOOK_ID);
+        expect(fsStore.files.get(`${DIR}/old.sql`)).toBe('later');
+    });
 });

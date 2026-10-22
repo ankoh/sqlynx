@@ -145,4 +145,19 @@ describe('OPFSStorageBackend V2 flat storage', () => {
         expect(await backend.loadAppSettings()).toEqual({ aiProvider });
         expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)! as string).appSettings.aiProvider).toEqual(aiProvider);
     });
+    it('migrates the files of a notebook once when loading it', async () => {
+        const renaming = new OPFSStorageBackend([{ from: 'old.sql', to: 'new.sql' }]);
+        await renaming.initialize();
+        await renaming.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook());
+        const notebookDir = `notebooks/${TEST_NOTEBOOK_ID}`;
+        files.set(`${notebookDir}/old.sql`, 'content');
+        expect(await renaming.loadNotebook(TEST_NOTEBOOK_ID)).toEqual(testNotebook());
+        expect(files.has(`${notebookDir}/old.sql`)).toBe(false);
+        expect(new TextDecoder().decode(files.get(`${notebookDir}/new.sql`) as ArrayBuffer)).toBe('content');
+
+        // The backend migrates a notebook once
+        files.set(`${notebookDir}/old.sql`, 'later');
+        await renaming.loadNotebook(TEST_NOTEBOOK_ID);
+        expect(files.get(`${notebookDir}/old.sql`)).toBe('later');
+    });
 });

@@ -1,6 +1,7 @@
 import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
+import { migrateNotebookFiles, NOTEBOOK_FILE_RENAMES, type NotebookFileRename } from './notebook_file_migration.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
 /// Origin Private File System storage backend.
@@ -13,6 +14,14 @@ import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, valida
 /// Every per-notebook method is keyed by the bare notebook UUID.
 export class OPFSStorageBackend implements NotebookRegistryBackend {
     private rootHandle: FileSystemDirectoryHandle | null = null;
+    /// The renames that bring a notebook folder to the current file layout
+    private readonly fileRenames: readonly NotebookFileRename[];
+    /// The notebooks whose files were migrated by this backend
+    private readonly migratedNotebooks = new Set<string>();
+
+    constructor(fileRenames: readonly NotebookFileRename[] = NOTEBOOK_FILE_RENAMES) {
+        this.fileRenames = fileRenames;
+    }
 
     getBackendType(): StorageBackendType {
         return StorageBackendType.OPFS;
@@ -93,8 +102,33 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
         }
     }
 
+    /// Bring the files of a notebook to the current layout, once per notebook
+    private async migrateNotebookFiles(notebookId: string, notebookDir: FileSystemDirectoryHandle): Promise<void> {
+        if (this.migratedNotebooks.has(notebookId)) return;
+        await migrateNotebookFiles({
+            exists: async name => {
+                try {
+                    await notebookDir.getFileHandle(name, { create: false });
+                    return true;
+                } catch {
+                    return false;
+                }
+            },
+            // OPFS cannot rename files everywhere, the content is copied
+            rename: async (from, to) => {
+                const content = await (await (await notebookDir.getFileHandle(from)).getFile()).arrayBuffer();
+                const writable = await (await notebookDir.getFileHandle(to, { create: true })).createWritable();
+                await writable.write(content);
+                await writable.close();
+                await notebookDir.removeEntry(from);
+            },
+        }, this.fileRenames);
+        this.migratedNotebooks.add(notebookId);
+    }
+
     async loadNotebook(notebookId: string): Promise<NotebookData> {
         const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), false);
+        await this.migrateNotebookFiles(notebookId, notebookDir);
         const metaFile = await notebookDir.getFileHandle(STORAGE_NOTEBOOK_FILE);
         const file = await metaFile.getFile();
         const text = await file.text();

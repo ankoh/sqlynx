@@ -1,6 +1,7 @@
 import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
+import { migrateNotebookFiles, NOTEBOOK_FILE_RENAMES, type NotebookFileRename } from './notebook_file_migration.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
 import { exists, join, mkdir, readDir, readFile, readTextFile, remove, rename, stat, writeFile, writeTextFile } from '../../../platform/electron_fs.js';
@@ -22,9 +23,14 @@ const GITIGNORE_FILE = '.gitignore';
 export class NativeStorageBackend implements StorageBackend {
     /// The absolute directory on disk that holds this notebook's files
     private readonly dir: string;
+    /// The renames that bring the notebook folder to the current file layout
+    private readonly fileRenames: readonly NotebookFileRename[];
+    /// Were the files of the notebook migrated?
+    private filesMigrated = false;
 
-    constructor(dir: string) {
+    constructor(dir: string, fileRenames: readonly NotebookFileRename[] = NOTEBOOK_FILE_RENAMES) {
         this.dir = dir;
+        this.fileRenames = fileRenames;
     }
 
     getBackendType(): StorageBackendType {
@@ -78,7 +84,18 @@ export class NativeStorageBackend implements StorageBackend {
 
     // ---- Per-notebook operations ---------------------------------------------------------------
 
+    /// Bring the files of the notebook folder to the current layout, once
+    private async migrateNotebookFiles(): Promise<void> {
+        if (this.filesMigrated) return;
+        await migrateNotebookFiles({
+            exists: async name => exists(await this.abs(name)),
+            rename: async (from, to) => rename(await this.abs(from), await this.abs(to)),
+        }, this.fileRenames);
+        this.filesMigrated = true;
+    }
+
     async loadNotebook(notebookId: string): Promise<NotebookData> {
+        await this.migrateNotebookFiles();
         const metaFile = await this.abs(STORAGE_NOTEBOOK_FILE);
         const text = await readTextFile(metaFile);
         return JSON.parse(text) as NotebookData;
