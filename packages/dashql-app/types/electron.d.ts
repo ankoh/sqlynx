@@ -19,10 +19,10 @@ interface DashQLElectronBridge {
         writeFile(path: string, data: Uint8Array): Promise<void>;
         writeTextFile(path: string, data: string): Promise<void>;
     };
-    getInitialDeepLinks(): Promise<Array<{type: "event" | "notebook"; value: string}>>;
+    getInitialDeepLinks(): Promise<Array<{type: "event" | "session"; value: string}>>;
     getRuntimeCapabilities(): Promise<unknown>;
     nativeProxyRequest(request: unknown): Promise<unknown>;
-    onDeepLink(listener: (link: {type: "event" | "notebook"; value: string}) => void): () => void;
+    onDeepLink(listener: (link: {type: "event" | "session"; value: string}) => void): () => void;
     openExternal(url: string): Promise<void>;
     oauthLoopback: {
         listen(callbackUrl: string): Promise<number>;

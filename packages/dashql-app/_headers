@@ -3,13 +3,13 @@
   Cross-Origin-Opener-Policy: same-origin
   Access-Control-Allow-Origin: *
 
-# Published notebook examples are mutable source files. Never reuse them without a new request.
-/static/examples/notebooks/*
+# Published session examples are mutable source files. Never reuse them without a new request.
+/static/examples/sessions/*
   Cache-Control: no-store, max-age=0, must-revalidate
 
 # Vite fingerprints files in these output directories. Their URLs change with their contents, so
 # browsers can retain successful responses across deployments. Keep mutable static/config.json and
-# published notebooks outside these rules.
+# published sessions outside these rules.
 /static/assets/*
   Cache-Control: public, max-age=31536000, immutable
 

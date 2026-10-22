@@ -8,7 +8,7 @@ import {
 } from './umap_worker_request.js';
 
 /// A projection request built from a resolved `'umap'` visualize spec: the vector
-/// column to project plus the UMAP options. The view/notebook layer derives this
+/// column to project plus the UMAP options. The view/session layer derives this
 /// from a `UmapSpec`; the compute module only consumes the plain request.
 export interface UmapRequest {
     /// The column holding the embedding vectors (FixedSizeList/List of Float32).
@@ -33,7 +33,7 @@ export interface RunningProjection {
 }
 
 /// Progress callback: `stage` is the UMAP phase ("knn", "optimize", ...), `progress`
-/// is in [0, 1]. Wired to the notebook status/log surface.
+/// is in [0, 1]. Wired to the session status/log surface.
 export type ProjectionProgress = (progress: number, stage: string) => void;
 
 let nextRunId = 1;

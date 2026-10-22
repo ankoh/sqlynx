@@ -73,7 +73,7 @@ Interaction and accessibility requirements:
 
 ### 3. Integrate CodeMirror
 
-Reuse the lower-level CodeMirror wrapper from the notebook editor rather than the notebook-specific `ScriptEditor`.
+Reuse the lower-level CodeMirror wrapper from the session editor rather than the session-specific `ScriptEditor`.
 
 Configure an isolated SQL editor with:
 

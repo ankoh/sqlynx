@@ -1,31 +1,31 @@
 import * as React from 'react';
 
 import { PlatformFile } from '../../platform/file/file.js';
-import type { NotebookBundle } from '../notebook/persistence/notebook_bundle.js';
-import { readNotebookBundleFromZip } from '../notebook/persistence/notebook_import.js';
-import { useNotebookImport } from '../notebook/persistence/notebook_import_provider.js';
-import { NotebookImportCard, type NotebookImportCardDependencies } from '../notebook/ui/notebook_import_card.js';
-import { OPEN_LINK_NOTEBOOK, useRouterNavigate } from '../router/router.js';
+import type { SessionBundle } from '../session/persistence/session_bundle.js';
+import { readSessionBundleFromZip } from '../session/persistence/session_import.js';
+import { useSessionImport } from '../session/persistence/session_import_provider.js';
+import { SessionImportCard, type SessionImportCardDependencies } from '../session/ui/session_import_card.js';
+import { OPEN_LINK_SESSION, useRouterNavigate } from '../router/router.js';
 
 type PreparationPhase = 'reading' | 'validating';
 
 type FileLoadState =
     | { phase: 'reading' }
     | { phase: 'validating'; fileByteCount: number }
-    | { phase: 'ready'; bundle: NotebookBundle; fileByteCount: number }
-    | { phase: 'importing'; bundle: NotebookBundle; fileByteCount: number }
+    | { phase: 'ready'; bundle: SessionBundle; fileByteCount: number }
+    | { phase: 'importing'; bundle: SessionBundle; fileByteCount: number }
     | { phase: 'failed'; failedPhase: PreparationPhase | 'importing'; error: Error; fileByteCount: number | null };
 
 export interface FileLoaderDependencies {
-    notebookImportCard?: NotebookImportCardDependencies;
-    readNotebookBundleFromZip: typeof readNotebookBundleFromZip;
-    useNotebookImport(): Pick<ReturnType<typeof useNotebookImport>, 'importPortableBundle'>;
+    sessionImportCard?: SessionImportCardDependencies;
+    readSessionBundleFromZip: typeof readSessionBundleFromZip;
+    useSessionImport(): Pick<ReturnType<typeof useSessionImport>, 'importPortableBundle'>;
     useRouterNavigate: typeof useRouterNavigate;
 }
 
 const DEFAULT_DEPENDENCIES: FileLoaderDependencies = {
-    readNotebookBundleFromZip,
-    useNotebookImport,
+    readSessionBundleFromZip,
+    useSessionImport,
     useRouterNavigate,
 };
 
@@ -37,7 +37,7 @@ interface Props {
 
 export function FileLoader({ file, onDone, dependencies = DEFAULT_DEPENDENCIES }: Props): React.ReactElement {
     const navigate = dependencies.useRouterNavigate();
-    const { importPortableBundle } = dependencies.useNotebookImport();
+    const { importPortableBundle } = dependencies.useSessionImport();
     const [attempt, setAttempt] = React.useState(0);
     const [state, setState] = React.useState<FileLoadState>({ phase: 'reading' });
     const prepareFile = React.useEffectEvent(async (input: PlatformFile, signal: AbortSignal) => {
@@ -49,7 +49,7 @@ export function FileLoader({ file, onDone, dependencies = DEFAULT_DEPENDENCIES }
             setState({ phase: 'validating', fileByteCount: bytes.byteLength });
             const zipBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
             const zipBlob = new Blob([zipBuffer], { type: 'application/zip' });
-            const bundle = await dependencies.readNotebookBundleFromZip(zipBlob);
+            const bundle = await dependencies.readSessionBundleFromZip(zipBlob);
             signal.throwIfAborted();
 
             setState({ phase: 'ready', bundle, fileByteCount: bytes.byteLength });
@@ -74,17 +74,17 @@ export function FileLoader({ file, onDone, dependencies = DEFAULT_DEPENDENCIES }
         if (state.phase !== 'importing') onDone();
     }, [onDone, state.phase]);
     const retry = React.useCallback(() => setAttempt(value => value + 1), []);
-    const startImport = React.useEffectEvent(async (bundle: NotebookBundle, fileByteCount: number) => {
+    const startImport = React.useEffectEvent(async (bundle: SessionBundle, fileByteCount: number) => {
         setState({ phase: 'importing', bundle, fileByteCount });
         try {
-            const notebookId = await importPortableBundle(bundle, {
+            const sessionId = await importPortableBundle(bundle, {
                 presentation: { mode: 'centered' },
             });
-            if (notebookId == null) {
+            if (sessionId == null) {
                 setState({ phase: 'ready', bundle, fileByteCount });
                 return;
             }
-            navigate({ type: OPEN_LINK_NOTEBOOK, value: notebookId });
+            navigate({ type: OPEN_LINK_SESSION, value: sessionId });
             onDone();
         } catch (error) {
             setState({
@@ -101,18 +101,18 @@ export function FileLoader({ file, onDone, dependencies = DEFAULT_DEPENDENCIES }
 
     switch (state.phase) {
         case 'reading':
-            return <NotebookImportCard phase="file-loading" sourcePath={file.path} stage="reading" fileByteCount={null} onClose={requestClose} dependencies={dependencies.notebookImportCard} />;
+            return <SessionImportCard phase="file-loading" sourcePath={file.path} stage="reading" fileByteCount={null} onClose={requestClose} dependencies={dependencies.sessionImportCard} />;
         case 'validating':
-            return <NotebookImportCard phase="file-loading" sourcePath={file.path} stage="validating" fileByteCount={state.fileByteCount} onClose={requestClose} dependencies={dependencies.notebookImportCard} />;
+            return <SessionImportCard phase="file-loading" sourcePath={file.path} stage="validating" fileByteCount={state.fileByteCount} onClose={requestClose} dependencies={dependencies.sessionImportCard} />;
         case 'ready':
-            return <NotebookImportCard phase="file-ready" sourcePath={file.path} fileByteCount={state.fileByteCount}
-                bundle={state.bundle} busy={false} onImport={requestImport} onClose={requestClose} dependencies={dependencies.notebookImportCard} />;
+            return <SessionImportCard phase="file-ready" sourcePath={file.path} fileByteCount={state.fileByteCount}
+                bundle={state.bundle} busy={false} onImport={requestImport} onClose={requestClose} dependencies={dependencies.sessionImportCard} />;
         case 'importing':
-            return <NotebookImportCard phase="file-ready" sourcePath={file.path} fileByteCount={state.fileByteCount}
-                bundle={state.bundle} busy onImport={requestImport} onClose={requestClose} dependencies={dependencies.notebookImportCard} />;
+            return <SessionImportCard phase="file-ready" sourcePath={file.path} fileByteCount={state.fileByteCount}
+                bundle={state.bundle} busy onImport={requestImport} onClose={requestClose} dependencies={dependencies.sessionImportCard} />;
         case 'failed':
-            return <NotebookImportCard phase="file-error" sourcePath={file.path} fileByteCount={state.fileByteCount}
-                failedStage={state.failedPhase} errorMessage={state.error.message} onRetry={retry} onClose={requestClose} dependencies={dependencies.notebookImportCard} />;
+            return <SessionImportCard phase="file-error" sourcePath={file.path} fileByteCount={state.fileByteCount}
+                failedStage={state.failedPhase} errorMessage={state.error.message} onRetry={retry} onClose={requestClose} dependencies={dependencies.sessionImportCard} />;
     }
 }
 

@@ -1,7 +1,7 @@
 # VISUALIZE Execution — Proof of Concept
 
 > Historical design record, superseded by complete-query execution. The
-> original POC used frontend source lookup, source-kind dispatch, and notebook
+> original POC used frontend source lookup, source-kind dispatch, and session
 > script references. Those mechanisms were removed and must not be used as a
 > current implementation guide. The supported architecture executes the
 > complete classical query prefix written before ` VISUALIZE` with no
@@ -60,26 +60,26 @@ the files below are `src/analyzer/types.rs`, `src/analyzer/visualization.rs`, `s
   2. Read the complete query AST node's text range and slice that span from the
      same script.
   3. Call the existing `executeQuery` with that SQL, return the new `queryId` and a handle to the Vega-Lite JSON.
-- `packages/dashql-app/src/view/notebook/notebook_feed.tsx` (in `handleSend`) — before calling `executeQuery`, detect VIS_VISUALISE via the analyzed buffer; if present, dispatch through `visualize_executor.ts` instead. Either way, wrap the resulting `queryId` into the script's `latestQueryId` via `REGISTER_QUERY` (unchanged action shape — visualize execution still produces one `QueryExecutionState`, sourced from the complete query prefix).
+- `packages/dashql-app/src/view/session/session_feed.tsx` (in `handleSend`) — before calling `executeQuery`, detect VIS_VISUALISE via the analyzed buffer; if present, dispatch through `visualize_executor.ts` instead. Either way, wrap the resulting `queryId` into the script's `latestQueryId` via `REGISTER_QUERY` (unchanged action shape — visualize execution still produces one `QueryExecutionState`, sourced from the complete query prefix).
 - `packages/dashql-app/src/view/visualization/visualization_dispatch.tsx` and
   `packages/dashql-app/src/view/visualization/vegalite_view.tsx` — dispatch the resolved renderer,
   attach the result data to the Vega-Lite spec, and mount `vega-embed`. They handle resize and
   rendering errors; callers disable visualization tabs until the result is available.
-- `packages/dashql-app/src/view/notebook/script_details.tsx`:
+- `packages/dashql-app/src/view/session/script_details.tsx`:
   - Add `TabKey.Visualization = 3` to the enum (line 38).
   - Compute `hasVisualizeStmt` from the editor session's portable script annotations.
   - Update the `enabledTabs` counter (lines 233–236) to include the visualization tab only when `activeQueryState.status === SUCCEEDED && hasVisualizeStmt`.
   - Add the tab in `tabProps` (chart icon — pick an appropriate symbol from `@ankoh/dashql-svg-symbols`; reuse `#table_24` style as a placeholder if no chart icon exists yet) and the renderer in `tabRenderers`.
   - Update the keyboard cycle list (line 288) and split-tab fallback logic (lines 392–410) to include the new tab.
-- `packages/dashql-app/src/scripts/notebook_scripts.ts` `deriveScriptAnnotations` — also lift the complete visualization query out of the analyzed buffer into `ScriptAnnotations`, so consumers don't re-decode the flatbuffer per render.
+- `packages/dashql-app/src/scripts/session_scripts.ts` `deriveScriptAnnotations` — also lift the complete visualization query out of the analyzed buffer into `ScriptAnnotations`, so consumers don't re-decode the flatbuffer per render.
 - `packages/dashql-app/src/scripts/script_types.ts` — extend `ScriptAnnotations` with the visualization query and renderer data.
 
 ## Historical reuse decisions
 
 - C++ Vega-Lite generation: `visualize::GenerateVegaLiteSpec` already exists and is exercised by snapshot tests. We just call it from the analyzer's `Pack` path.
-- Query plumbing: `executeQuery` in `connection/query_executor.tsx` plus `REGISTER_QUERY` in `scripts/notebook_scripts.ts`, dispatched from `view/notebook/notebook_feed.tsx`, already covers ID allocation, dispatch, lifecycle, and the computation registry. Visualize execution piggy-backs on this — we don't add a parallel state machine.
+- Query plumbing: `executeQuery` in `connection/query_executor.tsx` plus `REGISTER_QUERY` in `scripts/session_scripts.ts`, dispatched from `view/session/session_feed.tsx`, already covers ID allocation, dispatch, lifecycle, and the computation registry. Visualize execution piggy-backs on this — we don't add a parallel state machine.
 - Query extraction: the parser already provides the complete source span, so
-  execution does not depend on catalog or notebook source reconstruction.
+  execution does not depend on catalog or session source reconstruction.
 
 ## Historical scope exclusions
 

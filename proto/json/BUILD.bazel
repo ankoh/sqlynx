@@ -18,6 +18,6 @@ jsonschema_typescript(
         "dashql/connection.json",
         "dashql/app_event.json",
         "dashql/app_manifest.json",
-        "dashql/app_notebook.json",
+        "dashql/app_session.json",
     ],
 )

@@ -2,13 +2,13 @@ import * as React from 'react';
 
 import { createQueryExecutionMetrics } from '../query/query_execution_state.js';
 import type { QueryExecutionHistoryState } from '../query/query_execution_state.js';
-import { CONNECTOR_INFOS, ConnectorType } from '../app/notebook/connections/connector_info.js';
-import { ConnectionHealth, ConnectionStatus, type AttachedDatabaseState } from '../app/notebook/connections/attached_database_state.js';
-import { useAttachedDatabaseRegistrySetter } from '../app/notebook/connections/attached_database_registry.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../app/session/connections/connector_info.js';
+import { ConnectionHealth, ConnectionStatus, type AttachedDatabaseState } from '../app/session/connections/attached_database_state.js';
+import { useAttachedDatabaseRegistrySetter } from '../app/session/connections/attached_database_registry.js';
 import { ShellQueryExecutionTracker } from './query_execution.js';
 
 export const SHELL_DATABASE_ID = 'shell';
-export const SHELL_NOTEBOOK_ID = 'shell';
+export const SHELL_SESSION_ID = 'shell';
 
 interface ShellConnectionContextValue {
     queryExecutions: ShellQueryExecutionTracker;
@@ -41,7 +41,7 @@ export const ShellConnectionProvider: React.FC<{ children: React.ReactElement }>
         stateRef.current = state;
         setRegistry(registry => {
             registry.attachedDatabases.set(SHELL_DATABASE_ID, state);
-            registry.attachedDatabasesByNotebook.set(SHELL_NOTEBOOK_ID, {
+            registry.attachedDatabasesBySession.set(SHELL_SESSION_ID, {
                 mainDatabaseId: SHELL_DATABASE_ID,
                 attachedDatabaseIds: [],
             });
@@ -72,7 +72,7 @@ export const ShellConnectionProvider: React.FC<{ children: React.ReactElement }>
         return () => {
             setRegistry(registry => {
                 registry.attachedDatabases.delete(SHELL_DATABASE_ID);
-                registry.attachedDatabasesByNotebook.delete(SHELL_NOTEBOOK_ID);
+                registry.attachedDatabasesBySession.delete(SHELL_SESSION_ID);
                 registry.attachedDatabasesByType[ConnectorType.HYPER] = registry.attachedDatabasesByType[ConnectorType.HYPER]
                     .filter(connectionId => connectionId !== SHELL_DATABASE_ID);
                 return { ...registry };

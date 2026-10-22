@@ -4,8 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Logger } from '../../platform/logger/logger.js';
-import { ConnectionHealth, type AttachedDatabaseState } from '../notebook/connections/attached_database_state.js';
-import type { HyperSetupApi } from '../notebook/connections/hyper/hyper_connection_setup.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../session/connections/attached_database_state.js';
+import type { HyperSetupApi } from '../session/connections/hyper/hyper_connection_setup.js';
 import { cancelInitialMemorySetup, useInitialMemorySetup } from './initial_memory_setup.js';
 
 describe('initial Memory setup', () => {
@@ -16,14 +16,14 @@ describe('initial Memory setup', () => {
     const dispatch = vi.fn();
     const logger = { warn: vi.fn() } as unknown as Logger;
 
-    function Consumer(props: { notebookId: string | null; database: AttachedDatabaseState | null }) {
-        useInitialMemorySetup(props.notebookId, props.database, setup, dispatch, logger);
-        return <div>Notebook visible</div>;
+    function Consumer(props: { sessionId: string | null; database: AttachedDatabaseState | null }) {
+        useInitialMemorySetup(props.sessionId, props.database, setup, dispatch, logger);
+        return <div>Session visible</div>;
     }
 
-    async function render(next = database, notebookId: string | null = 'notebook') {
+    async function render(next = database, sessionId: string | null = 'session') {
         await act(async () => {
-            root.render(<Consumer database={next} notebookId={notebookId} />);
+            root.render(<Consumer database={next} sessionId={sessionId} />);
             await Promise.resolve();
         });
     }
@@ -72,11 +72,11 @@ describe('initial Memory setup', () => {
         expect(setup.setup).not.toHaveBeenCalled();
     });
 
-    it('starts each newly selected database once without blocking notebook visibility', async () => {
+    it('starts each newly selected database once without blocking session visibility', async () => {
         setup.setup = vi.fn<HyperSetupApi['setup']>(() => new Promise(() => {}));
         await render();
-        expect(container.textContent).toBe('Notebook visible');
-        await render({ ...database, databaseId: 'second-memory' }, 'second-notebook');
+        expect(container.textContent).toBe('Session visible');
+        await render({ ...database, databaseId: 'second-memory' }, 'second-session');
         await render();
         expect(setup.setup).toHaveBeenCalledTimes(2);
     });

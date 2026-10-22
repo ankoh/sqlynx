@@ -2,7 +2,7 @@
 
 `dashql::Planner` builds a statement-level dependency DAG above the analyzer. It
 consumes an ordered set of analyzed scripts without analyzing, publishing, or
-modifying them. Notebook order, followed by statement order, defines the baseline
+modifying them. Session order, followed by statement order, defines the baseline
 semantics; independent statements do not acquire source-order edges.
 
 ## Preparation and API
@@ -106,7 +106,7 @@ qualified name, using the strongest mode.
 DROP resolves against the live namespace, not future input declarations. An
 unresolved DROP records an unresolved reference, not a synthetic catalog entity.
 References to later producers are diagnosed rather than moving those producers
-ahead of notebook order. CTE bindings are not catalog entities in this graph.
+ahead of session order. CTE bindings are not catalog entities in this graph.
 
 The current supported statement families are SELECT, INSERT, DELETE, EXPLAIN,
 VISUALIZE, CREATE TABLE, CREATE TABLE AS, CREATE VIEW, SELECT INTO, DROP TABLE,

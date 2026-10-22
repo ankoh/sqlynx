@@ -149,7 +149,7 @@ never edits either string.
   present and fallback to the unmodified complete query prefix otherwise.
   Include a query with a CTE, join, filter, ordering, and limit to guard against
   prefix truncation or reconstruction.
-- **End-to-end in the app** — run a notebook with a complete
+- **End-to-end in the app** — run a session with a complete
   `SELECT ... FROM <relation> VISUALIZE USING vegalite (...)` query and an
   aggregating bar-chart spec; confirm the executed query is the GROUP BY (small result)
   rather than `SELECT *`, and the chart renders identically to the pre-change JS-aggregated

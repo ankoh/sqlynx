@@ -43,7 +43,7 @@ sequenceDiagram
 
 There is one batch worker per main-thread `DashQL` instance. `DashQLCoreProvider` accepts
 `initialSetup={{ setupBatchWorker: true }}` to initialize the worker and its Core module during
-initial Core setup, before returning the instance. The notebook app enables this option; callers
+initial Core setup, before returning the instance. The session app enables this option; callers
 that disable or omit it, including the shell, have no batch worker. Worker-backed catalog calls
 fail without an initialized worker; there is no lazy creation or automatic replacement. The option
 is captured at provider creation rather than reacting to later prop changes. An empty batch warms
@@ -148,7 +148,7 @@ prevents publication; it does not interrupt a synchronous native job already exe
 
 | Path | Inputs | Execution |
 |---|---|---|
-| Notebook startup restoration | Persisted relation and function SQL | Worker |
+| Session startup restoration | Persisted relation and function SQL | Worker |
 | Hyper catalog refresh | Relation and function SQL | Worker |
 | Salesforce catalog refresh | Metadata-derived relations and prefetched functions | Worker |
 | PostgreSQL-style refresh | Relations from `pg_attribute`, functions from `pg_proc` | Worker |
@@ -159,7 +159,7 @@ prevents publication; it does not interrupt a synchronous native job already exe
 The synchronous exceptions use the same isolated descriptor preparation and per-descriptor atomic
 import contract, but still perform preparation on the main thread. They are not off-thread paths.
 
-Interactive notebook editing, editor completion, and query execution do not use the batch API.
+Interactive session editing, editor completion, and query execution do not use the batch API.
 Moving editor analysis to a worker would need revision validation and a serialized editor-state
 contract beyond catalog descriptors.
 
@@ -200,6 +200,6 @@ single-descriptor migration. Verification uses Bazel targets, as required by rep
 - `packages/dashql-core/src/catalog/descriptor.rs` and `catalog/mod.rs`: validation and receiver publication.
 - `packages/dashql-core-js/src/batch.ts` and `api.ts`: public API and buffer ownership.
 - `packages/dashql-core-js/src/batch_worker.ts` and `batch_worker_client.ts`: persistent worker transport.
-- `packages/dashql-app/src/app/notebook/connections/catalog_batch.ts`: application commit boundary.
-- `packages/dashql-app/src/app/notebook/connections/catalog_loader.tsx`: refresh queue and supersession.
-- `packages/dashql-app/src/app/notebook/persistence/app_state_loader.ts`: startup restoration.
+- `packages/dashql-app/src/app/session/connections/catalog_batch.ts`: application commit boundary.
+- `packages/dashql-app/src/app/session/connections/catalog_loader.tsx`: refresh queue and supersession.
+- `packages/dashql-app/src/app/session/persistence/app_state_loader.ts`: startup restoration.

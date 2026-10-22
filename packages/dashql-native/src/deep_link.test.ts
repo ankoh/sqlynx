@@ -16,13 +16,13 @@ describe("parseDeepLink", () => {
     });
 
     it.each([
-        "dashql://localhost?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json",
-        "https://dashql.app/?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json",
-        "http://localhost:9002/?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json",
-    ])("extracts notebook payloads from supported links: %s", (link) => {
+        "dashql://localhost?session=https%3A%2F%2Fexample.com%2Fdashql-session.json",
+        "https://dashql.app/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json",
+        "http://localhost:9002/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json",
+    ])("extracts session payloads from supported links: %s", (link) => {
         expect(parseDeepLink(link)).toEqual({
-            type: "notebook",
-            value: "https://example.com/dashql-notebook.json",
+            type: "session",
+            value: "https://example.com/dashql-session.json",
         });
     });
 
@@ -64,7 +64,7 @@ describe("DeepLinkQueue", () => {
     it("buffers cold-start links and delivers later links immediately", () => {
         const queue = new DeepLinkQueue();
         const initial = {type: "event", value: "initial"} as const;
-        const running = {type: "notebook", value: "https://example.com/dashql-notebook.json"} as const;
+        const running = {type: "session", value: "https://example.com/dashql-session.json"} as const;
         queue.push(initial);
         const receiver = vi.fn();
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { useAppConfig, useAppReconfigure } from './app_config.js';
-import { useStorageReader } from '../notebook/persistence/storage_provider.js';
+import { useStorageReader } from '../session/persistence/storage_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 
 const LOG_CTX = 'app_settings_sync';
@@ -32,8 +32,8 @@ export const AppSettingsSync: React.FC<Props> = (props: Props) => {
         storageReader.backend.loadAppSettings().then(stored => {
             if (stored != null) {
                 logger.info("Hydrated app settings from manifest", {}, LOG_CTX);
-                const { lastOpenedNotebookId: _lastOpenedNotebookId, ...settings } = stored as typeof stored & {
-                    lastOpenedNotebookId?: string;
+                const { lastOpenedSessionId: _lastOpenedSessionId, ...settings } = stored as typeof stored & {
+                    lastOpenedSessionId?: string;
                 };
                 reconfigure(c => c == null ? null : {
                     ...c,

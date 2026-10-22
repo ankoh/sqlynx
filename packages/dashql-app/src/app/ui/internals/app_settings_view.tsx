@@ -10,7 +10,7 @@ import { AppConfig, useAppConfig, useAppReconfigure } from '../../config/app_con
 import { CONFIRM_FINISHED_SETUP, useRouteContext, useRouterNavigate } from '../../router/router.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { LogLevel } from '../../../platform/logger/log_buffer.js';
-import { useStorageReader } from '../../notebook/persistence/storage_provider.js';
+import { useStorageReader } from '../../session/persistence/storage_provider.js';
 
 export function AppSettings(props: { onClose: () => void; }) {
     const config = useAppConfig();
@@ -124,7 +124,7 @@ export function AppSettings(props: { onClose: () => void; }) {
         }
 
         const confirmed = confirm(
-            "This will delete ALL stored data including all attached databases, notebooks, and scripts. This action cannot be undone.\n\nAre you sure you want to clear all storage?"
+            "This will delete ALL stored data including all attached databases, sessions, and scripts. This action cannot be undone.\n\nAre you sure you want to clear all storage?"
         );
 
         if (!confirmed) {

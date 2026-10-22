@@ -174,7 +174,7 @@ export function setQueryExecutorMockState(state: QueryExecutorMockState) {
 
 export function fakeQueryExecutorModule() {
     return {
-        useQueryState: (_notebookId: string | null, queryId: number | null) => {
+        useQueryState: (_sessionId: string | null, queryId: number | null) => {
             if (queryId == null) return null;
             return activeQueryExecutorMockState?.queryStates?.get(queryId) ?? null;
         },

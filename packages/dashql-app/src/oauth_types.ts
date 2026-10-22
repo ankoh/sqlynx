@@ -19,6 +19,6 @@ export interface OAuthRedirectData {
 }
 
 export interface AppEventData {
-    notebook?: string;
+    session?: string;
     oauthRedirect?: OAuthRedirectData;
 }

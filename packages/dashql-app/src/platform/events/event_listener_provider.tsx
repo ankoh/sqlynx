@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useLocation } from 'react-router-dom';
 
-import { PlatformEventListener, EVENT_QUERY_PARAMETER, NOTEBOOK_QUERY_PARAMETER } from './event_listener.js';
+import { PlatformEventListener, EVENT_QUERY_PARAMETER, SESSION_QUERY_PARAMETER } from './event_listener.js';
 import { WebPlatformEventListener } from './web_event_listener.js';
 import { ElectronPlatformEventListener } from './electron_event_listener.js';
 import { AppHost, getAppHost } from '../native_globals.js';
@@ -42,9 +42,9 @@ export const PlatformEventListenerProvider: React.FC<Props> = (props: Props) => 
     React.useEffect(() => {
         const searchParams = new URLSearchParams(documentSearch);
         const data = searchParams.get(EVENT_QUERY_PARAMETER);
-        const notebookUrl = searchParams.get(NOTEBOOK_QUERY_PARAMETER);
+        const sessionUrl = searchParams.get(SESSION_QUERY_PARAMETER);
 
-        if ((!data && !notebookUrl) || location.state == SKIP_EVENT_LISTENER) {
+        if ((!data && !sessionUrl) || location.state == SKIP_EVENT_LISTENER) {
             return;
         }
 
@@ -55,15 +55,15 @@ export const PlatformEventListenerProvider: React.FC<Props> = (props: Props) => 
                 listener.dispatchAppEvent(event);
                 consumed = true;
             }
-        } else if (notebookUrl) {
-            listener.dispatchNotebookUrl(notebookUrl);
+        } else if (sessionUrl) {
+            listener.dispatchSessionUrl(sessionUrl);
             consumed = true;
         }
         if (consumed) {
             // Consume the event before an import can trigger a reload. Leaving `data` in the address
-            // would dispatch the same notebook again and immediately reopen the conflict dialog.
+            // would dispatch the same session again and immediately reopen the conflict dialog.
             searchParams.delete(EVENT_QUERY_PARAMETER);
-            searchParams.delete(NOTEBOOK_QUERY_PARAMETER);
+            searchParams.delete(SESSION_QUERY_PARAMETER);
             const search = searchParams.toString();
             const nextUrl = `${location.pathname}${search ? `?${search}` : ''}${location.hash}`;
             globalThis.history.replaceState(globalThis.history.state, '', nextUrl);

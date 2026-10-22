@@ -10,21 +10,21 @@ import { DASHQL_VERSION } from '../../globals.js';
 import { VersionCheckIndicator } from '../../ui/version/version_viewer.js';
 import { VersionInfoOverlay } from '../../ui/version/version_viewer.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
-import { NOTEBOOK_PATH, SELECT_NOTEBOOK, useRouteContext, useRouterNavigate } from '../router/router.js';
+import { SESSION_PATH, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../router/router.js';
 import { useVersionCheck } from '../../platform/version/version_check.js';
 import { useLocation } from 'react-router-dom';
-import { NotebookViewMode, useNotebookViewMode } from '../notebook/scripts/notebook_commands.js';
+import { SessionViewMode, useSessionViewMode } from '../session/scripts/session_commands.js';
 import { FlavorLogo, useAppFlavor } from '../flavor/flavor_provider.js';
 
 const LOG_CTX = "navbar";
 
-const InternalsButton = (props: { notebookId: string | null }) => {
+const InternalsButton = (props: { sessionId: string | null }) => {
     const [showInternalsViewerOverlay, setInternalsViewerOverlay] = React.useState<boolean>(false);
 
     return (
         <div className={styles.tab}>
             <InternalsViewerOverlay
-                notebookId={props.notebookId}
+                sessionId={props.sessionId}
                 isOpen={showInternalsViewerOverlay}
                 onClose={() => setInternalsViewerOverlay(false)}
                 renderAnchor={(p: object) => (
@@ -48,18 +48,18 @@ const InternalsButton = (props: { notebookId: string | null }) => {
     );
 };
 
-const NotebookShellButton = () => {
-    const { mode, setMode } = useNotebookViewMode();
-    const shellActive = mode === NotebookViewMode.Shell;
-    const label = shellActive ? 'Return to notebook' : 'Open shell';
+const SessionShellButton = () => {
+    const { mode, setMode } = useSessionViewMode();
+    const shellActive = mode === SessionViewMode.Shell;
+    const label = shellActive ? 'Return to session' : 'Open shell';
     return (
         <div className={`${styles.tab} ${shellActive ? styles.active : ''}`}>
             <NavBarButton
-                aria-label={shellActive ? 'Shell, return to notebook' : label}
+                aria-label={shellActive ? 'Shell, return to session' : label}
                 aria-pressed={shellActive}
                 className={styles.tab_button}
                 hover={HoverMode.Darken}
-                onClick={() => setMode(shellActive ? NotebookViewMode.Notebook : NotebookViewMode.Shell)}
+                onClick={() => setMode(shellActive ? SessionViewMode.Session : SessionViewMode.Shell)}
             >
                 <>
                     <svg width="16px" height="16px" aria-hidden="true">
@@ -107,16 +107,16 @@ const BrandLogo = () => {
     const flavor = useAppFlavor();
     const route = useRouteContext();
     const navigate = useRouterNavigate();
-    const { setMode } = useNotebookViewMode();
+    const { setMode } = useSessionViewMode();
     const openWorkbench = React.useCallback(() => {
-        setMode(NotebookViewMode.Notebook);
-        navigate(route.notebookId == null
-            ? { type: NOTEBOOK_PATH, value: null }
-            : { type: SELECT_NOTEBOOK, value: route.notebookId });
-    }, [navigate, route.notebookId, setMode]);
+        setMode(SessionViewMode.Session);
+        navigate(route.sessionId == null
+            ? { type: SESSION_PATH, value: null }
+            : { type: SELECT_SESSION, value: route.sessionId });
+    }, [navigate, route.sessionId, setMode]);
 
     return (
-        <button type="button" className={styles.brand_logo} aria-label="Open notebook workbench" onClick={openWorkbench}>
+        <button type="button" className={styles.brand_logo} aria-label="Open session workbench" onClick={openWorkbench}>
             <FlavorLogo height={flavor.logo.wordmark ? WORDMARK_HEIGHT : 24} ariaHidden />
         </button>
     );
@@ -145,7 +145,7 @@ export const CompactNavBar = (): React.ReactElement => {
         <header className={`${navbarClass} ${styles.navbar_overlay}`} data-electron-drag-region>
             <BrandIdentity />
             <div className={styles.navbar_actions}>
-                <InternalsButton notebookId={route.notebookId} />
+                <InternalsButton sessionId={route.sessionId} />
                 <VersionButton />
             </div>
         </header>
@@ -164,7 +164,7 @@ export const NavBar = (): React.ReactElement => {
         logger.debug("Navigated to path", { "path": location.pathname }, LOG_CTX);
     }, [location.pathname]);
 
-    const notebookId = route.notebookId;
+    const sessionId = route.sessionId;
     return (
         // Electron excludes the interactive controls below via the global no-drag rules.
         <div className={isMac ? styles.navbar_mac : styles.navbar_default}
@@ -172,8 +172,8 @@ export const NavBar = (): React.ReactElement => {
         >
             <BrandLogo />
             <div className={styles.navbar_actions}>
-                {notebookId != null && <NotebookShellButton />}
-                <InternalsButton notebookId={notebookId} />
+                {sessionId != null && <SessionShellButton />}
+                <InternalsButton sessionId={sessionId} />
                 <VersionButton />
             </div>
         </div>

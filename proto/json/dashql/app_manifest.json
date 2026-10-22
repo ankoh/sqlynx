@@ -2,15 +2,15 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "dashql/app_manifest.json",
   "title": "StorageManifest",
-  "description": "Manifest structure for DashQL notebooks (dashql-manifest.json)",
+  "description": "Manifest structure for DashQL sessions (dashql-manifest.json)",
   "type": "object",
   "properties": {
-    "notebooks": {
+    "sessions": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/NotebookEntry"
+        "$ref": "#/definitions/SessionEntry"
       },
-      "description": "List of notebooks"
+      "description": "List of sessions"
     },
     "appSettings": {
       "$ref": "#/definitions/AppSettings",
@@ -21,34 +21,34 @@
       "items": {
         "$ref": "#/definitions/ConnectionEntry"
       },
-      "description": "The connections, the source of truth for the connection settings that notebooks replicate. Absent in manifests written before connections were global, an empty array means there are no connections."
+      "description": "The connections, the source of truth for the connection settings that sessions replicate. Absent in manifests written before connections were global, an empty array means there are no connections."
     }
   },
-  "required": ["notebooks"],
+  "required": ["sessions"],
   "additionalProperties": false,
   "definitions": {
     "ConnectionEntry": {
       "type": "object",
-      "description": "A connection that notebooks reference by its id",
+      "description": "A connection that sessions reference by its id",
       "properties": {
         "id": {
           "type": "string",
-          "description": "The connection identifier (UUID), notebooks reference the connection with it"
+          "description": "The connection identifier (UUID), sessions reference the connection with it"
         },
         "params": {
           "$ref": "connection.json#/definitions/ConnectionParams",
-          "description": "The saved connection parameters, every notebook referencing the connection stores a copy"
+          "description": "The saved connection parameters, every session referencing the connection stores a copy"
         },
         "paramsDraft": {
           "$ref": "connection.json#/definitions/ConnectionParams",
-          "description": "Unsaved edits of the connection parameters, including incomplete or invalid settings. Never replicated into notebooks."
+          "description": "Unsaved edits of the connection parameters, including incomplete or invalid settings. Never replicated into sessions."
         },
         "aliases": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Identifiers of connections that were consolidated into this one. Notebooks referencing an alias are resolved to this connection."
+          "description": "Identifiers of connections that were consolidated into this one. Sessions referencing an alias are resolved to this connection."
         },
         "createdAt": {
           "type": "string",
@@ -59,22 +59,22 @@
       "required": ["id", "params"],
       "additionalProperties": false
     },
-    "NotebookEntry": {
+    "SessionEntry": {
       "type": "object",
-      "description": "Manifest entry for a notebook",
+      "description": "Manifest entry for a session",
       "properties": {
         "path": {
           "type": "string",
-          "description": "The notebook identity as a bare notebook UUID."
+          "description": "The session identity as a bare session UUID."
         },
         "storageType": {
           "type": "string",
           "enum": ["opfs", "native"],
-          "description": "Where this notebook's files live. Defaults to \"opfs\" when omitted (the OPFS root). \"native\" means the files live directly in `nativePath`. Mirrors the `storageType` field on the notebook itself."
+          "description": "Where this session's files live. Defaults to \"opfs\" when omitted (the OPFS root). \"native\" means the files live directly in `nativePath`. Mirrors the `storageType` field on the session itself."
         },
         "nativePath": {
           "type": "string",
-          "description": "Absolute directory holding this notebook's files. Required when storageType is \"native\"; one directory holds exactly one notebook."
+          "description": "Absolute directory holding this session's files. Required when storageType is \"native\"; one directory holds exactly one session."
         }
       },
       "required": ["path"],

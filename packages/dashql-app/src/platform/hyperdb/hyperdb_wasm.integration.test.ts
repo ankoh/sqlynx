@@ -223,14 +223,14 @@ describe('HyperDB embedded database integration', () => {
         }
     }, 60_000);
 
-    it('queries notebook CSV data directly from the canonical OPFS path without registration', async () => {
+    it('queries session CSV data directly from the canonical OPFS path without registration', async () => {
         const connection = await database!.connect();
         const root = await navigator.storage.getDirectory();
-        const notebooks = await root.getDirectoryHandle('notebooks', { create: true });
-        const notebookId = crypto.randomUUID();
+        const sessions = await root.getDirectoryHandle('sessions', { create: true });
+        const sessionId = crypto.randomUUID();
         try {
-            const notebook = await notebooks.getDirectoryHandle(notebookId, { create: true });
-            const attachments = await notebook.getDirectoryHandle('attachments', { create: true });
+            const session = await sessions.getDirectoryHandle(sessionId, { create: true });
+            const attachments = await session.getDirectoryHandle('attachments', { create: true });
             const file = await attachments.getFileHandle('values.csv', { create: true });
             const writer = await file.createWritable();
             await writer.write('value,name\n1,alpha\n2,beta\n');
@@ -238,13 +238,13 @@ describe('HyperDB embedded database integration', () => {
 
             expect(toPlainObjects(await connection.query(`
                 SELECT value, name
-                FROM external('/mnt/fs/notebooks/${notebookId}/attachments/values.csv', format => 'csv', header => true,
+                FROM external('/mnt/fs/sessions/${sessionId}/attachments/values.csv', format => 'csv', header => true,
                     columns => descriptor(value bigint, name text))
                 ORDER BY value
             `))).toEqual([{ value: 1n, name: 'alpha' }, { value: 2n, name: 'beta' }]);
         } finally {
             await connection.close();
-            await ignoreCleanupFailure(() => notebooks.removeEntry(notebookId, { recursive: true }));
+            await ignoreCleanupFailure(() => sessions.removeEntry(sessionId, { recursive: true }));
         }
     }, 60_000);
 

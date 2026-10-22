@@ -137,10 +137,10 @@ export interface QueryMetadata {
     issuer: string | null;
     /// Authored by the user or the app?
     userProvided: boolean;
-    /// The notebook that issued the query, if any.
-    /// Several notebooks may share a connection, the notebook scopes the query result cache and the
-    /// cleanup of the notebook's queries.
-    notebookId?: string;
+    /// The session that issued the query, if any.
+    /// Several sessions may share a connection, the session scopes the query result cache and the
+    /// cleanup of the session's queries.
+    sessionId?: string;
 }
 
 export interface QueryExecutionState {

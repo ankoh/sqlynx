@@ -8,7 +8,7 @@ import { DashQL } from '@ankoh/dashql-core';
 import type { BatchWorkerRequest, BatchWorkerResponse } from '@ankoh/dashql-core/browser-worker';
 import { TracedLogger } from '../../platform/logger/logger.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
-import { initializeCatalogBatchWorker } from '../notebook/connections/catalog_batch.js';
+import { initializeCatalogBatchWorker } from '../session/connections/catalog_batch.js';
 
 class TestWorker extends EventTarget {
     readonly requests: BatchWorkerRequest[] = [];

@@ -1,36 +1,36 @@
 import * as dashql from '@ankoh/dashql-core';
 
 import { TracedLogger } from '../../platform/logger/logger.js';
-import { StorageReader } from '../notebook/persistence/storage_provider.js';
+import { StorageReader } from '../session/persistence/storage_provider.js';
 import { AppLoadingProgress, AppLoadingProgressConsumer } from './app_loading_progress.js';
-import { SetAttachedDatabaseRegistryAction } from '../notebook/connections/attached_database_registry.js';
-import type { AttachedDatabaseState } from '../notebook/connections/attached_database_state.js';
+import { SetAttachedDatabaseRegistryAction } from '../session/connections/attached_database_registry.js';
+import type { AttachedDatabaseState } from '../session/connections/attached_database_state.js';
 import { Dispatch } from '../../utils/variant.js';
-import { SetNotebookScriptsRegistryAction } from '../notebook/scripts/notebook_scripts_registry.js';
+import { SetSessionScriptsRegistryAction } from '../session/scripts/session_scripts_registry.js';
 import { ProgressCounter } from '../../utils/progress.js';
-import { InvalidNotebook } from '../notebook/persistence/notebook_validation.js';
+import { InvalidSession } from '../session/persistence/session_validation.js';
 import { AppLoadingStatus } from '../router/app_loading_status.js';
 import type { RouteContext } from '../router/router.js';
 
-export function canShowNotebook(route: RouteContext, pauseAfterSetup: boolean): boolean {
+export function canShowSession(route: RouteContext, pauseAfterSetup: boolean): boolean {
     return route.appLoadingStatus === AppLoadingStatus.SETUP_DONE
-        && route.notebookId != null
+        && route.sessionId != null
         && (!pauseAfterSetup || route.confirmedFinishedSetup);
 }
 
 export interface AppLoadingResult {
-    /// Notebooks whose metadata failed validation and were refused a load (keyed by bare UUID).
-    invalidNotebooks: Map<string, InvalidNotebook>;
-    /// Valid restored notebooks in persisted manifest order.
-    restoredNotebookIds: string[];
+    /// Sessions whose metadata failed validation and were refused a load (keyed by bare UUID).
+    invalidSessions: Map<string, InvalidSession>;
+    /// Valid restored sessions in persisted manifest order.
+    restoredSessionIds: string[];
     /// The restored connections
     restoredConnections: Map<string, AttachedDatabaseState>;
 }
 
-export function selectStartupNotebook(
-    restoredNotebookIds: readonly string[],
+export function selectStartupSession(
+    restoredSessionIds: readonly string[],
 ): string | null {
-    return restoredNotebookIds[0] ?? null;
+    return restoredSessionIds[0] ?? null;
 }
 
 export async function shouldFinishInitialNavigation(initialInlineSetup: Promise<boolean> | null): Promise<boolean> {
@@ -38,7 +38,7 @@ export async function shouldFinishInitialNavigation(initialInlineSetup: Promise<
 }
 
 /// Main logic to setup the application
-export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage: StorageReader, resetConnections: Dispatch<SetAttachedDatabaseRegistryAction>, resetNotebookScripts: Dispatch<SetNotebookScriptsRegistryAction>, consumer: AppLoadingProgressConsumer) {
+export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage: StorageReader, resetConnections: Dispatch<SetAttachedDatabaseRegistryAction>, resetSessionScripts: Dispatch<SetSessionScriptsRegistryAction>, consumer: AppLoadingProgressConsumer) {
     const traced = logger.childSpan();
     traced.info("Loading application", {}, "app_loading");
     const appLoadStartTime = performance.now();
@@ -46,7 +46,7 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
     let progress: AppLoadingProgress = {
         restoreConnections: new ProgressCounter(),
         restoreCatalogs: new ProgressCounter(),
-        restoreNotebookScripts: new ProgressCounter(),
+        restoreSessionScripts: new ProgressCounter(),
     };
     const partialProgressConsumer = (update: Partial<AppLoadingProgress>) => {
         progress = {
@@ -65,7 +65,7 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
     const restoreDuration = performance.now() - restoreStartTime;
     traced.info("Restored application state", {
         connections: state.connectionStates.size.toString(),
-        notebooks: state.notebookScripts.size.toString(),
+        sessions: state.sessionScripts.size.toString(),
         durationMs: restoreDuration.toFixed(2)
     }, "app_loading");
 
@@ -75,19 +75,19 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
     }, "app_loading");
     resetConnections({
         attachedDatabases: state.connectionStates,
-        attachedDatabasesByNotebook: state.attachedDatabasesByNotebook,
+        attachedDatabasesBySession: state.attachedDatabasesBySession,
         attachedDatabasesByType: state.connectionStatesByType,
         attachedDatabasesBySignature: state.connectionSignatures,
     });
 
-    // Reset the notebook scripts registry
-    traced.info("Updating notebook scripts registry", {
-        notebookCount: state.notebookScripts.size.toString()
+    // Reset the session scripts registry
+    traced.info("Updating session scripts registry", {
+        sessionCount: state.sessionScripts.size.toString()
     }, "app_loading");
-    resetNotebookScripts({
-        notebookScriptsMap: state.notebookScripts,
-        notebookScriptsByConnection: state.notebookScriptsByConnection,
-        notebookScriptsByConnectionType: state.notebookScriptsByConnectionType,
+    resetSessionScripts({
+        sessionScriptsMap: state.sessionScripts,
+        sessionScriptsByConnection: state.sessionScriptsByConnection,
+        sessionScriptsByConnectionType: state.sessionScriptsByConnectionType,
     });
 
     const totalAppLoadDuration = performance.now() - appLoadStartTime;
@@ -96,8 +96,8 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
     }, "app_loading");
 
     return {
-        invalidNotebooks: state.invalidNotebooks,
-        restoredNotebookIds: [...state.notebookScripts.keys()],
+        invalidSessions: state.invalidSessions,
+        restoredSessionIds: [...state.sessionScripts.keys()],
         restoredConnections: state.connectionStates,
     };
 }

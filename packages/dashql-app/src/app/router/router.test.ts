@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { notebookIdFromPathname, notebookPath } from './router.js';
+import { sessionIdFromPathname, sessionPath } from './router.js';
 
-describe('notebook routes', () => {
-    it('builds and reads the canonical notebook route', () => {
-        expect(notebookPath('notebook id')).toBe('/notebooks/notebook%20id');
-        expect(notebookIdFromPathname('/notebooks/notebook%20id')).toBe('notebook id');
+describe('session routes', () => {
+    it('builds and reads the canonical session route', () => {
+        expect(sessionPath('session id')).toBe('/sessions/session%20id');
+        expect(sessionIdFromPathname('/sessions/session%20id')).toBe('session id');
     });
 
-    it('ignores non-notebook and malformed routes', () => {
-        expect(notebookIdFromPathname('/')).toBeNull();
-        expect(notebookIdFromPathname('/notebooks/%E0%A4%A')).toBeNull();
+    it('ignores non-session and malformed routes', () => {
+        expect(sessionIdFromPathname('/')).toBeNull();
+        expect(sessionIdFromPathname('/sessions/%E0%A4%A')).toBeNull();
     });
 });

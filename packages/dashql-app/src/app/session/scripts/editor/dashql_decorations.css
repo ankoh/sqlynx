@@ -1,0 +1,96 @@
+.dashql-tableref-cursor {
+    background-color: rgb(220, 220, 220);
+}
+.dashql-tableref-focus {
+    background-color: rgb(240, 240, 240);
+}
+
+.dashql-tableref-resolved { }
+.dashql-tableref-unresolved { }
+
+.dashql-colref-cursor { 
+    background-color: rgb(220, 220, 220);
+}
+.dashql-colref-focus {
+    background-color: rgb(240, 240, 240);
+}
+
+.dashql-colref-resolved { }
+.dashql-colref-unresolved { }
+
+.dashql-function-ref { }
+
+.dashql-error {
+    position: relative;
+    text-decoration: underline 1px red;
+    text-decoration-style: wavy;
+}
+
+.dashql-warning {
+    position: relative;
+    text-decoration: underline 1px goldenrod;
+    text-decoration-style: wavy;
+}
+
+.dashql-quote-tombstoned {
+    color: rgb(160, 160, 160);
+    text-decoration: underline 1px rgb(160, 160, 160);
+    text-decoration-style: dotted;
+}
+
+.dashql-story-sql-control {
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    height: 20px;
+    margin: 0;
+    padding: 2px 6px;
+    border: 1px solid color-mix(in srgb, #aa0d91 28%, transparent);
+    border-radius: 3px;
+    background: color-mix(in srgb, #aa0d91 7%, var(--session_feed_preview_background, #f7f7f7));
+    color: #aa0d91;
+    cursor: pointer;
+    font-family: var(--font_family_mono);
+    font-size: 0.72rem;
+    line-height: 1.35;
+    letter-spacing: 0;
+}
+
+.dashql-story-fold-gutter {
+    width: 16px;
+}
+
+.dashql-story-fold-spacer {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+}
+
+.dashql-story-fold-control {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    color: #aa0d91;
+    cursor: pointer;
+    font-family: var(--font_family_mono);
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.dashql-story-fold-control:hover {
+    background: color-mix(in srgb, #aa0d91 10%, transparent);
+}
+
+.dashql-story-fold-control:focus-visible {
+    outline: 2px solid var(--focus_border_color);
+    outline-offset: -1px;
+}
+
+.dashql-story-sql-control:focus-visible {
+    outline: 2px solid var(--focus_border_color);
+    outline-offset: 2px;
+}

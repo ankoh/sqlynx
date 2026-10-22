@@ -7,9 +7,9 @@ to know whether they scan, parse and analyze before handing them over.
 dashql-cli lint [--schema <file.sql>]... [--debug] <file.sql|dir|->...
 ```
 
-Run it through Bazel: `bazel run //packages/dashql-cli:cli -- lint examples/notebooks/tpch`.
+Run it through Bazel: `bazel run //packages/dashql-cli:cli -- lint examples/sessions/tpch`.
 Relative paths are resolved against the directory you invoke Bazel from. Directories are searched recursively for
-`*.sql` files, the generated catalog files of notebooks (`dashql-catalog-relations.sql`, `dashql-catalog-functions.sql`, `dashql-catalog-changes.sql`) are skipped.
+`*.sql` files, the generated catalog files of sessions (`dashql-catalog-relations.sql`, `dashql-catalog-functions.sql`, `dashql-catalog-changes.sql`) are skipped.
 `-` reads a script from stdin:
 
 ```

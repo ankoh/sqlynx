@@ -1,43 +1,43 @@
 import * as React from 'react';
 
 import { AppLoadingStatus } from '../router/app_loading_status.js';
-import { OPEN_LINK_NOTEBOOK, SELECT_NOTEBOOK, useRouteContext, useRouterNavigate } from '../router/router.js';
-import { resolveNotebookExecutionDatabase, useAttachConnection, useAttachedDatabaseDispatch, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator } from '../notebook/connections/attached_database_registry.js';
-import { isHyperWasmAttachedDatabase } from '../notebook/ui/attached_database_label.js';
+import { OPEN_LINK_SESSION, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../router/router.js';
+import { resolveSessionExecutionDatabase, useAttachConnection, useAttachedDatabaseDispatch, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator } from '../session/connections/attached_database_registry.js';
+import { isHyperWasmAttachedDatabase } from '../session/ui/attached_database_label.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
 import { usePlatformEventListener } from '../../platform/events/event_listener_provider.js';
-import { useNotebookScriptsSetup } from '../notebook/scripts/notebook_scripts_setup.js';
+import { useSessionScriptsSetup } from '../session/scripts/session_scripts_setup.js';
 import { AppLoadingPage } from '../ui/app_loading_page.js';
-import { SETUP_NOTEBOOK, SETUP_NOTEBOOK_URL, SetupEventVariant } from '../../platform/events/event.js';
+import { SETUP_SESSION, SETUP_SESSION_URL, SetupEventVariant } from '../../platform/events/event.js';
 import { AppLoadingProgress } from './app_loading_progress.js';
 import { ProgressCounter } from '../../utils/progress.js';
-import { canShowNotebook, loadApp, selectStartupNotebook, shouldFinishInitialNavigation } from './app_loading_logic.js';
+import { canShowSession, loadApp, selectStartupSession, shouldFinishInitialNavigation } from './app_loading_logic.js';
 import { useAppConfig, useAppReconfigure } from '../config/app_config.js';
-import { useStorage } from '../notebook/persistence/storage_provider.js';
-import { groupNotebookManifestWrites, WRITE_NOTEBOOK_MANIFEST } from '../notebook/persistence/storage_writer.js';
-import { useNotebookScriptsRegistrySetter } from '../notebook/scripts/notebook_scripts_registry.js';
+import { useStorage } from '../session/persistence/storage_provider.js';
+import { groupSessionManifestWrites, WRITE_SESSION_MANIFEST } from '../session/persistence/storage_writer.js';
+import { useSessionScriptsRegistrySetter } from '../session/scripts/session_scripts_registry.js';
 import { useEmbeddedDatabaseSetup } from '../../platform/database/embedded_database_provider.js';
-import { InvalidNotebook } from '../notebook/persistence/notebook_validation.js';
+import { InvalidSession } from '../session/persistence/session_validation.js';
 import { AppHost, getAppHost } from '../../platform/native_globals.js';
-import { readNotebookBundleFromZip } from '../notebook/persistence/notebook_import.js';
-import { useNotebookImport } from '../notebook/persistence/notebook_import_provider.js';
+import { readSessionBundleFromZip } from '../session/persistence/session_import.js';
+import { useSessionImport } from '../session/persistence/session_import_provider.js';
 import { useHttpClient } from '../../platform/http/http_client_provider.js';
 import {
-    readNotebookBundleFromHttp,
-    type HttpNotebookLoadProgress,
-    type HttpNotebookLoadResult,
-} from '../notebook/persistence/http_notebook_bundle.js';
+    readSessionBundleFromHttp,
+    type HttpSessionLoadProgress,
+    type HttpSessionLoadResult,
+} from '../session/persistence/http_session_bundle.js';
 import { stringifyError } from '../../platform/logger/logger.js';
-import { NotebookImportCard } from '../notebook/ui/notebook_import_card.js';
+import { SessionImportCard } from '../session/ui/session_import_card.js';
 import { IndicatorStatus } from '../../ui/foundations/status_indicator.js';
-import { createDefaultHyperWasmAttachedDatabaseState } from '../notebook/connections/connection_params.js';
+import { createDefaultHyperWasmAttachedDatabaseState } from '../session/connections/connection_params.js';
 import { useAppSettingsReady } from '../config/app_settings_sync.js';
-import { InvalidNotebookRegistryProvider } from '../notebook/persistence/invalid_notebook_registry.js';
-import { useHyperSetup } from '../notebook/connections/hyper/hyper_connection_setup.js';
+import { InvalidSessionRegistryProvider } from '../session/persistence/invalid_session_registry.js';
+import { useHyperSetup } from '../session/connections/hyper/hyper_connection_setup.js';
 import { useInitialMemorySetup } from './initial_memory_setup.js';
-import { NotebookSetupStatus } from '../router/notebook_setup_status.js';
+import { SessionSetupStatus } from '../router/session_setup_status.js';
 import { NarrowScreenWarning, useNarrowScreenWarning } from '../ui/narrow_screen_warning.js';
 
 async function loadFonts(): Promise<void> {
@@ -67,40 +67,40 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const navigate = useRouterNavigate();
     const routeContext = useRouteContext();
     const setupCore = useDashQLCoreSetup();
-    const setupNotebookScripts = useNotebookScriptsSetup();
+    const setupSessionScripts = useSessionScriptsSetup();
     const [storageReader, storageWriter] = useStorage();
     const allocateAttachedDatabase = useAttachedDatabaseStateAllocator();
     const attachConnection = useAttachConnection();
     const [connReg, setConnReg] = useAttachedDatabaseRegistry();
     const dispatchDatabase = useAttachedDatabaseDispatch();
-    const setNotebookScriptsRegistry = useNotebookScriptsRegistrySetter();
+    const setSessionScriptsRegistry = useSessionScriptsRegistrySetter();
     const setupEmbeddedDatabase = useEmbeddedDatabaseSetup();
     const hyperSetup = useHyperSetup();
 
     const appEvents = usePlatformEventListener();
-    const notebookImport = useNotebookImport();
+    const sessionImport = useSessionImport();
     const httpClient = useHttpClient();
     const [embeddedDatabaseStatus, setEmbeddedDatabaseStatus] = React.useState<IndicatorStatus>(IndicatorStatus.None);
-    const [loadedNotebook, setLoadedNotebook] = React.useState<HttpNotebookLoadResult | null>(null);
-    const [loadedNotebookConflict, setLoadedNotebookConflict] = React.useState<{
+    const [loadedSession, setLoadedSession] = React.useState<HttpSessionLoadResult | null>(null);
+    const [loadedSessionConflict, setLoadedSessionConflict] = React.useState<{
         displayLocation: string;
         isNative: boolean;
     } | null>(null);
-    const [loadedNotebookBusy, setLoadedNotebookBusy] = React.useState(false);
-    const [remoteNotebookLoading, setRemoteNotebookLoading] = React.useState<{
+    const [loadedSessionBusy, setLoadedSessionBusy] = React.useState(false);
+    const [remoteSessionLoading, setRemoteSessionLoading] = React.useState<{
         sourceUrl: string;
-        progress: HttpNotebookLoadProgress;
+        progress: HttpSessionLoadProgress;
     } | null>(null);
-    const remoteNotebookAbortRef = React.useRef<AbortController | null>(null);
-    // Normal startup must not replace the route selected by an inline notebook import.
+    const remoteSessionAbortRef = React.useRef<AbortController | null>(null);
+    // Normal startup must not replace the route selected by an inline session import.
     const initialInlineSetupRef = React.useRef<Promise<boolean> | null>(null);
-    // Notebooks whose metadata was refused a load. Surfaced (marked invalid, blocked, deletable) in
-    // the notebook workbench instead of being silently dropped.
-    const [invalidNotebooks, setInvalidNotebooks] = React.useState<Map<string, InvalidNotebook>>(() => new Map());
+    // Sessions whose metadata was refused a load. Surfaced (marked invalid, blocked, deletable) in
+    // the session workbench instead of being silently dropped.
+    const [invalidSessions, setInvalidSessions] = React.useState<Map<string, InvalidSession>>(() => new Map());
     const [loadingProgress, setLoadingProgress] = React.useState<AppLoadingProgress>(() => ({
         restoreConnections: new ProgressCounter(),
         restoreCatalogs: new ProgressCounter(),
-        restoreNotebookScripts: new ProgressCounter(),
+        restoreSessionScripts: new ProgressCounter(),
     }));
     const [setupDone, resolveSetupDone, _rejectSetupDone] = React.useMemo(() => {
         let resolve: () => void;
@@ -113,14 +113,14 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     }, []);
 
     React.useEffect(() => {
-        if (routeContext.notebookSetupStatus === NotebookSetupStatus.OPENING && routeContext.notebookId != null) {
-            navigate({ type: SELECT_NOTEBOOK, value: routeContext.notebookId });
+        if (routeContext.sessionSetupStatus === SessionSetupStatus.OPENING && routeContext.sessionId != null) {
+            navigate({ type: SELECT_SESSION, value: routeContext.sessionId });
         }
-    }, [navigate, routeContext.notebookId, routeContext.notebookSetupStatus]);
+    }, [navigate, routeContext.sessionId, routeContext.sessionSetupStatus]);
 
     useInitialMemorySetup(
-        routeContext.notebookId,
-        routeContext.notebookId == null ? null : resolveNotebookExecutionDatabase(connReg, routeContext.notebookId),
+        routeContext.sessionId,
+        routeContext.sessionId == null ? null : resolveSessionExecutionDatabase(connReg, routeContext.sessionId),
         hyperSetup,
         dispatchDatabase,
         logger,
@@ -134,120 +134,120 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
         traced.debug("Consuming setup event", { "event_type": String(data.type) }, "app_loader");
 
         let remoteAbort: AbortController | null = null;
-        let remoteLoad: Promise<HttpNotebookLoadResult> | null = null;
-        if (data.type === SETUP_NOTEBOOK_URL) {
-            remoteNotebookAbortRef.current?.abort();
+        let remoteLoad: Promise<HttpSessionLoadResult> | null = null;
+        if (data.type === SETUP_SESSION_URL) {
+            remoteSessionAbortRef.current?.abort();
             remoteAbort = new AbortController();
-            remoteNotebookAbortRef.current = remoteAbort;
-            setRemoteNotebookLoading({ sourceUrl: data.value, progress: { phase: 'preparing' } });
-            setLoadedNotebook(null);
-            setLoadedNotebookConflict(null);
-            traced.info('Loading shared notebook', { sourceUrl: data.value }, 'app_loader');
-            remoteLoad = readNotebookBundleFromHttp(
+            remoteSessionAbortRef.current = remoteAbort;
+            setRemoteSessionLoading({ sourceUrl: data.value, progress: { phase: 'preparing' } });
+            setLoadedSession(null);
+            setLoadedSessionConflict(null);
+            traced.info('Loading shared session', { sourceUrl: data.value }, 'app_loader');
+            remoteLoad = readSessionBundleFromHttp(
                 new URL(data.value),
                 httpClient,
                 remoteAbort.signal,
                 progress => {
-                    if (remoteNotebookAbortRef.current === remoteAbort) {
-                        setRemoteNotebookLoading({ sourceUrl: data.value, progress });
+                    if (remoteSessionAbortRef.current === remoteAbort) {
+                        setRemoteSessionLoading({ sourceUrl: data.value, progress });
                     }
                 },
             );
         }
 
-        // Remote notebook I/O can proceed while the application initializes. Import and conflict
+        // Remote session I/O can proceed while the application initializes. Import and conflict
         // detection still wait for setup because they use the initialized storage registry.
         const setup = Promise.all([setupCore("app_setup"), setupDone]);
         const remoteResult = remoteLoad == null ? null : await remoteLoad;
         await setup;
         remoteAbort?.signal.throwIfAborted();
-        if (data.type === SETUP_NOTEBOOK) {
+        if (data.type === SETUP_SESSION) {
             const zipBlob = new Blob([data.value.buffer as ArrayBuffer], { type: 'application/zip' });
-            const bundle = await readNotebookBundleFromZip(zipBlob);
-            const notebookId = await notebookImport.importPortableBundle(bundle, {
+            const bundle = await readSessionBundleFromZip(zipBlob);
+            const sessionId = await sessionImport.importPortableBundle(bundle, {
                 presentation: { mode: 'centered' },
             });
-            if (notebookId != null) {
-                traced.debug("Finished link setup", { notebookId }, "app_loader");
-                navigate({ type: OPEN_LINK_NOTEBOOK, value: notebookId });
+            if (sessionId != null) {
+                traced.debug("Finished link setup", { sessionId }, "app_loader");
+                navigate({ type: OPEN_LINK_SESSION, value: sessionId });
                 return true;
             }
-        } else if (data.type === SETUP_NOTEBOOK_URL) {
+        } else if (data.type === SETUP_SESSION_URL) {
             const result = remoteResult!;
-            if (remoteNotebookAbortRef.current === remoteAbort) {
-                traced.info('Loaded shared notebook', {
-                    notebookId: result.bundle.notebook.notebookId,
+            if (remoteSessionAbortRef.current === remoteAbort) {
+                traced.info('Loaded shared session', {
+                    sessionId: result.bundle.session.sessionId,
                     loadedScriptCount: String(result.loadedScriptCount),
                     indexedScriptCount: String(result.indexedScriptCount),
                     incomplete: String(result.incomplete),
                 }, 'app_loader');
-                const conflictLocation = await notebookImport.findPortableBundleConflict(result.bundle);
+                const conflictLocation = await sessionImport.findPortableBundleConflict(result.bundle);
                 remoteAbort!.signal.throwIfAborted();
-                if (remoteNotebookAbortRef.current !== remoteAbort) return false;
-                traced.info('Checked shared notebook import conflict', {
-                    notebookId: result.bundle.notebook.notebookId,
+                if (remoteSessionAbortRef.current !== remoteAbort) return false;
+                traced.info('Checked shared session import conflict', {
+                    sessionId: result.bundle.session.sessionId,
                     conflict: String(conflictLocation != null),
                     existingLocation: conflictLocation?.displayLocation ?? '',
                 }, 'app_loader');
-                remoteNotebookAbortRef.current = null;
-                setRemoteNotebookLoading(null);
-                setLoadedNotebookConflict(conflictLocation);
-                setLoadedNotebook(result);
+                remoteSessionAbortRef.current = null;
+                setRemoteSessionLoading(null);
+                setLoadedSessionConflict(conflictLocation);
+                setLoadedSession(result);
             }
             return false;
         }
         return false;
     });
 
-    const cancelRemoteNotebookLoad = React.useCallback(() => {
-        remoteNotebookAbortRef.current?.abort();
-        remoteNotebookAbortRef.current = null;
-        setRemoteNotebookLoading(null);
+    const cancelRemoteSessionLoad = React.useCallback(() => {
+        remoteSessionAbortRef.current?.abort();
+        remoteSessionAbortRef.current = null;
+        setRemoteSessionLoading(null);
     }, []);
 
-    const importLoadedNotebook = React.useCallback((choice?: 'replace' | 'create-new') => {
-        if (loadedNotebook == null || loadedNotebookBusy) return;
-        setLoadedNotebookBusy(true);
-        const result = loadedNotebook;
+    const importLoadedSession = React.useCallback((choice?: 'replace' | 'create-new') => {
+        if (loadedSession == null || loadedSessionBusy) return;
+        setLoadedSessionBusy(true);
+        const result = loadedSession;
         const importChoice = choice ?? 'import';
-        logger.info('Importing shared notebook', {
-            notebookId: result.bundle.notebook.notebookId,
+        logger.info('Importing shared session', {
+            sessionId: result.bundle.session.sessionId,
             choice: importChoice,
         }, 'app_loader');
         const importPromise = choice == null
-            ? notebookImport.importPortableBundleWithChoice(result.bundle, 'create-new')
-            : notebookImport.importPortableBundleWithChoice(result.bundle, choice);
-        void importPromise.then(notebookId => {
+            ? sessionImport.importPortableBundleWithChoice(result.bundle, 'create-new')
+            : sessionImport.importPortableBundleWithChoice(result.bundle, choice);
+        void importPromise.then(sessionId => {
             // The user cancelled the import while choosing connections
-            if (notebookId == null) return;
-            logger.info('Imported shared notebook', {
-                sourceNotebookId: result.bundle.notebook.notebookId,
-                notebookId,
+            if (sessionId == null) return;
+            logger.info('Imported shared session', {
+                sourceSessionId: result.bundle.session.sessionId,
+                sessionId,
                 choice: importChoice,
             }, 'app_loader');
-            setLoadedNotebook(null);
-            setLoadedNotebookConflict(null);
-            navigate({ type: OPEN_LINK_NOTEBOOK, value: notebookId });
+            setLoadedSession(null);
+            setLoadedSessionConflict(null);
+            navigate({ type: OPEN_LINK_SESSION, value: sessionId });
         }).catch(error => {
-            logger.error('Failed to import loaded notebook', { error: stringifyError(error) }, 'app_loader');
-        }).finally(() => setLoadedNotebookBusy(false));
-    }, [loadedNotebook, loadedNotebookBusy, logger, navigate, notebookImport]);
+            logger.error('Failed to import loaded session', { error: stringifyError(error) }, 'app_loader');
+        }).finally(() => setLoadedSessionBusy(false));
+    }, [loadedSession, loadedSessionBusy, logger, navigate, sessionImport]);
 
-    const cancelLoadedNotebook = React.useCallback(() => {
-        if (loadedNotebookBusy) return;
-        setLoadedNotebook(null);
-        setLoadedNotebookConflict(null);
-    }, [loadedNotebookBusy]);
+    const cancelLoadedSession = React.useCallback(() => {
+        if (loadedSessionBusy) return;
+        setLoadedSession(null);
+        setLoadedSessionConflict(null);
+    }, [loadedSessionBusy]);
 
     const handleSetupEvent = React.useEffectEvent((data: SetupEventVariant) => {
         const handling = consumeSetupEvent(data).catch(error => {
             if ((error as Error)?.name === 'AbortError') return false;
-            remoteNotebookAbortRef.current = null;
-            setRemoteNotebookLoading(null);
-            logger.error('Failed to open shared notebook', { error: stringifyError(error) }, 'app_loader');
+            remoteSessionAbortRef.current = null;
+            setRemoteSessionLoading(null);
+            logger.error('Failed to open shared session', { error: stringifyError(error) }, 'app_loader');
             return false;
         });
-        if (data.type === SETUP_NOTEBOOK && routeContext.appLoadingStatus === AppLoadingStatus.NOT_STARTED) {
+        if (data.type === SETUP_SESSION && routeContext.appLoadingStatus === AppLoadingStatus.NOT_STARTED) {
             initialInlineSetupRef.current = handling;
         }
         void handling;
@@ -268,7 +268,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const setupAbortRef = React.useRef<AbortController | null>(null);
     React.useEffect(() => () => {
         setupAbortRef.current?.abort();
-        remoteNotebookAbortRef.current?.abort();
+        remoteSessionAbortRef.current?.abort();
     }, []);
     React.useEffect(() => {
         if (config == null || !appSettingsReady || hasStartedSetup.current) {
@@ -318,20 +318,20 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
             }, "app_loader");
 
             // Load the app
-            traced.info("Loading application state and notebooks", {}, "app_loader");
+            traced.info("Loading application state and sessions", {}, "app_loader");
             const loaded = await trackInitialization(
                 "Application state",
-                loadApp(traced, core, storageReader, setConnReg, setNotebookScriptsRegistry, setLoadingProgress),
+                loadApp(traced, core, storageReader, setConnReg, setSessionScriptsRegistry, setLoadingProgress),
             );
 
-            // Surface any notebooks that were refused a load in the selector. This is just an
-            // aggregate count for the log — each refused notebook already logs a WARN with its path
+            // Surface any sessions that were refused a load in the selector. This is just an
+            // aggregate count for the log — each refused session already logs a WARN with its path
             // and reason, so a second WARN here would only duplicate the diagnostic. Keep it at INFO.
-            if (loaded.invalidNotebooks.size > 0) {
-                traced.info("Some notebooks were refused a load", {
-                    count: loaded.invalidNotebooks.size.toString()
+            if (loaded.invalidSessions.size > 0) {
+                traced.info("Some sessions were refused a load", {
+                    count: loaded.invalidSessions.size.toString()
                 }, "app_loader");
-                setInvalidNotebooks(loaded.invalidNotebooks);
+                setInvalidSessions(loaded.invalidSessions);
             }
 
             const totalDuration = performance.now() - totalStartTime;
@@ -346,25 +346,25 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
             traced.info("Finishing setup", {}, "app_loader");
 
             if (await shouldFinishInitialNavigation(initialInlineSetupRef.current)) {
-                let notebookId = selectStartupNotebook(loaded.restoredNotebookIds);
-                if (notebookId == null) {
-                    notebookId = crypto.randomUUID();
+                let sessionId = selectStartupSession(loaded.restoredSessionIds);
+                if (sessionId == null) {
+                    sessionId = crypto.randomUUID();
                     // The embedded engine is a single database, a known embedded connection is reused
                     const embedded = [...loaded.restoredConnections.values()].find(isHyperWasmAttachedDatabase);
-                    if (embedded != null) attachConnection(notebookId, embedded.databaseId);
+                    if (embedded != null) attachConnection(sessionId, embedded.databaseId);
                     const database = embedded ?? allocateAttachedDatabase(
-                        notebookId,
+                        sessionId,
                         { ...createDefaultHyperWasmAttachedDatabaseState(core, connReg.attachedDatabasesBySignature), active: true },
                     );
-                    setupNotebookScripts(notebookId, database, 'Default');
-                    void storageWriter.write(groupNotebookManifestWrites(notebookId), {
-                        type: WRITE_NOTEBOOK_MANIFEST,
-                        value: [notebookId, database.databaseId, [database]],
+                    setupSessionScripts(sessionId, database, 'Default');
+                    void storageWriter.write(groupSessionManifestWrites(sessionId), {
+                        type: WRITE_SESSION_MANIFEST,
+                        value: [sessionId, database.databaseId, [database]],
                     });
                 }
                 navigate({
-                    type: OPEN_LINK_NOTEBOOK,
-                    value: notebookId,
+                    type: OPEN_LINK_SESSION,
+                    value: sessionId,
                 });
             }
             globalThis.__DASHQL_STARTUP__ = {
@@ -386,25 +386,25 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
         });
     }, [appSettingsReady, config]);
 
-    // Delete an invalid notebook: remove its files from storage and drop it from the selector list.
-    // Invalid notebooks never entered the connection/notebook registries, so there is nothing to
+    // Delete an invalid session: remove its files from storage and drop it from the selector list.
+    // Invalid sessions never entered the connection/session registries, so there is nothing to
     // dispatch there — only the persisted files and our local list need cleaning up.
-    const deleteInvalidNotebook = React.useCallback(async (notebookId: string) => {
+    const deleteInvalidSession = React.useCallback(async (sessionId: string) => {
         try {
-            await storageWriter.backend.deleteNotebook(notebookId);
+            await storageWriter.backend.deleteSession(sessionId);
         } catch (e) {
-            logger.error("Failed to delete invalid notebook", { notebookId, error: String(e) }, "app_loader");
+            logger.error("Failed to delete invalid session", { sessionId, error: String(e) }, "app_loader");
         }
-        setInvalidNotebooks(prev => {
-            if (!prev.has(notebookId)) return prev;
+        setInvalidSessions(prev => {
+            if (!prev.has(sessionId)) return prev;
             const next = new Map(prev);
-            next.delete(notebookId);
+            next.delete(sessionId);
             return next;
         });
     }, [storageWriter, logger]);
-    const invalidNotebookRegistry = React.useMemo(
-        () => ({ invalidNotebooks, deleteInvalidNotebook }),
-        [invalidNotebooks, deleteInvalidNotebook],
+    const invalidSessionRegistry = React.useMemo(
+        () => ({ invalidSessions, deleteInvalidSession }),
+        [invalidSessions, deleteInvalidSession],
     );
 
     if (showNarrowScreenWarning) {
@@ -414,35 +414,35 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
         })} />;
     }
 
-    if (remoteNotebookLoading != null) {
-        return <NotebookImportCard
+    if (remoteSessionLoading != null) {
+        return <SessionImportCard
             phase="loading"
-            sourceUrl={remoteNotebookLoading.sourceUrl}
-            progress={remoteNotebookLoading.progress}
-            onClose={cancelRemoteNotebookLoad}
+            sourceUrl={remoteSessionLoading.sourceUrl}
+            progress={remoteSessionLoading.progress}
+            onClose={cancelRemoteSessionLoad}
         />;
     }
-    if (loadedNotebook != null) {
-        return <NotebookImportCard
+    if (loadedSession != null) {
+        return <SessionImportCard
             phase="ready"
-            result={loadedNotebook}
-            conflictLocation={loadedNotebookConflict?.displayLocation ?? null}
-            conflictIsNative={getAppHost() === AppHost.ELECTRON && (loadedNotebookConflict?.isNative ?? false)}
-            busy={loadedNotebookBusy}
-            onImport={() => importLoadedNotebook()}
-            onReplace={() => importLoadedNotebook('replace')}
-            onCreateNew={() => importLoadedNotebook('create-new')}
-            onClose={cancelLoadedNotebook}
+            result={loadedSession}
+            conflictLocation={loadedSessionConflict?.displayLocation ?? null}
+            conflictIsNative={getAppHost() === AppHost.ELECTRON && (loadedSessionConflict?.isNative ?? false)}
+            busy={loadedSessionBusy}
+            onImport={() => importLoadedSession()}
+            onReplace={() => importLoadedSession('replace')}
+            onCreateNew={() => importLoadedSession('create-new')}
+            onClose={cancelLoadedSession}
         />;
     }
 
-    // Setup done and notebook selected? Show main interface
+    // Setup done and session selected? Show main interface
     const pauseAfterSetup = config?.settings?.pauseAfterAppSetup ?? false;
-    if (canShowNotebook(routeContext, pauseAfterSetup)) {
+    if (canShowSession(routeContext, pauseAfterSetup)) {
         return (
-            <InvalidNotebookRegistryProvider value={invalidNotebookRegistry}>
+            <InvalidSessionRegistryProvider value={invalidSessionRegistry}>
                 {props.children}
-            </InvalidNotebookRegistryProvider>
+            </InvalidSessionRegistryProvider>
         );
     } else {
         // Otherwise show the app loading page

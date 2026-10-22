@@ -1,0 +1,129 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dashql/app_session.json",
+  "title": "SessionData",
+  "description": "Version 2 session data structure (dashql-session.json)",
+  "type": "object",
+  "properties": {
+    "formatVersion": {
+      "type": "integer",
+      "enum": [3],
+      "description": "Session persistence format. Only version 3 is supported, version 2 is migrated on read."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Unique session identifier (UUID v4). This is the authoritative identity; the storage location prefix is display-only."
+    },
+    "sessionPath": {
+      "type": "string",
+      "description": "Display-only path (e.g., \"opfs://sessions/<uuid>\" or \"fs://<dir>\"). Not authoritative and may be absent on newly written sessions."
+    },
+    "storageType": {
+      "type": "string",
+      "enum": ["opfs", "native"],
+      "description": "Where this session's files live. Defaults to \"opfs\" when omitted."
+    },
+    "nativePath": {
+      "type": "string",
+      "description": "Absolute directory holding this session's files when storageType is \"native\"."
+    },
+    "name": {
+      "type": "string",
+      "description": "User-supplied session name shown as the primary label in the session bar and selector. Absent (or empty) means the user never named the session, and the UI falls back to the display path."
+    },
+    "mainDatabase": {
+      "$ref": "#/definitions/AttachedDatabase",
+      "description": "Database used for session analysis, catalog operations, and user query execution."
+    },
+    "attachedDatabases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/AttachedDatabase"
+      },
+      "description": "Additional databases attached to the main database. The application's internal compute database is never persisted here."
+    },
+    "metadata": {
+      "$ref": "#/definitions/SessionMetadata",
+      "description": "The session metadata"
+    },
+    "settings": {
+      "$ref": "#/definitions/SessionSettings",
+      "description": "The session settings. Absent in sessions written before settings existed."
+    },
+    "lastModified": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When was last modified"
+    },
+    "lastAccessed": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When was last accessed"
+    }
+  },
+  "required": ["formatVersion", "sessionId", "mainDatabase", "attachedDatabases", "metadata"],
+  "additionalProperties": false,
+  "definitions": {
+    "AttachedDatabase": {
+      "type": "object",
+      "description": "A connection referenced by the session",
+      "properties": {
+        "databaseId": {
+          "type": "string",
+          "description": "The identifier (UUID) of the referenced connection in the connections of the app manifest"
+        },
+        "params": {
+          "$ref": "connection.json#/definitions/ConnectionParams",
+          "description": "A copy of the saved connection parameters. The app manifest is the source of truth, the copy keeps the session folder self-contained."
+        },
+        "paramsDraft": {
+          "$ref": "connection.json#/definitions/ConnectionParams",
+          "description": "Legacy unsaved edits, only read when migrating to global connections. Drafts are kept in the app manifest."
+        }
+      },
+      "required": ["databaseId", "params"],
+      "additionalProperties": false
+    },
+    "SessionOriginType": {
+      "type": "string",
+      "enum": ["FILE", "LOCAL", "HTTP"],
+      "description": "The origin type of the session"
+    },
+    "SessionSettings": {
+      "type": "object",
+      "description": "Session settings",
+      "properties": {
+        "cacheQueryResults": {
+          "type": "boolean",
+          "description": "Whether query results are cached and reused for unchanged queries"
+        }
+      },
+      "required": ["cacheQueryResults"],
+      "additionalProperties": false
+    },
+    "SessionMetadata": {
+      "type": "object",
+      "description": "Session metadata",
+      "properties": {
+        "originType": {
+          "$ref": "#/definitions/SessionOriginType",
+          "description": "The origin type"
+        },
+        "originalFileName": {
+          "type": "string",
+          "description": "The original file name"
+        },
+        "originalHttpUrl": {
+          "type": "string",
+          "description": "The original HTTP URL"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When was created"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

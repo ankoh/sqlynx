@@ -15,12 +15,12 @@ exports_files([
 ])
 
 filegroup(
-    name = "example_notebooks",
+    name = "example_sessions",
     srcs = glob(
-        ["examples/notebooks/**"],
+        ["examples/sessions/**"],
         exclude = [
-            "examples/notebooks/**/.DS_Store",
-            "examples/notebooks/**/cache/**",
+            "examples/sessions/**/.DS_Store",
+            "examples/sessions/**/cache/**",
         ],
         allow_empty = False,
     ),
@@ -34,13 +34,13 @@ js_library(
 )
 
 js_library(
-    name = "example_notebooks_test_data",
+    name = "example_sessions_test_data",
     srcs = glob(
-        ["examples/notebooks/**"],
+        ["examples/sessions/**"],
         exclude = [
-            "examples/notebooks/**/.DS_Store",
-            "examples/notebooks/**/.gitignore",
-            "examples/notebooks/**/cache/**",
+            "examples/sessions/**/.DS_Store",
+            "examples/sessions/**/.gitignore",
+            "examples/sessions/**/cache/**",
         ],
         allow_empty = False,
     ),

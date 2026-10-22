@@ -152,7 +152,7 @@ export class DashQL {
         return new DashQLScriptSession(new Ptr(SCRIPT_SESSION_TYPE, this, native));
     }
 
-    /// Plan current analysis in notebook order; callers prepare and publish sessions explicitly.
+    /// Plan current analysis in script order; callers prepare and publish script sessions explicitly.
     public plan(sessions: readonly DashQLScriptSession[]): FlatBufferPtr<buffers.execution.ExecutionGraph> {
         if (!Array.isArray(sessions)) {
             throw new TypeError('planner sessions must be an array');

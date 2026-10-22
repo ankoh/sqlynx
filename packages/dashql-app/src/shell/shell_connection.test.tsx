@@ -2,12 +2,12 @@ import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 
-import { ConnectionHealth } from '../app/notebook/connections/attached_database_state.js';
-import { AttachedDatabaseRegistry, useAttachedDatabaseRegistry } from '../app/notebook/connections/attached_database_registry.js';
+import { ConnectionHealth } from '../app/session/connections/attached_database_state.js';
+import { AttachedDatabaseRegistry, useAttachedDatabaseRegistry } from '../app/session/connections/attached_database_registry.js';
 import { EXECUTE_QUERY, QUERY_SUCCEEDED, QueryExecutionStatus, QueryType, createQueryExecutionState } from '../query/query_execution_state.js';
 import {
     SHELL_DATABASE_ID,
-    SHELL_NOTEBOOK_ID,
+    SHELL_SESSION_ID,
     ShellConnectionProvider,
     useShellConnection,
 } from './shell_connection.js';
@@ -44,7 +44,7 @@ describe('ShellConnectionProvider', () => {
             </AttachedDatabaseRegistry>
         ));
 
-        expect(registry!.attachedDatabasesByNotebook.get(SHELL_NOTEBOOK_ID)).toEqual({
+        expect(registry!.attachedDatabasesBySession.get(SHELL_SESSION_ID)).toEqual({
             mainDatabaseId: SHELL_DATABASE_ID,
             attachedDatabaseIds: [],
         });

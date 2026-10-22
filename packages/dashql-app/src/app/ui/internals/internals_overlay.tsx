@@ -5,16 +5,16 @@ import { AnchorAlignment, AnchorSide } from '../../../ui/foundations/anchored_po
 import { AnchoredOverlay } from '../../../ui/foundations/anchored_overlay.js';
 import { AppSettings } from './app_settings_view.js';
 import { AISettingsView } from './ai_settings_view.js';
-import { StorageWriterView } from '../../notebook/persistence/ui/storage_writer_view.js';
+import { StorageWriterView } from '../../session/persistence/ui/storage_writer_view.js';
 import { LogViewer } from '../../../ui/logs/log_viewer.js';
 import { OverlaySize } from '../../../ui/foundations/overlay.js';
-import { QueryViewer } from '../../notebook/connections/ui/query_viewer.js';
-import { QueryCacheView } from '../../notebook/persistence/ui/query_cache_view.js';
+import { QueryViewer } from '../../session/connections/ui/query_viewer.js';
+import { QueryCacheView } from '../../session/persistence/ui/query_cache_view.js';
 import { VerticalTabs, VerticalTabVariant } from '../../../ui/foundations/vertical_tabs.js';
 
 interface InternalsViewerProps {
-    /// The active notebook UUID, used by notebook-scoped tabs (e.g. the query cache inspector).
-    notebookId: string | null;
+    /// The active session UUID, used by session-scoped tabs (e.g. the query cache inspector).
+    sessionId: string | null;
     onClose: () => void;
 }
 
@@ -95,10 +95,10 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                     <QueryViewer onClose={props.onClose} />
                 ),
                 [TabKey.StorageWriter]: _props => (
-                    <StorageWriterView notebookId={props.notebookId} onClose={props.onClose} />
+                    <StorageWriterView sessionId={props.sessionId} onClose={props.onClose} />
                 ),
                 [TabKey.QueryCache]: _props => (
-                    <QueryCacheView notebookId={props.notebookId} onClose={props.onClose} />
+                    <QueryCacheView sessionId={props.sessionId} onClose={props.onClose} />
                 ),
                 [TabKey.AISettings]: _props => (
                     <AISettingsView onClose={props.onClose} />
@@ -112,10 +112,10 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
 }
 
 type InternalsViewerOverlayProps = {
-    /// The active notebook UUID, forwarded to notebook-scoped tabs (e.g. the query cache inspector).
-    /// Omitted on setup/loading pages that have no active notebook — the query cache tab then shows
-    /// an empty "no active notebook" state.
-    notebookId?: string | null;
+    /// The active session UUID, forwarded to session-scoped tabs (e.g. the query cache inspector).
+    /// Omitted on setup/loading pages that have no active session — the query cache tab then shows
+    /// an empty "no active session" state.
+    sessionId?: string | null;
     isOpen: boolean;
     onClose: () => void;
     renderAnchor: (p: object) => React.ReactElement;
@@ -137,7 +137,7 @@ export function InternalsViewerOverlay(props: InternalsViewerOverlayProps) {
                 height: OverlaySize.L,
             }}
         >
-            <InternalsViewer notebookId={props.notebookId ?? null} onClose={props.onClose} />
+            <InternalsViewer sessionId={props.sessionId ?? null} onClose={props.onClose} />
         </AnchoredOverlay>
     );
 }

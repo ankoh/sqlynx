@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import { VariantKind } from "../../utils/variant.js";
 import { AppLoadingStatus } from './app_loading_status.js';
-import { NotebookSetupStatus } from './notebook_setup_status.js';
+import { SessionSetupStatus } from './session_setup_status.js';
 import { LoggableException } from '../../platform/logger/logger.js';
 
 export interface RouteContext {
@@ -10,31 +10,31 @@ export interface RouteContext {
     appLoadingStatus: AppLoadingStatus;
     /// Confirmed the finished setup?
     confirmedFinishedSetup: boolean;
-    /// The focused notebook id
-    notebookId: string | null;
-    /// The notebook setup status
-    notebookSetupStatus: NotebookSetupStatus;
+    /// The focused session id
+    sessionId: string | null;
+    /// The session setup status
+    sessionSetupStatus: SessionSetupStatus;
 }
 
-export const NOTEBOOK_PATH = Symbol("NAVIGATE_NOTEBOOK");
+export const SESSION_PATH = Symbol("NAVIGATE_SESSION");
 export const TOOL_PATH = Symbol("NAVIGATE_TOOLS");
 export const FINISH_SETUP = Symbol("FINISH_SETUP");
 export const CONFIRM_FINISHED_SETUP = Symbol("CONFIRM_FINISHED_SETUP");
 export const SKIP_SETUP = Symbol("SKIP_SETUP");
-export const SELECT_NOTEBOOK = Symbol("SELECT_NOTEBOOK");
-export const CHANGE_NOTEBOOK = Symbol("CHANGE_NOTEBOOK");
-export const BEGIN_NOTEBOOK_SETUP = Symbol("BEGIN_NOTEBOOK_SETUP");
-export const CANCEL_NOTEBOOK_SETUP = Symbol("CANCEL_NOTEBOOK_SETUP");
-export const SKIP_NOTEBOOK_SETUP = Symbol("SKIP_NOTEBOOK_SETUP");
-export const OPEN_LINK_NOTEBOOK = Symbol("OPEN_LINK_NOTEBOOK");
-export const OPEN_NOTEBOOK = Symbol("OPEN_NOTEBOOK");
+export const SELECT_SESSION = Symbol("SELECT_SESSION");
+export const CHANGE_SESSION = Symbol("CHANGE_SESSION");
+export const BEGIN_SESSION_SETUP = Symbol("BEGIN_SESSION_SETUP");
+export const CANCEL_SESSION_SETUP = Symbol("CANCEL_SESSION_SETUP");
+export const SKIP_SESSION_SETUP = Symbol("SKIP_SESSION_SETUP");
+export const OPEN_LINK_SESSION = Symbol("OPEN_LINK_SESSION");
+export const OPEN_SESSION = Symbol("OPEN_SESSION");
 
-export function notebookPath(notebookId: string): string {
-    return `/notebooks/${encodeURIComponent(notebookId)}`;
+export function sessionPath(sessionId: string): string {
+    return `/sessions/${encodeURIComponent(sessionId)}`;
 }
 
-export function notebookIdFromPathname(pathname: string): string | null {
-    const match = /^\/notebooks\/([^/]+)\/?$/.exec(pathname);
+export function sessionIdFromPathname(pathname: string): string | null {
+    const match = /^\/sessions\/([^/]+)\/?$/.exec(pathname);
     if (match == null) return null;
     try {
         return decodeURIComponent(match[1]);
@@ -44,18 +44,18 @@ export function notebookIdFromPathname(pathname: string): string | null {
 }
 
 export type RouteTarget =
-    VariantKind<typeof NOTEBOOK_PATH, string | null>
+    VariantKind<typeof SESSION_PATH, string | null>
     | VariantKind<typeof TOOL_PATH, null>
     | VariantKind<typeof FINISH_SETUP, null>
     | VariantKind<typeof CONFIRM_FINISHED_SETUP, boolean>
     | VariantKind<typeof SKIP_SETUP, null>
-    | VariantKind<typeof SELECT_NOTEBOOK, string>
-    | VariantKind<typeof CHANGE_NOTEBOOK, null>
-    | VariantKind<typeof BEGIN_NOTEBOOK_SETUP, string>
-    | VariantKind<typeof CANCEL_NOTEBOOK_SETUP, null>
-    | VariantKind<typeof SKIP_NOTEBOOK_SETUP, null>
-    | VariantKind<typeof OPEN_LINK_NOTEBOOK, string>
-    | VariantKind<typeof OPEN_NOTEBOOK, string>
+    | VariantKind<typeof SELECT_SESSION, string>
+    | VariantKind<typeof CHANGE_SESSION, null>
+    | VariantKind<typeof BEGIN_SESSION_SETUP, string>
+    | VariantKind<typeof CANCEL_SESSION_SETUP, null>
+    | VariantKind<typeof SKIP_SESSION_SETUP, null>
+    | VariantKind<typeof OPEN_LINK_SESSION, string>
+    | VariantKind<typeof OPEN_SESSION, string>
     ;
 
 export function useRouteContext() {
@@ -68,13 +68,13 @@ export function useRouteContext() {
             return {
                 appLoadingStatus: AppLoadingStatus.NOT_STARTED,
                 confirmedFinishedSetup: false,
-                notebookId: notebookIdFromPathname(pathname),
-                notebookSetupStatus: NotebookSetupStatus.NONE,
+                sessionId: sessionIdFromPathname(pathname),
+                sessionSetupStatus: SessionSetupStatus.NONE,
             };
         } else {
             return {
                 ...route,
-                notebookSetupStatus: route.notebookSetupStatus ?? NotebookSetupStatus.NONE,
+                sessionSetupStatus: route.sessionSetupStatus ?? SessionSetupStatus.NONE,
             };
         }
     }, [route, pathname]);
@@ -86,11 +86,11 @@ export function useRouterNavigate() {
     const context = useRouteContext();
     return React.useCallback((route: RouteTarget) => {
         switch (route.type) {
-            case NOTEBOOK_PATH:
-                navigate(route.value == null ? "/" : notebookPath(route.value), {
+            case SESSION_PATH:
+                navigate(route.value == null ? "/" : sessionPath(route.value), {
                     state: {
                         ...context,
-                        notebookId: route.value ?? null,
+                        sessionId: route.value ?? null,
                     }
                 });
                 break;
@@ -114,74 +114,74 @@ export function useRouterNavigate() {
                     state: {
                         appLoadingStatus: AppLoadingStatus.SETUP_DONE,
                         confirmedFinishedSetup: false,
-                        notebookId: null,
-                        notebookSetupStatus: NotebookSetupStatus.NONE,
+                        sessionId: null,
+                        sessionSetupStatus: SessionSetupStatus.NONE,
                     }
                 });
                 break;
-            case SELECT_NOTEBOOK:
-                navigate(notebookPath(route.value), {
+            case SELECT_SESSION:
+                navigate(sessionPath(route.value), {
                     state: {
                         ...context,
-                        notebookId: route.value,
-                        notebookSetupStatus: NotebookSetupStatus.NONE,
+                        sessionId: route.value,
+                        sessionSetupStatus: SessionSetupStatus.NONE,
                     }
                 });
                 break;
-            case OPEN_NOTEBOOK:
-                navigate(notebookPath(route.value), {
+            case OPEN_SESSION:
+                navigate(sessionPath(route.value), {
                     state: {
                         ...context,
-                        notebookId: route.value,
-                        notebookSetupStatus: NotebookSetupStatus.OPENING,
+                        sessionId: route.value,
+                        sessionSetupStatus: SessionSetupStatus.OPENING,
                     }
                 });
                 break;
-            case CHANGE_NOTEBOOK:
+            case CHANGE_SESSION:
                 navigate("/", {
                     state: {
                         ...context,
-                        notebookId: null,
-                        notebookSetupStatus: NotebookSetupStatus.NONE,
+                        sessionId: null,
+                        sessionSetupStatus: SessionSetupStatus.NONE,
                     }
                 });
                 break;
-            case BEGIN_NOTEBOOK_SETUP:
-                navigate(notebookPath(route.value), {
+            case BEGIN_SESSION_SETUP:
+                navigate(sessionPath(route.value), {
                     state: {
                         ...context,
-                        notebookId: route.value,
-                        notebookSetupStatus: NotebookSetupStatus.CONFIGURING,
+                        sessionId: route.value,
+                        sessionSetupStatus: SessionSetupStatus.CONFIGURING,
                     }
                 });
                 break;
-            case CANCEL_NOTEBOOK_SETUP:
+            case CANCEL_SESSION_SETUP:
                 navigate("/", {
                     state: {
                         ...context,
-                        notebookId: null,
-                        notebookSetupStatus: NotebookSetupStatus.NONE,
+                        sessionId: null,
+                        sessionSetupStatus: SessionSetupStatus.NONE,
                     }
                 });
                 break;
-            case SKIP_NOTEBOOK_SETUP:
+            case SKIP_SESSION_SETUP:
                 navigate(location.pathname, {
                     state: {
                         ...context,
-                        notebookSetupStatus: NotebookSetupStatus.NONE,
+                        sessionSetupStatus: SessionSetupStatus.NONE,
                     }
                 });
                 break;
-            case OPEN_LINK_NOTEBOOK:
-                // A notebook arrived via a shared link and has been restored into the registries.
+            case OPEN_LINK_SESSION:
+                // A session arrived via a shared link and has been restored into the registries.
                 // Start the common opening flow atomically so embedded connections can initialize
                 // without briefly showing the connection setup screen.
-                navigate(notebookPath(route.value), {
+                navigate(sessionPath(route.value), {
                     state: {
                         appLoadingStatus: AppLoadingStatus.SETUP_DONE,
                         confirmedFinishedSetup: false,
-                        notebookId: route.value,
-                        notebookSetupStatus: NotebookSetupStatus.OPENING,
+                        sessionId: route.value,
+                        sessionSetupStatus: SessionSetupStatus.OPENING,
                     }
                 });
                 break;

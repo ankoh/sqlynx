@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { SETUP_NOTEBOOK_URL, type SetupEventVariant } from './event.js';
+import { SETUP_SESSION_URL, type SetupEventVariant } from './event.js';
 import { parseClipboardSetup, PlatformEventListener } from './event_listener.js';
 import { TestLogger } from '../logger/test_logger.js';
 
@@ -27,37 +27,37 @@ describe('PlatformEventListener clipboard events', () => {
     }
 
     it.each([
-        'dashql://localhost?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json',
-        'https://dashql.app/?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json',
-        'http://localhost:9002/?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json',
-    ])('accepts a notebook link from %s', link => {
+        'dashql://localhost?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
+        'https://dashql.app/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
+        'http://localhost:9002/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
+    ])('accepts a session link from %s', link => {
         expect(parseClipboardSetup(link)).toEqual({
-            type: 'notebook',
-            value: 'https://example.com/dashql-notebook.json',
+            type: 'session',
+            value: 'https://example.com/dashql-session.json',
         });
     });
 
     it.each([
-        'https://example.com/?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json',
-        'http://dashql.app/?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json',
-        'http://localhost:9003/?notebook=https%3A%2F%2Fexample.com%2Fdashql-notebook.json',
+        'https://example.com/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
+        'http://dashql.app/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
+        'http://localhost:9003/?session=https%3A%2F%2Fexample.com%2Fdashql-session.json',
     ])('rejects an app link from an untrusted origin: %s', link => {
         expect(parseClipboardSetup(link)).toBeNull();
     });
 
-    it('dispatches a notebook setup event from a pasted app URL', async () => {
+    it('dispatches a session setup event from a pasted app URL', async () => {
         const listener = new TestPlatformEventListener(new TestLogger());
         const setupEvents: SetupEventVariant[] = [];
         listener.subscribeSetupEvents(event => setupEvents.push(event));
         await listener.setup();
 
         const { preventDefault, stopPropagation } = paste(
-            'http://localhost:9002/?notebook=http://localhost:9002/static/examples/notebooks/explain/dashql-notebook.json',
+            'http://localhost:9002/?session=http://localhost:9002/static/examples/sessions/explain/dashql-session.json',
         );
 
         expect(setupEvents).toEqual([{
-            type: SETUP_NOTEBOOK_URL,
-            value: 'http://localhost:9002/static/examples/notebooks/explain/dashql-notebook.json',
+            type: SETUP_SESSION_URL,
+            value: 'http://localhost:9002/static/examples/sessions/explain/dashql-session.json',
         }]);
         expect(preventDefault).toHaveBeenCalledOnce();
         expect(stopPropagation).toHaveBeenCalledOnce();

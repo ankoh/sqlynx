@@ -90,7 +90,7 @@ describe('DashQL planner', () => {
         expect(dql!.registeredMemory.size).toBe(0);
     });
 
-    it('preserves notebook order, source SQL, revisions, and independent reads', () => {
+    it('preserves script order, source SQL, revisions, and independent reads', () => {
         const catalog = dql!.createCatalog();
         prepare(catalog, 'create table a (id int); create table b (id int)', 0, true);
         const first = prepare(catalog, '-- description\nselect * from a; select * from b;', 20);

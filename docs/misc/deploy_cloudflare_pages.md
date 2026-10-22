@@ -52,7 +52,7 @@ defines the cross-origin isolation headers and browser cache policy:
     so loaders must not use it as the total of a progress bar (`utils/content_length.ts`).
   - The Electron app protocol and the browser test server serve every `*.wasm.br` the same way. Dev, `reloc` and
     `electron` builds stay uncompressed.
-- Published notebook source under `/static/examples/notebooks/*`: `no-store`, so every open fetches the
+- Published session source under `/static/examples/sessions/*`: `no-store`, so every open fetches the
   current manifest, generated index, and SQL files.
 - HTML entrypoints: stored with mandatory revalidation.
 

@@ -18,12 +18,12 @@ describe('App flavor resolution', () => {
     });
 
     it('adds the flavor parameter to urls that lost it', () => {
-        expect(withFlavorParameter(new URL('https://dashql.app/notebooks/a'), SIDB_FLAVOR)?.href)
-            .toBe('https://dashql.app/notebooks/a?flavor=sidb');
-        expect(withFlavorParameter(new URL('https://dashql.app/notebooks/a?data=x#h'), SIDB_FLAVOR)?.href)
-            .toBe('https://dashql.app/notebooks/a?data=x&flavor=sidb#h');
+        expect(withFlavorParameter(new URL('https://dashql.app/sessions/a'), SIDB_FLAVOR)?.href)
+            .toBe('https://dashql.app/sessions/a?flavor=sidb');
+        expect(withFlavorParameter(new URL('https://dashql.app/sessions/a?data=x#h'), SIDB_FLAVOR)?.href)
+            .toBe('https://dashql.app/sessions/a?data=x&flavor=sidb#h');
         expect(withFlavorParameter(new URL('https://dashql.app/?flavor=sidb'), SIDB_FLAVOR)).toBeNull();
-        expect(withFlavorParameter(new URL('https://dashql.app/notebooks/a'), DASHQL_FLAVOR)).toBeNull();
+        expect(withFlavorParameter(new URL('https://dashql.app/sessions/a'), DASHQL_FLAVOR)).toBeNull();
     });
 });
 

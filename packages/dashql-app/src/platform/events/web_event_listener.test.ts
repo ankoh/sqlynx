@@ -12,7 +12,7 @@ describe('WebPlatformEventListener drag and drop', () => {
         listeners.length = 0;
     });
 
-    it('dispatches only the first dropped notebook and blocks duplicate global handlers', async () => {
+    it('dispatches only the first dropped session and blocks duplicate global handlers', async () => {
         const listener = new WebPlatformEventListener(new TestLogger());
         listeners.push(listener);
         const events: PlatformDragDropEventVariant[] = [];
@@ -44,7 +44,7 @@ describe('WebPlatformEventListener drag and drop', () => {
 
         const event = new Event('drop', { bubbles: true, cancelable: true }) as DragEvent;
         Object.defineProperty(event, 'dataTransfer', {
-            value: { files: { length: 1, item: () => new File(['data'], 'notebook.dashql') } },
+            value: { files: { length: 1, item: () => new File(['data'], 'session.dashql') } },
         });
         window.dispatchEvent(event);
         expect(handler).not.toHaveBeenCalled();

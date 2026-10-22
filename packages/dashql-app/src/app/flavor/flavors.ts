@@ -13,8 +13,8 @@ export interface AppFlavorLogo {
 /// The features of a flavor.
 /// Unlike the app settings, they are fixed by the flavor and can neither be changed by the user nor persisted.
 export interface AppFlavorFeatures {
-    /// Can notebooks be exported as .dashql archives?
-    notebookArchiveExport: boolean;
+    /// Can sessions be exported as .dashql archives?
+    sessionArchiveExport: boolean;
 }
 
 /// A product flavor of the app: brand identity, theme tokens and settings defaults.
@@ -41,7 +41,7 @@ export const DASHQL_FLAVOR: AppFlavor = {
     logo: { symbol: 'dashql', aspectRatio: 1, wordmark: false },
     favicon: null,
     features: {
-        notebookArchiveExport: true,
+        sessionArchiveExport: true,
     },
 };
 
@@ -52,7 +52,7 @@ export const SIDB_FLAVOR: AppFlavor = {
     logo: { symbol: 'sidb', aspectRatio: 2231 / 688, wordmark: true },
     favicon: new URL('../../../static/favicons/sidb/favicon.svg?no-inline', import.meta.url),
     features: {
-        notebookArchiveExport: false,
+        sessionArchiveExport: false,
     },
 };
 

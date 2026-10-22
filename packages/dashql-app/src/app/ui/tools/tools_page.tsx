@@ -3,7 +3,7 @@ import icons from '@ankoh/dashql-svg-symbols';
 import { Link, useLocation } from 'react-router-dom';
 
 import * as styles from './tools_page.module.css';
-import * as shared from '../../notebook/connections/ui/connection_settings.module.css';
+import * as shared from '../../session/connections/ui/connection_settings.module.css';
 
 import { classNames } from '../../../utils/classnames.js';
 import { useRouteContext } from '../../router/router.js';

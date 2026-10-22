@@ -1,0 +1,28 @@
+{
+  "formatVersion": 3,
+  "sessionId": "de246c14-208b-4493-a3c3-89c7c6aba032",
+  "mainDatabase": {
+    "databaseId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9",
+    "params": {
+      "hyper": {
+        "protocol": "WASM",
+        "endpoint": "",
+        "tls": {
+          "clientKeyPath": "",
+          "clientCertPath": "",
+          "caCertsPath": ""
+        },
+        "attachedDatabases": [],
+        "metadata": {},
+        "queryParameters": {}
+      }
+    }
+  },
+  "attachedDatabases": [],
+  "metadata": {
+    "createdAt": "2026-09-03T06:52:24.149Z",
+    "originalFileName": "hyper"
+  },
+  "name": "TPC-H",
+  "storageType": "native"
+}

@@ -10,7 +10,7 @@
 ///
 /// The wasm CPU fallback is single-threaded (rayon degrades to sequential on wasm32),
 /// so a projection of a large embedding table is seconds-scale and MUST NOT block
-/// the UI. Progress is streamed back so the notebook status/log surface can show it.
+/// the UI. Progress is streamed back so the session status/log surface can show it.
 
 // eslint-disable-next-line import/no-unresolved -- resolved by the bundler alias to dependencies/umap-wasm/index.js
 import { createUMAP } from '@dashql/umap-wasm';

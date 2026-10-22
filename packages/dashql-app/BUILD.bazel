@@ -27,14 +27,14 @@ copy_to_directory(
     visibility = ["//visibility:private"],
 )
 
-# Stage the declared notebook examples as Vite public assets. The root filegroup controls exactly
+# Stage the declared session examples as Vite public assets. The root filegroup controls exactly
 # which source files enter this directory; Vite then copies them unchanged into every app bundle.
 copy_to_directory(
-    name = "example_notebooks",
-    srcs = ["//:example_notebooks"],
-    out = "public/static/examples/notebooks",
+    name = "example_sessions",
+    srcs = ["//:example_sessions"],
+    out = "public/static/examples/sessions",
     replace_prefixes = {
-        "examples/notebooks": "",
+        "examples/sessions": "",
     },
     visibility = ["//visibility:private"],
 )
@@ -266,7 +266,7 @@ ts_project(
 _vite_web_deps = [
     ":srcs",
     ":browser_test_files",
-    ":example_notebooks",
+    ":example_sessions",
     ":vite_config",
     "//:node_modules/@ankoh/dashql-core",
     ":dep_protobuf",
@@ -407,7 +407,7 @@ sh_binary(
     srcs = ["utils/dev.sh"],
     args = ["$(location :dev_config)"],
     data = [
-        ":example_notebooks",
+        ":example_sessions",
         ":dev_config",
         "//:node_modules/@ankoh/dashql-core",
         ":dep_protobuf",

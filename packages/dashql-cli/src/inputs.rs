@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 /// The path that reads a script from stdin
 pub const STDIN: &str = "-";
 
-/// Catalog files that notebooks keep next to their scripts, they describe the connection and are not meant to run.
+/// Catalog files that sessions keep next to their scripts, they describe the connection and are not meant to run.
 /// `dashql-functions.sql` and `dashql-relations.sql` are their names in older versions.
 const GENERATED_FILES: [&str; 5] = [
     "dashql-catalog-changes.sql",

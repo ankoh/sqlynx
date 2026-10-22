@@ -1,4 +1,4 @@
-import { STORAGE_SHELL_FOLDER } from '../app/notebook/persistence/storage_backend.js';
+import { STORAGE_SHELL_FOLDER } from '../app/session/persistence/storage_backend.js';
 
 const HISTORY_FILE = 'salesforce-login-history.json';
 const HISTORY_LOCK = 'dashql-salesforce-login-history';

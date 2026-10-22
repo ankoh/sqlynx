@@ -5,7 +5,7 @@ queries are static SQL, and demo mode *synthesizes* random Arrow batches at runt
 (`packages/dashql-app/src/utils/random_data.ts`). No CSV/Parquet is committed anywhere.
 
 `data.dashql.app` hosts real test datasets (à la
-[vega-datasets](https://github.com/vega/vega-datasets)) that notebooks can query over HTTP.
+[vega-datasets](https://github.com/vega/vega-datasets)) that sessions can query over HTTP.
 The immediate consumer is the umap renderer
 (`SELECT * FROM '<dataset-url>' VISUALIZE USING umap (...)`),
 which needs a query result with a `FLOAT[]` vector column — data that is impractical to
@@ -23,7 +23,7 @@ synthesize convincingly.
   subcommand of `dashql-pack` (which owns get.dashql.app: git/semver/minisign/channels). They
   share only ~10 lines of S3-client setup, intentionally duplicated rather than coupled, so the
   release pipeline stays untouched and de-risked.
-- **Immutable versioned paths** on R2, so old notebooks keep working and CDN caching is safe.
+- **Immutable versioned paths** on R2, so old sessions keep working and CDN caching is safe.
 
 ### Why it's hermetic
 
@@ -161,7 +161,7 @@ No Python/pip — Bazel provides the DuckDB CLI and the index generator.
 2. Add the generated `http_file` repo to `use_repo(dashql_datasets, …)` in `MODULE.bazel`. The
    repo name is `dataset_<name>_<as>` with `-`/`.` replaced by `_`.
 3. Pin the source hash (`shasum -a 256`, or `scripts/update_bazel_hashes.py`).
-4. Bump `version` whenever you reshape an existing dataset — paths are immutable, so old notebooks
+4. Bump `version` whenever you reshape an existing dataset — paths are immutable, so old sessions
    keep working against the old version.
 5. `bazel run //packages/dashql-datasets:sync` (or trigger the workflow).
 

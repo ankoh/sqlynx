@@ -95,7 +95,7 @@ SELECT category, revenue FROM sales WHERE fy = 2026 VISUALIZE USING vegalite (ma
 
 Standalone `VISUALIZE`, `VISUALIZE <source> USING ...`, and source-free
 visualization are not part of the grammar. This is a hard cutover; there is no
-legacy compatibility form. The query cannot name another notebook script
+legacy compatibility form. The query cannot name another session script
 through a synthetic relation; all CTEs, projections, filters, and catalog-table
 references needed by the chart must be present in the query itself.
 

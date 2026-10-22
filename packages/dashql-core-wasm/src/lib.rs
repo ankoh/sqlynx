@@ -655,10 +655,10 @@ impl ScriptExecution {
     }
 }
 
-/// The sessions to plan, in notebook order
+/// The script sessions to plan, in script order
 #[wasm_bindgen]
 pub struct SessionList {
-    /// The shared sessions in notebook order
+    /// The shared script sessions in script order
     sessions: Vec<Rc<RefCell<CoreScriptSession>>>,
 }
 

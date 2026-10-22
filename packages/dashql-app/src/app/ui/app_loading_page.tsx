@@ -8,7 +8,7 @@ import { Button, ButtonVariant } from '../../ui/foundations/button.js';
 import { CONFIRM_FINISHED_SETUP, useRouteContext, useRouterNavigate } from '../router/router.js';
 import { getStatusFromProgressCounter, IndicatorStatus, StatusIndicator } from '../../ui/foundations/status_indicator.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
-import { useStorageReader } from '../notebook/persistence/storage_provider.js';
+import { useStorageReader } from '../session/persistence/storage_provider.js';
 import { AppLoadingProgress } from '../loading/app_loading_progress.js';
 import { ParticleFlowBackground } from '../../ui/particle_flow/particle_flow_background.js';
 import { CompactNavBar } from './navbar.js';
@@ -116,7 +116,7 @@ export const AppLoadingPage: React.FC<Props> = (props: Props) => {
                                         />
                                     </div>
                                     <div className={pageStyles.detail_entry_key}>
-                                        Discover Notebooks
+                                        Discover Sessions
                                     </div>
                                     <div className={pageStyles.detail_entry_value}>
                                         <StatusIndicator
@@ -128,7 +128,7 @@ export const AppLoadingPage: React.FC<Props> = (props: Props) => {
                                         />
                                     </div>
                                     <div className={pageStyles.detail_entry_key}>
-                                        Load Notebook Scripts
+                                        Load Session Scripts
                                     </div>
                                     <div className={pageStyles.detail_entry_value}>
                                         <StatusIndicator
@@ -136,7 +136,7 @@ export const AppLoadingPage: React.FC<Props> = (props: Props) => {
                                             fill="black"
                                             width={"14px"}
                                             height={"14px"}
-                                            status={getStatusFromProgressCounter(props.progress.restoreNotebookScripts)}
+                                            status={getStatusFromProgressCounter(props.progress.restoreSessionScripts)}
                                         />
                                     </div>
                                 </div>

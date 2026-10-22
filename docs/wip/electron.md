@@ -325,7 +325,7 @@ flags or weakened Electron security settings.
 ### Phase 2: HyperDB Product Integration
 
 - Make the Electron renderer select HyperDB Wasm as its embedded database.
-- Verify application loading, compute queries, notebook queries, Arrow imports,
+- Verify application loading, compute queries, session queries, Arrow imports,
   persistence, shutdown, and relaunch behavior.
 - Remove Electron dependencies on the native DuckDB protocol and bridge.
 - Measure engine initialization, query latency, peak memory, and the additional

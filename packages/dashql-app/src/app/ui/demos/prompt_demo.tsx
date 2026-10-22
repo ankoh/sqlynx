@@ -6,7 +6,7 @@ import symbols from '@ankoh/dashql-svg-symbols';
 
 import { useDashQLCoreSetup } from '../../providers/core_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
-import { PromptEditor } from '../../notebook/scripts/editor/prompt_editor.js';
+import { PromptEditor } from '../../session/scripts/editor/prompt_editor.js';
 
 const LOG_CTX = "prompt_demo";
 

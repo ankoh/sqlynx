@@ -187,9 +187,9 @@ export function UIExperimentPage(): React.ReactElement {
                     </div>
                     <div className={styles.component_variants}>
                         <div className={styles.actionlist_component}>
-                            <ActionList.List aria-label="Notebooks" leading trailing>
+                            <ActionList.List aria-label="Sessions" leading trailing>
                                 <ActionList.GroupHeading>
-                                    Notebooks
+                                    Sessions
                                 </ActionList.GroupHeading>
                                 <ActionList.ListItem>
                                     <ActionList.Leading>

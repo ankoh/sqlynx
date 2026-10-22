@@ -98,7 +98,7 @@ Processes DashQL visualization AST nodes, extracting:
 
 The query is retained as one AST source span and later executed verbatim. The
 analyzer does not classify visualization sources or resolve them through
-notebook script metadata. Standalone `VISUALIZE`, source-free visualization,
+session script metadata. Standalone `VISUALIZE`, source-free visualization,
 and the former `VISUALIZE <source> USING ...` form are rejected by the parser
 and therefore never reach this pass. The cutover has no compatibility path in
 the analyzer.

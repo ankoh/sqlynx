@@ -3,15 +3,15 @@ import * as buf from "@bufbuild/protobuf";
 
 import { BASE64URL_CODEC } from '../../utils/base64.js';
 import { Logger } from '../logger/logger.js';
-import { PlatformDragDropEventVariant, SETUP_NOTEBOOK, SETUP_NOTEBOOK_URL, SetupEventVariant } from './event.js';
+import { PlatformDragDropEventVariant, SETUP_SESSION, SETUP_SESSION_URL, SetupEventVariant } from './event.js';
 
 const LOG_CTX = "event_listener";
 export const EVENT_QUERY_PARAMETER = "data";
-export const NOTEBOOK_QUERY_PARAMETER = "notebook";
+export const SESSION_QUERY_PARAMETER = "session";
 
 type ClipboardSetup =
     | { type: "event", value: string }
-    | { type: "notebook", value: string };
+    | { type: "session", value: string };
 
 export function parseClipboardSetup(text: string): ClipboardSetup | null {
     let url: URL;
@@ -30,8 +30,8 @@ export function parseClipboardSetup(text: string): ClipboardSetup | null {
 
     const eventData = url.searchParams.get(EVENT_QUERY_PARAMETER);
     if (eventData) return { type: "event", value: eventData };
-    const notebookUrl = url.searchParams.get(NOTEBOOK_QUERY_PARAMETER);
-    return notebookUrl ? { type: "notebook", value: notebookUrl } : null;
+    const sessionUrl = url.searchParams.get(SESSION_QUERY_PARAMETER);
+    return sessionUrl ? { type: "session", value: sessionUrl } : null;
 }
 
 // An oauth subscriber
@@ -57,7 +57,7 @@ export abstract class PlatformEventListener {
     /// The setup subscriber.
     /// There can only be a single navigation subscribe at a single point in time
     private setupSubscriber: ((data: SetupEventVariant) => void) | null = null;
-    /// The queued notebook setup (if any)
+    /// The queued session setup (if any)
     private queuedSetupEvent: SetupEventVariant | null;
     /// The clipboard subscriber
     private clipboardEventHandler: (e: ClipboardEvent) => void;
@@ -106,20 +106,20 @@ export abstract class PlatformEventListener {
     public dispatchAppEvent(event: app_event.AppEventData) {
         if ('oauthRedirect' in event) {
             this.dispatchOAuthRedirect(event.oauthRedirect);
-        } else if ('notebook' in event) {
-            // Decode base64url notebook data to Uint8Array
-            const notebookBuffer = BASE64URL_CODEC.decode(event.notebook);
-            const notebookBytes = new Uint8Array(notebookBuffer);
+        } else if ('session' in event) {
+            // Decode base64url session data to Uint8Array
+            const sessionBuffer = BASE64URL_CODEC.decode(event.session);
+            const sessionBytes = new Uint8Array(sessionBuffer);
             const setupEvent: SetupEventVariant = {
-                type: SETUP_NOTEBOOK,
-                value: notebookBytes
+                type: SETUP_SESSION,
+                value: sessionBytes
             };
             this.dispatchSetup(setupEvent);
         }
     }
 
-    public dispatchNotebookUrl(url: string): void {
-        this.dispatchSetup({ type: SETUP_NOTEBOOK_URL, value: url });
+    public dispatchSessionUrl(url: string): void {
+        this.dispatchSetup({ type: SETUP_SESSION_URL, value: url });
     }
 
     /// Received navigation event
@@ -194,24 +194,24 @@ export abstract class PlatformEventListener {
     /// Subscribe navigation events
     public subscribeSetupEvents(handler: (data: SetupEventVariant) => void): void {
         if (this.setupSubscriber) {
-            this.logger.warn("Tried to register more than one notebook setup subscriber", {}, LOG_CTX);
+            this.logger.warn("Tried to register more than one session setup subscriber", {}, LOG_CTX);
             return;
         }
-        this.logger.info("Subscribing to notebook setup events", {}, LOG_CTX);
+        this.logger.info("Subscribing to session setup events", {}, LOG_CTX);
         this.setupSubscriber = handler;
 
-        // Is there a pending notebook setup?
+        // Is there a pending session setup?
         if (this.queuedSetupEvent != null) {
             const setup = this.queuedSetupEvent;
             this.queuedSetupEvent = null;
-            this.logger.info("Dispatching buffered notebook setup event", {}, LOG_CTX);
+            this.logger.info("Dispatching buffered session setup event", {}, LOG_CTX);
             this.setupSubscriber(setup);
         }
     }
-    /// Unsubscribe from notebook setup events
+    /// Unsubscribe from session setup events
     public unsubscribeSetupEvents(handler: (data: SetupEventVariant) => void): void {
         if (this.setupSubscriber != handler) {
-            this.logger.warn("Tried to unregister a notebook setup subscriber that is not registered", {}, LOG_CTX);
+            this.logger.warn("Tried to unregister a session setup subscriber that is not registered", {}, LOG_CTX);
         } else {
             this.setupSubscriber = null;
         }
@@ -287,10 +287,10 @@ export abstract class PlatformEventListener {
         let eventData: string | null = null;
         if (setup?.type === "event") {
             eventData = setup.value;
-        } else if (setup?.type === "notebook") {
+        } else if (setup?.type === "session") {
             event.preventDefault();
             event.stopPropagation();
-            this.dispatchNotebookUrl(setup.value);
+            this.dispatchSessionUrl(setup.value);
             return;
         } else if (BASE64URL_CODEC.isValidBase64(pastedText)) {
             // Raw base64 event data pasted directly (web opener flow fallback)

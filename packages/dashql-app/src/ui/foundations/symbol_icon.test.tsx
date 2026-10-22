@@ -54,7 +54,7 @@ describe('SymbolIcon', () => {
         expectSymbol(svg, 'x_24');
     });
 
-    it('uses the 16px beaker artwork at notebook-card sizes', () => {
+    it('uses the 16px beaker artwork at session-card sizes', () => {
         const svg = render(<BeakerIcon size={14} />);
 
         expectSymbol(svg, 'beaker_16');
