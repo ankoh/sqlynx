@@ -37,8 +37,8 @@ WASM and catalog lifecycles.
 The synchronization boundary recognizes these notebook-relative paths:
 
 ```text
-dashql-relations.sql
-dashql-functions.sql
+dashql-catalog-relations.sql
+dashql-catalog-functions.sql
 scripts/
   dashql-draft.sql
   <page>/
@@ -49,10 +49,14 @@ It deliberately ignores:
 
 ```text
 dashql-notebook.json
+dashql-catalog-changes.sql
 cache/
 .gitignore
 <any other file>
 ```
+
+`dashql-catalog-changes.sql` records the catalog changes of executed statements. The app owns it and
+re-applies the changes after reloading `dashql-catalog-relations.sql`.
 
 The native notebook directory is resolved through `StorageReader.getNotebookLocation`. Only locations
 with `StorageBackendType.Native` and a `nativePath` receive a watcher.

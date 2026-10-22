@@ -7,7 +7,7 @@ import { NotebookScripts } from '../scripts/notebook_scripts.js';
 import { AttachedDatabaseState } from '../connections/attached_database_state.js';
 import { createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
 import type { StorageBackend, NotebookData, NotebookMetadata as StorageNotebookMetadata } from './storage_backend.js';
-import { STORAGE_SCRIPTS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_CATALOG_CHANGES } from './storage_backend.js';
+import { STORAGE_SCRIPTS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES } from './storage_backend.js';
 
 const LOG_CTX = 'storage_writer';
 
@@ -89,8 +89,8 @@ export type StorageWriteKey = string;
 export const groupNotebookManifestWrites = (notebookId: string) => `${notebookId}/${STORAGE_NOTEBOOK_FILE}`;
 /// Connection updates and name updates must not coalesce, but both serialize per notebook.
 export const groupNotebookConnectionWrites = (notebookId: string) => `${notebookId}/${STORAGE_NOTEBOOK_FILE}:connections`;
-export const groupNotebookSchemaWrites = (notebookId: string) => `${notebookId}/dashql-relations.sql`;
-export const groupNotebookFunctionWrites = (notebookId: string) => `${notebookId}/dashql-functions.sql`;
+export const groupNotebookSchemaWrites = (notebookId: string) => `${notebookId}/${STORAGE_CATALOG_RELATIONS}`;
+export const groupNotebookFunctionWrites = (notebookId: string) => `${notebookId}/${STORAGE_CATALOG_FUNCTIONS}`;
 export const groupNotebookCatalogChangesWrites = (notebookId: string) => `${notebookId}/${STORAGE_CATALOG_CHANGES}`;
 export const groupNotebookWrites = (notebookId: string) => `${notebookId}/${STORAGE_SCRIPTS_FOLDER}`;
 export const groupScriptWrites = (notebookId: string, fileName: string) =>
@@ -520,7 +520,7 @@ export class StorageWriter {
                 await this.backend.saveNotebookSchema(notebookId, schemaSQL);
                 const timeAfter = new Date();
                 const writeDuration = timeAfter.getTime() - timeBefore.getTime();
-                const actualPath = `${notebookId}/dashql-relations.sql`;
+                const actualPath = `${notebookId}/${STORAGE_CATALOG_RELATIONS}`;
                 this.registerWrite(actualPath, schemaSQL.length, writeDuration);
                 this.completedFileContents.set(actualPath, schemaSQL);
                 break;
@@ -538,7 +538,7 @@ export class StorageWriter {
                 await this.backend.saveNotebookFunctions(notebookId, functionsSQL);
                 const timeAfter = new Date();
                 const writeDuration = timeAfter.getTime() - timeBefore.getTime();
-                const actualPath = `${notebookId}/dashql-functions.sql`;
+                const actualPath = `${notebookId}/${STORAGE_CATALOG_FUNCTIONS}`;
                 this.registerWrite(actualPath, functionsSQL.length, writeDuration);
                 this.completedFileContents.set(actualPath, functionsSQL);
                 break;

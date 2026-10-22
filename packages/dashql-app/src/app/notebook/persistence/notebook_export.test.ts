@@ -116,8 +116,8 @@ describe('V2 notebook export', () => {
         const archive = await JSZip.loadAsync(await exportNotebookAsZip(TEST_NOTEBOOK_ID, backend, { withCatalog: true }));
         expect(await archive.file('scripts/01_first.sql')!.async('text')).toBe('SELECT 1');
         expect(await archive.file('scripts/02_second.sql')!.async('text')).toBe('SELECT 2');
-        expect(await archive.file('dashql-relations.sql')!.async('text')).toBe('schema');
-        expect(await archive.file('dashql-functions.sql')!.async('text')).toBe('functions');
+        expect(await archive.file('dashql-catalog-relations.sql')!.async('text')).toBe('schema');
+        expect(await archive.file('dashql-catalog-functions.sql')!.async('text')).toBe('functions');
         expect(archive.file(/scripts\/[^/]+\/[^/]+/)).toEqual([]);
         expect(archive.file('scripts/dashql-draft.sql')).toBeNull();
     });
@@ -144,8 +144,8 @@ describe('V2 notebook export', () => {
         const event = JSON.parse(eventJson) as { notebook: string };
         const archive = await JSZip.loadAsync(BASE64URL_CODEC.decode(event.notebook));
 
-        expect(archive.file('dashql-relations.sql')).toBeNull();
-        expect(archive.file('dashql-functions.sql')).toBeNull();
+        expect(archive.file('dashql-catalog-relations.sql')).toBeNull();
+        expect(archive.file('dashql-catalog-functions.sql')).toBeNull();
     });
 
     it('includes catalogs in shared ZIP exports by default', async () => {
@@ -160,8 +160,8 @@ describe('V2 notebook export', () => {
             new Map(),
         ));
 
-        expect(await archive.file('dashql-relations.sql')!.async('text')).toBe('schema');
-        expect(await archive.file('dashql-functions.sql')!.async('text')).toBe('functions');
+        expect(await archive.file('dashql-catalog-relations.sql')!.async('text')).toBe('schema');
+        expect(await archive.file('dashql-catalog-functions.sql')!.async('text')).toBe('functions');
     });
 
     it('generates new notebook and database UUIDs for shared exports by default', async () => {

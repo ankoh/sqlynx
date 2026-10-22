@@ -4,8 +4,8 @@ import {
     StorageBackendType,
     STORAGE_ATTACHMENTS_FOLDER,
     STORAGE_SCRIPTS_FOLDER,
-    STORAGE_SCRIPT_FUNCTIONS,
-    STORAGE_SCRIPT_SCHEMA,
+    STORAGE_CATALOG_FUNCTIONS,
+    STORAGE_CATALOG_RELATIONS,
 } from './storage_backend.js';
 
 const LOG_CTX = 'native_notebook_sync';
@@ -37,8 +37,8 @@ export function isNotebookContentWatchEvent(event: WatchEvent, dir: string): boo
     return event.paths.some(rawPath => {
         const path = rawPath.replace(/\\/g, '/');
         const relative = path === normalizedDir ? '' : path.slice(normalizedDir.length + 1);
-        return relative === STORAGE_SCRIPT_SCHEMA
-            || relative === STORAGE_SCRIPT_FUNCTIONS
+        return relative === STORAGE_CATALOG_RELATIONS
+            || relative === STORAGE_CATALOG_FUNCTIONS
             || relative === STORAGE_SCRIPTS_FOLDER
             || relative.startsWith(`${STORAGE_SCRIPTS_FOLDER}/`)
             || relative === STORAGE_ATTACHMENTS_FOLDER

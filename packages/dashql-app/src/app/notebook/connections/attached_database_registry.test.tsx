@@ -176,8 +176,8 @@ describe('catalog refresh persistence', () => {
             expect(currentRegistry.attachedDatabases.get(TEST_DATABASE_ID)?.catalogUpdates.tasksFinished.has(1)).toBe(true);
             // The refresh describes the changes of earlier statements, recorded catalog changes are cleared
             expect(writer.getPendingKeysForNotebook(TEST_NOTEBOOK_ID)).toEqual([
-                `${TEST_NOTEBOOK_ID}/dashql-relations.sql`,
-                `${TEST_NOTEBOOK_ID}/dashql-functions.sql`,
+                `${TEST_NOTEBOOK_ID}/dashql-catalog-relations.sql`,
+                `${TEST_NOTEBOOK_ID}/dashql-catalog-functions.sql`,
                 ...(catalogChangesSql === '' ? [] : [`${TEST_NOTEBOOK_ID}/dashql-catalog-changes.sql`]),
             ]);
             await writer.flush();

@@ -11,8 +11,10 @@ import {
     STORAGE_ATTACHMENTS_FOLDER,
     STORAGE_NOTEBOOK_INDEX_FILE,
     STORAGE_SCRIPTS_FOLDER,
-    STORAGE_SCRIPT_FUNCTIONS,
-    STORAGE_SCRIPT_SCHEMA,
+    LEGACY_STORAGE_CATALOG_FUNCTIONS,
+    LEGACY_STORAGE_CATALOG_RELATIONS,
+    STORAGE_CATALOG_FUNCTIONS,
+    STORAGE_CATALOG_RELATIONS,
 } from './storage_backend.js';
 import type { NotebookBundle } from './notebook_bundle.js';
 import { describeNotebookValidationError, validateNotebookData } from './notebook_validation.js';
@@ -94,9 +96,13 @@ export async function readNotebookBundleFromHttp(
     };
     reportFileProgress();
 
+    // Notebooks published by older versions name the catalog files differently
+    const fetchCatalogFile = async (name: string, legacyName: string) =>
+        await fetchBestEffortText(httpClient, new URL(name, baseUrl), MAX_SCRIPT_BYTES, signal)
+        ?? await fetchBestEffortText(httpClient, new URL(legacyName, baseUrl), MAX_SCRIPT_BYTES, signal);
     const optional = await Promise.all([
-        trackFile(fetchBestEffortText(httpClient, new URL(STORAGE_SCRIPT_SCHEMA, baseUrl), MAX_SCRIPT_BYTES, signal)),
-        trackFile(fetchBestEffortText(httpClient, new URL(STORAGE_SCRIPT_FUNCTIONS, baseUrl), MAX_SCRIPT_BYTES, signal)),
+        trackFile(fetchCatalogFile(STORAGE_CATALOG_RELATIONS, LEGACY_STORAGE_CATALOG_RELATIONS)),
+        trackFile(fetchCatalogFile(STORAGE_CATALOG_FUNCTIONS, LEGACY_STORAGE_CATALOG_FUNCTIONS)),
     ]);
 
     const scripts: ScriptData[] = (await Promise.all(index.scripts.map(async script => {

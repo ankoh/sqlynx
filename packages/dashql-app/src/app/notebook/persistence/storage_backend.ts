@@ -22,8 +22,13 @@ export const STORAGE_CACHE_EXTENSION = '.arrow';
 export const STORAGE_CACHE_ACCESS_SUFFIX = '.last_access';
 export const STORAGE_SHELL_FOLDER = 'dashql-shell';
 
-export const STORAGE_SCRIPT_SCHEMA = 'dashql-relations.sql';
-export const STORAGE_SCRIPT_FUNCTIONS = 'dashql-functions.sql';
+/// The relations of the catalog, as the last catalog refresh described them
+export const STORAGE_CATALOG_RELATIONS = 'dashql-catalog-relations.sql';
+/// The functions of the catalog
+export const STORAGE_CATALOG_FUNCTIONS = 'dashql-catalog-functions.sql';
+/// The names of the catalog files of older versions, the file migration renames them
+export const LEGACY_STORAGE_CATALOG_RELATIONS = 'dashql-relations.sql';
+export const LEGACY_STORAGE_CATALOG_FUNCTIONS = 'dashql-functions.sql';
 /// The catalog changes of executed statements since the last catalog refresh
 export const STORAGE_CATALOG_CHANGES = 'dashql-catalog-changes.sql';
 export const STORAGE_SCRIPT_EXTENSION = '.sql';

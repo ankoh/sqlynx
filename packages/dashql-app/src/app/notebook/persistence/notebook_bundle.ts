@@ -1,6 +1,6 @@
 import type { DashQL, FlatBufferPtr, buffers } from '@ankoh/dashql-core';
 import type { DataFileData, NotebookData, ScriptData, StorageBackend } from './storage_backend.js';
-import { StorageBackendType, validateDataFileName } from './storage_backend.js';
+import { STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, StorageBackendType, validateDataFileName } from './storage_backend.js';
 import {
     describeNotebookValidationError,
     isValidUuid,
@@ -19,7 +19,7 @@ export interface NotebookBundle {
 
 export interface NotebookCatalogValidationResult {
     bundle: NotebookBundle;
-    invalidFiles: Array<'dashql-relations.sql' | 'dashql-functions.sql'>;
+    invalidFiles: Array<typeof STORAGE_CATALOG_RELATIONS | typeof STORAGE_CATALOG_FUNCTIONS>;
 }
 
 export function regenerateNotebookDatabaseIds(notebook: NotebookData): NotebookData {
@@ -56,8 +56,8 @@ export function filterInvalidNotebookCatalogs(
         invalidFiles.push(fileName);
         return null;
     };
-    const schemaSql = validate(bundle.schemaSql, 'dashql-relations.sql');
-    const functionsSql = validate(bundle.functionsSql, 'dashql-functions.sql');
+    const schemaSql = validate(bundle.schemaSql, STORAGE_CATALOG_RELATIONS);
+    const functionsSql = validate(bundle.functionsSql, STORAGE_CATALOG_FUNCTIONS);
     return {
         bundle: schemaSql === bundle.schemaSql && functionsSql === bundle.functionsSql
             ? bundle

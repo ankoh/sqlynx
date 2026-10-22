@@ -8,8 +8,8 @@ import {
     STORAGE_ATTACHMENTS_FOLDER,
     validateDataFileName,
     STORAGE_SCRIPTS_FOLDER,
-    STORAGE_SCRIPT_FUNCTIONS,
-    STORAGE_SCRIPT_SCHEMA,
+    STORAGE_CATALOG_FUNCTIONS,
+    STORAGE_CATALOG_RELATIONS,
 } from './storage_backend.js';
 import { BASE64URL_CODEC } from '../../../utils/base64.js';
 import { sanitizeConnectionParamsForSharing } from '../connections/connection_params.js';
@@ -66,10 +66,10 @@ export async function createNotebookZip(
         attachedDatabases: notebookData.attachedDatabases.map(exportDatabase),
     }, null, 2));
     if (schemaSql != null) {
-        zip.file(STORAGE_SCRIPT_SCHEMA, schemaSql);
+        zip.file(STORAGE_CATALOG_RELATIONS, schemaSql);
     }
     if (functionsSql != null) {
-        zip.file(STORAGE_SCRIPT_FUNCTIONS, functionsSql);
+        zip.file(STORAGE_CATALOG_FUNCTIONS, functionsSql);
     }
 
     // Add the flat ordered scripts.

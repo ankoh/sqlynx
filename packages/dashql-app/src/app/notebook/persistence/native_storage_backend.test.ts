@@ -94,4 +94,14 @@ describe('NativeStorageBackend V2 flat storage', () => {
         await renaming.loadNotebook(TEST_NOTEBOOK_ID);
         expect(fsStore.files.get(`${DIR}/old.sql`)).toBe('later');
     });
+    it('renames the catalog files of folders written by older versions', async () => {
+        await backend.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook());
+        fsStore.files.set(`${DIR}/dashql-relations.sql`, 'schema');
+        fsStore.files.set(`${DIR}/dashql-functions.sql`, 'functions');
+        await backend.loadNotebook(TEST_NOTEBOOK_ID);
+        expect(await backend.loadNotebookSchema(TEST_NOTEBOOK_ID)).toBe('schema');
+        expect(await backend.loadNotebookFunctions(TEST_NOTEBOOK_ID)).toBe('functions');
+        expect(fsStore.files.has(`${DIR}/dashql-relations.sql`)).toBe(false);
+        expect(fsStore.files.has(`${DIR}/dashql-functions.sql`)).toBe(false);
+    });
 });

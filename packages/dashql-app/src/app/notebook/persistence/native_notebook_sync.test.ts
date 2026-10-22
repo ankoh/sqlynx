@@ -33,7 +33,7 @@ describe('native notebook sync', () => {
         expect(isNotebookContentWatchEvent(modify(`${DIR}/cache/result.arrow`), DIR)).toBe(false);
         expect(isNotebookContentWatchEvent(modify(`${DIR}/dashql-notebook.json`), DIR)).toBe(false);
         expect(isNotebookContentWatchEvent(modify(`${DIR}/scripts/01_query.sql`), DIR)).toBe(true);
-        expect(isNotebookContentWatchEvent(modify(`${DIR}/dashql-relations.sql`), DIR)).toBe(true);
+        expect(isNotebookContentWatchEvent(modify(`${DIR}/dashql-catalog-relations.sql`), DIR)).toBe(true);
     });
 
     it('normalizes windows paths before filtering cache events', () => {

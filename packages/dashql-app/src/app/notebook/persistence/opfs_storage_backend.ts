@@ -1,4 +1,4 @@
-import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
+import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
 import { migrateNotebookFiles, NOTEBOOK_FILE_RENAMES, type NotebookFileRename } from './notebook_file_migration.js';
@@ -204,7 +204,7 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
     async loadNotebookSchema(notebookId: string): Promise<string | null> {
         try {
             const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), false);
-            const schemaFile = await notebookDir.getFileHandle(STORAGE_SCRIPT_SCHEMA, { create: false });
+            const schemaFile = await notebookDir.getFileHandle(STORAGE_CATALOG_RELATIONS, { create: false });
             const file = await schemaFile.getFile();
             return await file.text();
         } catch {
@@ -214,7 +214,7 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
 
     async saveNotebookSchema(notebookId: string, sql: string): Promise<void> {
         const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), true);
-        const schemaFile = await notebookDir.getFileHandle(STORAGE_SCRIPT_SCHEMA, { create: true });
+        const schemaFile = await notebookDir.getFileHandle(STORAGE_CATALOG_RELATIONS, { create: true });
         const writable = await schemaFile.createWritable();
         await writable.write(sql);
         await writable.close();
@@ -242,7 +242,7 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
     async loadNotebookFunctions(notebookId: string): Promise<string | null> {
         try {
             const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), false);
-            const functionsFile = await notebookDir.getFileHandle(STORAGE_SCRIPT_FUNCTIONS, { create: false });
+            const functionsFile = await notebookDir.getFileHandle(STORAGE_CATALOG_FUNCTIONS, { create: false });
             const file = await functionsFile.getFile();
             return await file.text();
         } catch {
@@ -252,7 +252,7 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
 
     async saveNotebookFunctions(notebookId: string, sql: string): Promise<void> {
         const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), true);
-        const functionsFile = await notebookDir.getFileHandle(STORAGE_SCRIPT_FUNCTIONS, { create: true });
+        const functionsFile = await notebookDir.getFileHandle(STORAGE_CATALOG_FUNCTIONS, { create: true });
         const writable = await functionsFile.createWritable();
         await writable.write(sql);
         await writable.close();

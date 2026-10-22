@@ -9,8 +9,8 @@ Authors keep the existing notebook folder as the source of truth:
 
 ```text
 dashql-notebook.json
-dashql-relations.sql
-dashql-functions.sql
+dashql-catalog-relations.sql
+dashql-catalog-functions.sql
 scripts/
   dashql-draft.sql
   1_main/
@@ -54,8 +54,8 @@ The index is derived, not authoritative:
 
 Fixed optional files are discovered by convention and are not listed in the index:
 
-- `dashql-relations.sql`
-- `dashql-functions.sql`
+- `dashql-catalog-relations.sql`
+- `dashql-catalog-functions.sql`
 - `scripts/dashql-draft.sql`
 
 ## Link And Loading Flow

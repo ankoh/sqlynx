@@ -6,8 +6,10 @@ import {
     STORAGE_ATTACHMENTS_FOLDER,
     validateDataFileName,
     STORAGE_SCRIPTS_FOLDER,
-    STORAGE_SCRIPT_FUNCTIONS,
-    STORAGE_SCRIPT_SCHEMA,
+    LEGACY_STORAGE_CATALOG_FUNCTIONS,
+    LEGACY_STORAGE_CATALOG_RELATIONS,
+    STORAGE_CATALOG_FUNCTIONS,
+    STORAGE_CATALOG_RELATIONS,
 } from './storage_backend.js';
 import type { NotebookBundle, NotebookBundleWriteOptions } from './notebook_bundle.js';
 import { writeNotebookBundle } from './notebook_bundle.js';
@@ -69,8 +71,11 @@ export async function readNotebookBundleFromZip(zipBlob: Blob): Promise<Notebook
         );
     }
 
-    const schema = destinations.get(destinationKey(STORAGE_SCRIPT_SCHEMA));
-    const functions = destinations.get(destinationKey(STORAGE_SCRIPT_FUNCTIONS));
+    // Bundles of older versions name the catalog files differently
+    const schema = destinations.get(destinationKey(STORAGE_CATALOG_RELATIONS))
+        ?? destinations.get(destinationKey(LEGACY_STORAGE_CATALOG_RELATIONS));
+    const functions = destinations.get(destinationKey(STORAGE_CATALOG_FUNCTIONS))
+        ?? destinations.get(destinationKey(LEGACY_STORAGE_CATALOG_FUNCTIONS));
     const scripts: Array<{ name: string; file: JSZip.JSZipObject }> = [];
 
     for (const entry of destinations.values()) {
@@ -157,8 +162,10 @@ function destinationKey(path: string): string {
 function isBundleFile(path: string): boolean {
     const key = destinationKey(path);
     return key === destinationKey(STORAGE_NOTEBOOK_FILE)
-        || key === destinationKey(STORAGE_SCRIPT_SCHEMA)
-        || key === destinationKey(STORAGE_SCRIPT_FUNCTIONS)
+        || key === destinationKey(STORAGE_CATALOG_RELATIONS)
+        || key === destinationKey(STORAGE_CATALOG_FUNCTIONS)
+        || key === destinationKey(LEGACY_STORAGE_CATALOG_RELATIONS)
+        || key === destinationKey(LEGACY_STORAGE_CATALOG_FUNCTIONS)
         || key.startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`)
         || (key.startsWith(`${destinationKey(STORAGE_SCRIPTS_FOLDER)}/`) && key.endsWith('.sql'));
 }

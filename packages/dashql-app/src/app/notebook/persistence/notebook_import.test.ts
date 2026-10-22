@@ -15,8 +15,8 @@ describe('V2 notebook ZIP import', () => {
     it('reads naturally ordered flat scripts and ignores derived files', async () => {
         const bundle = await readNotebookBundleFromZip(await zip({
             [STORAGE_NOTEBOOK_FILE]: JSON.stringify(testNotebook()),
-            'dashql-relations.sql': 'schema',
-            'dashql-functions.sql': 'functions',
+            'dashql-catalog-relations.sql': 'schema',
+            'dashql-catalog-functions.sql': 'functions',
             'scripts/10_last.sql': 'SELECT 10',
             'scripts/2_first.sql': 'SELECT 2',
             'dashql-notebook-index.json': '{"scripts":[]}',
@@ -33,6 +33,16 @@ describe('V2 notebook ZIP import', () => {
                 { name: '10_last.sql', sql: 'SELECT 10' },
             ],
         });
+    });
+
+    it('reads the catalog files of bundles exported by older versions', async () => {
+        const bundle = await readNotebookBundleFromZip(await zip({
+            [STORAGE_NOTEBOOK_FILE]: JSON.stringify(testNotebook()),
+            'dashql-relations.sql': 'schema',
+            'dashql-functions.sql': 'functions',
+        }));
+        expect(bundle.schemaSql).toBe('schema');
+        expect(bundle.functionsSql).toBe('functions');
     });
 
     it.each([
@@ -65,7 +75,7 @@ describe('V2 notebook ZIP import', () => {
         const target = '99999999-8888-4777-8666-555555555555';
         await expect(importNotebookFromZip(await zip({
             [STORAGE_NOTEBOOK_FILE]: JSON.stringify(testNotebook()),
-            'dashql-relations.sql': 'schema',
+            'dashql-catalog-relations.sql': 'schema',
             'scripts/01_query.sql': 'SELECT 1',
         }), backend, { targetNotebookId: target, targetIsFresh: true })).resolves.toBe(target);
 

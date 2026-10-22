@@ -15,8 +15,8 @@ import type { AttachedDatabaseState } from '../connections/attached_database_sta
 import type { StorageWriter } from './storage_writer.js';
 import {
     STORAGE_SCRIPTS_FOLDER,
-    STORAGE_SCRIPT_FUNCTIONS,
-    STORAGE_SCRIPT_SCHEMA,
+    STORAGE_CATALOG_FUNCTIONS,
+    STORAGE_CATALOG_RELATIONS,
 } from './storage_backend.js';
 
 const LOG_CTX = 'native_notebook_sync';
@@ -36,8 +36,8 @@ async function confirmExternalReload(hasPendingWrites: boolean): Promise<Noteboo
 }
 
 function isReloadedStorageKey(notebookId: string, key: string): boolean {
-    return key === `${notebookId}/${STORAGE_SCRIPT_SCHEMA}`
-        || key === `${notebookId}/${STORAGE_SCRIPT_FUNCTIONS}`
+    return key === `${notebookId}/${STORAGE_CATALOG_RELATIONS}`
+        || key === `${notebookId}/${STORAGE_CATALOG_FUNCTIONS}`
         || key === `${notebookId}/${STORAGE_SCRIPTS_FOLDER}`
         || key.startsWith(`${notebookId}/${STORAGE_SCRIPTS_FOLDER}/`);
 }
@@ -53,13 +53,13 @@ function snapshotMatchesCompletedWrite(
 ): boolean {
     const diskFiles = new Map<string, string | null>();
     const memoryFiles = new Map<string, string | null>();
-    diskFiles.set(`${notebookId}/${STORAGE_SCRIPT_SCHEMA}`, schema);
-    diskFiles.set(`${notebookId}/${STORAGE_SCRIPT_FUNCTIONS}`, functions);
+    diskFiles.set(`${notebookId}/${STORAGE_CATALOG_RELATIONS}`, schema);
+    diskFiles.set(`${notebookId}/${STORAGE_CATALOG_FUNCTIONS}`, functions);
     if (connection) {
-        memoryFiles.set(`${notebookId}/${STORAGE_SCRIPT_SCHEMA}`, catalogFileMatchesStorage(connection.catalogRelationScript, null)
+        memoryFiles.set(`${notebookId}/${STORAGE_CATALOG_RELATIONS}`, catalogFileMatchesStorage(connection.catalogRelationScript, null)
             ? null
             : connection.catalogRelationScript.toString());
-        memoryFiles.set(`${notebookId}/${STORAGE_SCRIPT_FUNCTIONS}`, catalogFileMatchesStorage(connection.catalogFunctionScript, null)
+        memoryFiles.set(`${notebookId}/${STORAGE_CATALOG_FUNCTIONS}`, catalogFileMatchesStorage(connection.catalogFunctionScript, null)
             ? null
             : connection.catalogFunctionScript.toString());
     }

@@ -5,7 +5,7 @@ import { generateFunctionScriptHeader } from './catalog_function_sql_generator.j
 import { CatalogSource } from './catalog_sql_generator.js';
 import { publishCatalogBatchSync } from './catalog_batch.js';
 
-import prefetchedHyperFunctionsSql from '../../../../static/catalog/hyper/dashql-functions.sql?raw';
+import prefetchedHyperFunctionsSql from '../../../../static/catalog/hyper/dashql-catalog-functions.sql?raw';
 
 export const PREFETCHED_HYPER_FUNCTIONS_SQL = prefetchedHyperFunctionsSql;
 

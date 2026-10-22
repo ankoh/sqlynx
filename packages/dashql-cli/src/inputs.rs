@@ -8,8 +8,15 @@ use std::path::{Component, Path, PathBuf};
 /// The path that reads a script from stdin
 pub const STDIN: &str = "-";
 
-/// Catalog dumps that notebooks keep next to their scripts, they describe the connection and are not meant to run
-const GENERATED_FILES: [&str; 2] = ["dashql-functions.sql", "dashql-relations.sql"];
+/// Catalog files that notebooks keep next to their scripts, they describe the connection and are not meant to run.
+/// `dashql-functions.sql` and `dashql-relations.sql` are their names in older versions.
+const GENERATED_FILES: [&str; 5] = [
+    "dashql-catalog-changes.sql",
+    "dashql-catalog-functions.sql",
+    "dashql-catalog-relations.sql",
+    "dashql-functions.sql",
+    "dashql-relations.sql",
+];
 
 /// The directory the user invoked the CLI from. Under `bazel run` the process runs in the runfiles tree.
 fn working_directory() -> std::io::Result<PathBuf> {
@@ -122,6 +129,8 @@ mod tests {
             "a.SQL",
             "notes.txt",
             "dashql-relations.sql",
+            "dashql-catalog-relations.sql",
+            "dashql-catalog-changes.sql",
             "sub/c.sql",
             ".hidden/d.sql",
             "node_modules/e.sql",

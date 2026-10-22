@@ -4,8 +4,10 @@ import {
     STORAGE_ATTACHMENTS_FOLDER,
     validateDataFileName,
     STORAGE_SCRIPTS_FOLDER,
-    STORAGE_SCRIPT_FUNCTIONS,
-    STORAGE_SCRIPT_SCHEMA,
+    LEGACY_STORAGE_CATALOG_FUNCTIONS,
+    LEGACY_STORAGE_CATALOG_RELATIONS,
+    STORAGE_CATALOG_FUNCTIONS,
+    STORAGE_CATALOG_RELATIONS,
 } from './storage_backend.js';
 import type { NotebookBundle } from './notebook_bundle.js';
 import { describeNotebookValidationError, validateNotebookData } from './notebook_validation.js';
@@ -122,8 +124,9 @@ export async function readNotebookBundleFromBrowserFolder(
 
     return {
         notebook,
-        schemaSql: getOptionalContent(contents, STORAGE_SCRIPT_SCHEMA),
-        functionsSql: getOptionalContent(contents, STORAGE_SCRIPT_FUNCTIONS),
+        // Folders of older versions name the catalog files differently
+        schemaSql: getOptionalContent(contents, STORAGE_CATALOG_RELATIONS) ?? getOptionalContent(contents, LEGACY_STORAGE_CATALOG_RELATIONS),
+        functionsSql: getOptionalContent(contents, STORAGE_CATALOG_FUNCTIONS) ?? getOptionalContent(contents, LEGACY_STORAGE_CATALOG_FUNCTIONS),
         scripts,
         data: await Promise.all([...destinations.values()]
             .filter(entry => classifyBundlePath(entry.path) === 'data')
@@ -163,8 +166,10 @@ function classifyBundlePath(path: string): 'accept' | 'script' | 'data' | 'ignor
         return 'data';
     }
     if (key === destinationKey(STORAGE_NOTEBOOK_FILE)
-        || key === destinationKey(STORAGE_SCRIPT_SCHEMA)
-        || key === destinationKey(STORAGE_SCRIPT_FUNCTIONS)) {
+        || key === destinationKey(STORAGE_CATALOG_RELATIONS)
+        || key === destinationKey(STORAGE_CATALOG_FUNCTIONS)
+        || key === destinationKey(LEGACY_STORAGE_CATALOG_RELATIONS)
+        || key === destinationKey(LEGACY_STORAGE_CATALOG_FUNCTIONS)) {
         return 'accept';
     }
 

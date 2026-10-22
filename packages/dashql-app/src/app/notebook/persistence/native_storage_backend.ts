@@ -1,4 +1,4 @@
-import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
+import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
 import { migrateNotebookFiles, NOTEBOOK_FILE_RENAMES, type NotebookFileRename } from './notebook_file_migration.js';
@@ -13,7 +13,7 @@ const GITIGNORE_FILE = '.gitignore';
 ///
 /// One directory holds exactly one notebook. Unlike OPFS, there is no `notebooks/<uuid>` nesting and
 /// no manifest file in the directory: the notebook's files (`dashql-notebook.json`,
-/// `dashql-relations.sql`, `dashql-functions.sql`, `scripts/…`) are written *directly* under the
+/// `dashql-catalog-relations.sql`, `dashql-catalog-functions.sql`, `scripts/…`) are written *directly* under the
 /// configured directory. The notebook UUID passed to each method identifies the notebook for the
 /// caller's routing, but does not affect the on-disk layout (the directory already is the notebook).
 ///
@@ -128,7 +128,7 @@ export class NativeStorageBackend implements StorageBackend {
     }
 
     async loadNotebookSchema(_notebookId: string): Promise<string | null> {
-        const schemaFile = await this.abs(STORAGE_SCRIPT_SCHEMA);
+        const schemaFile = await this.abs(STORAGE_CATALOG_RELATIONS);
         if (!(await exists(schemaFile))) {
             return null;
         }
@@ -137,7 +137,7 @@ export class NativeStorageBackend implements StorageBackend {
 
     async saveNotebookSchema(_notebookId: string, sql: string): Promise<void> {
         await this.ensureDir('');
-        const schemaFile = await this.abs(STORAGE_SCRIPT_SCHEMA);
+        const schemaFile = await this.abs(STORAGE_CATALOG_RELATIONS);
         await writeTextFile(schemaFile, sql);
     }
 
@@ -156,7 +156,7 @@ export class NativeStorageBackend implements StorageBackend {
     }
 
     async loadNotebookFunctions(_notebookId: string): Promise<string | null> {
-        const functionsFile = await this.abs(STORAGE_SCRIPT_FUNCTIONS);
+        const functionsFile = await this.abs(STORAGE_CATALOG_FUNCTIONS);
         if (!(await exists(functionsFile))) {
             return null;
         }
@@ -165,7 +165,7 @@ export class NativeStorageBackend implements StorageBackend {
 
     async saveNotebookFunctions(_notebookId: string, sql: string): Promise<void> {
         await this.ensureDir('');
-        const functionsFile = await this.abs(STORAGE_SCRIPT_FUNCTIONS);
+        const functionsFile = await this.abs(STORAGE_CATALOG_FUNCTIONS);
         await writeTextFile(functionsFile, sql);
     }
 

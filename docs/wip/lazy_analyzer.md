@@ -10,8 +10,8 @@ analyzing every notebook script during startup is no longer necessary.
 Ordinary notebook scripts should instead remain unanalyzed after restoration and be analyzed lazily
 when an operation needs analysis. The exception is the connection-owned catalog scripts:
 
-- `dashql-relations.sql`
-- `dashql-functions.sql`
+- `dashql-catalog-relations.sql`
+- `dashql-catalog-functions.sql`
 
 These schema scripts define the catalog used by notebook scripts and must still be analyzed and
 loaded when the notebook opens. Ordinary notebook entries containing DDL are not schema scripts for
@@ -36,7 +36,7 @@ all scripts outdated and immediately calls `analyzeAllScripts`.
 
 When a notebook opens:
 
-- Analyze and load `dashql-relations.sql` and `dashql-functions.sql` eagerly.
+- Analyze and load `dashql-catalog-relations.sql` and `dashql-catalog-functions.sql` eagerly.
 - Restore ordinary notebook scripts and the draft with `outdated: true` and null analysis buffers.
 - Do not analyze ordinary scripts until an explicit operation needs their analysis.
 - Do not trigger hidden analysis from passive rendering or cache-status checks.
