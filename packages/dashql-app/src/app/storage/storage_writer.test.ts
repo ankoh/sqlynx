@@ -302,6 +302,19 @@ describe('storage writer outcomes', () => {
         expect(backend.sessions.size).toBe(0);
     });
 
+    it('drops pending and later writes of a deleted session', async () => {
+        const backend = new SessionTestBackend();
+        backend.sessions.set(TEST_SESSION_ID, testSession());
+        const writer = new StorageWriter(new NullLogger(), backend);
+        const pending = writer.write(groupScriptWrites(TEST_SESSION_ID, 'a.sql'), { type: WRITE_SCRIPT, value: [TEST_SESSION_ID, 'a.sql', 'select 1'] }, 1000);
+        await writer.deleteSession(TEST_SESSION_ID);
+        expect(await pending).toBe(false);
+        expect(await writer.write(groupScriptWrites(TEST_SESSION_ID, 'b.sql'), { type: WRITE_SCRIPT, value: [TEST_SESSION_ID, 'b.sql', 'select 2'] })).toBe(false);
+        await writer.flush();
+        expect(backend.sessions.has(TEST_SESSION_ID)).toBe(false);
+        expect(backend.calls.filter(call => call.startsWith('write:'))).toEqual([]);
+    });
+
     it('patches the copies of a connection and resolves aliases', async () => {
         const backend = new SessionTestBackend();
         const writer = new StorageWriter(new NullLogger(), backend);

@@ -654,7 +654,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         const action = item.isNative ? 'Unlink' : 'Delete';
         if (!window.confirm(`${action} "${item.label}"?${item.isNative ? ' The folder and its files will remain on disk.' : ''}`)) return;
         try {
-            await storageWriter.backend.deleteSession(item.sessionId);
+            await storageWriter.deleteSession(item.sessionId);
         } catch (error) {
             console.error('Failed to delete session from storage:', error);
             return;
@@ -672,7 +672,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
             const next = sessions.find(session => session.sessionId !== item.sessionId);
             if (next != null) navigate({ type: OPEN_SESSION, value: next.sessionId });
         }
-    }, [computationDispatch, deleteSessionScripts, navigate, sessions, props.sessionScripts.sessionId, storageWriter.backend]);
+    }, [computationDispatch, deleteSessionScripts, navigate, sessions, props.sessionScripts.sessionId, storageWriter]);
 
     const openSession = React.useCallback((item: SessionItem) => {
         navigate({ type: SELECT_SESSION, value: item.sessionId });

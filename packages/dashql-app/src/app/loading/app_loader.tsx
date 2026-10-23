@@ -390,7 +390,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     // dispatch there — only the persisted files and our local list need cleaning up.
     const deleteInvalidSession = React.useCallback(async (sessionId: string) => {
         try {
-            await storageWriter.backend.deleteSession(sessionId);
+            await storageWriter.deleteSession(sessionId);
         } catch (e) {
             logger.error("Failed to delete invalid session", { sessionId, error: String(e) }, "app_loader");
         }

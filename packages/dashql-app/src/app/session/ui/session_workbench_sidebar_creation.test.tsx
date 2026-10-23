@@ -75,7 +75,8 @@ const dependencies = {
     }),
     useStorageWriter: () => ({
         write: state.write,
-        backend: { deleteSession: state.deleteSession },
+        deleteSession: state.deleteSession,
+        backend: {},
         cancelPendingWritesForSession: vi.fn(),
     }),
     useComputationDispatch: () => vi.fn(),

@@ -94,7 +94,6 @@ export const DELETE_CONNECTION_ENTRY = Symbol('DELETE_CONNECTION_ENTRY');
 export const WRITE_CONNECTION_FILE = Symbol('WRITE_CONNECTION_FILE');
 export const PATCH_SESSION_CONNECTION = Symbol('PATCH_SESSION_CONNECTION');
 export const WRITE_SCRIPT = Symbol('WRITE_SCRIPT');
-export const DELETE_SESSION = Symbol('DELETE_SESSION');
 export const DELETE_SCRIPT = Symbol('DELETE_SCRIPT');
 export const RENAME_SCRIPT = Symbol('RENAME_SCRIPT');
 export const WRITE_SESSION_SCRIPTS = Symbol('WRITE_SESSION_SCRIPTS');
@@ -120,7 +119,6 @@ export type StorageWriteTaskVariant =
     | VariantKind<typeof WRITE_CONNECTION_FILE, [string, string, string]>
     | VariantKind<typeof PATCH_SESSION_CONNECTION, [string, SessionConnection] | [string, SessionConnection, string[]]>
     | VariantKind<typeof WRITE_SCRIPT, [string, string, string]>
-    | VariantKind<typeof DELETE_SESSION, string>
     | VariantKind<typeof DELETE_SCRIPT, [string, string]>
     | VariantKind<typeof RENAME_SCRIPT, [string, string, string]>
     | VariantKind<typeof WRITE_SESSION_SCRIPTS, [string, SessionScriptList]>
@@ -307,6 +305,8 @@ export class StorageWriter {
     paused: boolean;
     /// Sessions temporarily held by external reload/conflict handling.
     pausedSessions: Set<string>;
+    /// Deleted sessions, their ids are never reused and writes for them are discarded.
+    deletedSessions: Set<string>;
     /// The executions that are currently in flight (used by flush() to await completion).
     inFlight: Set<Promise<void>>;
     /// Latest execution per chain key, so mutations and their index rebuilds cannot overlap.
@@ -325,6 +325,7 @@ export class StorageWriter {
         this.statisticsSubscribers = new Set();
         this.paused = false;
         this.pausedSessions = new Set();
+        this.deletedSessions = new Set();
         this.inFlight = new Set();
         this.chainExecutions = new Map();
         this.completedFileContents = new Map();
@@ -421,6 +422,28 @@ export class StorageWriter {
         }
     }
 
+    /// Delete a session from the storage.
+    /// The pending writes of the session are discarded and writes that already started finish first,
+    /// no write recreates files of the deleted session afterwards.
+    public async deleteSession(sessionId: string): Promise<void> {
+        this.deletedSessions.add(sessionId);
+        this.cancelPendingWritesForSession(sessionId);
+        await this.settle();
+        try {
+            await this.backend.deleteSession(sessionId);
+        } catch (error) {
+            // The session stays in the storage, it may be written again
+            this.deletedSessions.delete(sessionId);
+            throw error;
+        }
+        this.logger.info("Deleted session", { sessionId }, LOG_CTX);
+        for (const path of this.completedFileContents.keys()) {
+            if (storageWriteKeyBelongsToSession(path, sessionId)) {
+                this.completedFileContents.set(path, null);
+            }
+        }
+    }
+
     /// Wait for writes that have already started without flushing pending debounced work.
     public async settle(): Promise<void> {
         while (this.inFlight.size > 0) {
@@ -481,6 +504,10 @@ export class StorageWriter {
     }
 
     protected schedule(key: string, task: StorageWriteTaskVariant, debounceFor: number): Promise<StorageWriteResult> {
+        // Writes that were queued while a session was deleted must not recreate its files
+        if ([...this.deletedSessions].some(sessionId => storageWriteKeyBelongsToSession(key, sessionId))) {
+            return Promise.resolve({ status: 'cancelled' });
+        }
         this.writeKeyGenerations.set(key, this.nextWriteGeneration++);
         // Is there a previous task with the same key?
         const prevTask = this.pendingTasks.get(key);
@@ -895,18 +922,6 @@ export class StorageWriter {
                 this.completedFileContents.set(actualPath, sql);
                 break;
             }
-            case DELETE_SESSION:
-                this.logger.info("Deleting session", {
-                    task: key,
-                    sessionId: task.value
-                }, LOG_CTX);
-                await this.backend.deleteSession(task.value);
-                for (const path of this.completedFileContents.keys()) {
-                    if (storageWriteKeyBelongsToSession(path, task.value)) {
-                        this.completedFileContents.set(path, null);
-                    }
-                }
-                break;
             case DELETE_SCRIPT: {
                 const [sessionId, scriptName] = task.value;
                 this.logger.info("Deleting session script", {
