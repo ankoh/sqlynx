@@ -2,7 +2,7 @@ import * as Immutable from 'immutable';
 import * as dashql from '@ankoh/dashql-core';
 
 import { Logger, stringifyError } from '../../platform/logger/logger.js';
-import { VariantKind } from '../../utils/index.js';
+import { VariantKind } from '../../utils/variant.js';
 import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, SessionSettings, SessionConnection, ConnectionEntry, ConnectionParams, SessionRegistryBackend, SessionScript } from './storage_backend.js';
 import { STORAGE_SCRIPTS_FOLDER, STORAGE_SESSION_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CONNECTIONS_FOLDER, isSessionRegistryBackend } from './storage_backend.js';
 import { SESSION_FORMAT_VERSION } from '../../migration/versions.js';

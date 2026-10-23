@@ -14,7 +14,6 @@ const StorageWriterContext = React.createContext<StorageWriter | null>(null);
 // Storage context for reading
 export interface StorageReader {
     backend: StorageBackend;
-    waitForInitialRestore(): Promise<void>;
     /// The physical location of a session's files (used by the UI for a display path).
     getSessionLocation(sessionId: string): SessionLocation;
     /// The user-facing session order (manifest array order), as session UUIDs. Empty for a bare
@@ -81,10 +80,6 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({ backend: provi
 
         return {
             backend,
-            async waitForInitialRestore(): Promise<void> {
-                // Nothing to wait for in current implementation
-                return Promise.resolve();
-            },
             getSessionLocation(sessionId: string): SessionLocation {
                 if (backend instanceof CompositeStorageBackend) {
                     return backend.getSessionLocation(sessionId);

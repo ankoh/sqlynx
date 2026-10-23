@@ -12,7 +12,7 @@ import {
 } from './hyper_connection_state.js';
 import { Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { HyperConnectorConfig } from '../connector_configs.js';
-import { Dispatch } from '../../../utils/index.js';
+import { Dispatch } from '../../../utils/variant.js';
 import {
     HyperDatabaseChannel,
     HyperDatabaseClient,

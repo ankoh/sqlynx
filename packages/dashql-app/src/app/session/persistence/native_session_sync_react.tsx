@@ -78,7 +78,7 @@ export function readStoredSessionScripts(
     const resolved = resolveSessionScripts(session, scripts.map(script => script.name), main, (connectionId, copy) => {
         const known = registry.connections.get(connectionId);
         if (known != null || copy == null) return known ?? null;
-        const connection = connectionStateFromCopy(main.instance, connectionId, copy, registry.connectionsBySignature);
+        const connection = connectionStateFromCopy(main.instance, connectionId, copy);
         created.push(connection);
         return connection;
     });

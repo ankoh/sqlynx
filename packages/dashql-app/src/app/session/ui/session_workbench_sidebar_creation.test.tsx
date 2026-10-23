@@ -50,7 +50,6 @@ const dependencies = {
     useDynamicConnectionDispatch: () => [{
         connections: state.connections,
         attachedDatabasesBySession: state.attachedDatabasesBySession,
-        connectionsBySignature: new Map(),
         connectionsByType: connectionsByType(),
     }, state.dispatchDatabase],
     useAttachedDatabaseStateAllocator: () => state.allocateDatabase,

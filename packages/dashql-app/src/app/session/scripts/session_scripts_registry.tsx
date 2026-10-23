@@ -3,7 +3,6 @@ import * as React from 'react';
 import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptData, destroySessionScripts, reduceSessionScripts, sessionConnectionIds, sessionScriptListWrite } from './session_scripts.js';
 import { Dispatch } from '../../../utils/variant.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
-import { CONNECTOR_TYPES, ConnectorType } from '../../connections/connector_info.js';
 import { createDefaultConnectionParamsForConnector } from '../../connections/connection_params.js';
 import { useStorageWriter } from '../../storage/storage_provider.js';
 import { syncSessionConnections, useConnectionRegistrySetter } from '../../connections/connection_registry.js';
@@ -31,14 +30,11 @@ export interface SessionScriptsRegistry {
     sessionScriptsMap: Map<string, SessionScripts>;
     /// The index to find the sessions with scripts that analyze with a connection (connectionId -> sessionIds)
     sessionScriptsByConnection: Map<string, string[]>;
-    /// The index to find scripts associated with a connection type (arrays of sessionIds)
-    sessionScriptsByConnectionType: string[][];
 }
 
-export type SessionScriptsInput = SessionScripts;
 export type SetSessionScriptsRegistryAction = React.SetStateAction<SessionScriptsRegistry>;
 export type SessionScriptsAllocator = (
-    scripts: SessionScriptsInput,
+    scripts: SessionScripts,
     catalogFunctionScript: DashQLScript,
 ) => [string, SessionScripts];
 export type ModifySessionScripts = (action: SessionScriptsAction) => Promise<SessionScripts | null> | void;
@@ -55,7 +51,6 @@ export const SessionScriptsRegistryProvider: React.FC<React.PropsWithChildren<Pr
     const [reg, setReg] = React.useState<SessionScriptsRegistry>(() => ({
         sessionScriptsMap: new Map(),
         sessionScriptsByConnection: new Map(),
-        sessionScriptsByConnectionType: CONNECTOR_TYPES.map(() => []),
     }));
     return (
         <SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider value={setReg}>
@@ -96,7 +91,7 @@ export function useSessionScriptsRegistrySetter(): Dispatch<SetSessionScriptsReg
 export function useSessionScriptsAllocator(): SessionScriptsAllocator {
     const storage = useStorageWriter();
     const setReg = React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!;
-    return React.useCallback((state: SessionScriptsInput, catalogFunctionScript: DashQLScript) => {
+    return React.useCallback((state: SessionScripts, catalogFunctionScript: DashQLScript) => {
         const sessionId = state.sessionId;
         const scripts: SessionScripts = { ...state };
 
@@ -109,7 +104,6 @@ export function useSessionScriptsAllocator(): SessionScriptsAllocator {
             for (const connectionId of sessionConnectionIds(scripts)) {
                 addSessionScriptsForConnection(reg, connectionId, sessionId);
             }
-            reg.sessionScriptsByConnectionType[state.connectorInfo.connectorType].push(sessionId);
             reg.sessionScriptsMap.set(sessionId, scripts);
             return { ...reg };
         });
@@ -196,9 +190,6 @@ export function removeSessionScriptsFromRegistry(reg: SessionScriptsRegistry, se
     for (const connectionId of sessionConnectionIds(entry)) {
         removeSessionScriptsForConnection(reg, connectionId, sessionId);
     }
-    const connectorType = entry.connectorInfo.connectorType;
-    reg.sessionScriptsByConnectionType[connectorType] =
-        reg.sessionScriptsByConnectionType[connectorType].filter(id => id !== sessionId);
     return { ...reg };
 }
 
@@ -265,7 +256,7 @@ export function useSessionScripts(id: string | null): [SessionScripts | null, Mo
                     sessionId: id,
                     actionType: action.type.description ?? action.type.toString(),
                 }, LOG_CTX);
-                const next = reduceSessionScripts(prev, action, storageWriter, logger, true);
+                const next = reduceSessionScripts(prev, action, storageWriter, logger);
                 reg.sessionScriptsMap.set(sessionId, next);
                 reindexSessionScriptConnections(reg, prev, next);
                 changed ||= next !== prev;
@@ -337,7 +328,7 @@ export function useConnectionScriptsDispatch(): ModifyConnectionSessionScripts {
                 for (const sessionId of [...(reg.sessionScriptsByConnection.get(conn) ?? [])]) {
                     const prev = reg.sessionScriptsMap.get(sessionId);
                     if (prev) {
-                        const next = reduceSessionScripts(prev, action, storage, logger, true);
+                        const next = reduceSessionScripts(prev, action, storage, logger);
                         reg.sessionScriptsMap.set(sessionId, next);
                         reindexSessionScriptConnections(reg, prev, next);
                         changed ||= next !== prev;

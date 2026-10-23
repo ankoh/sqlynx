@@ -1222,11 +1222,11 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const createConnection = React.useCallback((connector: ConnectorType) => {
         setCreateConnectionOpen(false);
         const params = createDefaultConnectionParamsForConnector(CONNECTOR_INFOS[connector]);
-        const initialDatabase = dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params, databaseRegistry.connectionsBySignature);
+        const initialDatabase = dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params);
         const database = allocateConnection({ ...initialDatabase, active: true });
         connectionSettingsAnchorRef.current = createConnectionButtonRef.current;
         setConnectionOverlayDatabaseId(database.connectionId);
-    }, [allocateConnection, databaseRegistry.connectionsBySignature, dependencies, props.sessionScripts.instance]);
+    }, [allocateConnection, dependencies, props.sessionScripts.instance]);
 
     /// Delete a connection that no session uses
     const deleteConnection = React.useCallback((connectionId: string) => {
@@ -1241,8 +1241,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         const sessionId = crypto.randomUUID();
         const params = createDefaultConnectionParamsForConnector(CONNECTOR_INFOS[connector]);
         const initialDatabase = connector === ConnectorType.HYPER
-            ? dependencies.createDefaultHyperWasmConnectionState(props.sessionScripts.instance, databaseRegistry.connectionsBySignature)
-            : dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params, databaseRegistry.connectionsBySignature);
+            ? dependencies.createDefaultHyperWasmConnectionState(props.sessionScripts.instance)
+            : dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params);
         // The session is committed now; settings must not switch its initialized script dialect.
         const database = allocateDatabase(sessionId, { ...initialDatabase, active: true });
         setupSessionScripts(sessionId, database);
@@ -1252,7 +1252,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
-    }, [allocateDatabase, databaseRegistry.connectionsBySignature, dependencies, navigate, props.closeAfterSelection, props.sessionScripts.instance, setupSessionScripts, storageWriter]);
+    }, [allocateDatabase, dependencies, navigate, props.closeAfterSelection, props.sessionScripts.instance, setupSessionScripts, storageWriter]);
 
     const closeConnectionOverlay = React.useCallback(() => {
         setConnectionOverlayDatabaseId(null);

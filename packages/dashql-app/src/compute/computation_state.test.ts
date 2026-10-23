@@ -206,7 +206,7 @@ describe('ComputationState', () => {
             type: COMPUTATION_FROM_QUERY_RESULT,
             value: [1, inputTable, inputTableColumns, tableLifetime],
         };
-        const output = reduceComputationState(state, action, memory, logger);
+        const output = reduceComputationState(state, action, memory);
         expect(Object.entries(output.tableComputations).length).toEqual(1);
         expect(output.tableComputations[1].dataTable).toEqual(inputTable);
         expect(output.tableComputations[1].dataTableFieldsByName).toEqual(inputTableFieldIndex);
@@ -230,15 +230,15 @@ describe('ComputationState', () => {
         state = reduceComputationState(state, {
             type: SET_RESULT_SEARCH_PATTERN,
             value: [1, 'columns', 'score'],
-        }, memory, logger);
+        }, memory);
         state = reduceComputationState(state, {
             type: COLUMN_SEARCH_SUCCEEDED,
             value: [1, dataFrame, 1, [1]],
-        }, memory, logger);
+        }, memory);
         state = reduceComputationState(state, {
             type: SET_RESULT_SEARCH_PATTERN,
             value: [1, 'columns', 'sc'],
-        }, memory, logger);
+        }, memory);
 
         expect(state.tableComputations[1].columnSearch.pending).toBe(true);
         expect(state.tableComputations[1].columnSearch.requestedPattern).toBe('sc');
@@ -257,7 +257,7 @@ describe('ComputationState', () => {
         state = reduceComputationState(state, {
             type: SET_RESULT_SEARCH_PATTERN,
             value: [1, 'data', '10'],
-        }, memory, logger);
+        }, memory);
 
         state = reduceComputationState(state, {
             type: DATA_SEARCH_SUCCEEDED,
@@ -268,7 +268,7 @@ describe('ComputationState', () => {
                 version: new ComputationStateVersion(2, 7),
                 requestId: 1,
             }],
-        }, memory, logger);
+        }, memory);
 
         expect(state.tableComputations[1].version).toEqual(new ComputationStateVersion(2, 7));
         expect(state.tableComputations[1].dataSearch.matchingRows).toEqual(new Map([[2, [1]], [3, [1]]]));
@@ -323,7 +323,7 @@ describe('ComputationState', () => {
         state = reduceComputationState(state, {
             type: UMAP_COMPUTATION_SUCCEEDED,
             value: [1, projectedTable, projectedFrame, projectedColumns],
-        }, memory, logger);
+        }, memory);
 
         const ts = state.tableComputations[1];
         // The coordinate columns are present on the swapped-in data table.
@@ -349,7 +349,7 @@ describe('ComputationState', () => {
             type: DELETE_COMPUTATION,
             value: [1],
         };
-        const output = reduceComputationState(state, action, memory, logger);
+        const output = reduceComputationState(state, action, memory);
         expect(Object.entries(output.tableComputations).length).toEqual(0);
         expect(tableLifetime.signal.aborted).toBe(true);
     });
@@ -363,16 +363,16 @@ describe('ComputationState', () => {
         state = reduceComputationState(state, {
             type: COMPUTATION_FROM_QUERY_RESULT,
             value: [1, inputTable, inputTableColumns, new AbortController()],
-        }, memory, logger);
+        }, memory);
         state = reduceComputationState(state, {
             type: CREATED_DATA_FRAME,
             value: [1, previousFrame],
-        }, memory, logger);
+        }, memory);
 
         state = reduceComputationState(state, {
             type: COMPUTATION_FROM_QUERY_RESULT,
             value: [1, inputTable, inputTableColumns, new AbortController()],
-        }, memory, logger);
+        }, memory);
 
         expect(state.tableComputations[1].dataFrame).toBeNull();
         expect(memory.getRegisteredDataFrames().has(previousFrame)).toBe(false);
@@ -407,7 +407,7 @@ describe('ComputationState', () => {
                 },
             };
 
-            state = reduceComputationState(state, schedulingAction, memory, logger);
+            state = reduceComputationState(state, schedulingAction, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(1);
             expect(state.schedulerTasks[42].type).toEqual(TABLE_FILTERING_TASK);
             expect(state.schedulerTasks[42].taskId).toEqual(42);
@@ -426,14 +426,14 @@ describe('ComputationState', () => {
                     completedAt: new Date(),
                 }],
             };
-            state = reduceComputationState(state, updateAction, memory, logger);
+            state = reduceComputationState(state, updateAction, memory);
             expect(state.tableComputations[1].tasks.filteringTask?.progress.status).toEqual(TaskStatus.TASK_SUCCEEDED);
 
             const deleteTask: ComputationAction = {
                 type: UNREGISTER_SCHEDULER_TASK,
                 value: state.schedulerTasks[42],
             };
-            state = reduceComputationState(state, deleteTask, memory, logger);
+            state = reduceComputationState(state, deleteTask, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(0);
             expect(memory.getRegisteredDataFrames().size).toEqual(1);
             expect(state.tableComputations[1].tasks.filteringTask).not.toBeNull();
@@ -469,7 +469,7 @@ describe('ComputationState', () => {
                 },
             };
 
-            state = reduceComputationState(state, schedulingAction, memory, logger);
+            state = reduceComputationState(state, schedulingAction, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(1);
             expect(state.schedulerTasks[42].type).toEqual(TABLE_ORDERING_TASK);
             expect(state.schedulerTasks[42].taskId).toEqual(42);
@@ -487,14 +487,14 @@ describe('ComputationState', () => {
                     completedAt: new Date(),
                 }],
             };
-            state = reduceComputationState(state, updateAction, memory, logger);
+            state = reduceComputationState(state, updateAction, memory);
             expect(state.tableComputations[1].tasks.orderingTask?.progress.status).toEqual(TaskStatus.TASK_SUCCEEDED);
 
             const deleteTask: ComputationAction = {
                 type: UNREGISTER_SCHEDULER_TASK,
                 value: state.schedulerTasks[42],
             };
-            state = reduceComputationState(state, deleteTask, memory, logger);
+            state = reduceComputationState(state, deleteTask, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(0);
             expect(memory.getRegisteredDataFrames().size).toEqual(1);
             expect(state.tableComputations[1].tasks.orderingTask).not.toBeNull();
@@ -523,7 +523,7 @@ describe('ComputationState', () => {
                 },
             };
 
-            state = reduceComputationState(state, schedulingAction, memory, logger);
+            state = reduceComputationState(state, schedulingAction, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(1);
             expect(state.schedulerTasks[42].type).toEqual(TABLE_AGGREGATION_TASK);
             expect(state.schedulerTasks[42].taskId).toEqual(42);
@@ -535,7 +535,7 @@ describe('ComputationState', () => {
                 type: UNREGISTER_SCHEDULER_TASK,
                 value: state.schedulerTasks[42],
             };
-            state = reduceComputationState(state, deleteTask, memory, logger);
+            state = reduceComputationState(state, deleteTask, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(0);
             expect(memory.getRegisteredDataFrames().size).toEqual(1);
             expect(state.tableComputations[1].tasks.tableAggregationTask).not.toBeNull();
@@ -573,7 +573,7 @@ describe('ComputationState', () => {
                 },
             };
 
-            state = reduceComputationState(state, schedulingAction, memory, logger);
+            state = reduceComputationState(state, schedulingAction, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(1);
             expect(state.schedulerTasks[42].type).toEqual(SYSTEM_COLUMN_COMPUTATION_TASK);
             expect(state.schedulerTasks[42].taskId).toEqual(42);
@@ -590,7 +590,7 @@ describe('ComputationState', () => {
                 type: UNREGISTER_SCHEDULER_TASK,
                 value: state.schedulerTasks[42],
             };
-            state = reduceComputationState(state, deleteTask, memory, logger);
+            state = reduceComputationState(state, deleteTask, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(0);
             expect(memory.getRegisteredDataFrames().size).toEqual(2);
             expect(state.tableComputations[1].tasks.systemColumnTask).not.toBeNull();
@@ -628,7 +628,7 @@ describe('ComputationState', () => {
                 },
             };
 
-            state = reduceComputationState(state, schedulingAction, memory, logger);
+            state = reduceComputationState(state, schedulingAction, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(1);
             expect(state.schedulerTasks[42].type).toEqual(COLUMN_AGGREGATION_TASK);
             expect(state.schedulerTasks[42].taskId).toEqual(42);
@@ -645,7 +645,7 @@ describe('ComputationState', () => {
                 type: UNREGISTER_SCHEDULER_TASK,
                 value: state.schedulerTasks[42],
             };
-            state = reduceComputationState(state, deleteTask, memory, logger);
+            state = reduceComputationState(state, deleteTask, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(0);
             expect(memory.getRegisteredDataFrames().size).toEqual(2);
             expect(state.tableComputations[1].tasks.columnAggregationTasks[1]).not.toBeNull();
@@ -697,7 +697,7 @@ describe('ComputationState', () => {
                 },
             };
 
-            state = reduceComputationState(state, schedulingAction, memory, logger);
+            state = reduceComputationState(state, schedulingAction, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(1);
             expect(state.schedulerTasks[42].type).toEqual(FILTERED_COLUMN_AGGREGATION_TASK);
             expect(state.schedulerTasks[42].taskId).toEqual(42);
@@ -718,7 +718,7 @@ describe('ComputationState', () => {
                 type: UNREGISTER_SCHEDULER_TASK,
                 value: state.schedulerTasks[42],
             };
-            state = reduceComputationState(state, deleteTask, memory, logger);
+            state = reduceComputationState(state, deleteTask, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(0);
             expect(memory.getRegisteredDataFrames().size).toEqual(4);
             expect(state.tableComputations[1].tasks.filteredColumnAggregationTasks[1]).not.toBeNull();
@@ -753,7 +753,7 @@ describe('ComputationState', () => {
                 }],
             };
 
-            state = reduceComputationState(state, filterSucceeded, memory, logger);
+            state = reduceComputationState(state, filterSucceeded, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(0);
             expect(state.tableComputations[1].filterTable?.version.filter).toEqual(10);
             expect(state.tableComputations[1].version.filter).toEqual(10); // State version unchanged (already incremented when task was scheduled)
@@ -780,7 +780,7 @@ describe('ComputationState', () => {
                 }],
             };
 
-            state = reduceComputationState(state, staleFilterSucceeded, memory, logger);
+            state = reduceComputationState(state, staleFilterSucceeded, memory);
             expect(state.tableComputations[1].version.filter).toEqual(11);
             expect(state.tableComputations[1].filterTable).toBeNull();
             expect(memory.getRegisteredDataFrames().size).toEqual(0);
@@ -813,7 +813,7 @@ describe('ComputationState', () => {
                 }],
             };
 
-            state = reduceComputationState(state, currentFilterSucceeded, memory, logger);
+            state = reduceComputationState(state, currentFilterSucceeded, memory);
             expect(state.tableComputations[1].version.filter).toEqual(10); // State unchanged (already incremented when task was scheduled)
             expect(state.tableComputations[1].filterTable?.version.filter).toEqual(10);
             expect(state.tableComputations[1].orderingTable).toBeNull(); // Ordering cleared because filter changed
@@ -861,7 +861,7 @@ describe('ComputationState', () => {
                 }],
             };
 
-            state = reduceComputationState(state, orderingSucceeded, memory, logger);
+            state = reduceComputationState(state, orderingSucceeded, memory);
             expect(state.tableComputations[1].version.filter).toEqual(10); // Ordering doesn't change filter version
             expect(state.tableComputations[1].dataFrame).toBe(inputDataFrame);
             expect(state.tableComputations[1].dataTable).toBe(inputTable);
@@ -889,7 +889,7 @@ describe('ComputationState', () => {
             };
             memory.acquire(orderingDataFrame);
 
-            state = reduceComputationState(state, { type: CLEAR_TABLE_ORDERING, value: 1 }, memory, logger);
+            state = reduceComputationState(state, { type: CLEAR_TABLE_ORDERING, value: 1 }, memory);
 
             expect(state.tableComputations[1].dataTableOrdering).toEqual([]);
             expect(state.tableComputations[1].orderingTable).toBeNull();
@@ -934,7 +934,7 @@ describe('ComputationState', () => {
                     version: state.tableComputations[1].version,
                     dataSearchRequestId: null,
                 }],
-            }, memory, logger);
+            }, memory);
 
             expect(state.tableComputations[1].dataTableOrdering).toEqual([]);
             expect(state.tableComputations[1].orderingTable).toBeNull();
@@ -965,7 +965,7 @@ describe('ComputationState', () => {
                 }],
             };
 
-            state = reduceComputationState(state, staleOrderingSucceeded, memory, logger);
+            state = reduceComputationState(state, staleOrderingSucceeded, memory);
             expect(state.tableComputations[1].version.filter).toEqual(11);
             expect(state.tableComputations[1].orderingTable).toBeNull();
             expect(state.tableComputations[1].dataFrame).toBe(inputDataFrame);
@@ -1047,7 +1047,7 @@ describe('ComputationState', () => {
                 )],
             };
 
-            state = reduceComputationState(state, aggregationSucceeded, memory, logger);
+            state = reduceComputationState(state, aggregationSucceeded, memory);
             expect(Object.entries(state.schedulerTasks).length).toEqual(0);
             expect(state.tableComputations[1].filteredColumnAggregates[1]).toBeNull();
             expect(state.tableComputations[1].filteredColumnAggregatesOutdated[1]).toEqual(true);
@@ -1064,7 +1064,7 @@ describe('ComputationState', () => {
                     new ComputationStateVersion(0, 10),
                 )],
             };
-            state = reduceComputationState(state, currentAggregationSucceeded, memory, logger);
+            state = reduceComputationState(state, currentAggregationSucceeded, memory);
             expect(state.tableComputations[1].filteredColumnAggregates[1]?.filterVersion.filter).toEqual(10);
             expect(state.tableComputations[1].filteredColumnAggregatesOutdated[1]).toEqual(false);
             expect(state.tableComputations[1].tasks.filteredColumnAggregationTasks[1]?.progress.status).toEqual(TaskStatus.TASK_SUCCEEDED);

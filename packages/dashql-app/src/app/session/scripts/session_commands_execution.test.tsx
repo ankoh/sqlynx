@@ -15,7 +15,7 @@ describe('global session execution feedback', () => {
     const execute = vi.fn();
     const resolveMain = vi.fn();
     const sessionScripts = {
-        sessionId: 'session', connectorInfo: { features: { executeQueryAction: true } }, settings: { cacheQueryResults: false },
+        sessionId: 'session', settings: { cacheQueryResults: false },
         scriptFocus: { fileName: '01_query.sql' },
         scriptRefs: { '01_query.sql': { scriptId: 1, fileName: '01_query.sql' } },
         scriptOrder: ['01_query.sql'],

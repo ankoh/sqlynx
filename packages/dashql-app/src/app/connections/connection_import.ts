@@ -1,14 +1,12 @@
 import * as dashql from '@ankoh/dashql-core';
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
-import { computeConnectionSignatureFromDetails, ConnectionStateDetailsVariant } from './connection_state_details.js';
+import { ConnectionStateDetailsVariant } from './connection_state_details.js';
 import { LoggableException } from '../../platform/logger/logger.js';
 import { CONNECTOR_INFOS, ConnectorInfo, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import { ConnectionHealth, ConnectionState, ConnectionStatus, createConnectionMetrics, normalizeConnectionName } from './connection_state.js';
 import { generateCatalogScriptHeader, CatalogSource } from './catalog_sql_generator.js';
 import { generateFunctionScriptHeader } from './catalog_function_sql_generator.js';
-import { DefaultHasher } from '../../utils/hash_default.js';
-import { ConnectionSignatureMap, newConnectionSignature } from './connection_signature.js';
 import { QueryExecutionState } from './query_execution_state.js';
 import { getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';
 const LOG_CTX = "connection";
@@ -63,11 +61,7 @@ export function decodeConnectionFromProto(conn: connection.Connection, sessionId
     }
 }
 
-export function restoreConnectionState(instance: dashql.DashQL, connectionId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap, paramsDraft?: ConnectionParams, name?: string): ConnectionState {
-    const hasher = new DefaultHasher();
-    computeConnectionSignatureFromDetails(details, hasher);
-    const sig = newConnectionSignature(hasher, connSigs, null);
-
+export function restoreConnectionState(instance: dashql.DashQL, connectionId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, paramsDraft?: ConnectionParams, name?: string): ConnectionState {
     let catalog: ReturnType<dashql.DashQL['createCatalog']> | null = null;
     let catalogRelationScript: ReturnType<dashql.DashQL['createScript']> | null = null;
     let catalogFunctionScript: ReturnType<dashql.DashQL['createScript']> | null = null;
@@ -81,7 +75,6 @@ export function restoreConnectionState(instance: dashql.DashQL, connectionId: st
         catalogFunctionScript?.destroy();
         catalogRelationScript?.destroy();
         catalog?.destroy();
-        connSigs.delete(sig.signatureString);
         throw error;
     }
     const restoredCatalog = catalog;
@@ -95,7 +88,6 @@ export function restoreConnectionState(instance: dashql.DashQL, connectionId: st
         connectionStatus: ConnectionStatus.NOT_STARTED,
         connectionHealth: ConnectionHealth.NOT_STARTED,
         connectorInfo: info,
-        connectionSignature: sig,
         details: details,
         params: getConnectionParamsFromStateDetails(details)!,
         paramsDraft: paramsDraft == null ? undefined : structuredClone(paramsDraft),

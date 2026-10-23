@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { CatalogUpdateTaskStatus, CatalogUpdateVariant, isCatalogRefreshRunning, reduceCatalogAction, type CatalogUpdateTaskState } from './catalog_update_state.js';
 import {
@@ -67,20 +67,19 @@ describe('reduceCatalogAction', () => {
                     restoredAt: null,
                 },
             } as unknown as ConnectionState;
-            const storage = {} as any;
-            state = reduceCatalogAction(state, { type: UPDATE_CATALOG, value: [7, task(7)] }, storage);
-            state = reduceCatalogAction(state, { type: UPDATE_CATALOG, value: [8, task(8)] }, storage);
+            state = reduceCatalogAction(state, { type: UPDATE_CATALOG, value: [7, task(7)] });
+            state = reduceCatalogAction(state, { type: UPDATE_CATALOG, value: [8, task(8)] });
             if (newerFinishedFirst) {
-                state = reduceCatalogAction(state, { type: CATALOG_UPDATE_SUCCEEDED, value: [8] }, storage);
+                state = reduceCatalogAction(state, { type: CATALOG_UPDATE_SUCCEEDED, value: [8] });
             }
-            state = reduceCatalogAction(state, action, storage);
+            state = reduceCatalogAction(state, action);
             expect(state.catalogUpdates.tasksRunning.has(7)).toBe(false);
             expect(state.catalogUpdates.tasksFinished.has(7)).toBe(true);
             expect(state.catalogUpdates.currentFullRefresh).toBe(8);
             expect(state.catalogUpdates.lastFullRefresh).toBe(newerFinishedFirst ? 8 : 6);
             expect(isCatalogRefreshRunning(state)).toBe(!newerFinishedFirst);
             if (!newerFinishedFirst) {
-                state = reduceCatalogAction(state, { type: CATALOG_UPDATE_SUCCEEDED, value: [8] }, storage);
+                state = reduceCatalogAction(state, { type: CATALOG_UPDATE_SUCCEEDED, value: [8] });
             }
             expect(state.catalogUpdates.currentFullRefresh).toBe(8);
             expect(state.catalogUpdates.lastFullRefresh).toBe(8);
@@ -114,17 +113,15 @@ describe('reduceCatalogAction', () => {
                 restoredAt: null,
             },
         } as unknown as ConnectionState;
-        const storage = { write: vi.fn() };
 
         const next = reduceCatalogAction(state, {
             type: CATALOG_UPDATE_PARTIALLY_SUCCEEDED,
             value: [7, error],
-        }, storage as any);
+        });
 
         const finished = next.catalogUpdates.tasksFinished.get(7)!;
         expect(finished.status).toBe(CatalogUpdateTaskStatus.PARTIALLY_SUCCEEDED);
         expect(finished.error).toBe(error);
         expect(next.catalogUpdates.tasksRunning.has(7)).toBe(false);
-        expect(storage.write).not.toHaveBeenCalled();
     });
 });

@@ -1,58 +1,45 @@
 import { describe, it, expect } from 'vitest';
 import { SessionScriptsRegistry, addSessionScriptsForConnection, removeSessionScriptsFromRegistry } from './session_scripts_registry.js';
 import { SessionScripts } from './session_scripts.js';
-import { ConnectorType } from '../../connections/connector_info.js';
 
-// removeSessionScriptsFromRegistry only reads sessionScriptsMap, the connections of the scripts and
-// entry.connectorInfo.connectorType, so a tiny stand-in SessionScripts is enough — no Wasm needed.
-function scripts(sessionId: string, connectorType: ConnectorType, connectionId: string = `connection-${sessionId}`): SessionScripts {
-    return { sessionId, connectionId, connectorInfo: { connectorType }, scripts: {} } as unknown as SessionScripts;
+// removeSessionScriptsFromRegistry only reads sessionScriptsMap and the connections of the scripts,
+// so a tiny stand-in SessionScripts is enough — no Wasm needed.
+function scripts(sessionId: string, connectionId: string = `connection-${sessionId}`): SessionScripts {
+    return { sessionId, connectionId, scripts: {} } as unknown as SessionScripts;
 }
 
-function registry(entries: Array<[string, ConnectorType]>): SessionScriptsRegistry {
+function registry(sessionIds: string[]): SessionScriptsRegistry {
     const reg: SessionScriptsRegistry = {
         sessionScriptsMap: new Map(),
         sessionScriptsByConnection: new Map(),
-        sessionScriptsByConnectionType: [[], [], [], []],
     };
-    for (const [sessionId, connectorType] of entries) {
-        reg.sessionScriptsMap.set(sessionId, scripts(sessionId, connectorType));
+    for (const sessionId of sessionIds) {
+        reg.sessionScriptsMap.set(sessionId, scripts(sessionId));
         addSessionScriptsForConnection(reg, `connection-${sessionId}`, sessionId);
-        reg.sessionScriptsByConnectionType[connectorType].push(sessionId);
     }
     return reg;
 }
 
 describe('removeSessionScriptsFromRegistry', () => {
-    it('drops the entry from all three indices', () => {
-        const reg = registry([['a', ConnectorType.HYPER]]);
+    it('drops the entry from both indices', () => {
+        const reg = registry(['a']);
         const next = removeSessionScriptsFromRegistry(reg, 'a');
 
         expect(next.sessionScriptsMap.has('a')).toBe(false);
         expect(next.sessionScriptsByConnection.has('connection-a')).toBe(false);
-        expect(next.sessionScriptsByConnectionType[ConnectorType.HYPER]).not.toContain('a');
     });
 
-    it('leaves sibling sessions of the same connector type intact', () => {
-        const reg = registry([['a', ConnectorType.HYPER], ['b', ConnectorType.HYPER]]);
+    it('leaves sibling sessions intact', () => {
+        const reg = registry(['a', 'b']);
         const next = removeSessionScriptsFromRegistry(reg, 'a');
 
         expect(next.sessionScriptsMap.has('a')).toBe(false);
         expect(next.sessionScriptsMap.has('b')).toBe(true);
         expect(next.sessionScriptsByConnection.get('connection-b')).toEqual(['b']);
-        expect(next.sessionScriptsByConnectionType[ConnectorType.HYPER]).toEqual(['b']);
-    });
-
-    it('only touches the type index of the removed session', () => {
-        const reg = registry([['a', ConnectorType.HYPER], ['t', ConnectorType.TRINO]]);
-        const next = removeSessionScriptsFromRegistry(reg, 'a');
-
-        expect(next.sessionScriptsByConnectionType[ConnectorType.HYPER]).toEqual([]);
-        expect(next.sessionScriptsByConnectionType[ConnectorType.TRINO]).toEqual(['t']);
     });
 
     it('is a no-op for an unknown session id (returns the same reference)', () => {
-        const reg = registry([['a', ConnectorType.HYPER]]);
+        const reg = registry(['a']);
         const next = removeSessionScriptsFromRegistry(reg, 'missing');
 
         expect(next).toBe(reg);
@@ -62,9 +49,8 @@ describe('removeSessionScriptsFromRegistry', () => {
     it('keeps the other sessions of a shared connection', () => {
         const reg = registry([]);
         for (const sessionId of ['a', 'b']) {
-            reg.sessionScriptsMap.set(sessionId, scripts(sessionId, ConnectorType.TRINO, 'shared'));
+            reg.sessionScriptsMap.set(sessionId, scripts(sessionId, 'shared'));
             addSessionScriptsForConnection(reg, 'shared', sessionId);
-            reg.sessionScriptsByConnectionType[ConnectorType.TRINO].push(sessionId);
         }
         expect(reg.sessionScriptsByConnection.get('shared')).toEqual(['a', 'b']);
         const next = removeSessionScriptsFromRegistry(reg, 'a');

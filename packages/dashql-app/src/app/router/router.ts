@@ -17,7 +17,6 @@ export interface RouteContext {
 }
 
 export const SESSION_PATH = Symbol("NAVIGATE_SESSION");
-export const TOOL_PATH = Symbol("NAVIGATE_TOOLS");
 export const FINISH_SETUP = Symbol("FINISH_SETUP");
 export const CONFIRM_FINISHED_SETUP = Symbol("CONFIRM_FINISHED_SETUP");
 export const SKIP_SETUP = Symbol("SKIP_SETUP");
@@ -45,7 +44,6 @@ export function sessionIdFromPathname(pathname: string): string | null {
 
 export type RouteTarget =
     VariantKind<typeof SESSION_PATH, string | null>
-    | VariantKind<typeof TOOL_PATH, null>
     | VariantKind<typeof FINISH_SETUP, null>
     | VariantKind<typeof CONFIRM_FINISHED_SETUP, boolean>
     | VariantKind<typeof SKIP_SETUP, null>
@@ -91,13 +89,6 @@ export function useRouterNavigate() {
                     state: {
                         ...context,
                         sessionId: route.value ?? null,
-                    }
-                });
-                break;
-            case TOOL_PATH:
-                navigate("/tool", {
-                    state: {
-                        ...context,
                     }
                 });
                 break;

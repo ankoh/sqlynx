@@ -80,7 +80,7 @@ function state(names = ['1_alpha.sql', '2_beta.sql', '3_gamma.sql'], main: Scrip
 }
 
 function reduce(current: SessionScripts, action: Parameters<typeof reduceSessionScripts>[1], writer?: RecordingWriter) {
-    return reduceSessionScripts(current, action, writer ?? new RecordingWriter(logger, new SessionTestBackend()), logger, true);
+    return reduceSessionScripts(current, action, writer ?? new RecordingWriter(logger, new SessionTestBackend()), logger);
 }
 
 describe('V2 flat session script mutations', () => {
@@ -92,12 +92,12 @@ describe('V2 flat session script mutations', () => {
             { type: RENAME_SCRIPT, value: { fileName: '1_alpha.sql', newFileName: 'offline' } },
             { type: CREATE_SCRIPT, value: { index: 1 } },
         ] as Parameters<typeof reduceSessionScripts>[1][]) {
-            current = reduceSessionScripts(current, action, writer, logger, false);
+            current = reduceSessionScripts(current, action, writer, logger);
         }
         expect(current.name).toBe('Offline session');
         current = reduceSessionScripts(current, {
             type: DELETE_SCRIPT, value: current.scriptOrder[0],
-        }, writer, logger, false);
+        }, writer, logger);
         expect(writer.records.some(task => task.type.description === 'WRITE_SESSION_PROPERTIES')).toBe(true);
         expect(writer.records.some(task => task.type.description === 'WRITE_SCRIPT')).toBe(true);
         expect(writer.records.some(task => task.type.description === 'RENAME_SCRIPT')).toBe(true);
@@ -108,13 +108,13 @@ describe('V2 flat session script mutations', () => {
     it('persists settings together with the name and skips unchanged settings', () => {
         const writer = new RecordingWriter(logger, new SessionTestBackend());
         let current = state();
-        current = reduceSessionScripts(current, { type: UPDATE_SESSION_SETTINGS, value: { cacheQueryResults: true } }, writer, logger, false);
+        current = reduceSessionScripts(current, { type: UPDATE_SESSION_SETTINGS, value: { cacheQueryResults: true } }, writer, logger);
         expect(current.settings).toEqual({ cacheQueryResults: true });
         expect(writer.records[writer.records.length - 1]).toEqual({
             type: WRITE_SESSION_PROPERTIES, value: [current.sessionId, { name: 'Test', settings: { cacheQueryResults: true } }],
         });
         const writes = writer.records.length;
-        expect(reduceSessionScripts(current, { type: UPDATE_SESSION_SETTINGS, value: { cacheQueryResults: true } }, writer, logger, false)).toBe(current);
+        expect(reduceSessionScripts(current, { type: UPDATE_SESSION_SETTINGS, value: { cacheQueryResults: true } }, writer, logger)).toBe(current);
         expect(writer.records).toHaveLength(writes);
     });
 
@@ -143,7 +143,7 @@ describe('V2 flat session script mutations', () => {
             scriptBuffers: null,
             scriptCompletion: null,
             scriptPendingDiff: null,
-        } }, writer, logger, false);
+        } }, writer, logger);
         expect(writer.records).toContainEqual(expect.objectContaining({
             value: [current.sessionId, '1_alpha.sql', 'SELECT 42'],
         }));

@@ -1,16 +1,15 @@
 import * as dashql from '@ankoh/dashql-core';
 import type * as app_session from '@ankoh/dashql-jsonschema/app_session.js';
 
-import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR, ConnectorInfo } from './connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR, ConnectorInfo, getConnectorInfoForParams } from './connector_info.js';
 import { ConnectionHealth, ConnectionStateWithoutId, ConnectionStatus, createConnectionMetrics } from './connection_state.js';
-import { computeNewConnectionSignatureFromDetails, ConnectionStateDetailsVariant } from './connection_state_details.js';
+import { ConnectionStateDetailsVariant } from './connection_state_details.js';
 import { createHyperConnectionParamsSignature } from './hyper/hyper_connection_params.js';
 import { createHyperConnectionStateDetails } from './hyper/hyper_connection_state.js';
 import { createSalesforceConnectionParamsSignature } from './salesforce/salesforce_connection_params.js';
 import { createSalesforceConnectionStateDetails } from './salesforce/salesforce_connection_state.js';
 import { createTrinoConnectionParamsSignature } from './trino/trino_connection_params.js';
 import { createTrinoConnectionStateDetails } from './trino/trino_connection_state.js';
-import { newConnectionSignature, ConnectionSignatureMap } from './connection_signature.js';
 import { generateCatalogScriptHeader, CatalogSource } from './catalog_sql_generator.js';
 import { generateFunctionScriptHeader } from './catalog_function_sql_generator.js';
 
@@ -57,13 +56,6 @@ export function connectionParamsShareEqual(left: ConnectionParams, right: Connec
 /// builtins of Hyper and stay persisted.
 export function connectionCatalogIsDurable(params: ConnectionParams): boolean {
     return !('hyper' in params && params.hyper.protocol === 'WASM');
-}
-
-export function getConnectionInfoFromParams(params: ConnectionParams) {
-    if ('trino' in params) return CONNECTOR_INFOS[ConnectorType.TRINO];
-    if ('hyper' in params) return CONNECTOR_INFOS[ConnectorType.HYPER];
-    if ('salesforce' in params) return CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD];
-    return undefined;
 }
 
 export function getConnectionStateDetailsFromParams(params: ConnectionParams): ConnectionStateDetailsVariant | null {
@@ -151,10 +143,9 @@ export function createConnectionParamsSignature(params: ConnectionParams): any {
     return null;
 }
 
-export function createConnectionStateFromParams(dql: dashql.DashQL, params: ConnectionParams, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
-    const info = getConnectionInfoFromParams(params)!;
+export function createConnectionStateFromParams(dql: dashql.DashQL, params: ConnectionParams): ConnectionStateWithoutId {
+    const info = getConnectorInfoForParams(params)!;
     const details = getConnectionStateDetailsFromParams(params)!;
-    const sig = computeNewConnectionSignatureFromDetails(details);
 
     const catalog = dql.createCatalog();
     const catalogRelationScript = dql.createScript(catalog);
@@ -167,7 +158,6 @@ export function createConnectionStateFromParams(dql: dashql.DashQL, params: Conn
         connectionStatus: ConnectionStatus.NOT_STARTED,
         connectionHealth: ConnectionHealth.NOT_STARTED,
         connectorInfo: info,
-        connectionSignature: newConnectionSignature(sig, connSigs, null),
         metrics: createConnectionMetrics(),
         details,
         params: structuredClone(params),
@@ -190,16 +180,9 @@ export function createConnectionStateFromParams(dql: dashql.DashQL, params: Conn
     };
 }
 
-export function createDefaultHyperWasmConnectionState(
-    dql: dashql.DashQL,
-    connSigs: ConnectionSignatureMap,
-): ConnectionStateWithoutId {
+export function createDefaultHyperWasmConnectionState(dql: dashql.DashQL): ConnectionStateWithoutId {
     const connector = CONNECTOR_INFOS[ConnectorType.HYPER];
-    return createConnectionStateFromParams(
-        dql,
-        createDefaultConnectionParamsForConnector(connector),
-        connSigs,
-    );
+    return createConnectionStateFromParams(dql, createDefaultConnectionParamsForConnector(connector));
 }
 
 export function createDefaultConnectionParamsForConnector(connector: ConnectorInfo): ConnectionParams {

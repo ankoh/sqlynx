@@ -23,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 
 import { ConnectionHealth, ConnectionState } from '../../../connections/connection_state.js';
-import { getSelectedScriptRef, getSelectedScriptRefs, SessionScripts, type ScriptData, SELECT_SCRIPT, CREATE_SCRIPT, DELETE_SCRIPT, RENAME_SCRIPT, REORDER_SCRIPTS, SET_SCRIPT_TEXT, ACCEPT_PENDING_DIFF, REJECT_PENDING_DIFF } from '../../scripts/session_scripts.js';
+import { getSelectedScriptRef, getScriptRefs, SessionScripts, type ScriptData, SELECT_SCRIPT, CREATE_SCRIPT, DELETE_SCRIPT, RENAME_SCRIPT, REORDER_SCRIPTS, SET_SCRIPT_TEXT, ACCEPT_PENDING_DIFF, REJECT_PENDING_DIFF } from '../../scripts/session_scripts.js';
 import { useQueryExecutor } from '../../../connections/query_executor.js';
 import { type ModifySessionScripts } from '../../scripts/session_scripts_registry.js';
 import { type KeyEventHandler, useKeyEvents } from '../../../../utils/key_events.js';
@@ -152,7 +152,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
     // The estimated heights only matter until a row is measured.
     // Don't re-estimate (and copy the text of every script) whenever any script changes.
     const canonicalEntries = React.useMemo(
-        () => getSelectedScriptRefs(props.sessionScripts).map(entry => ({
+        () => getScriptRefs(props.sessionScripts).map(entry => ({
             ...entry,
             estimatedHeight: estimateFeedEntryHeight(
                 props.sessionScripts.scripts[entry.scriptId]?.scriptSession.getText() ?? '',

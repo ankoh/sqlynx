@@ -1,4 +1,3 @@
-import { StorageWriter } from '../storage/storage_writer.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -63,7 +62,7 @@ export function isCatalogRefreshRunning(connection: ConnectionState | null): boo
     return refreshId != null && connection.catalogUpdates.tasksRunning.has(refreshId);
 }
 
-export function reduceCatalogAction(state: ConnectionState, action: CatalogAction, _storage: StorageWriter): ConnectionState {
+export function reduceCatalogAction(state: ConnectionState, action: CatalogAction): ConnectionState {
     const now = new Date();
 
     if (action.type == UPDATE_CATALOG) {

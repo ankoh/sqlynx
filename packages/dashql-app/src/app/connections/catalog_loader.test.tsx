@@ -9,7 +9,6 @@ import { CATALOG_UPDATE_CANCELLED, CATALOG_UPDATE_FAILED, CATALOG_UPDATE_SUCCEED
 import { reduceCatalogAction } from './catalog_update_state.js';
 import { CatalogResolver, HYPER_CONNECTOR } from './connector_info.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
-import type { StorageWriter } from '../storage/storage_writer.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
@@ -78,12 +77,11 @@ describe('CatalogLoaderProvider queue', () => {
             connections: new Map([['database', connection]]),
             attachedDatabasesBySession: new Map(),
             connectionsByType: [],
-            connectionsBySignature: new Map(),
         };
         // Deliberately do not rerender on dispatch: completion itself must wake the queue.
         dispatch.mockImplementation((id, action) => {
             registry.connections.set(id!, reduceCatalogAction(
-                registry.connections.get(id!)!, action as CatalogAction, {} as StorageWriter,
+                registry.connections.get(id!)!, action as CatalogAction,
             ));
         });
         updateHyperCatalog.mockImplementation((...args) => new Promise((resolve, reject) => {

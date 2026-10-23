@@ -31,7 +31,7 @@ describe('registerSessionScriptQuery', () => {
         const modifySessionScripts = vi.fn((action) => {
             session = reduceSessionScripts(session, action,
                 null as unknown as Parameters<typeof reduceSessionScripts>[2],
-                { warn: vi.fn() } as unknown as Parameters<typeof reduceSessionScripts>[3], false);
+                { warn: vi.fn() } as unknown as Parameters<typeof reduceSessionScripts>[3]);
         });
         let resolveOlder!: (table: Table) => void;
         const older = new Promise<Table>(resolve => { resolveOlder = resolve; });
@@ -54,7 +54,7 @@ describe('registerSessionScriptQuery', () => {
         const modifySessionScripts = vi.fn((action) => {
             session = reduceSessionScripts(session, action,
                 null as unknown as Parameters<typeof reduceSessionScripts>[2],
-                { warn: vi.fn() } as unknown as Parameters<typeof reduceSessionScripts>[3], false);
+                { warn: vi.fn() } as unknown as Parameters<typeof reduceSessionScripts>[3]);
         });
         let resolve!: (table: Table) => void;
         const execution = new Promise<Table>(yes => { resolve = yes; });

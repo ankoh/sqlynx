@@ -2,7 +2,7 @@ import * as dashql from '@ankoh/dashql-core';
 import { DEFAULT_DATABASE_NAME } from '../../../connections/catalog_sql_generator.js';
 
 import { ChangeSpec, Text } from '@codemirror/state';
-import { VariantKind } from '../../../../utils/index.js';
+import { VariantKind } from '../../../../utils/variant.js';
 import { DashQLCompletionState } from './dashql_processor.js';
 
 export const PATCH_INSERT_TEXT = Symbol("INSERT_TEXT");

@@ -26,8 +26,8 @@ export function ComputationRegistry(props: ComputationRegistryProps) {
     const logger = useLogger();
     const dataFrameMemory = React.useMemo(() => new DataFrameRegistry(logger), []);
     const reducer = React.useCallback((state: ComputationState, action: ComputationAction) => {
-        return reduceComputationState(state, action, dataFrameMemory, logger);
-    }, [dataFrameMemory, logger]);
+        return reduceComputationState(state, action, dataFrameMemory);
+    }, [dataFrameMemory]);
     const [state, dispatch] = React.useReducer(reducer, null, createComputationState);
     return (
         <DATA_FRAME_REGISTRY_CTX.Provider value={dataFrameMemory}>

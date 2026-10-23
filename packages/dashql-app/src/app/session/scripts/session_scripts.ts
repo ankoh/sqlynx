@@ -4,7 +4,7 @@ import * as Immutable from 'immutable';
 import { DashQLCompletionState, DashQLPendingDiff, DashQLProcessorUpdateOut } from './editor/dashql_processor.js';
 import { deriveFocusFromCompletionCandidates, deriveFocusFromEditorUpdate, SemanticUserFocus } from './focus.js';
 import { ConnectorInfo, ConnectorType } from '../../connections/connector_info.js';
-import { VariantKind } from '../../../utils/index.js';
+import { VariantKind } from '../../../utils/variant.js';
 import {
     DEBOUNCE_DURATION_SCRIPT_WRITE,
     DEBOUNCE_DURATION_SESSION_WRITE,
@@ -21,7 +21,6 @@ import {
     WRITE_SCRIPT,
     type SessionScriptList,
 } from '../../storage/storage_writer.js';
-import type { SessionScriptsInput } from './session_scripts_registry.js';
 import type { SessionSettings } from './session_settings.js';
 import type { ConnectionParams, SessionConnection, SessionScript } from '../../storage/storage_backend.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
@@ -254,13 +253,8 @@ enum FocusUpdate {
     UpdateFromCompletion,
 };
 
-/// Returns the cell file names in feed order.
-export function getScriptFileNames(state: SessionScripts): readonly string[] {
-    return state.scriptOrder;
-}
-
 /// Returns the committed cells in feed order.
-export function getSelectedScriptRefs(state: SessionScripts): ScriptRef[] {
+export function getScriptRefs(state: SessionScripts): ScriptRef[] {
     return state.scriptOrder.map(name => state.scriptRefs[name]);
 }
 
@@ -270,13 +264,6 @@ export function getSelectedScriptRef(state: SessionScripts): ScriptRef | undefin
     if (file && state.scriptRefs[file]) return state.scriptRefs[file];
     const files = state.scriptOrder;
     return files.length > 0 ? state.scriptRefs[files[0]] : undefined;
-}
-
-/// Returns the index of the selected entry in the feed, or -1.
-export function getSelectedScriptIndex(state: SessionScripts): number {
-    const file = state.scriptFocus.fileName;
-    if (!file) return -1;
-    return state.scriptOrder.indexOf(file);
 }
 
 /// The script list of the session file, the cells in feed order with their connections
@@ -303,8 +290,8 @@ export function sessionScriptListWrite(state: SessionScripts): SessionScriptList
 }
 
 /// Persist the order and the connections of the cells, the session file follows with its connections
-function writeSessionScriptList(state: SessionScripts, storage: StorageWriter | null) {
-    void storage?.write(
+function writeSessionScriptList(state: SessionScripts, storage: StorageWriter) {
+    void storage.write(
         groupSessionScriptListWrites(state.sessionId),
         { type: WRITE_SESSION_SCRIPTS, value: [state.sessionId, sessionScriptListWrite(state)] },
         DEBOUNCE_DURATION_SESSION_WRITE,
@@ -319,9 +306,7 @@ function writeSessionProperties(state: SessionScripts, storage: StorageWriter) {
     );
 }
 
-export function reduceSessionScripts(state: SessionScripts, action: SessionScriptsAction, storageArg: StorageWriter, logger: Logger, _active: boolean): SessionScripts {
-    // Session files are local state, independent of connection setup and health.
-    const storage = storageArg;
+export function reduceSessionScripts(state: SessionScripts, action: SessionScriptsAction, storage: StorageWriter, logger: Logger): SessionScripts {
     switch (action.type) {
         case RENAME_SESSION: {
             const trimmed = action.value?.trim() ?? '';
@@ -562,7 +547,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                 const scriptData = nextState.scripts[scriptKey];
                 if (scriptData?.fileName) {
                     const sql = scriptData.scriptSession.getText();
-                    storage?.write(
+                    storage.write(
                         groupScriptWrites(nextState.sessionId, scriptData.fileName),
                         { type: WRITE_SCRIPT, value: [nextState.sessionId, scriptData.fileName, sql] },
                         DEBOUNCE_DURATION_SCRIPT_WRITE
@@ -646,7 +631,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                 scriptOrder: remainingFiles,
                 scriptFocus: { ...state.scriptFocus, fileName: newFile },
             });
-            storage?.write(
+            storage.write(
                 groupScriptDeletes(next.sessionId, deletedEntry.fileName),
                 { type: STORAGE_DELETE_SCRIPT, value: [next.sessionId, deletedEntry.fileName] },
                 DEBOUNCE_DURATION_SCRIPT_WRITE
@@ -683,7 +668,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                 scriptOrder,
                 scriptFocus: { ...state.scriptFocus, fileName },
             };
-            storage?.write(
+            storage.write(
                 groupScriptWrites(next.sessionId, fileName),
                 { type: WRITE_SCRIPT, value: [next.sessionId, fileName, text ?? ''] },
                 DEBOUNCE_DURATION_SCRIPT_WRITE
@@ -747,7 +732,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                 // Rename the file in place: its SQL is unchanged, so move it rather than delete-old +
                 // rewrite-new. The new clean base is disambiguated unique within the page, so the
                 // rename target never collides with another script's existing name.
-                storage?.write(
+                storage.write(
                     groupScriptRenames(next.sessionId, oldFileName),
                     { type: STORAGE_RENAME_SCRIPT, value: [next.sessionId, oldFileName, newFileName] },
                     DEBOUNCE_DURATION_SCRIPT_WRITE
@@ -756,7 +741,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             } else {
                 // No rename: just persist the current contents under the unchanged name.
                 const sql = updatedScriptData ? updatedScriptData.scriptSession.getText() : '';
-                storage?.write(
+                storage.write(
                     groupScriptWrites(next.sessionId, newFileName),
                     { type: WRITE_SCRIPT, value: [next.sessionId, newFileName, sql] },
                     DEBOUNCE_DURATION_SCRIPT_WRITE
@@ -883,7 +868,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             // Persist only the updated script (same tail as UPDATE_FROM_PROCESSOR)
             const sql = nextScriptData.scriptSession.getText();
             if (nextScriptData.fileName) {
-                storage?.write(
+                storage.write(
                     groupScriptWrites(nextState.sessionId, nextScriptData.fileName),
                     { type: WRITE_SCRIPT, value: [nextState.sessionId, nextScriptData.fileName, sql] },
                     DEBOUNCE_DURATION_SCRIPT_WRITE
@@ -942,7 +927,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             // Persist only the updated script (same tail as SET_SCRIPT_TEXT)
             const sql = nextScriptData.scriptSession.getText();
             if (nextScriptData.fileName) {
-                storage?.write(
+                storage.write(
                     groupScriptWrites(nextState.sessionId, nextScriptData.fileName),
                     { type: WRITE_SCRIPT, value: [nextState.sessionId, nextScriptData.fileName, sql] },
                     DEBOUNCE_DURATION_SCRIPT_WRITE
@@ -954,7 +939,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
     }
 }
 
-export function clearSemanticUserFocus<V extends SessionScriptsInput>(state: V): V {
+export function clearSemanticUserFocus<V extends SessionScripts>(state: V): V {
     return { ...state, semanticUserFocus: null };
 }
 
@@ -1182,9 +1167,7 @@ function deriveScriptAnnotations(
     const visualizeQuery = compileVisualizeQuery(scriptSession, connectorType, logger);
 
     return {
-        tableRefs: [],
         tableDefs: tableDefsFlat,
-        restrictedColumns: [],
         visualizeQuery,
     };
 }
@@ -1251,10 +1234,6 @@ export function compileSessionQuery(
     } finally {
         compiled.destroy();
     }
-}
-
-export function compileQuery(scriptData: ScriptData, connectorType: ConnectorType, logger?: LoggerLike): string {
-    return compileSessionQuery(scriptData, connectorType, logger).sql;
 }
 
 export function createScriptExecution(scriptData: ScriptData, connectorType: ConnectorType): core.DashQLScriptExecution {
@@ -1401,7 +1380,7 @@ export function replaceScriptSessionText(scriptSession: core.DashQLScriptSession
     }
 }
 
-export function analyzeOutdatedScript<V extends SessionScriptsInput>(state: V, scriptKey: number, logger: Logger): V {
+export function analyzeOutdatedScript<V extends SessionScripts>(state: V, scriptKey: number, logger: Logger): V {
     const scriptData = state.scripts[scriptKey];
     if (!scriptData || !scriptData.analysisOutdated) {
         return state;

@@ -19,7 +19,7 @@ import { applyFlavorToDocument, getAppFlavor } from './flavor/flavor_resolution.
 import { GitHubTheme } from '../theme/github_theme.js';
 import { HttpClientProvider } from '../platform/http/http_client_provider.js';
 import { AIClientProvider } from '../platform/ai/ai_client_provider.js';
-import { HyperConnector } from './connections/hyper/hyper_connector.js';
+import { HyperSetupProvider } from './connections/hyper/hyper_connection_setup.js';
 import { HyperDatabaseClientProvider } from './connections/hyper/hyperdb_grpc_client_provider.js';
 import { HyperPlanDemoPage } from './ui/demos/plan_demo.js';
 import { JsonViewerExperimentPage } from './ui/demos/json_demo.js';
@@ -34,7 +34,6 @@ import { RouterReset } from './router/router_reset.js';
 import { SalesforceConnector } from './connections/salesforce/salesforce_connector.js';
 import { StorageProvider } from './storage/storage_provider.js';
 import { TrinoConnector } from './connections/trino/trino_connector.js';
-import { ToolsPage } from './ui/tools/tools_page.js';
 import { UIExperimentPage } from './ui/demos/ui_demo.js';
 import { VersionCheck } from '../platform/version/version_check.js';
 import { SessionCommands } from './session/scripts/session_commands.js';
@@ -66,7 +65,7 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
     <ConnectionRegistry>
         <ConnectionPersistenceProvider>
             <SalesforceConnector>
-                <HyperConnector>
+                <HyperSetupProvider>
                     <TrinoConnector>
                         <ComputationRegistry>
                             <SessionComputeQueryExecutionProvider>
@@ -91,7 +90,7 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
                             </SessionComputeQueryExecutionProvider>
                         </ComputationRegistry>
                     </TrinoConnector>
-                </HyperConnector>
+                </HyperSetupProvider>
             </SalesforceConnector>
         </ConnectionPersistenceProvider>
     </ConnectionRegistry>
@@ -176,10 +175,6 @@ root.render(
                             <Route index Component={SessionPage} />
                             <Route path="/session" Component={SessionPage} />
                             <Route path="/sessions/:sessionId" Component={SessionPage} />
-                            <Route path="/tool" element={<NavigateWithState to="/tool/format" />} />
-                            <Route path="/tool/format" Component={ToolsPage} />
-                            <Route path="/tool/hyperplan" Component={ToolsPage} />
-                            <Route path="/tool/sparkplan" Component={ToolsPage} />
                             {isDebugBuild() && (
                                 <>
                                     <Route path="/demo/ui" Component={UIExperimentPage} />

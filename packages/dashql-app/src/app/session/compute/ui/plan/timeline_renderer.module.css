@@ -1,8 +1,0 @@
-.root {
-    width: 100%;
-    max-width: 800px;
-    height: 32px;
-    border-radius: 6px;
-    border: 1px solid var(--border_color_primary);
-    background-color: white;
-}

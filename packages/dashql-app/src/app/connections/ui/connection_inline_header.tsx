@@ -53,7 +53,7 @@ export function ConnectionInlineHeader(props: Props): React.ReactElement {
     // Suppress the header button when no setup/cancel/reset handler is provided.
     const headerActionsProvided = props.setupConnection || props.cancelSetup || props.resetSetup;
     let connectButton: React.ReactElement = <div />;
-    if (props.connector.features.manualSetup && headerActionsProvided) {
+    if (headerActionsProvided) {
         switch (props.connectionHealth ?? props.connection?.connectionHealth) {
             case ConnectionHealth.NOT_STARTED:
             case ConnectionHealth.CANCELLED:
@@ -158,33 +158,31 @@ export function ConnectionInlineHeader(props: Props): React.ReactElement {
                     )}
                 </div>
             </div>
-            {(props.connector.features.healthChecks || props.embedded) && (
-                <div className={style.status_row}>
-                    {!props.embedded && (
-                        <div className={style.status_left}>
-                            <div className={style.status_indicator}>
-                                <StatusIndicator status={indicatorStatus} />
-                            </div>
-                            <div className={style.status_text}>
-                                {statusText}
-                            </div>
-                            {connectionError && (
-                                <div className={style.status_error}>
-                                    {connectionError}
-                                </div>
-                            )}
+            <div className={style.status_row}>
+                {!props.embedded && (
+                    <div className={style.status_left}>
+                        <div className={style.status_indicator}>
+                            <StatusIndicator status={indicatorStatus} />
                         </div>
-                    )}
-                    {props.embedded && (
-                        <div className={style.embedded_label}>
-                            Embedded Engine
+                        <div className={style.status_text}>
+                            {statusText}
                         </div>
-                    )}
-                    <div className={style.status_right}>
-                        {connectButton}
+                        {connectionError && (
+                            <div className={style.status_error}>
+                                {connectionError}
+                            </div>
+                        )}
                     </div>
+                )}
+                {props.embedded && (
+                    <div className={style.embedded_label}>
+                        Embedded Engine
+                    </div>
+                )}
+                <div className={style.status_right}>
+                    {connectButton}
                 </div>
-            )}
+            </div>
         </div>
     );
 }

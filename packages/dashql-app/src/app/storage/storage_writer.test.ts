@@ -137,7 +137,7 @@ describe('V2 storage writer flat mutations', () => {
         for (const discard of [false, true]) {
             state = reduceConnectionState(state, discard
                 ? { type: DISCARD_CONNECTION_DRAFT, value: null }
-                : { type: SET_CONNECTION_DRAFT, value: paramsDraft }, writer, logger);
+                : { type: SET_CONNECTION_DRAFT, value: paramsDraft }, logger);
             await writer.write(groupConnectionEntryWrites(TEST_CONNECTION_ID), {
                 type: WRITE_CONNECTION_ENTRY,
                 value: { id: TEST_CONNECTION_ID, params: state.params, ...(state.paramsDraft ? { paramsDraft: state.paramsDraft } : {}) },

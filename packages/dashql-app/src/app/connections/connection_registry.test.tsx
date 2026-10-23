@@ -45,7 +45,6 @@ function registry(attachedDatabaseId: string | null, mainDatabaseId = attachedDa
             attachedDatabaseIds: attachedDatabaseId == null ? [] : [attachedDatabaseId],
         }]]),
         connectionsByType: [],
-        connectionsBySignature: new Map(),
     };
 }
 
@@ -130,7 +129,6 @@ describe('catalog refresh persistence', () => {
             connectionId: TEST_CONNECTION_ID,
             active: true,
             params: { salesforce: { instanceUrl: 'https://example.my.salesforce.com' } },
-            connectionSignature: { signatureString: 'salesforce' },
             connectorInfo: { connectorType: ConnectorType.SALESFORCE_DATA_CLOUD },
             details: { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: { proto: { setupParams: { instanceUrl: 'https://example.my.salesforce.com' } } } },
             catalogRelationScript: script(schemaSQL),
@@ -210,7 +208,6 @@ describe('catalog refresh persistence', () => {
         const embedded = {
             connectionId: TEST_CONNECTION_ID, active: true,
             params: { hyper: { protocol: 'WASM' } },
-            connectionSignature: { signatureString: 'embedded' },
             connectorInfo: { connectorType: ConnectorType.HYPER },
             details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } },
             catalogRelationScript: { toString: () => 'CREATE TABLE "hyper"."public"."gone" (id INT);' },
@@ -272,7 +269,6 @@ describe('catalog refresh persistence', () => {
         const attached = {
             connectionId: attachedId, active: true,
             params: { salesforce: {} },
-            connectionSignature: { signatureString: 'attached' },
             connectorInfo: { connectorType: ConnectorType.SALESFORCE_DATA_CLOUD },
             details: { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: { proto: { setupParams: {} } } },
             catalogRelationScript: relationScript, catalogFunctionScript: functionScript,
@@ -338,7 +334,6 @@ describe('shared connection persistence', () => {
             active: true,
             params: trino('https://old'),
             connectionHealth: ConnectionHealth.NOT_STARTED,
-            connectionSignature: { signatureString: 'trino', signatures: new Map() },
             connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
             catalogChangesSql: '',
         } as unknown as ConnectionState;

@@ -16,7 +16,6 @@ import {
 import { QUERY_PROGRESS_UPDATED, QUERY_RECEIVED_BATCH } from '../../query/query_execution_state.js';
 import { Dispatch } from '../../utils/variant.js';
 import { CONNECTOR_TYPES } from './connector_info.js';
-import { ConnectionSignatureMap } from './connection_signature.js';
 import { useStorageWriter } from '../storage/storage_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 
@@ -58,7 +57,6 @@ export interface ConnectionRegistry {
     connections: Map<string, ConnectionState>;  // connectionId -> ConnectionState
     attachedDatabasesBySession: Map<string, SessionAttachedDatabases>;
     connectionsByType: string[][];  // arrays of databaseIds by connector type
-    connectionsBySignature: ConnectionSignatureMap;
 }
 
 /// The connections that a session uses.
@@ -146,7 +144,6 @@ export function registerConnection(registry: ConnectionRegistry, database: Conne
     registry.connections.set(database.connectionId, database);
     const byType = registry.connectionsByType[database.connectorInfo.connectorType];
     if (!byType.includes(database.connectionId)) byType.push(database.connectionId);
-    registry.connectionsBySignature.set(database.connectionSignature.signatureString, database.connectionId);
 }
 
 /// Let a session use a connection as its default connection (mutates the registry)
@@ -242,7 +239,6 @@ export function scheduleConnectionParamsWrites(registry: ConnectionRegistry, dat
 export type SetConnectionRegistryAction = React.SetStateAction<ConnectionRegistry>;
 export type AttachedDatabaseRole = 'main' | 'attached';
 export type AttachedDatabaseAllocator = (sessionId: string, state: ConnectionStateWithoutId) => ConnectionState;
-export type ConnectionCloner = (state: ConnectionState) => ConnectionState;
 export type ConnectionDispatch = (action: ConnectionAction) => void;
 export type DynamicConnectionDispatch = (connectionId: string | null, action: ConnectionAction) => void;
 
@@ -272,7 +268,6 @@ export const ConnectionRegistry: React.FC<Props> = (props: Props) => {
             connections: new Map(),
             attachedDatabasesBySession: new Map(),
             connectionsByType: CONNECTOR_TYPES.map(() => ([])),
-            connectionsBySignature: new Map(),
         });
     });
     const listeners = React.useRef(new Set<() => void>());
@@ -369,18 +364,6 @@ export function useAttachConnection(): ConnectionAttacher {
     }, [setReg]);
 }
 
-/// Drop the references of a session, the connections stay registered
-export function useSessionDetacher(): (sessionId: string) => void {
-    const setReg = React.useContext(CONNECTION_REGISTRY_SETTER_CTX)!;
-    return React.useCallback((sessionId: string) => {
-        setReg((reg) => {
-            if (!reg.attachedDatabasesBySession.has(sessionId)) return reg;
-            detachSession(reg, sessionId);
-            return { ...reg };
-        });
-    }, [setReg]);
-}
-
 export function useConnectionRegistry(): [ConnectionRegistry, Dispatch<SetConnectionRegistryAction>] {
     return [React.useContext(CONNECTION_REGISTRY_CTX)!, React.useContext(CONNECTION_REGISTRY_SETTER_CTX)!];
 }
@@ -421,7 +404,6 @@ export function useConnectionDispatch(): DynamicConnectionDispatch {
                     console.warn(`no attached database registered with id ${connectionId}`);
                     continue;
                 }
-                const connectionSignature = prev.connectionSignature.signatureString;
                 const connectorType = prev.connectorInfo.connectorType;
                 const sessionIds = findSessionsForConnection(reg, connectionId);
 
@@ -438,10 +420,9 @@ export function useConnectionDispatch(): DynamicConnectionDispatch {
                     logger.warn('refusing to switch the type of a shared connection', { connectionId }, LOG_CTX);
                     continue;
                 }
-                const next = reduceConnectionState(prev, action, storageWriter, logger);
+                const next = reduceConnectionState(prev, action, logger);
 
                 if (action.type == DELETE_CONNECTION) {
-                    reg.connectionsBySignature.delete(connectionSignature);
                     reg.connectionsByType[connectorType] = reg.connectionsByType[connectorType].filter(id => id != connectionId);
                     reg.connections.delete(connectionId);
                     if (prev.active) {
@@ -454,9 +435,6 @@ export function useConnectionDispatch(): DynamicConnectionDispatch {
                 if (action.type == SWITCH_CONNECTOR_TYPE && next.connectorInfo.connectorType !== connectorType) {
                     reg.connectionsByType[connectorType] = reg.connectionsByType[connectorType].filter(id => id != connectionId);
                     reg.connectionsByType[next.connectorInfo.connectorType].push(connectionId);
-                    // Update signature
-                    reg.connectionsBySignature.delete(connectionSignature);
-                    reg.connectionsBySignature.set(next.connectionSignature.signatureString, connectionId);
                 }
                 // Only connections that sessions reference or that were activated are persisted.
                 // Saving writes the committed params by itself and awaits the writes.
@@ -574,11 +552,6 @@ export function useConnectionState(sessionId: string | null): [ConnectionState |
 export function useSessionAttachedDatabases(sessionId: string | null): ResolvedSessionAttachedDatabases | null {
     const [registry] = useConnectionRegistry();
     return resolveSessionAttachedDatabases(registry, sessionId);
-}
-
-export function useSessionExecutionDatabase(sessionId: string | null): ConnectionState | null {
-    const [registry] = useConnectionRegistry();
-    return resolveSessionExecutionDatabase(registry, sessionId);
 }
 
 export function useConnectionById(connectionId: string | null): [ConnectionState | null, ConnectionDispatch] {

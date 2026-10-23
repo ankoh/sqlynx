@@ -1,7 +1,7 @@
 import type { ConnectionState } from '../connection_state.js';
 import { isListedConnection, type ConnectionRegistry } from '../connection_registry.js';
-import { HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
-import { getConnectionInfoFromParams, type ConnectionParams } from '../connection_params.js';
+import { getConnectorInfoForParams, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
+import type { ConnectionParams } from '../connection_params.js';
 
 export function isHyperWasmConnection(database: ConnectionState): boolean {
     return database.details.type === HYPER_CONNECTOR &&
@@ -78,7 +78,7 @@ export function connectionParamsLabel(params: ConnectionParams, connectionName?:
 
 /// The connector and the location of the database that connection params describe
 function connectionParamsDescription(params: ConnectionParams): string {
-    const name = getConnectionInfoFromParams(params)?.names.displayLong ?? 'Connection';
+    const name = getConnectorInfoForParams(params)?.names.displayLong ?? 'Connection';
     if ('hyper' in params) {
         const protocol = params.hyper.protocol ?? 'WASM';
         return protocol === 'WASM' ? `${name} Local` : `${name} / ${params.hyper.endpoint ?? ''}`;

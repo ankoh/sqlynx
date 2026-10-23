@@ -117,14 +117,13 @@ describe('Session connections', () => {
         reduceSessionScripts(session, {
             type: SET_SCRIPT_CONNECTION,
             value: { fileName, connection: scriptConnectionOf(restored.connectionStates.get(connectionId)!) },
-        }, writer, logger, true);
+        }, writer, logger);
 
     /// The connection registry of a restored app state
     const connectionRegistryOf = (restored: RestoredAppState): ConnectionRegistry => ({
         connections: restored.connectionStates,
         attachedDatabasesBySession: restored.attachedDatabasesBySession,
         connectionsByType: restored.connectionStatesByType,
-        connectionsBySignature: new Map(),
     });
 
     describe('restoring', () => {
@@ -221,7 +220,7 @@ describe('Session connections', () => {
             let session = sessionOf(restored);
             const writer = new StorageWriter(logger, backend);
             for (const name of session.scriptOrder) {
-                session = reduceSessionScripts(session, { type: ANALYZE_OUTDATED_SCRIPT, value: scriptOf(session, name).scriptKey }, writer, logger, true);
+                session = reduceSessionScripts(session, { type: ANALYZE_OUTDATED_SCRIPT, value: scriptOf(session, name).scriptKey }, writer, logger);
             }
             expect(unresolvedReferences(session, 'local.sql')).toBe(0);
             expect(scriptOf(session, 'local.sql').analysisOutdated).toBe(false);
@@ -265,7 +264,7 @@ describe('Session connections', () => {
 
             // Other changes of the script list keep the reference
             const writer = new StorageWriter(logger, backend);
-            session = reduceSessionScripts(session, { type: REORDER_SCRIPTS, value: ['other.sql', 'query.sql'] }, writer, logger, true);
+            session = reduceSessionScripts(session, { type: REORDER_SCRIPTS, value: ['other.sql', 'query.sql'] }, writer, logger);
             await writer.flush();
             expect(backend.sessions.get(SESSION_ID)!.scripts).toEqual([
                 { name: 'other.sql', connectionId: HYPER_ID },

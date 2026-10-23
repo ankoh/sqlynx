@@ -63,7 +63,7 @@ function fixture() {
     const writer = new StorageWriter(logger, new SessionTestBackend());
     const write = vi.spyOn(writer, 'write');
     const apply = (value = updates, current = state) => reduceSessionScripts(current,
-        { type: APPLY_PLANNER_ANALYSIS, value }, writer, logger, true);
+        { type: APPLY_PLANNER_ANALYSIS, value }, writer, logger);
     return { state, definition, query, other, updates, write, apply };
 }
 

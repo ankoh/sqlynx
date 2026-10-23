@@ -57,7 +57,7 @@ export const ConnectionStatus = React.forwardRef<HTMLButtonElement, ButtonProps>
             ref={ref}
             variant={ButtonVariant.Default}
             leadingVisual={ConnectorIconVisual}
-            trailingVisual={props.conn.connectorInfo.features.healthChecks ? StatusDotVisual : undefined}
+            trailingVisual={StatusDotVisual}
             onClick={handleClick}
             aria-label={props.compact ? connStatusText : undefined}
         >

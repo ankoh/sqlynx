@@ -1,19 +1,15 @@
-import * as dashql from '@ankoh/dashql-core';
-
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 import * as auth from '@ankoh/dashql-jsonschema/auth.js';
 
-import type { DetailedError } from '../connection_types.js';
+import type { DetailedError } from '../../../utils/error.js';
 
 import { VariantKind } from '../../../utils/variant.js';
 import { SalesforceDatabaseChannel } from './salesforce_api_client.js';
-import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
+import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
 import {
     ConnectionHealth,
     ConnectionState,
-    ConnectionStateWithoutId,
     ConnectionStatus,
-    createConnectionState,
     DELETE_CONNECTION,
     HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_FAILED,
@@ -21,11 +17,7 @@ import {
     HEALTH_CHECK_SUCCEEDED,
     RESET_CONNECTION,
 } from '../connection_state.js';
-import { Hasher } from '../../../utils/hash.js';
-import { ConnectionSignatureMap, updateConnectionSignature } from '../connection_signature.js';
-import { DefaultHasher } from '../../../utils/hash_default.js';
 import { dateToTimestamp } from "../proto_helper.js";
-import { StorageWriter } from "../../storage/storage_writer.js";
 
 /// The Salesforce connection state
 export interface SalesforceConnectionStateDetails {
@@ -46,14 +38,6 @@ export function createSalesforceConnectionStateDetails(params?: connection.Sales
     };
 }
 
-/// Create the connection state
-export function createSalesforceConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
-    return createConnectionState(dql, CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD], connSigs, {
-        type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-        value: createSalesforceConnectionStateDetails(),
-    });
-}
-
 /// Unpack the connection state from the variant
 export function getSalesforceConnectionDetails(state: ConnectionState | null): SalesforceConnectionStateDetails | null {
     if (state == null) return null;
@@ -61,12 +45,6 @@ export function getSalesforceConnectionDetails(state: ConnectionState | null): S
         case SALESFORCE_DATA_CLOUD_CONNECTOR: return state.details.value;
         default: return null;
     }
-}
-
-export function computeSalesforceConnectionSignature(details: SalesforceConnectionStateDetails, hasher: Hasher) {
-    hasher.add("salesforce");
-    hasher.add(details.proto.setupParams?.instanceUrl ?? "");
-    hasher.add(details.proto.setupParams?.appConsumerKey ?? "");
 }
 
 export const SETUP_CANCELLED = Symbol('AUTH_CANCELLED');
@@ -117,7 +95,7 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof DELETE_CONNECTION, null>
     ;
 
-export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction, _storage: StorageWriter): ConnectionState | null {
+export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState | null {
     const details = state.details.value as SalesforceConnectionStateDetails;
     let next: ConnectionState | null = null;
     switch (action.type) {
@@ -170,8 +148,6 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                 },
                 channel: null,
             };
-            let sig = new DefaultHasher();
-            computeSalesforceConnectionSignature(details, sig);
             next = {
                 ...state,
                 connectionStatus: ConnectionStatus.AUTH_STARTED,
@@ -181,7 +157,6 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: newDetails,
                 },
-                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.connectionId),
             };
             break
         }

@@ -26,10 +26,8 @@ export interface RestoredAppState {
     connectionStates: Map<string, ConnectionState>;
     attachedDatabasesBySession: Map<string, SessionAttachedDatabases>;
     connectionStatesByType: string[][];
-    connectionSignatures: Map<string, string | null>;
     sessionScripts: Map<string, SessionScripts>;
     sessionScriptsByConnection: Map<string, string[]>;
-    sessionScriptsByConnectionType: string[][];
     /// Sessions whose metadata failed validation and were refused a load (keyed by bare UUID).
     /// These never enter the connection/session maps; the session workbench surfaces them as
     /// invalid (blocked from opening, still deletable).
@@ -143,8 +141,6 @@ interface RestoreContext {
     connectionStates: Map<string, ConnectionState>;
     /// The connections by connector type
     connectionStatesByType: string[][];
-    /// The connection signatures
-    connectionSignatures: Map<string, string | null>;
     /// The connections that were consolidated into others (alias -> connectionId)
     aliases: Map<string, string>;
     /// The aliases of every connection (connectionId -> aliases)
@@ -179,7 +175,7 @@ interface CatalogTexts {
     changes: string | null;
 }
 
-function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Logger, processor: BatchProcessor | undefined, connectionSignatures: Map<string, string | null>): RestoreContext {
+function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Logger, processor: BatchProcessor | undefined): RestoreContext {
     return {
         core,
         backend,
@@ -188,7 +184,6 @@ function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Log
         processor,
         connectionStates: new Map(),
         connectionStatesByType: CONNECTOR_TYPES.map(() => []),
-        connectionSignatures,
         aliases: new Map(),
         aliasesOf: new Map(),
         catalogsRestored: new Set(),
@@ -243,7 +238,7 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
     let state: ConnectionState;
     try {
         const [connectorInfo, details] = decodeConnectionFromProto(entry.params as any, entry.id);
-        state = restoreConnectionState(ctx.core, entry.id, connectorInfo, details, ctx.connectionSignatures, entry.paramsDraft, entry.name);
+        state = restoreConnectionState(ctx.core, entry.id, connectorInfo, details, entry.paramsDraft, entry.name);
     } catch (error) {
         // Sessions referencing the connection register it again from their copies
         ctx.logger.warn("Failed to restore connection", { connectionId: entry.id, error: stringifyError(error) }, LOG_CTX);
@@ -293,9 +288,9 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
 
 /// Create the state of a connection that the app doesn't know from the copy that a session holds.
 /// The connection is neither registered nor written, see `destroyUnregisteredConnection`.
-export function connectionStateFromCopy(core: DashQL, connectionId: string, copy: SessionConnection, signatures: Map<string, string | null>): ConnectionState {
+export function connectionStateFromCopy(core: DashQL, connectionId: string, copy: SessionConnection): ConnectionState {
     const [connectorInfo, details] = decodeConnectionFromProto(copy.params as any, connectionId);
-    return restoreConnectionState(core, connectionId, connectorInfo, details, signatures, copy.paramsDraft, copy.name);
+    return restoreConnectionState(core, connectionId, connectorInfo, details, copy.paramsDraft, copy.name);
 }
 
 /// Resolve a session's reference to a connection.
@@ -309,7 +304,7 @@ function resolveSessionConnection(ctx: RestoreContext, sessionId: string, databa
         }
         return known;
     }
-    const state = connectionStateFromCopy(ctx.core, connectionId, database, ctx.connectionSignatures);
+    const state = connectionStateFromCopy(ctx.core, connectionId, database);
     ctx.connectionStates.set(state.connectionId, state);
     ctx.connectionStatesByType[state.connectorInfo.connectorType].push(state.connectionId);
     ctx.newConnections.set(state.connectionId, state);
@@ -334,7 +329,6 @@ async function restoreSessionEntry(
     attachedDatabasesBySession: Map<string, SessionAttachedDatabases>,
     sessionScripts: Map<string, SessionScripts>,
     sessionScriptsByConnection: Map<string, string[]>,
-    sessionScriptsByConnectionType: string[][],
     restoreConnections: ProgressCounter,
     restoreCatalogs: ProgressCounter,
     restoreSessionScriptsProgress: ProgressCounter,
@@ -500,7 +494,6 @@ async function restoreSessionEntry(
         for (const id of sessionConnectionIds(restoredSessionScripts)) {
             sessionScriptsByConnection.set(id, [...(sessionScriptsByConnection.get(id) ?? []), sessionId]);
         }
-        sessionScriptsByConnectionType[connectorInfo.connectorType].push(sessionId);
     }
 
     progressConsumer({
@@ -644,7 +637,6 @@ export function mergeRestoredSessionIntoScripts(
     for (const connectionId of sessionConnectionIds(restored.sessionScripts)) {
         addSessionScriptsForConnection(reg, connectionId, restored.sessionId);
     }
-    reg.sessionScriptsByConnectionType[restored.sessionScripts.connectorInfo.connectorType].push(restored.sessionId);
     return { ...reg };
 }
 
@@ -668,9 +660,6 @@ export function destroyRestoredSession(restored: RestoredSession): void {
 /// Destroy a connection that was created but never registered
 export function destroyUnregisteredConnection(connection: ConnectionState): void {
     invalidateCatalogBatch(connection.catalog);
-    connection.connectionSignature.signatures.delete(
-        connection.connectionSignature.signatureString,
-    );
     connection.catalog.dropDescriptor(connection.catalogRelationScript.catalog_entry_id);
     connection.catalog.dropDescriptor(connection.catalogFunctionScript.catalog_entry_id);
     connection.catalogRelationScript.destroy();
@@ -679,7 +668,7 @@ export function destroyUnregisteredConnection(connection: ConnectionState): void
 }
 
 /// The live connections that a restored session resolves its references against
-export type LiveConnections = Pick<ConnectionRegistry, 'connections' | 'connectionsBySignature'>;
+export type LiveConnections = Pick<ConnectionRegistry, 'connections'>;
 
 /// Restore a single, already-persisted session (connection references + catalog + session) and
 /// return just that session's pieces.
@@ -702,7 +691,7 @@ export async function restoreSingleSession(
     // manifest entry `restoreSessionEntry` needs to route the load.
     const sessionEntry: SessionEntry = { path: sessionId, storageType: StorageBackendType.OPFS };
 
-    const ctx = createRestoreContext(core, backend, logger, processor, live.connectionsBySignature);
+    const ctx = createRestoreContext(core, backend, logger, processor);
     for (const [connectionId, state] of live.connections) {
         ctx.connectionStates.set(connectionId, state);
         ctx.catalogsRestored.add(connectionId);
@@ -716,7 +705,6 @@ export async function restoreSingleSession(
     const attachedDatabasesBySession = new Map<string, SessionAttachedDatabases>();
     const sessionScripts = new Map<string, SessionScripts>();
     const sessionScriptsByConnection = new Map<string, string[]>();
-    const sessionScriptsByConnectionType: string[][] = CONNECTOR_TYPES.map(() => []);
 
     const noopConsumer = () => { };
     try {
@@ -726,7 +714,6 @@ export async function restoreSingleSession(
             attachedDatabasesBySession,
             sessionScripts,
             sessionScriptsByConnection,
-            sessionScriptsByConnectionType,
             new ProgressCounter(),
             new ProgressCounter(),
             new ProgressCounter(),
@@ -765,12 +752,11 @@ export async function restoreAppState(
     logger.info("Starting app state restoration", {}, LOG_CTX);
     const startTime = performance.now();
 
-    const ctx = createRestoreContext(core, backend, logger, processor, new Map());
+    const ctx = createRestoreContext(core, backend, logger, processor);
     const attachedDatabasesBySession = new Map<string, SessionAttachedDatabases>();
     const sessionScripts = new Map<string, SessionScripts>();
     const sessionScriptsByConnection = new Map<string, string[]>();
     const invalidSessions = new Map<string, InvalidSession>();
-    const sessionScriptsByConnectionType: string[][] = CONNECTOR_TYPES.map(() => []);
 
     // Initialize progress counters
     const restoreConnections = new ProgressCounter();
@@ -829,7 +815,6 @@ export async function restoreAppState(
                     attachedDatabasesBySession,
                     sessionScripts,
                     sessionScriptsByConnection,
-                    sessionScriptsByConnectionType,
                     restoreConnections,
                     restoreCatalogs,
                     restoreSessionScriptsProgress,
@@ -909,10 +894,8 @@ export async function restoreAppState(
         connectionStates: ctx.connectionStates,
         attachedDatabasesBySession,
         connectionStatesByType: ctx.connectionStatesByType,
-        connectionSignatures: ctx.connectionSignatures,
         sessionScripts,
         sessionScriptsByConnection,
-        sessionScriptsByConnectionType,
         invalidSessions,
     };
 }

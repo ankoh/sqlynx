@@ -17,7 +17,7 @@ import {
     REQUESTING_ACCESS_TOKEN,
     RECEIVED_ACCESS_TOKEN,
 } from './trino_connection_state.js';
-import { Dispatch } from '../../../utils/index.js';
+import { Dispatch } from '../../../utils/variant.js';
 import { LoggableException, Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { RESET_CONNECTION } from '../connection_state.js';
 import { requestTrinoAccessToken, TrinoApiClientInterface, TrinoApiEndpoint } from './trino_api_client.js';

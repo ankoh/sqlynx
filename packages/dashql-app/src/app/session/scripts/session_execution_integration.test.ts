@@ -57,7 +57,7 @@ function fixture(entries: Array<[string, string]>) {
     const writer = new StorageWriter(logger, new SessionTestBackend());
     const write = vi.spyOn(writer, 'write');
     const apply = (action: SessionScriptsAction) => {
-        live = reduceSessionScripts(live, action, writer, logger, true);
+        live = reduceSessionScripts(live, action, writer, logger);
         return live;
     };
     const modifySessionScripts = vi.fn<ModifySessionScripts>(action => { apply(action); });

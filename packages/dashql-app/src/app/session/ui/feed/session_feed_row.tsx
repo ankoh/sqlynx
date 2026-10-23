@@ -20,7 +20,7 @@ import { ConnectorType } from '../../../connections/connector_info.js';
 import { QueryExecutionStatus, queryIsDone } from '../../../connections/query_execution_state.js';
 import { computeQueryCacheKeyForConnection, useCancelQuery, useQueryState } from '../../../connections/query_executor.js';
 import type { StorageReader } from '../../../storage/storage_provider.js';
-import { compileSessionQuery, getSelectedScriptRefs, type SessionScripts, type ScriptData } from '../../scripts/session_scripts.js';
+import { compileSessionQuery, getScriptRefs, type SessionScripts, type ScriptData } from '../../scripts/session_scripts.js';
 import { scriptDisplayName } from '../../scripts/script_types.js';
 import { deriveEntryStatus, EntryStatusKind } from '../entry_status_model.js';
 import { EntryStatusBar } from '../entry_status_bar.js';
@@ -456,7 +456,7 @@ export interface ScriptFeedRowProps {
     connections: ReadonlyMap<string, ScriptConnectionView>;
     cacheQueryResults: boolean;
     storageReader: StorageReader;
-    entries: ReturnType<typeof getSelectedScriptRefs>;
+    entries: ReturnType<typeof getScriptRefs>;
     scripts: SessionScripts['scripts'];
     scriptDebugMode: boolean;
     formattingDebugMode: boolean;

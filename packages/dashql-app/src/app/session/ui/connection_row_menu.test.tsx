@@ -23,9 +23,6 @@ function database(): ConnectionState {
     return {
         connectionId: 'database-1',
         connectionHealth: ConnectionHealth.ONLINE,
-        connectorInfo: {
-            features: { refreshSchemaAction: true },
-        },
         catalogUpdates: {
             currentFullRefresh: null,
             tasksRunning: new Map(),

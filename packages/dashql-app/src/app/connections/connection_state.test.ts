@@ -5,7 +5,7 @@ import {
     APPLY_CATALOG_CHANGES,
     connectionCatalogMatchesStorage,
     CATALOG_UPDATE_SUCCEEDED,
-    createConnectionStateForType,
+    createConnectionState,
     DELETE_CONNECTION,
     RESET_CONNECTION,
     reduceConnectionState,
@@ -14,7 +14,8 @@ import {
     type ConnectionState,
 } from './connection_state.js';
 import { TestLogger } from '../../platform/logger/test_logger.js';
-import { ConnectorType } from './connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType } from './connector_info.js';
+import { createConnectionStateDetails } from './connection_state_details.js';
 import { publishCatalogBatch } from './catalog_batch.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 
@@ -30,7 +31,7 @@ afterEach(() => {
 });
 
 function state(): ConnectionState {
-    return { ...createConnectionStateForType(dql, ConnectorType.HYPER, new Map()), connectionId: 'test' };
+    return { ...createConnectionState(dql, CONNECTOR_INFOS[ConnectorType.HYPER], createConnectionStateDetails(ConnectorType.HYPER)), connectionId: 'test' };
 }
 
 describe('attached database descriptor catalogs', () => {
@@ -61,7 +62,7 @@ describe('attached database descriptor catalogs', () => {
             processor: () => new Promise(() => {}),
         });
         const outcome = publication.then(() => 'published', error => error.name);
-        const next = reduceConnectionState(database, { type, value: null }, {} as any, {} as any);
+        const next = reduceConnectionState(database, { type, value: null }, {} as any);
         expect(controllers.every(controller => controller.signal.aborted)).toBe(true);
         for (const abort of aborts) {
             expect(abort.mock.invocationCallOrder[0]).toBeLessThan(cleanup.mock.invocationCallOrder[0]);
@@ -137,7 +138,7 @@ describe('attached database descriptor catalogs', () => {
         const schema = 'CREATE TABLE stored(id int);';
         const functions = 'CREATE FUNCTION stored_fn() RETURNS bigint;';
         replaceConnectionCatalogFromStorage(database, schema, functions);
-        database = reduceConnectionState(database, { type: RESET_CONNECTION, value: null }, {} as any, {} as any);
+        database = reduceConnectionState(database, { type: RESET_CONNECTION, value: null }, {} as any);
         expect(database.catalogRelationScript.toString()).toBe(schema);
         expect(database.catalogFunctionScript.toString()).toBe(functions);
         expect(connectionCatalogMatchesStorage(database, schema, functions)).toBe(false);
@@ -197,7 +198,7 @@ describe('attached database descriptor catalogs', () => {
         const drops = vi.spyOn(database.catalog, 'dropDescriptor');
         const destroyRelations = vi.spyOn(database.catalogRelationScript, 'destroy');
         const destroyFunctions = vi.spyOn(database.catalogFunctionScript, 'destroy');
-        reduceConnectionState(database, { type: DELETE_CONNECTION, value: null }, {} as any, {} as any);
+        reduceConnectionState(database, { type: DELETE_CONNECTION, value: null }, {} as any);
         expect(drops.mock.calls).toEqual([
             [database.catalogRelationScript.catalog_entry_id],
             [database.catalogFunctionScript.catalog_entry_id],
@@ -236,7 +237,7 @@ describe('catalog changes of executed statements', () => {
         const next = reduceConnectionState(database, {
             type: APPLY_CATALOG_CHANGES,
             value: [change(DROP, '', 'stored'), change(CREATE, 'other', 'created', ['a', 'b'])],
-        }, {} as any, new TestLogger());
+        }, new TestLogger());
         expect(relationsOf(next)).toEqual(['hyper.other.created(a, b)']);
         expect(next.catalogChangesSql).toContain('DROP TABLE "hyper"."public"."stored";');
         expect(next.catalogChangesSql).toContain('CREATE TABLE "hyper"."other"."created"');
@@ -250,7 +251,7 @@ describe('catalog changes of executed statements', () => {
         const next = reduceConnectionState(database, {
             type: APPLY_CATALOG_CHANGES,
             value: [change(CREATE, '', 'created', ['a'])],
-        }, {} as any, new TestLogger());
+        }, new TestLogger());
         replaceConnectionCatalogFromStorage(next, 'CREATE TABLE "hyper"."public"."edited"(id int);', null);
         expect(relationsOf(next)).toEqual(['hyper.public.created(a)', 'hyper.public.edited(id)']);
     });
@@ -260,7 +261,7 @@ describe('catalog changes of executed statements', () => {
         database = reduceConnectionState(database, {
             type: APPLY_CATALOG_CHANGES,
             value: [change(CREATE, '', 'created', ['a'])],
-        }, {} as any, new TestLogger());
+        }, new TestLogger());
         expect(database.catalogChangesSql).not.toBe('');
         database = reduceConnectionState(database, {
             type: UPDATE_CATALOG,
@@ -275,8 +276,8 @@ describe('catalog changes of executed statements', () => {
                 finishedAt: null,
                 lastUpdateAt: new Date(),
             }],
-        }, {} as any, new TestLogger());
-        database = reduceConnectionState(database, { type: CATALOG_UPDATE_SUCCEEDED, value: [1] }, {} as any, new TestLogger());
+        }, new TestLogger());
+        database = reduceConnectionState(database, { type: CATALOG_UPDATE_SUCCEEDED, value: [1] }, new TestLogger());
         expect(database.catalogChangesSql).toBe('');
     });
 });

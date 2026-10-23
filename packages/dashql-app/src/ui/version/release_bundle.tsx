@@ -7,7 +7,7 @@ import { useLogger } from '../../platform/logger/logger_provider.js';
 import { useCanaryReleaseManifest, useStableReleaseManifest } from '../../platform/version/version_check.js';
 
 import * as styles from './release_bundle.module.css';
-import { Result, RESULT_OK } from '../../utils/index.js';
+import { Result, RESULT_OK } from '../../utils/result.js';
 
 interface ReleaseBundleProps {
     name: string;

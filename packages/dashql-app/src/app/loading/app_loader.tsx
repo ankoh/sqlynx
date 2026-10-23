@@ -357,7 +357,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
                     if (embedded != null) attachConnection(sessionId, embedded.connectionId);
                     const database = embedded ?? allocateAttachedDatabase(
                         sessionId,
-                        { ...createDefaultHyperWasmConnectionState(core, connReg.connectionsBySignature), active: true },
+                        { ...createDefaultHyperWasmConnectionState(core), active: true },
                     );
                     setupSessionScripts(sessionId, database, 'Default');
                     void storageWriter.write(groupSessionManifestWrites(sessionId), {

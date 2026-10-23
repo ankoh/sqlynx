@@ -16,7 +16,6 @@ import {
 import { type CacheFileStat } from './query_result_cache_eviction.js';
 import { NativeStorageBackend } from './native_storage_backend.js';
 import { type SessionLocation, locationFromEntry } from './session_locator.js';
-import { grantFsScope } from './native_fs_scope.js';
 import { copySession, verifySession } from './storage_migration.js';
 import { validateSessionData, describeSessionValidationError } from './session_validation.js';
 import {
@@ -61,8 +60,6 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
     private readonly locations: Map<string, SessionLocation>;
     /// Cached per-session native backends, keyed by uuid
     private readonly nativeCache: Map<string, NativeStorageBackend>;
-    /// Native directories whose fs scope has already been granted this session
-    private readonly grantedScopes: Set<string>;
     /// The logger
     private readonly logger: Logger;
 
@@ -70,7 +67,6 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         this.opfs = opfs;
         this.locations = new Map();
         this.nativeCache = new Map();
-        this.grantedScopes = new Set();
         this.logger = logger;
     }
 
@@ -83,36 +79,14 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         await this.refreshLocations();
     }
 
-    /// Rebuild the uuid -> location map from the OPFS root manifest and re-grant native fs scopes.
+    /// Rebuild the uuid -> location map from the OPFS root manifest.
     ///
-    /// Called at init (and after relocate, before reload re-runs init). Granting scope here, before
-    /// any native session is read, satisfies "grant before read" without a separate boot step.
+    /// Called at init (and after relocate, before reload re-runs init).
     async refreshLocations(): Promise<void> {
         const sessions = await this.opfs.listSessions(STORAGE_MANIFEST_FILE);
         this.locations.clear();
         for (const entry of sessions) {
             this.locations.set(entry.path, locationFromEntry(entry));
-        }
-        for (const loc of this.locations.values()) {
-            if (loc.type === StorageBackendType.Native && loc.nativePath) {
-                await this.ensureScope(loc.nativePath);
-            }
-        }
-    }
-
-    /// Grant the native fs scope for a directory exactly once per session.
-    private async ensureScope(dir: string): Promise<void> {
-        if (this.grantedScopes.has(dir)) {
-            return;
-        }
-        try {
-            await grantFsScope(dir);
-            this.grantedScopes.add(dir);
-        } catch (e: any) {
-            // A failed grant means subsequent native reads/writes for this directory will fail with
-            // a permission error. Log it, but don't poison the whole restore - other sessions are
-            // independent. We deliberately don't mark the scope as granted so a later access retries.
-            this.logger.warn('failed to grant native fs scope', { dir, error: String(e?.message ?? e) }, LOG_CTX);
         }
     }
 
@@ -121,11 +95,10 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         return this.locations.get(sessionId) ?? { type: StorageBackendType.OPFS };
     }
 
-    /// Resolve the backend that physically holds a session's files, granting scope as needed.
+    /// Resolve the backend that physically holds a session's files.
     private async backendFor(sessionId: string): Promise<StorageBackend> {
         const loc = this.locationOf(sessionId);
         if (loc.type === StorageBackendType.Native && loc.nativePath) {
-            await this.ensureScope(loc.nativePath);
             let native = this.nativeCache.get(sessionId);
             if (!native) {
                 native = new NativeStorageBackend(loc.nativePath);
@@ -384,7 +357,6 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
     /// A folder of an older version is migrated in memory, the folder itself is migrated once it is
     /// registered.
     async prepareNativeSession(dir: string): Promise<PreparedNativeSession> {
-        await this.ensureScope(dir);
         const head = await readSessionBundleHead(new OverlayFolder(new NativeFolder(dir)), `Invalid session folder ${dir}`);
 
         let bundle: SessionBundle;
@@ -491,7 +463,6 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
             throw new Error(`Session ${uuid} is not an OPFS session`);
         }
 
-        await this.ensureScope(dir);
         const native = new NativeStorageBackend(dir);
         await native.initialize();
 

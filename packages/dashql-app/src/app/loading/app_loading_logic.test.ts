@@ -45,10 +45,8 @@ describe('loadApp', () => {
             connectionStates: new Map(),
             attachedDatabasesBySession: new Map(),
             connectionStatesByType: [[], [], [], []],
-            connectionSignatures: new Map(),
             sessionScripts: new Map(),
             sessionScriptsByConnection: new Map(),
-            sessionScriptsByConnectionType: [[], [], [], []],
             invalidSessions: new Map(),
         };
         const storage = { restoreAppState: vi.fn().mockResolvedValue(restored) };
@@ -82,10 +80,8 @@ describe('loadApp', () => {
             connectionStates: new Map(),
             attachedDatabasesBySession: new Map(),
             connectionStatesByType: [[], [], [], []],
-            connectionSignatures: new Map(),
             sessionScripts: new Map([['second', {}], ['first', {}]]),
             sessionScriptsByConnection: new Map(),
-            sessionScriptsByConnectionType: [[], [], [], []],
             invalidSessions: new Map(),
         };
         const result = await loadApp(

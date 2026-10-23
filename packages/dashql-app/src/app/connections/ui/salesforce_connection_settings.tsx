@@ -23,7 +23,7 @@ import { Logger } from '../../../platform/logger/logger.js';
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../connector_info.js';
 import { isNativePlatform } from '../../../platform/native_globals.js';
 import { ConnectionStateDetailsVariant } from '../connection_state_details.js';
-import type { DetailedError } from '../connection_types.js';
+import type { DetailedError } from '../../../utils/error.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { collectSalesforceAuthInfo } from '../salesforce/salesforce_api_client.js';
 import { cancelConnectionSetup, registerConnectionSetup } from '../connection_setup_cancellation.js';

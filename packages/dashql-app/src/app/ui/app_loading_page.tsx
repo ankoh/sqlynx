@@ -8,7 +8,6 @@ import { Button, ButtonVariant } from '../../ui/foundations/button.js';
 import { CONFIRM_FINISHED_SETUP, useRouteContext, useRouterNavigate } from '../router/router.js';
 import { getStatusFromProgressCounter, IndicatorStatus, StatusIndicator } from '../../ui/foundations/status_indicator.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
-import { useStorageReader } from '../storage/storage_provider.js';
 import { AppLoadingProgress } from '../loading/app_loading_progress.js';
 import { ParticleFlowBackground } from '../../ui/particle_flow/particle_flow_background.js';
 import { CompactNavBar } from './navbar.js';
@@ -23,7 +22,6 @@ interface Props {
 export const AppLoadingPage: React.FC<Props> = (props: Props) => {
     const navigate = useRouterNavigate();
     const coreSetup = useDashQLCoreSetup();
-    const storageReader = useStorageReader();
     const routeContext = useRouteContext();
 
     // Subscribe core setup.
@@ -40,25 +38,6 @@ export const AppLoadingPage: React.FC<Props> = (props: Props) => {
                 }
             } catch (e: any) {
                 setCoreStatus(IndicatorStatus.Failed);
-            }
-        };
-        run();
-        return () => abort.abort();
-    }, []);
-
-    // Subscribe initial state restore
-    const [storageStatus, setStorageStatus] = React.useState<IndicatorStatus>(IndicatorStatus.None);
-    React.useEffect(() => {
-        const abort = new AbortController();
-        const run = async () => {
-            try {
-                setStorageStatus(IndicatorStatus.Running);
-                await storageReader.waitForInitialRestore();
-                if (!abort.signal.aborted) {
-                    setStorageStatus(IndicatorStatus.Succeeded);
-                }
-            } catch (e: any) {
-                setStorageStatus(IndicatorStatus.Failed);
             }
         };
         run();

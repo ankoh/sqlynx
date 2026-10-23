@@ -1,5 +1,0 @@
-.overlay {
-    width: 100%;
-    max-height: min(320px, calc(100vh - 48px));
-    overflow-y: auto;
-}

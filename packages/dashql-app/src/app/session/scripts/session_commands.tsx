@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { ConnectionHealth, printConnectionHealth } from '../../connections/connection_state.js';
-import { ConnectorInfo } from '../../connections/connector_info.js';
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
 import { getSelectedScriptRef, SELECT_NEXT_SCRIPT, SELECT_PREV_SCRIPT } from './session_scripts.js';
 import { useCatalogLoaderQueue } from '../../connections/catalog_loader.js';
@@ -22,13 +21,8 @@ const LOG_CTX = "session_commands";
 export enum SessionCommandType {
     ExecuteEditorQuery = 1,
     RefreshCatalog = 2,
-    SaveSessionAsLink = 3,
-    SaveQueryAsSql = 4,
-    SaveQueryResultsAsArrow = 5,
     SelectPreviousSessionScript = 6,
     SelectNextSessionScript = 7,
-    EditSessionConnection = 8,
-    CloseSession = 9,
 }
 
 export type ScriptCommandDispatch = (command: SessionCommandType) => void;
@@ -231,19 +225,6 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                         refreshCatalog(connection.connectionId, true);
                     }
                     break;
-                case SessionCommandType.CloseSession: {
-                    break;
-                }
-
-                case SessionCommandType.SaveSessionAsLink:
-                    console.log('Save session as link');
-                    break;
-                case SessionCommandType.SaveQueryAsSql:
-                    console.log('Save query as sql command');
-                    break;
-                case SessionCommandType.SaveQueryResultsAsArrow:
-                    console.log('Save query results as arrow');
-                    break;
                 case SessionCommandType.SelectPreviousSessionScript:
                     if (modifySessionScripts) {
                         modifySessionScripts({
@@ -260,28 +241,11 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                         });
                     }
                     break;
-                case SessionCommandType.EditSessionConnection:
-                    // Connection settings are now handled via overlay in the UI
-                    break;
             }
         },
         [logger],
     );
 
-    // Helper to require connector info
-    const requireConnector = (handler: (connectorInfo: ConnectorInfo) => () => void) => {
-        const connectorInfo = sessionScripts?.connectorInfo ?? null;
-        if (connectorInfo == null) {
-            return () => console.warn(`Command requires an active connector`);
-        } else {
-            return handler(connectorInfo);
-        }
-    };
-
-    // Helper to signal that a command is not implemented
-    const commandNotImplemented = (connector: ConnectorInfo, actionName: string) => {
-        console.warn(`Connector '${connector.names.displayLong}' does not implement the command '${actionName}'`);
-    };
     // Create key event handlers
     const keyHandlers = React.useMemo<KeyEventHandler[]>(
         () => [
@@ -293,33 +257,15 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
             {
                 key: 'r',
                 ctrlKey: true,
-                callback: requireConnector(c =>
-                    !c.features.refreshSchemaAction
-                        ? () => commandNotImplemented(c, 'REFRESH_SCHEMA')
-                        : () => commandDispatch(SessionCommandType.RefreshCatalog),
-                ),
+                callback: () => commandDispatch(SessionCommandType.RefreshCatalog),
             },
-            {
-                key: 's',
-                ctrlKey: true,
-                callback: () => commandDispatch(SessionCommandType.SaveQueryAsSql),
-            },
-            {
-                key: 'a',
-                ctrlKey: true,
-                callback: requireConnector(c =>
-                    !c.features.executeQueryAction
-                        ? () => commandNotImplemented(c, 'SAVE_QUERY_RESULTS_AS_ARROW')
-                        : () => commandDispatch(SessionCommandType.SaveQueryResultsAsArrow),
-                ),
-            },
-                    // Ctrl+H / Ctrl+L (page-bar navigation) and Ctrl+J / Ctrl+K (feed navigation) are
-                    // handled in the session page, where the meta tabs (relations/functions) and the
+            // Ctrl+H / Ctrl+L (page-bar navigation) and Ctrl+J / Ctrl+K (feed navigation) are
+            // handled in the session page, where the meta tabs (relations/functions) and the
             // editing/details view state are in scope. They fold the meta tabs into the same
             // left/right stepping and become no-ops when the feed isn't showing. They are
             // intentionally not bound here to avoid double-handling the key.
         ],
-        [sessionScripts?.connectorInfo, commandDispatch],
+        [commandDispatch],
     );
 
     // Setup key event handlers

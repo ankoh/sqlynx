@@ -56,16 +56,6 @@ export interface ConnectorPlatforms {
 }
 
 export interface ConnectorFeatures {
-    /// Can manually set up connector? (vs. static / preloaded)
-    manualSetup: boolean;
-    /// Has health checks?
-    healthChecks: boolean;
-    /// User-editable schema script?
-    schemaScript: boolean;
-    /// Can execute queries?
-    executeQueryAction: boolean;
-    /// Can refresh a schema?
-    refreshSchemaAction: boolean;
     /// Do new sessions cache query results?
     queryResultCaching: boolean;
 }
@@ -86,11 +76,6 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
         },
         catalogResolver: CatalogResolver.SQL_HYPER,
         features: {
-            manualSetup: true,
-            healthChecks: true,
-            schemaScript: false,
-            executeQueryAction: true,
-            refreshSchemaAction: true,
             queryResultCaching: false,
         },
         platforms: {
@@ -113,11 +98,6 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
         },
         catalogResolver: CatalogResolver.SALESFORCE_METDATA_API,
         features: {
-            manualSetup: true,
-            healthChecks: true,
-            schemaScript: false,
-            executeQueryAction: true,
-            refreshSchemaAction: true,
             queryResultCaching: true,
         },
         platforms: {
@@ -140,11 +120,6 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
         },
         catalogResolver: CatalogResolver.SQL_INFORMATION_SCHEMA,
         features: {
-            manualSetup: true,
-            healthChecks: true,
-            schemaScript: false,
-            executeQueryAction: true,
-            refreshSchemaAction: true,
             queryResultCaching: true,
         },
         platforms: {

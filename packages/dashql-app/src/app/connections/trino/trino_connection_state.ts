@@ -1,18 +1,14 @@
-import * as dashql from "@ankoh/dashql-core";
-
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 import * as auth from '@ankoh/dashql-jsonschema/auth.js';
 
-import type { DetailedError } from '../connection_types.js';
+import type { DetailedError } from '../../../utils/error.js';
 
 import { VariantKind } from '../../../utils/variant.js';
-import { ConnectorType, CONNECTOR_INFOS, TRINO_CONNECTOR } from '../connector_info.js';
+import { TRINO_CONNECTOR } from '../connector_info.js';
 import {
     ConnectionHealth,
     ConnectionStatus,
     ConnectionState,
-    ConnectionStateWithoutId,
-    createConnectionState,
     HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
@@ -21,11 +17,7 @@ import {
     DELETE_CONNECTION,
 } from '../connection_state.js';
 import { TrinoChannelInterface } from "./trino_channel.js";
-import { Hasher } from "../../../utils/hash.js";
-import { ConnectionSignatureMap, updateConnectionSignature } from "../connection_signature.js";
-import { DefaultHasher } from "../../../utils/hash_default.js";
 import { dateToTimestamp } from "../proto_helper.js";
-import { StorageWriter } from "../../storage/storage_writer.js";
 
 // OAuth flow action symbols
 export const OAUTH_STARTED = Symbol('OAUTH_STARTED');
@@ -55,26 +47,12 @@ export function createTrinoConnectionStateDetails(params?: connection.TrinoConne
     };
 }
 
-export function createTrinoConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
-    return createConnectionState(dql, CONNECTOR_INFOS[ConnectorType.TRINO], connSigs, {
-        type: TRINO_CONNECTOR,
-        value: createTrinoConnectionStateDetails(),
-    });
-}
-
 export function getTrinoConnectionDetails(state: ConnectionState | null): TrinoConnectionStateDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case TRINO_CONNECTOR: return state.details.value;
         default: return null;
     }
-}
-
-export function computeTrinoConnectionSignature(details: TrinoConnectionStateDetails, hasher: Hasher) {
-    hasher.add("trino");
-    hasher.add(details.proto.setupParams?.endpoint ?? "");
-    hasher.add(details.proto.setupParams?.catalogName ?? "");
-    hasher.add((details.proto.setupParams?.schemaNames ?? []).toString());
 }
 
 export const TRINO_CHANNEL_SETUP_CANCELLED = Symbol('TRINO_CHANNEL_SETUP_CANCELLED');
@@ -107,7 +85,7 @@ export type TrinoConnectorAction =
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
-export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoConnectorAction, _storage: StorageWriter): ConnectionState | null {
+export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoConnectorAction): ConnectionState | null {
     const details = state.details.value as TrinoConnectionStateDetails;
     let next: ConnectionState | null = null;
     switch (action.type) {
@@ -152,8 +130,6 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                 },
                 channel: null,
             };
-            const sig = new DefaultHasher();
-            computeTrinoConnectionSignature(newDetails, sig);
             next = {
                 ...state,
                 connectionStatus: ConnectionStatus.AUTH_STARTED,
@@ -162,7 +138,6 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                     type: TRINO_CONNECTOR,
                     value: newDetails,
                 },
-                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.connectionId),
             };
             break;
         }
@@ -383,8 +358,6 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                 },
                 channel: null
             };
-            const sig = new DefaultHasher();
-            computeTrinoConnectionSignature(newDetails, sig);
             next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_SETUP_STARTED,
@@ -393,7 +366,6 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                     type: TRINO_CONNECTOR,
                     value: newDetails,
                 },
-                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.connectionId)
             };
             break;
         }

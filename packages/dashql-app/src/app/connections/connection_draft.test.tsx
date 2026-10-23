@@ -38,12 +38,11 @@ function database(type: ConnectorType): ConnectionState {
         connectionId: TEST_CONNECTION_ID, connectorInfo, params, active: false,
         connectionStatus: ConnectionStatus.NOT_STARTED, connectionHealth: ConnectionHealth.NOT_STARTED,
         details: getConnectionStateDetailsFromParams(params),
-        connectionSignature: { signatureString: 'initial', signatures: new Map() },
         catalog: { clear: vi.fn() }, catalogUpdates: { tasksRunning: new Map() },
     } as unknown as ConnectionState;
 }
 function reduce(state: ConnectionState, action: ConnectionAction) {
-    return reduceConnectionState(state, action, {} as StorageWriter, {} as Logger);
+    return reduceConnectionState(state, action, {} as Logger);
 }
 function edited(params: ConnectionParams, endpoint: string): ConnectionParams {
     if ('hyper' in params) return { hyper: { ...params.hyper, protocol: 'V3_HTTP', endpoint } };

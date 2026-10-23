@@ -67,24 +67,10 @@ export function projectionForVisualizeQuery(query: ResolvedVisualizeQuery | null
 
 /// Script annotations derived from analysis
 export interface ScriptAnnotations {
-    // The table references
-    tableRefs: string[];
     // The table definitions
     tableDefs: string[];
-    // The restricted columns
-    restrictedColumns: string[];
     // The resolved VISUALIZE query for this script, if any.
     visualizeQuery: ResolvedVisualizeQuery | null;
-}
-
-/// A script in the collection (runtime representation)
-export interface Script {
-    // The script id
-    scriptId: number;
-    // The script text
-    scriptText: string;
-    // The script annotations
-    annotations: ScriptAnnotations;
 }
 
 /// A reference in the session's flat ordered script collection.
@@ -95,22 +81,10 @@ export interface ScriptRef {
     fileName: string;
 }
 
-/// Complete script collection structure (runtime representation).
-export interface Scripts {
-    // The scripts
-    scripts: Script[];
-    // The committed script references keyed by file name
-    scriptRefs: { [fileName: string]: ScriptRef };
-    // The session metadata
-    sessionMetadata: SessionMetadata;
-}
-
 /// Helper to create empty annotations
 export function createEmptyAnnotations(): ScriptAnnotations {
     return {
-        tableRefs: [],
         tableDefs: [],
-        restrictedColumns: [],
         visualizeQuery: null,
     };
 }

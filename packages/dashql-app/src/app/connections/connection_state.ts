@@ -1,5 +1,4 @@
 import * as core from '@ankoh/dashql-core';
-import * as dashql from '@ankoh/dashql-core';
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
 import { HyperConnectorAction, reduceHyperConnectorState } from './hyper/hyper_connection_state.js';
@@ -11,6 +10,7 @@ import { VariantKind } from '../../utils/variant.js';
 import {
     CONNECTOR_INFOS,
     ConnectorInfo,
+    getConnectorInfoForParams,
     ConnectorType,
     HYPER_CONNECTOR,
     SALESFORCE_DATA_CLOUD_CONNECTOR,
@@ -37,15 +37,12 @@ import {
     QUERY_CACHE_DELETED,
     QueryExecutionState,
 } from './query_execution_state.js';
-import { Hasher } from '../../utils/hash.js';
 import { reduceQueryAction } from './query_execution_state.js';
 import { reduceTrinoConnectorState, TrinoConnectorAction } from './trino/trino_connection_state.js';
-import { computeConnectionSignatureFromDetails, computeNewConnectionSignatureFromDetails, ConnectionStateDetailsVariant, createConnectionStateDetails } from './connection_state_details.js';
-import { ConnectionSignatureMap, ConnectionSignatureState, newConnectionSignature } from './connection_signature.js';
-import { StorageWriter } from '../storage/storage_writer.js';
+import { ConnectionStateDetailsVariant, createConnectionStateDetails } from './connection_state_details.js';
 import { Logger, stringifyError } from '../../platform/logger/logger.js';
 import { invalidateCatalogBatch, publishCatalogBatchSync, type CatalogBatchEntry } from './catalog_batch.js';
-import { connectionParamsEqual, connectionParamsWithoutDraftRows, getConnectionInfoFromParams, getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';
+import { connectionParamsEqual, connectionParamsWithoutDraftRows, getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';
 import { HYPER_CHANNEL_SETUP_STARTED } from './hyper/hyper_connection_state.js';
 import { OAUTH_STARTED, TRINO_CHANNEL_SETUP_STARTED } from './trino/trino_connection_state.js';
 import { SETUP_STARTED } from './salesforce/salesforce_connection_state.js';
@@ -88,8 +85,6 @@ export interface ConnectionState {
     connectionHealth: ConnectionHealth;
     /// The connection info
     connectorInfo: ConnectorInfo;
-    /// The connection signature
-    connectionSignature: ConnectionSignatureState;
     /// The user-assigned display name, absent when the connection is unnamed
     name?: string;
 
@@ -107,13 +102,13 @@ export interface ConnectionState {
     metrics: connection.ConnectionMetrics;
 
     /// The catalog
-    catalog: dashql.DashQLCatalog;
+    catalog: core.DashQLCatalog;
     /// The  catalog updates
     catalogUpdates: CatalogUpdates;
     /// The catalog relation script (consolidated SQL for all relations)
-    catalogRelationScript: dashql.DashQLScript;
+    catalogRelationScript: core.DashQLScript;
     /// The catalog function script (consolidated SQL for all function declarations)
-    catalogFunctionScript: dashql.DashQLScript;
+    catalogFunctionScript: core.DashQLScript;
     /// The catalog changes of executed statements since the last catalog refresh, as SQL.
     /// They are applied to the relation descriptor on top of the relation script.
     catalogChangesSql: string;
@@ -165,33 +160,6 @@ export enum ConnectionStatus {
     CORE_ACCESS_TOKEN_RECEIVED,
 }
 
-export function canDeleteConnectionWithStatus(status: ConnectionStatus) {
-    switch (status) {
-        case ConnectionStatus.AUTH_CANCELLED:
-        case ConnectionStatus.AUTH_FAILED:
-        case ConnectionStatus.CHANNEL_SETUP_CANCELLED:
-        case ConnectionStatus.CHANNEL_SETUP_FAILED:
-        case ConnectionStatus.CHANNEL_SETUP_STARTED:
-        case ConnectionStatus.CORE_ACCESS_TOKEN_RECEIVED:
-        case ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED:
-        case ConnectionStatus.HEALTH_CHECK_CANCELLED:
-        case ConnectionStatus.HEALTH_CHECK_FAILED:
-        case ConnectionStatus.HEALTH_CHECK_SUCCEEDED:
-        case ConnectionStatus.NOT_STARTED:
-        case ConnectionStatus.OAUTH_CODE_RECEIVED:
-        case ConnectionStatus.PKCE_GENERATED:
-            return true;
-        case ConnectionStatus.AUTH_STARTED:
-        case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
-        case ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED:
-        case ConnectionStatus.HEALTH_CHECK_STARTED:
-        case ConnectionStatus.PKCE_GENERATION_STARTED:
-        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:
-        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW:
-            return false;
-    }
-}
-
 export enum ConnectionHealth {
     NOT_STARTED = 0,
     CONNECTING = 1,
@@ -220,7 +188,6 @@ export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;
 export const DELETE_CONNECTION = Symbol('DELETE_CONNECTION');
 export const RESET_CONNECTION = Symbol('RESET_CONNECTION');
 export const SWITCH_CONNECTOR_TYPE = Symbol('SWITCH_CONNECTOR_TYPE');
-export const SET_CONNECTION_ACTIVE = Symbol('SET_CONNECTION_ACTIVE');
 export const SET_CATALOG_SCRIPT = Symbol('SET_CATALOG_SCRIPT');
 export const APPLY_CATALOG_CHANGES = Symbol('APPLY_CATALOG_CHANGES');
 export const UPDATE_CATALOG = Symbol('UPDATE_CATALOG');
@@ -242,8 +209,8 @@ export const COMMIT_CONNECTION_PARAMS = Symbol('COMMIT_CONNECTION_PARAMS');
 export const SET_CONNECTION_NAME = Symbol('SET_CONNECTION_NAME');
 
 export type CatalogAction =
-    | VariantKind<typeof SET_CATALOG_SCRIPT, dashql.DashQLScript>
-    | VariantKind<typeof APPLY_CATALOG_CHANGES, dashql.buffers.catalog.CatalogChangeT[]>
+    | VariantKind<typeof SET_CATALOG_SCRIPT, core.DashQLScript>
+    | VariantKind<typeof APPLY_CATALOG_CHANGES, core.buffers.catalog.CatalogChangeT[]>
     | VariantKind<typeof UPDATE_CATALOG, [number, CatalogUpdateTaskState]>
     | VariantKind<typeof CATALOG_UPDATE_REGISTER_QUERY, [number, number]>
     | VariantKind<typeof CATALOG_UPDATE_SCHEMA_SCRIPT, [number]>
@@ -260,7 +227,6 @@ export type ConnectionAction =
     | VariantKind<typeof DELETE_CONNECTION, null>
     | VariantKind<typeof RESET_CONNECTION, null>
     | VariantKind<typeof SWITCH_CONNECTOR_TYPE, ConnectorType>
-    | VariantKind<typeof SET_CONNECTION_ACTIVE, null>
     | VariantKind<typeof SET_CONNECTION_NAME, string | null>
     | CatalogAction
     | QueryExecutionAction
@@ -269,10 +235,10 @@ export type ConnectionAction =
     | SalesforceConnectionStateAction
     ;
 
-export function reduceConnectionState(state: ConnectionState, action: ConnectionAction, storage: StorageWriter, logger: Logger): ConnectionState {
+export function reduceConnectionState(state: ConnectionState, action: ConnectionAction, logger: Logger): ConnectionState {
     switch (action.type) {
         case SET_CONNECTION_DRAFT: {
-            if (getConnectionInfoFromParams(action.value)?.connectorType !== state.connectorInfo.connectorType) return state;
+            if (getConnectorInfoForParams(action.value)?.connectorType !== state.connectorInfo.connectorType) return state;
             const paramsDraft = structuredClone(action.value);
             if (connectionParamsEqual(state.paramsDraft, paramsDraft)) return state;
             return { ...state, paramsDraft };
@@ -319,7 +285,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
         case CATALOG_UPDATE_SUCCEEDED:
         case CATALOG_UPDATE_PARTIALLY_SUCCEEDED:
         case CATALOG_UPDATE_FAILED:
-            return reduceCatalogAction(state, action, storage);
+            return reduceCatalogAction(state, action);
 
         case EXECUTE_QUERY:
         case QUERY_PREPARING:
@@ -373,13 +339,13 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             let newState: ConnectionState | null = null;
             switch (state.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    newState = reduceSalesforceConnectionState(cleaned, action as SalesforceConnectionStateAction, storage);
+                    newState = reduceSalesforceConnectionState(cleaned, action as SalesforceConnectionStateAction);
                     break;
                 case HYPER_CONNECTOR:
-                    newState = reduceHyperConnectorState(cleaned, action as HyperConnectorAction, storage);
+                    newState = reduceHyperConnectorState(cleaned, action as HyperConnectorAction);
                     break;
                 case TRINO_CONNECTOR:
-                    newState = reduceTrinoConnectorState(cleaned, action as TrinoConnectorAction, storage);
+                    newState = reduceTrinoConnectorState(cleaned, action as TrinoConnectorAction);
                     break;
             }
 
@@ -401,11 +367,9 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             }
             const newInfo = CONNECTOR_INFOS[newType as number];
             const newDetails = createConnectionStateDetails(newType);
-            const newSig = computeNewConnectionSignatureFromDetails(newDetails);
             return {
                 ...state,
                 connectorInfo: newInfo,
-                connectionSignature: newConnectionSignature(newSig, state.connectionSignature.signatures, null),
                 details: newDetails,
                 params: getConnectionParamsFromStateDetails(newDetails)!,
                 paramsDraft: undefined,
@@ -419,15 +383,6 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             const name = normalizeConnectionName(action.value);
             if (name === state.name) return state;
             return { ...state, name };
-        }
-
-        // SET_CONNECTION_ACTIVE marks the connection as active.
-        // Once active, storage writes are enabled for both connection and session scripts state.
-        case SET_CONNECTION_ACTIVE: {
-            if (state.active) {
-                return state;
-            }
-            return { ...state, active: true };
         }
 
         /// DELETE_CONNECTION deletes the connection state
@@ -462,13 +417,13 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             let newState: ConnectionState | null = null;
             switch (state.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    newState = reduceSalesforceConnectionState(cleaned, action as SalesforceConnectionStateAction, storage);
+                    newState = reduceSalesforceConnectionState(cleaned, action as SalesforceConnectionStateAction);
                     break;
                 case HYPER_CONNECTOR:
-                    newState = reduceHyperConnectorState(cleaned, action as HyperConnectorAction, storage);
+                    newState = reduceHyperConnectorState(cleaned, action as HyperConnectorAction);
                     break;
                 case TRINO_CONNECTOR:
-                    newState = reduceTrinoConnectorState(cleaned, action as TrinoConnectorAction, storage);
+                    newState = reduceTrinoConnectorState(cleaned, action as TrinoConnectorAction);
                     break;
             }
 
@@ -518,13 +473,13 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             let newState: ConnectionState | null = null;
             switch (state.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    newState = reduceSalesforceConnectionState(state, action as SalesforceConnectionStateAction, storage);
+                    newState = reduceSalesforceConnectionState(state, action as SalesforceConnectionStateAction);
                     break;
                 case HYPER_CONNECTOR:
-                    newState = reduceHyperConnectorState(state, action as HyperConnectorAction, storage);
+                    newState = reduceHyperConnectorState(state, action as HyperConnectorAction);
                     break;
                 case TRINO_CONNECTOR:
-                    newState = reduceTrinoConnectorState(state, action as TrinoConnectorAction, storage);
+                    newState = reduceTrinoConnectorState(state, action as TrinoConnectorAction);
                     break;
             }
             if (newState == null) {
@@ -570,7 +525,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
 /// Known limitation: the changes don't distinguish temporary relations. A `CREATE TEMP TABLE` is
 /// recorded and persisted like any other relation, so it outlives the database session it belongs to
 /// and is restored with the catalog after a reconnect.
-function applyCatalogChanges(state: ConnectionState, changes: dashql.buffers.catalog.CatalogChangeT[], logger: Logger): ConnectionState {
+function applyCatalogChanges(state: ConnectionState, changes: core.buffers.catalog.CatalogChangeT[], logger: Logger): ConnectionState {
     if (changes.length === 0) return state;
     try {
         const qualified = state.instance.qualifyCatalogChanges(changes, catalogNameDefaults(state.details));
@@ -600,63 +555,21 @@ export function createConnectionMetrics(): connection.ConnectionMetrics {
     return createQueryExecutionMetrics();
 }
 
-export function createConnectionState(dql: dashql.DashQL, info: ConnectorInfo, connSigs: ConnectionSignatureMap, details: ConnectionStateDetailsVariant): ConnectionStateWithoutId {
+export function createConnectionState(dql: core.DashQL, info: ConnectorInfo, details: ConnectionStateDetailsVariant): ConnectionStateWithoutId {
     const catalog = dql.createCatalog();
     const catalogRelationScript = dql.createScript(catalog);
     catalogRelationScript.replaceText(generateCatalogScriptHeader(CatalogSource.Unknown));
     const catalogFunctionScript = dql.createScript(catalog);
     catalogFunctionScript.replaceText(generateFunctionScriptHeader(CatalogSource.Unknown));
-    const connSig = computeNewConnectionSignatureFromDetails(details);
     return {
         instance: dql,
         active: false,
         connectionStatus: ConnectionStatus.NOT_STARTED,
         connectionHealth: ConnectionHealth.NOT_STARTED,
         connectorInfo: info,
-        connectionSignature: newConnectionSignature(connSig, connSigs, null),
         metrics: createConnectionMetrics(),
         details,
         params: getConnectionParamsFromStateDetails(details)!,
-        catalog,
-        catalogUpdates: {
-            tasksRunning: new Map(),
-            tasksFinished: new Map(),
-            currentFullRefresh: null,
-            lastFullRefresh: null,
-            restoredAt: null,
-        },
-        catalogRelationScript,
-        catalogFunctionScript,
-        catalogChangesSql: '',
-        snapshotQueriesActiveFinished: 1,
-        queriesActive: new Map(),
-        queriesActiveOrdered: [],
-        queriesFinished: new Map(),
-        queriesFinishedOrdered: [],
-    };
-}
-
-export function createConnectionStateForType(dql: dashql.DashQL, type: ConnectorType, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
-    const connInfo = CONNECTOR_INFOS[type as number];
-    const connMetrics = createConnectionMetrics();
-    const connDetails = createConnectionStateDetails(type);
-    const connSig = computeNewConnectionSignatureFromDetails(connDetails);
-
-    const catalog = dql.createCatalog();
-    const catalogRelationScript = dql.createScript(catalog);
-    catalogRelationScript.replaceText(generateCatalogScriptHeader(CatalogSource.Unknown));
-    const catalogFunctionScript = dql.createScript(catalog);
-    catalogFunctionScript.replaceText(generateFunctionScriptHeader(CatalogSource.Unknown));
-    return {
-        instance: dql,
-        active: false,
-        connectionStatus: ConnectionStatus.NOT_STARTED,
-        connectionHealth: ConnectionHealth.NOT_STARTED,
-        connectorInfo: connInfo,
-        connectionSignature: newConnectionSignature(connSig, connSigs, null),
-        metrics: connMetrics,
-        details: connDetails,
-        params: getConnectionParamsFromStateDetails(connDetails)!,
         catalog,
         catalogUpdates: {
             tasksRunning: new Map(),
@@ -732,8 +645,4 @@ export function catalogFileMatchesStorage(script: core.DashQLScript, sql: string
 
 function catalogScriptHasNoStatements(sql: string): boolean {
     return sql.split('\n').every(line => line.trim() === '' || line.trimStart().startsWith('--'));
-}
-
-export function computeConnectionSignature(state: ConnectionState, hasher: Hasher) {
-    return computeConnectionSignatureFromDetails(state.details, hasher);
 }

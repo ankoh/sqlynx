@@ -5,7 +5,6 @@ import { ColumnAggregationVariant, TableAggregationTask, TableOrderingTask, Tabl
 import { VariantKind } from '../utils/variant.js';
 import { CrossFilters } from './cross_filters.js';
 import { DataFrame, DataFrameRegistry } from './data_frame.js';
-import { Logger } from '../platform/logger/logger.js';
 import { COLUMN_AGGREGATION_TASK, DATA_SEARCH_TASK, FILTERED_COLUMN_AGGREGATION_TASK, SYSTEM_COLUMN_COMPUTATION_TASK, TABLE_AGGREGATION_TASK, TABLE_FILTERING_TASK, TABLE_ORDERING_TASK, TaskVariant } from './computation_scheduler.js';
 import { parseDataSearchMatches } from './sql/query_result_search_sql.js';
 
@@ -191,7 +190,7 @@ export type ComputationAction =
     | VariantKind<typeof RESULT_SEARCH_FAILED, [number, DataFrame, 'columns' | 'data', number, string]>
     ;
 
-export function reduceComputationState(state: ComputationState, action: ComputationAction, memory: DataFrameRegistry, _logger: Logger): ComputationState {
+export function reduceComputationState(state: ComputationState, action: ComputationAction, memory: DataFrameRegistry): ComputationState {
     switch (action.type) {
         case SCHEDULE_TASK: {
             const taskVariant = action.value;

@@ -1,18 +1,14 @@
-import * as dashql from "@ankoh/dashql-core";
-
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
-import type { DetailedError } from '../connection_types.js';
+import type { DetailedError } from '../../../utils/error.js';
 
 import { VariantKind } from '../../../utils/variant.js';
 import { HyperDatabaseChannel } from './hyperdb_grpc_client.js';
-import { ConnectorType, CONNECTOR_INFOS, HYPER_CONNECTOR } from '../connector_info.js';
+import { HYPER_CONNECTOR } from '../connector_info.js';
 import {
     ConnectionHealth,
     ConnectionStatus,
     ConnectionState,
-    ConnectionStateWithoutId,
-    createConnectionState,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_FAILED,
@@ -20,11 +16,7 @@ import {
     RESET_CONNECTION,
     DELETE_CONNECTION,
 } from '../connection_state.js';
-import { Hasher } from "../../../utils/hash.js";
-import { ConnectionSignatureMap, updateConnectionSignature } from "../connection_signature.js";
-import { DefaultHasher } from "../../../utils/hash_default.js";
 import { dateToTimestamp } from "../proto_helper.js";
-import { StorageWriter } from "../../storage/storage_writer.js";
 
 export interface HyperConnectionDetails {
     /// The protobuf
@@ -51,29 +43,12 @@ export function createHyperConnectionStateDetails(params?: connection.HyperConne
     };
 }
 
-export function createHyperConnectionState(dql: dashql.DashQL, connSigs: ConnectionSignatureMap): ConnectionStateWithoutId {
-    return createConnectionState(dql, CONNECTOR_INFOS[ConnectorType.HYPER], connSigs, {
-        type: HYPER_CONNECTOR,
-        value: createHyperConnectionStateDetails()
-    });
-}
-
 export function getHyperConnectionDetails(state: ConnectionState | null): HyperConnectionDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case HYPER_CONNECTOR: return state.details.value;
         default: return null;
     }
-}
-
-export function computeHyperConnectionSignature(details: HyperConnectionDetails, hasher: Hasher) {
-    hasher.add("hyper");
-    hasher.add(details.proto.setupParams?.protocol ?? "");
-    hasher.add(details.proto.setupParams?.endpoint ?? "");
-    const databases = [...(details.proto.setupParams?.attachedDatabases ?? [])]
-        .map(database => `${database.path}\0${database.alias}`)
-        .sort();
-    for (const database of databases) hasher.add(database);
 }
 
 export const HYPER_CHANNEL_SETUP_CANCELLED = Symbol('HYPER_CHANNEL_SETUP_CANCELLED');
@@ -94,7 +69,7 @@ export type HyperConnectorAction =
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
-export function reduceHyperConnectorState(state: ConnectionState, action: HyperConnectorAction, _storage: StorageWriter): ConnectionState | null {
+export function reduceHyperConnectorState(state: ConnectionState, action: HyperConnectorAction): ConnectionState | null {
     const details = state.details.value as HyperConnectionDetails;
     let next: ConnectionState | null = null;
     switch (action.type) {
@@ -176,8 +151,6 @@ export function reduceHyperConnectorState(state: ConnectionState, action: HyperC
                 },
                 channel: null,
             };
-            const sig = new DefaultHasher();
-            computeHyperConnectionSignature(details, sig);
             next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_SETUP_STARTED,
@@ -186,7 +159,6 @@ export function reduceHyperConnectorState(state: ConnectionState, action: HyperC
                     type: HYPER_CONNECTOR,
                     value: details,
                 },
-                connectionSignature: updateConnectionSignature(state.connectionSignature, sig, state.connectionId),
             };
             break;
         }

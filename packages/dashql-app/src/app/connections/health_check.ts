@@ -1,6 +1,6 @@
 import { ConnectionDispatch } from './connection_registry.js';
 import { HEALTH_CHECK_CANCELLED, HEALTH_CHECK_FAILED, HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED } from './connection_state.js';
-import { DetailedError } from './connection_types.js';
+import type { DetailedError } from '../../utils/error.js';
 import { HyperDatabaseChannel } from './hyper/hyperdb_grpc_client.js';
 import { QueryExecutor } from './query_executor.js';
 import { QueryType } from './query_execution_state.js';

@@ -83,7 +83,6 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
         connections: state.connectionStates,
         attachedDatabasesBySession: state.attachedDatabasesBySession,
         connectionsByType: state.connectionStatesByType,
-        connectionsBySignature: state.connectionSignatures,
     });
 
     // Reset the session scripts registry
@@ -93,7 +92,6 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
     resetSessionScripts({
         sessionScriptsMap: state.sessionScripts,
         sessionScriptsByConnection: state.sessionScriptsByConnection,
-        sessionScriptsByConnectionType: state.sessionScriptsByConnectionType,
     });
 
     const totalAppLoadDuration = performance.now() - appLoadStartTime;

@@ -79,7 +79,6 @@ function fixture(sessionId: string, deferStream = false) {
     const database = {
         connectionId: session.connectionId, active: false,
         connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
-        connectionSignature: { signatureString: session.connectionId },
         connectionHealth: ConnectionHealth.ONLINE, metrics: createConnectionMetrics(),
         details: { type: HYPER_CONNECTOR, value: { proto: {}, channel: { executeQuery } } },
         queriesActive: new Map(), queriesActiveOrdered: [],
