@@ -13,7 +13,7 @@ export const HYPERDB_WASM_ENGINE_SETTINGS = Object.freeze({
     raw_sql_format_table_scan: true,
     enable_row_types: true,
     http_location_allowlist: ['*'],
-    log_json_export: true,
+    log_json_export: false,
     log_file_size_limit: '1M',
     log_file_max_count: 10,
 });

@@ -48,6 +48,33 @@ export const HYPER_LOG_QUERY_ENDS_TABLE: HyperDBExtractTable = {
     `,
 };
 
+/// A number of a resource-metrics event, NULL for the gauges that the platform does not record and logs as `{}`.
+function resourceMetric(path: readonly string[], type: string): string {
+    const parents = path.slice(0, -1).map(key => `->${quoteLiteral(key)}`).join('');
+    return `nullif(v::json${parents}->>${quoteLiteral(path[path.length - 1])}, '{}')::${type}`;
+}
+
+/// An extract table with one row per resource-metrics event, which Hyper writes every log_resource_usage_interval.
+/// The process memory is the size of the Wasm memory, which never shrinks. The transaction memory is the memory that
+/// the running queries hold. The loads are between 0 and 1.
+export const HYPER_LOG_RESOURCE_METRICS_TABLE: HyperDBExtractTable = {
+    name: 'resource_metrics',
+    query: `
+        SELECT
+            ts,
+            ${resourceMetric(['memory', 'process_physical_memory_mb'], 'double precision')} AS process_memory_mb,
+            ${resourceMetric(['memory', 'total_physical_memory_mb'], 'double precision')} AS total_memory_mb,
+            ${resourceMetric(['mem-trackers', 'memory_tracked_current_usage_mb', 'global_transactions'], 'double precision')} AS transaction_memory_mb,
+            ${resourceMetric(['load', 'overall_load'], 'double precision')} AS overall_load,
+            ${resourceMetric(['load', 'scheduler_load'], 'double precision')} AS scheduler_load,
+            ${resourceMetric(['load', 'memory_load'], 'double precision')} AS memory_load,
+            ${resourceMetric(['scheduler-thread-count', 'scheduler_thread_count', 'active'], 'integer')} AS active_threads,
+            ${resourceMetric(['scheduler-thread-count', 'scheduler_waiting_jobs_count'], 'integer')} AS waiting_jobs
+        FROM log
+        WHERE k = 'resource-metrics'
+    `,
+};
+
 /// The state key of the session ids of all monitor connections that ever read the log.
 export const HYPER_LOG_MONITOR_SESSION_KEY = 'hyper_log.monitor_session';
 
