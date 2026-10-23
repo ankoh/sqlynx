@@ -34,8 +34,7 @@ const BUNDLE = {
         attachedDatabases: [],
         metadata: { originType: 'FILE', originalFileName: 'Explain.dashql' },
     },
-    schemaSql: null,
-    functionsSql: null,
+    catalogs: [],
     scripts: [{ name: '01_query.sql', sql: 'SELECT 1' }],
 };
 

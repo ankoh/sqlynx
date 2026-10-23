@@ -81,6 +81,14 @@ export function connectionImportQuestions(plan: readonly ConnectionImportPlanIte
     return plan.filter(item => item.decision.kind === 'ask');
 }
 
+/// An imported session with resolved connection references
+export interface ConnectionImport {
+    /// The session with the rewritten references
+    session: SessionData;
+    /// The ids that the connections of the imported session got (imported id -> id)
+    connectionIds: Map<string, string>;
+}
+
 /// Rewrite the connection references of an imported session.
 ///
 /// Linked references take the id and the full params of the app's connection, the session then
@@ -92,7 +100,7 @@ export function applyConnectionImportPlan(
     choices: ReadonlyMap<string, ConnectionImportChoice>,
     entries: readonly ConnectionEntry[],
     randomUUID: () => string = () => crypto.randomUUID(),
-): SessionData {
+): ConnectionImport {
     const byRef = new Map(plan.map(item => [item.ref.connectionId, item]));
     const freshIds = new Map<string, string>();
     const resolve = (connectionId: string): { connectionId: string; entry: ConnectionEntry | null } => {
@@ -130,10 +138,13 @@ export function applyConnectionImportPlan(
     };
     // The default connection and the scripts follow their connections
     return {
-        ...session,
-        defaultConnectionId: resolve(session.defaultConnectionId).connectionId,
-        connections: dedupeConnections(session.connections.map(rewrite)),
-        scripts: session.scripts.map(script => ({ ...script, connectionId: resolve(script.connectionId).connectionId })),
+        session: {
+            ...session,
+            defaultConnectionId: resolve(session.defaultConnectionId).connectionId,
+            connections: dedupeConnections(session.connections.map(rewrite)),
+            scripts: session.scripts.map(script => ({ ...script, connectionId: resolve(script.connectionId).connectionId })),
+        },
+        connectionIds: new Map(session.connections.map(connection => [connection.connectionId, resolve(connection.connectionId).connectionId])),
     };
 }
 

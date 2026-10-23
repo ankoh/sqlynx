@@ -87,17 +87,17 @@ describe('V2 HTTP session bundle', () => {
             .not.toContain('https://example.com/session/scripts/page%2Fquery.sql');
     });
 
-    it('loads a current session without asking for files of older versions', async () => {
+    it('loads a current session with the catalogs of its connections without asking for files of older versions', async () => {
         const httpClient = client({
             '/session/dashql-session.json': JSON.stringify(testSession()),
-            '/session/dashql-catalog-relations.sql': 'CREATE TABLE r (a INT)',
+            [`/session/connections/${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`]: 'CREATE TABLE r (a INT)',
         });
         const result = await readSessionBundleFromHttp(URL, httpClient);
-        expect(result.bundle.schemaSql).toBe('CREATE TABLE r (a INT)');
+        expect(result.bundle.catalogs).toEqual([{ connectionId: TEST_CONNECTION_ID, relations: 'CREATE TABLE r (a INT)', functions: null }]);
         expect(result.incomplete).toBe(false);
         expect(vi.mocked(httpClient.fetch).mock.calls.map(call => new globalThis.URL(String(call[0])).pathname).sort()).toEqual([
-            '/session/dashql-catalog-functions.sql',
-            '/session/dashql-catalog-relations.sql',
+            `/session/connections/${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`,
+            `/session/connections/${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`,
             '/session/dashql-session.json',
         ]);
     });
@@ -125,7 +125,8 @@ describe('V2 HTTP session bundle', () => {
             '/session/dashql-catalog-relations.sql': 'CREATE TABLE r (a INT)',
         }));
         expect(result.bundle.session.formatVersion).toBe(SESSION_FORMAT_VERSION);
-        expect(result.bundle.schemaSql).toBe('CREATE TABLE r (a INT)');
+        // The catalog copy of older sessions is the catalog of the default connection
+        expect(result.bundle.catalogs).toEqual([{ connectionId: TEST_CONNECTION_ID, relations: 'CREATE TABLE r (a INT)', functions: null }]);
     });
 
     it('migrates a remote notebook behind a link of an older version', async () => {
@@ -142,8 +143,7 @@ describe('V2 HTTP session bundle', () => {
         expect(result.bundle.session).toMatchObject({ formatVersion: SESSION_FORMAT_VERSION, sessionId });
         expect(result.bundle.session).not.toHaveProperty('notebookId');
         expect(result.bundle.session.metadata.originalHttpUrl).toBe(notebookUrl.toString());
-        expect(result.bundle.schemaSql).toBe('CREATE TABLE r (a INT)');
-        expect(result.bundle.functionsSql).toBe('CREATE FUNCTION f() RETURNS INT');
+        expect(result.bundle.catalogs).toEqual([{ connectionId: TEST_CONNECTION_ID, relations: 'CREATE TABLE r (a INT)', functions: 'CREATE FUNCTION f() RETURNS INT' }]);
         expect(result.bundle.scripts).toEqual([{ name: '01_a.sql', sql: 'SELECT 1' }]);
         expect(result).toMatchObject({ listedScriptCount: 1, loadedScriptCount: 1, incomplete: false });
         expect(progress).toHaveBeenLastCalledWith(expect.objectContaining({ phase: 'files', completedFileCount: 4, totalFileCount: 4 }));

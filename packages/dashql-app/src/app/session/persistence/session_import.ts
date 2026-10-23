@@ -7,10 +7,20 @@ import {
     STORAGE_SCRIPTS_FOLDER,
 } from '../../storage/storage_backend.js';
 import type { SessionBundle, SessionBundleWriteOptions } from '../../storage/session_bundle.js';
-import { assembleSessionBundle, readSessionBundleHead, seedConnectionCatalog, writeSessionBundle } from '../../storage/session_bundle.js';
+import {
+    assembleSessionBundle,
+    isBundleCatalogPath,
+    readSessionBundleHead,
+    regenerateBundleConnectionIds,
+    seedConnectionCatalogs,
+    writeSessionBundle,
+} from '../../storage/session_bundle.js';
 import { MemoryFolder } from '../../../migration/migration_folder.js';
 
-export interface SessionZipImportOptions extends SessionBundleWriteOptions { }
+export interface SessionZipImportOptions extends SessionBundleWriteOptions {
+    /// Generate fresh connection identities for a clone/create-new import
+    regenerateConnectionIds?: boolean;
+}
 
 type SessionZipImportOptionsInput = SessionZipImportOptions | (() => string);
 
@@ -46,8 +56,8 @@ export async function readSessionBundleFromZip(zipBlob: Blob): Promise<SessionBu
 
     // The top-level files are migrated in memory, the scripts and attachments are read as they are
     const head = await readSessionBundleHead(new MemoryFolder(await Promise.all([...destinations]
-        .filter(([key]) => isTopLevelFile(key))
-        .map(async ([key, entry]) => [key, await entry.file.async('text')] as [string, string]))), 'Invalid ZIP');
+        .filter(([key, entry]) => isTopLevelFile(key) || isBundleCatalogPath(entry.path))
+        .map(async ([key, entry]) => [isBundleCatalogPath(entry.path) ? entry.path : key, await entry.file.async('text')] as [string, string]))), 'Invalid ZIP');
 
     const scripts: Array<{ name: string; file: JSZip.JSZipObject }> = [];
 
@@ -97,14 +107,13 @@ export async function importSessionFromZip(
     backend: StorageBackend,
     optionsInput: SessionZipImportOptionsInput = {},
 ): Promise<string> {
-    const bundle = await readSessionBundleFromZip(zipBlob);
-    const options = typeof optionsInput === 'function'
+    let bundle = await readSessionBundleFromZip(zipBlob);
+    const { regenerateConnectionIds, ...options }: SessionZipImportOptions = typeof optionsInput === 'function'
         ? { targetSessionId: optionsInput(), targetIsFresh: true, regenerateConnectionIds: true }
         : optionsInput;
+    if (regenerateConnectionIds) bundle = regenerateBundleConnectionIds(bundle);
     const sessionId = await writeSessionBundle(bundle, backend, options);
-    // Fresh connection ids are chosen while writing
-    const { defaultConnectionId } = await backend.loadSession(sessionId);
-    await seedConnectionCatalog(backend, defaultConnectionId, bundle, sessionId);
+    await seedConnectionCatalogs(backend, bundle, sessionId);
     return sessionId;
 }
 
@@ -140,6 +149,7 @@ function isTopLevelFile(key: string): boolean {
 function isBundleFile(path: string): boolean {
     const key = destinationKey(path);
     return isTopLevelFile(key)
+        || isBundleCatalogPath(path)
         || key.startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`)
         || (key.startsWith(`${destinationKey(STORAGE_SCRIPTS_FOLDER)}/`) && key.endsWith('.sql'));
 }

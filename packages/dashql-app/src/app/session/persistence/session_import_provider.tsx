@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { filterInvalidSessionCatalogs, type SessionBundle } from '../../storage/session_bundle.js';
+import { filterInvalidSessionCatalogs, renameBundleCatalogs, type SessionBundle } from '../../storage/session_bundle.js';
 import type { PreparedNativeSession } from '../../storage/composite_storage_backend.js';
 import type { CompositeStorageBackend } from '../../storage/composite_storage_backend.js';
 import {
@@ -140,12 +140,12 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
             if (chosen == null) return null;
             choices = chosen;
         }
-        const session = applyConnectionImportPlan(bundle.session, plan, choices, entries);
+        const { session, connectionIds } = applyConnectionImportPlan(bundle.session, plan, choices, entries);
         logger.info('resolved the connections of an imported session', {
             sessionId: bundle.session.sessionId,
             connections: plan.map(item => item.decision.kind).join(','),
         }, 'session_import');
-        return { ...bundle, session };
+        return { ...bundle, session, catalogs: renameBundleCatalogs(bundle.catalogs, connectionIds) };
     }, [backend, connectionStore, logger, references]);
 
     const stopSessionWork = React.useCallback(async (sessionId: string) => {

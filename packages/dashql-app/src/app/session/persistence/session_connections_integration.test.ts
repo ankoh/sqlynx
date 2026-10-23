@@ -376,7 +376,7 @@ describe('Session connections', () => {
             // Both connections describe connections of the app, the user is asked
             expect(plan.map(item => item.decision.kind)).toEqual(['ask', 'ask']);
             const choices = new Map<string, ConnectionImportChoice>(plan.map(item => [item.ref.connectionId, { kind: 'separate' }]));
-            const session = applyConnectionImportPlan(bundle.session, plan, choices, entries);
+            const session = applyConnectionImportPlan(bundle.session, plan, choices, entries).session;
             await writePortableSessionFresh(backend, { ...bundle, session }, IMPORTED_SESSION_ID);
 
             const restored = await restore(backend);
@@ -395,7 +395,7 @@ describe('Session connections', () => {
                 item.ref.connectionId,
                 { kind: 'link', connectionId: item.decision.kind === 'ask' ? item.decision.candidates[0].id : '' },
             ]));
-            const session = applyConnectionImportPlan(bundle.session, plan, choices, entries);
+            const session = applyConnectionImportPlan(bundle.session, plan, choices, entries).session;
             expect(session.scripts).toEqual([
                 { name: 'define.sql', connectionId: HYPER_ID },
                 { name: 'remote.sql', connectionId: TRINO_ID },

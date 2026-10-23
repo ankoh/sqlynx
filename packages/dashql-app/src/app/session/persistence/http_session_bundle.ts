@@ -57,15 +57,17 @@ export async function readSessionBundleFromHttp(
     const head = await readSessionBundleHead(folder, 'Invalid remote session');
     const session = head.session;
     const sessionName = session.name?.trim() || session.metadata.originalFileName || 'Unnamed session';
-    totalBytes += [head.schemaSql, head.functionsSql].reduce((bytes, text) => bytes + (text == null ? 0 : textBytes(text)), 0);
+    totalBytes += head.catalogs.flatMap(catalog => [catalog.relations, catalog.functions])
+        .reduce((bytes, text) => bytes + (text == null ? 0 : textBytes(text)), 0);
 
     onProgress?.({ phase: 'listing', sessionName, sessionId: session.sessionId });
     const listedScripts = session.scripts;
     const listedAttachments = session.attachments;
     const listedScriptCount = listedScripts.length;
-    const totalFileCount = 3 + listedScriptCount + listedAttachments.length;
-    // The manifest and the catalog files
-    let completedFileCount = 3;
+    // The manifest and the catalog files of the connections
+    const headFileCount = 1 + 2 * session.connections.length;
+    const totalFileCount = headFileCount + listedScriptCount + listedAttachments.length;
+    let completedFileCount = headFileCount;
     let completedScriptCount = 0;
     const reportFileProgress = () => onProgress?.({
         phase: 'files',
@@ -118,8 +120,7 @@ export async function readSessionBundleFromHttp(
                 originalHttpUrl: manifestUrl.toString(),
             },
         },
-        schemaSql: includeOptionalFiles ? head.schemaSql : null,
-        functionsSql: includeOptionalFiles ? head.functionsSql : null,
+        catalogs: includeOptionalFiles ? head.catalogs : [],
     }, includeOptionalFiles ? scripts : [], includeOptionalFiles ? data : []);
     const loadedScriptCount = bundle.scripts.length;
     return {

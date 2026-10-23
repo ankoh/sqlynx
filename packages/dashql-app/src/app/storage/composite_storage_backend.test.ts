@@ -166,8 +166,7 @@ describe('CompositeStorageBackend V2 flat routing', () => {
 
         const source = {
             session: testSession(),
-            schemaSql: null,
-            functionsSql: null,
+            catalogs: [],
             scripts: [{ name: '01_query.sql', sql: 'SELECT 1' }],
         };
         await replaceSessionWithPortableBundle(backend, source, {
@@ -184,8 +183,7 @@ describe('CompositeStorageBackend V2 flat routing', () => {
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
         const source = {
             session: testSession({ sessionId: OTHER_SESSION_ID }),
-            schemaSql: null,
-            functionsSql: null,
+            catalogs: [],
             scripts: [],
         };
         await expect(writePortableSessionFresh(backend, source)).resolves.toBe(OTHER_SESSION_ID);

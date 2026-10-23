@@ -23,7 +23,7 @@ import {
     readSessionBundle,
     readSessionBundleHead,
     reconcileStoredSessionFiles,
-    seedConnectionCatalog,
+    seedConnectionCatalogs,
     writeSessionBundle,
     type SessionBundle,
 } from './session_bundle.js';
@@ -419,8 +419,9 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         if (!validation.ok) {
             throw new Error(`Session in ${prepared.dir} is invalid: ${describeSessionValidationError(validation.error)}`);
         }
-        // The catalog of the folder was read before its migration removes it
-        await seedConnectionCatalog(this.opfs, prepared.bundle.session.defaultConnectionId, prepared.bundle, sessionId);
+        // The catalogs of the folder seed the connections that are new to the app. The app ignores
+        // them afterwards, and the migration removes the catalog copy of older folders.
+        await seedConnectionCatalogs(this.opfs, prepared.bundle, sessionId);
         await migrateSessionFolder(new NativeFolder(prepared.dir));
         const native = new NativeStorageBackend(prepared.dir);
         await reconcileStoredSessionFiles(native, sessionId);

@@ -15,8 +15,10 @@ describe('V2 session ZIP import', () => {
     it('appends unlisted scripts in natural order and ignores derived files', async () => {
         const bundle = await readSessionBundleFromZip(await zip({
             [STORAGE_SESSION_FILE]: JSON.stringify(testSession()),
-            'dashql-catalog-relations.sql': 'schema',
-            'dashql-catalog-functions.sql': 'functions',
+            [`connections/${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`]: 'schema',
+            [`connections/${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`]: 'functions',
+            // The catalog copy of older versions is ignored in a current session
+            'dashql-catalog-relations.sql': 'stale',
             'scripts/10_last.sql': 'SELECT 10',
             'scripts/2_first.sql': 'SELECT 2',
             'dashql-session-index.json': '{"scripts":[]}',
@@ -28,8 +30,7 @@ describe('V2 session ZIP import', () => {
                 { name: '2_first.sql', connectionId: TEST_CONNECTION_ID },
                 { name: '10_last.sql', connectionId: TEST_CONNECTION_ID },
             ] }),
-            schemaSql: 'schema',
-            functionsSql: 'functions',
+            catalogs: [{ connectionId: TEST_CONNECTION_ID, relations: 'schema', functions: 'functions' }],
             data: [],
             scripts: [
                 { name: '2_first.sql', sql: 'SELECT 2' },
@@ -59,8 +60,8 @@ describe('V2 session ZIP import', () => {
             'scripts/01_query.sql': 'SELECT 1',
         }));
         expect(bundle.session).toEqual(testSession({ scripts: [{ name: '01_query.sql', connectionId: TEST_CONNECTION_ID }] }));
-        expect(bundle.schemaSql).toBe('schema');
-        expect(bundle.functionsSql).toBe('functions');
+        // The catalog copy of older versions is the catalog of the default connection
+        expect(bundle.catalogs).toEqual([{ connectionId: TEST_CONNECTION_ID, relations: 'schema', functions: 'functions' }]);
         expect(bundle.scripts).toEqual([{ name: '01_query.sql', sql: 'SELECT 1' }]);
     });
 
@@ -94,7 +95,7 @@ describe('V2 session ZIP import', () => {
         const target = '99999999-8888-4777-8666-555555555555';
         await expect(importSessionFromZip(await zip({
             [STORAGE_SESSION_FILE]: JSON.stringify(testSession()),
-            'dashql-catalog-relations.sql': 'schema',
+            [`connections/${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`]: 'schema',
             'scripts/01_query.sql': 'SELECT 1',
         }), backend, { targetSessionId: target, targetIsFresh: true })).resolves.toBe(target);
 
@@ -110,7 +111,7 @@ describe('V2 session ZIP import', () => {
         await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-functions.sql', 'stored');
         await importSessionFromZip(await zip({
             [STORAGE_SESSION_FILE]: JSON.stringify(testSession()),
-            'dashql-catalog-relations.sql': 'schema',
+            [`connections/${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`]: 'schema',
         }), backend);
         expect([...backend.connectionFiles]).toEqual([[`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`, 'stored']]);
     });

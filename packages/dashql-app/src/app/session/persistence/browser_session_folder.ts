@@ -5,7 +5,7 @@ import {
     STORAGE_SCRIPTS_FOLDER,
 } from '../../storage/storage_backend.js';
 import type { SessionBundle } from '../../storage/session_bundle.js';
-import { assembleSessionBundle, readSessionBundleHead } from '../../storage/session_bundle.js';
+import { assembleSessionBundle, isBundleCatalogPath, readSessionBundleHead } from '../../storage/session_bundle.js';
 import { MemoryFolder } from '../../../migration/migration_folder.js';
 
 interface BrowserFolderEntry {
@@ -89,8 +89,10 @@ export async function readSessionBundleFromBrowserFolder(
     }));
 
     // The top-level files are migrated in memory, the scripts and attachments are read as they are
-    const head = await readSessionBundleHead(
-        new MemoryFolder([...contents].filter(([key]) => isTopLevelFile(key))), 'Invalid session folder');
+    const head = await readSessionBundleHead(new MemoryFolder([...destinations]
+        .filter(([key, entry]) => isTopLevelFile(key) || isBundleCatalogPath(entry.path))
+        .map(([key, entry]) => [isBundleCatalogPath(entry.path) ? entry.path : key, contents.get(key)!] as [string, string])),
+        'Invalid session folder');
 
     const scripts: ScriptData[] = [...destinations]
         .filter(([, entry]) => classifyBundlePath(entry.path) === 'script')
@@ -136,7 +138,7 @@ function classifyBundlePath(path: string): 'accept' | 'script' | 'data' | 'ignor
         validateDataFileName(parts[1]);
         return 'data';
     }
-    if (isTopLevelFile(key)) {
+    if (isTopLevelFile(key) || isBundleCatalogPath(path)) {
         return 'accept';
     }
 

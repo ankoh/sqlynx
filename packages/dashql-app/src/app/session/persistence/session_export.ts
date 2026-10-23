@@ -13,7 +13,14 @@ import {
 } from '../../storage/storage_backend.js';
 import { BASE64URL_CODEC } from '../../../utils/base64.js';
 import { sanitizeConnectionParamsForSharing } from '../../connections/connection_params.js';
-import { readSessionBundle, regenerateSessionConnectionIds, rebaseSessionAttachmentPaths } from '../../storage/session_bundle.js';
+import {
+    bundleCatalogPath,
+    readSessionBundle,
+    rebaseSessionAttachmentPaths,
+    regenerateBundleConnectionIds,
+    type SessionBundle,
+    type SessionBundleCatalog,
+} from '../../storage/session_bundle.js';
 
 /// The target platform a shared session link points at.
 export enum SessionLinkTarget {
@@ -23,21 +30,20 @@ export enum SessionLinkTarget {
 
 /// Options controlling how a session is exported to a ZIP.
 export interface SessionExportOptions {
-    /// Include the persisted relation and function catalog SQL files when they exist.
+    /// Include the catalogs of the connections of the session when they exist.
     withCatalog?: boolean;
-    /// Transform the session metadata after it is loaded from the backend and before it is written
-    /// into the ZIP. Scripts are exported verbatim from disk; only the `dashql-session.json`
-    /// payload passes through here. The sharing path uses this to sanitize
-    /// connection secrets, strip the login hint, or override the name.
-    /// Receives the session as stored; returns the session to serialize.
-    transformSession?: (session: SessionData) => SessionData;
+    /// Transform the session metadata and the catalogs after they are loaded from the backend and
+    /// before they are written into the ZIP. Scripts are exported verbatim from disk. The sharing
+    /// path uses this to sanitize connection secrets, strip the login hint, or give the session and
+    /// its connections fresh ids, the catalogs follow their connections.
+    transformBundle?: (bundle: Pick<SessionBundle, 'session' | 'catalogs'>) => Pick<SessionBundle, 'session' | 'catalogs'>;
 }
 
 /// Options applied after sanitizing session connection parameters for sharing.
 export interface SharedSessionExportOptions {
     /// Carry the sharer's resolved account username in the shared connection identity.
     withLoginHint?: boolean;
-    /// Include persisted relation and function catalog SQL files when present.
+    /// Include the catalogs of the connections of the session when present.
     withCatalog?: boolean;
     /// Keep the session and connection UUIDs instead of generating export-only identities.
     preserveUUIDs?: boolean;
@@ -49,8 +55,7 @@ type SharedSessionExportOptionsInput = SharedSessionExportOptions | boolean;
 export async function createSessionZip(
     sessionData: SessionData,
     scripts: ScriptData[],
-    schemaSql: string | null = null,
-    functionsSql: string | null = null,
+    catalogs: readonly SessionBundleCatalog[] = [],
     data: readonly DataFileData[] = [],
 ): Promise<Blob> {
     const zip = new JSZip();
@@ -63,11 +68,10 @@ export async function createSessionZip(
             params: sanitizeConnectionParamsForSharing(connection.params),
         })),
     }, null, 2));
-    if (schemaSql != null) {
-        zip.file(STORAGE_CATALOG_RELATIONS, schemaSql);
-    }
-    if (functionsSql != null) {
-        zip.file(STORAGE_CATALOG_FUNCTIONS, functionsSql);
+    // The catalogs of the connections, an import seeds the connections that are new to the app
+    for (const catalog of catalogs) {
+        if (catalog.relations != null) zip.file(bundleCatalogPath(catalog.connectionId, STORAGE_CATALOG_RELATIONS), catalog.relations);
+        if (catalog.functions != null) zip.file(bundleCatalogPath(catalog.connectionId, STORAGE_CATALOG_FUNCTIONS), catalog.functions);
     }
 
     // Add the flat ordered scripts.
@@ -95,7 +99,7 @@ export async function createSessionZip(
 
 /// Exports a session as a ZIP file by loading from storage backend.
 ///
-/// Scripts are always exported exactly as they exist on disk. Pass `options.transformSession` to
+/// Scripts are always exported exactly as they exist on disk. Pass `options.transformBundle` to
 /// adjust the session metadata on the way out (e.g. sanitize connection secrets or drop the login
 /// hint when sharing).
 export async function exportSessionAsZip(
@@ -105,21 +109,14 @@ export async function exportSessionAsZip(
 ): Promise<Blob> {
     const bundle = await readSessionBundle(sessionId, backend, options.withCatalog ?? false);
 
-    // Apply the caller's session transform (sharing sanitization, name override, ...)
-    const outSession = options.transformSession ? options.transformSession(bundle.session) : bundle.session;
-    const scripts = bundle.scripts.map(script => ({
-        ...script,
-        sql: rebaseSessionAttachmentPaths(script.sql, bundle.session.sessionId, outSession.sessionId)!,
-    }));
+    // Apply the caller's transform (sharing sanitization, name override, ...)
+    const out = options.transformBundle ? options.transformBundle(bundle) : bundle;
+    const rebase = (text: string | null) => rebaseSessionAttachmentPaths(text, bundle.session.sessionId, out.session.sessionId);
+    const scripts = bundle.scripts.map(script => ({ ...script, sql: rebase(script.sql)! }));
+    const catalogs = out.catalogs.map(catalog => ({ ...catalog, relations: rebase(catalog.relations), functions: rebase(catalog.functions) }));
 
     // Create ZIP from loaded data
-    return await createSessionZip(
-        outSession,
-        scripts,
-        rebaseSessionAttachmentPaths(bundle.schemaSql, bundle.session.sessionId, outSession.sessionId),
-        rebaseSessionAttachmentPaths(bundle.functionsSql, bundle.session.sessionId, outSession.sessionId),
-        bundle.data,
-    );
+    return await createSessionZip(out.session, scripts, catalogs, bundle.data);
 }
 
 /// Export a session as a shareable ZIP.
@@ -137,7 +134,8 @@ export async function exportSessionAsSharedZip(
     const withLoginHint = options.withLoginHint ?? true;
     return await exportSessionAsZip(sessionId, backend, {
         withCatalog: options.withCatalog ?? true,
-        transformSession: (session: SessionData): SessionData => {
+        transformBundle: bundle => {
+            const { session } = bundle;
             const sanitized: SessionData = {
                 ...session,
                 connections: session.connections.map(connection => ({
@@ -149,8 +147,8 @@ export async function exportSessionAsSharedZip(
                 })),
             };
             return options.preserveUUIDs
-                ? sanitized
-                : regenerateSessionConnectionIds({ ...sanitized, sessionId: crypto.randomUUID() });
+                ? { ...bundle, session: sanitized }
+                : regenerateBundleConnectionIds({ ...bundle, session: { ...sanitized, sessionId: crypto.randomUUID() } });
         },
     });
 }

@@ -46,13 +46,16 @@ attachments/
 It deliberately ignores:
 
 ```text
+connections/
 cache/
 .gitignore
 <any other file>
 ```
 
-Sessions don't hold a catalog. The catalog belongs to the connection and lives in the app storage
-(`connections/<id>/`); session format version 7 removed the catalog copies from session folders.
+Sessions don't hold a catalog. The catalog belongs to the connection and lives in the app storage;
+session format version 7 removed the catalog copies from session folders. A folder that was exported
+or checked in may carry the catalogs of its connections in `connections/<id>/`. They seed the
+connections that are new to the app when the folder is imported and are ignored afterwards.
 
 The native session directory is resolved through `StorageReader.getSessionLocation`. Only locations
 with `StorageBackendType.Native` and a `nativePath` receive a watcher.

@@ -12,10 +12,11 @@ import {
 import { importSessionFromZip } from './session_import.js';
 import { sessionBundlesEqual } from '../../storage/session_bundle.js';
 import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testConnections, testSession } from '../../storage/session_test_backend.js';
+import type { SessionData } from '../../storage/storage_backend.js';
 
 describe('V2 session export', () => {
     it('compares data bytes independently of typed-array JSON serialization', () => {
-        const bundle = { session: testSession(), schemaSql: null, functionsSql: null, scripts: [] };
+        const bundle = { session: testSession(), catalogs: [], scripts: [] };
         const bytes = new Uint8Array([0, 255]);
         const view = new Uint8Array([99, 0, 255, 99]).subarray(1, 3);
         expect(sessionBundlesEqual({ ...bundle, data: [{ name: 'payload.bin', bytes }] },
@@ -114,8 +115,8 @@ describe('V2 session export', () => {
         const archive = await JSZip.loadAsync(await exportSessionAsZip(TEST_SESSION_ID, backend, { withCatalog: true }));
         expect(await archive.file('scripts/01_first.sql')!.async('text')).toBe('SELECT 1');
         expect(await archive.file('scripts/02_second.sql')!.async('text')).toBe('SELECT 2');
-        expect(await archive.file('dashql-catalog-relations.sql')!.async('text')).toBe('schema');
-        expect(await archive.file('dashql-catalog-functions.sql')!.async('text')).toBe('functions');
+        expect(await archive.file(`connections/${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`)!.async('text')).toBe('schema');
+        expect(await archive.file(`connections/${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`)!.async('text')).toBe('functions');
         expect(archive.file(/scripts\/[^/]+\/[^/]+/)).toEqual([]);
         expect(archive.file('scripts/dashql-draft.sql')).toBeNull();
     });
@@ -131,6 +132,16 @@ describe('V2 session export', () => {
         expect(await target.loadScripts(TEST_SESSION_ID)).toEqual([{ name: '01_query.sql', sql: 'SELECT 42' }]);
     });
 
+    it('seeds the connections of an import with the exported catalogs', async () => {
+        const source = new SessionTestBackend();
+        await source.saveSessionManifest(TEST_SESSION_ID, testSession());
+        await source.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-relations.sql', 'schema');
+        const target = new SessionTestBackend();
+
+        await importSessionFromZip(await exportSessionAsZip(TEST_SESSION_ID, source, { withCatalog: true }), target);
+        expect([...target.connectionFiles]).toEqual([[`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`, 'schema']]);
+    });
+
     it('omits catalogs from URL exports by default', async () => {
         const backend = new SessionTestBackend();
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
@@ -142,15 +153,18 @@ describe('V2 session export', () => {
         const event = JSON.parse(eventJson) as { session: string };
         const archive = await JSZip.loadAsync(BASE64URL_CODEC.decode(event.session));
 
-        expect(archive.file('dashql-catalog-relations.sql')).toBeNull();
-        expect(archive.file('dashql-catalog-functions.sql')).toBeNull();
+        expect(archive.file(/^connections\//)).toEqual([]);
     });
 
-    it('includes catalogs in shared ZIP exports by default', async () => {
+    it('includes the catalogs of all connections in shared ZIP exports by default', async () => {
         const backend = new SessionTestBackend();
-        await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
+        const otherConnectionId = 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff';
+        await backend.saveSessionManifest(TEST_SESSION_ID, testSession({
+            ...testConnections(testSession().connections[0], { connectionId: otherConnectionId, params: { hyper: {} } as any }),
+        }));
         await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-relations.sql', 'schema');
         await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-functions.sql', 'functions');
+        await backend.saveConnectionFile(otherConnectionId, 'dashql-catalog-relations.sql', 'other');
 
         const archive = await JSZip.loadAsync(await exportSessionAsSharedZip(
             backend,
@@ -158,8 +172,14 @@ describe('V2 session export', () => {
             new Map(),
         ));
 
-        expect(await archive.file('dashql-catalog-relations.sql')!.async('text')).toBe('schema');
-        expect(await archive.file('dashql-catalog-functions.sql')!.async('text')).toBe('functions');
+        // The catalogs follow the fresh ids of their connections
+        const session = JSON.parse(await archive.file('dashql-session.json')!.async('text')) as SessionData;
+        const [main, other] = session.connections.map(connection => connection.connectionId);
+        expect(main).not.toBe(TEST_CONNECTION_ID);
+        expect(await archive.file(`connections/${main}/dashql-catalog-relations.sql`)!.async('text')).toBe('schema');
+        expect(await archive.file(`connections/${main}/dashql-catalog-functions.sql`)!.async('text')).toBe('functions');
+        expect(await archive.file(`connections/${other}/dashql-catalog-relations.sql`)!.async('text')).toBe('other');
+        expect(archive.file(/^connections\//)).toHaveLength(3);
     });
 
     it('generates new session and connection UUIDs for shared exports by default', async () => {

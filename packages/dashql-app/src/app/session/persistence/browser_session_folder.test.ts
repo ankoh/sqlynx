@@ -29,8 +29,7 @@ describe('V2 browser folder import', () => {
                 { name: '2_first.sql', connectionId: TEST_CONNECTION_ID },
                 { name: '10_last.sql', connectionId: TEST_CONNECTION_ID },
             ] }),
-            schemaSql: null,
-            functionsSql: null,
+            catalogs: [],
             data: [],
             scripts: [
                 { name: '2_first.sql', sql: 'SELECT 2' },

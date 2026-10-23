@@ -4,6 +4,7 @@ import {
     isSessionRegistryBackend,
     STORAGE_CATALOG_FUNCTIONS,
     STORAGE_CATALOG_RELATIONS,
+    STORAGE_CONNECTIONS_FOLDER,
     STORAGE_SESSION_FILE,
     StorageBackendType,
     validateDataFileName,
@@ -25,19 +26,50 @@ export interface SessionBundle {
     /// The session file. Its script list names every script of `scripts` in feed order and its
     /// attachment list names every file of `data`.
     session: SessionData;
-    /// The catalog relations of the default connection. Sessions don't store a catalog, bundles carry
-    /// the one of the connection so that a connection new to the app starts with it.
-    schemaSql: string | null;
-    /// The catalog functions of the default connection
-    functionsSql: string | null;
+    /// The catalogs of the connections of the session. Sessions don't store a catalog, bundles carry
+    /// the catalogs of their connections so that a connection new to the app starts with one.
+    catalogs: SessionBundleCatalog[];
     /// The script files
     scripts: ScriptData[];
     /// The attachments
     data?: DataFileData[];
 }
 
-/// The top-level files of a session bundle
-export interface SessionBundleHead extends Pick<SessionBundle, 'session' | 'schemaSql' | 'functionsSql'> {
+/// The catalog of a connection that a bundle carries
+export interface SessionBundleCatalog {
+    /// The connection
+    connectionId: string;
+    /// The catalog relations
+    relations: string | null;
+    /// The catalog functions
+    functions: string | null;
+}
+
+/// The path of a catalog file of a connection in a bundle, e.g. `connections/<id>/dashql-catalog-relations.sql`.
+/// The app ignores the folder of a session folder except when the session is imported.
+export function bundleCatalogPath(connectionId: string, fileName: string): string {
+    return `${STORAGE_CONNECTIONS_FOLDER}/${connectionId}/${fileName}`;
+}
+
+/// The format version of the session file of a folder, null if it has none
+async function readFormatVersion(folder: MigrationFolder): Promise<unknown> {
+    try {
+        const text = await folder.readText(STORAGE_SESSION_FILE);
+        return text == null ? null : (JSON.parse(text) as { formatVersion?: unknown })?.formatVersion ?? null;
+    } catch {
+        return null;
+    }
+}
+
+/// Is a path of a bundle the path of a catalog file of a connection?
+export function isBundleCatalogPath(path: string): boolean {
+    const parts = path.split('/');
+    return parts.length === 3 && parts[0] === STORAGE_CONNECTIONS_FOLDER
+        && (parts[2] === STORAGE_CATALOG_RELATIONS || parts[2] === STORAGE_CATALOG_FUNCTIONS);
+}
+
+/// The session file and the catalogs of a session bundle
+export interface SessionBundleHead extends Pick<SessionBundle, 'session' | 'catalogs'> {
     /// False when unusable entries were removed from the file lists of the session file
     filesValid: boolean;
 }
@@ -47,7 +79,7 @@ export interface SessionBundleHead extends Pick<SessionBundle, 'session' | 'sche
 /// The file lists of the session file are reconciled with the files: scripts without a file are
 /// dropped and script files without an entry are appended with the main database.
 export function assembleSessionBundle(
-    head: Pick<SessionBundle, 'session' | 'schemaSql' | 'functionsSql'>,
+    head: Pick<SessionBundle, 'session' | 'catalogs'>,
     scripts: ScriptData[],
     data: DataFileData[] = [],
 ): SessionBundle {
@@ -58,8 +90,7 @@ export function assembleSessionBundle(
             scripts: reconciled.scripts,
             attachments: sessionAttachments(data.map(file => file.name)),
         },
-        schemaSql: head.schemaSql,
-        functionsSql: head.functionsSql,
+        catalogs: head.catalogs,
         scripts,
         data,
     };
@@ -88,14 +119,18 @@ function sessionAttachmentsEqual(a: SessionData['attachments'] | undefined, b: S
     return a != null && a.length === b.length && a.every((file, i) => file.name === b[i].name);
 }
 
-/// Migrate the top-level files of a session to the current format and read them.
+/// Migrate the top-level files of a session to the current format and read them with the catalogs
+/// of the connections in `connections/<id>/`.
 ///
 /// The folder is usually held in memory, e.g. the files of an import or an `OverlayFolder` over a
 /// folder that must stay untouched. Errors start with `errorPrefix`, e.g. "Invalid ZIP".
-/// The catalog files are read before the migration removes the catalog copies of older sessions.
 export async function readSessionBundleHead(folder: MigrationFolder, errorPrefix: string): Promise<SessionBundleHead> {
+    // Older sessions copied the catalog of their default connection into the top level of the
+    // folder. It is read before the migration removes the copy.
     const migration = await migrateSessionFolder(folder, SESSION_CATALOG_COPY_FORMAT_VERSION);
-    const [schemaSql, functionsSql] = await Promise.all([
+    const hasCatalogCopy = migration !== SessionMigrationResult.Missing
+        && await readFormatVersion(folder) === SESSION_CATALOG_COPY_FORMAT_VERSION;
+    const [legacyRelations, legacyFunctions] = !hasCatalogCopy ? [null, null] : await Promise.all([
         folder.readText(STORAGE_CATALOG_RELATIONS),
         folder.readText(STORAGE_CATALOG_FUNCTIONS),
     ]);
@@ -124,23 +159,53 @@ export async function readSessionBundleHead(folder: MigrationFolder, errorPrefix
     }
     const files = sanitizeSessionFiles(parsedSession);
     const session: SessionData = { ...parsedSession, scripts: files.scripts, attachments: files.attachments };
-    return { session, schemaSql, functionsSql, filesValid: files.valid };
+    const catalogs: SessionBundleCatalog[] = [];
+    for (const { connectionId } of session.connections) {
+        const [relations, functions] = await Promise.all([
+            folder.readText(bundleCatalogPath(connectionId, STORAGE_CATALOG_RELATIONS)),
+            folder.readText(bundleCatalogPath(connectionId, STORAGE_CATALOG_FUNCTIONS)),
+        ]);
+        if (relations != null || functions != null) {
+            catalogs.push({ connectionId, relations, functions });
+        } else if (connectionId === session.defaultConnectionId && (legacyRelations != null || legacyFunctions != null)) {
+            catalogs.push({ connectionId, relations: legacyRelations, functions: legacyFunctions });
+        }
+    }
+    return { session, catalogs, filesValid: files.valid };
 }
 
 export interface SessionCatalogValidationResult {
+    /// The bundle without the malformed catalog files
     bundle: SessionBundle;
-    invalidFiles: Array<typeof STORAGE_CATALOG_RELATIONS | typeof STORAGE_CATALOG_FUNCTIONS>;
+    /// The paths of the malformed catalog files in the bundle
+    invalidFiles: string[];
 }
 
-/// Give the connections of a session fresh ids, the default connection and the scripts follow them
-export function regenerateSessionConnectionIds(session: SessionData): SessionData {
+/// Give the connections of a bundle fresh ids, the default connection, the scripts and the catalogs follow them
+export function regenerateBundleConnectionIds<B extends Pick<SessionBundle, 'session' | 'catalogs'>>(bundle: B): B {
+    const { session } = bundle;
     const connectionIds = new Map(session.connections.map(connection => [connection.connectionId, crypto.randomUUID()]));
     return {
-        ...session,
-        defaultConnectionId: connectionIds.get(session.defaultConnectionId) ?? session.defaultConnectionId,
-        connections: session.connections.map(connection => ({ ...connection, connectionId: connectionIds.get(connection.connectionId)! })),
-        scripts: remapSessionScripts(session.scripts, connectionIds),
+        ...bundle,
+        session: {
+            ...session,
+            defaultConnectionId: connectionIds.get(session.defaultConnectionId) ?? session.defaultConnectionId,
+            connections: session.connections.map(connection => ({ ...connection, connectionId: connectionIds.get(connection.connectionId)! })),
+            scripts: remapSessionScripts(session.scripts, connectionIds),
+        },
+        catalogs: renameBundleCatalogs(bundle.catalogs, connectionIds),
     };
+}
+
+/// Rename the connections of the catalogs of a bundle (connectionId -> new id).
+/// Connections that become one keep the first catalog.
+export function renameBundleCatalogs(catalogs: readonly SessionBundleCatalog[], connectionIds: ReadonlyMap<string, string>): SessionBundleCatalog[] {
+    const renamed = new Map<string, SessionBundleCatalog>();
+    for (const catalog of catalogs) {
+        const connectionId = connectionIds.get(catalog.connectionId) ?? catalog.connectionId;
+        if (!renamed.has(connectionId)) renamed.set(connectionId, { ...catalog, connectionId });
+    }
+    return [...renamed.values()];
 }
 
 /// Rewrite only this session's canonical attachment paths after explicitly creating a new identity.
@@ -159,20 +224,22 @@ export function filterInvalidSessionCatalogs(
     core: DashQL,
     bundle: SessionBundle,
 ): SessionCatalogValidationResult {
-    const invalidFiles: SessionCatalogValidationResult['invalidFiles'] = [];
-    const validate = (sql: string | null, fileName: SessionCatalogValidationResult['invalidFiles'][number]) => {
-        if (sql == null || parsesWithoutErrors(core, sql)) return sql;
-        invalidFiles.push(fileName);
-        return null;
-    };
-    const schemaSql = validate(bundle.schemaSql, STORAGE_CATALOG_RELATIONS);
-    const functionsSql = validate(bundle.functionsSql, STORAGE_CATALOG_FUNCTIONS);
-    return {
-        bundle: schemaSql === bundle.schemaSql && functionsSql === bundle.functionsSql
-            ? bundle
-            : { ...bundle, schemaSql, functionsSql },
-        invalidFiles,
-    };
+    const invalidFiles: string[] = [];
+    let changed = false;
+    const catalogs = bundle.catalogs.map(catalog => {
+        const validate = (sql: string | null, fileName: string) => {
+            if (sql == null || parsesWithoutErrors(core, sql)) return sql;
+            invalidFiles.push(bundleCatalogPath(catalog.connectionId, fileName));
+            changed = true;
+            return null;
+        };
+        return {
+            ...catalog,
+            relations: validate(catalog.relations, STORAGE_CATALOG_RELATIONS),
+            functions: validate(catalog.functions, STORAGE_CATALOG_FUNCTIONS),
+        };
+    });
+    return { bundle: changed ? { ...bundle, catalogs } : bundle, invalidFiles };
 }
 
 function parsesWithoutErrors(core: DashQL, sql: string): boolean {
@@ -202,12 +269,10 @@ export interface SessionBundleWriteOptions {
     /// The caller guarantees the destination did not exist before this write. Only then may a
     /// failed whole-bundle write remove the destination as rollback.
     targetIsFresh?: boolean;
-    /// Generate fresh connection identities for a clone/create-new import.
-    regenerateConnectionIds?: boolean;
 }
 
-/// Read the portable durable session data from a backend. The catalog of the default connection is
-/// only read for exports that ask for it, and only from a backend that holds the connections.
+/// Read the portable durable session data from a backend. The catalogs of the connections of the
+/// session are only read for exports that ask for them, and only from a backend that holds the connections.
 export async function readSessionBundle(
     sessionId: string,
     backend: StorageBackend,
@@ -218,15 +283,19 @@ export async function readSessionBundle(
         backend.loadScripts(sessionId),
     ]);
     const registry = withCatalog && isSessionRegistryBackend(backend) ? backend : null;
-    const [schemaSql, functionsSql] = registry == null ? [null, null] : await Promise.all([
-        registry.loadConnectionFile(stored.defaultConnectionId, STORAGE_CATALOG_RELATIONS),
-        registry.loadConnectionFile(stored.defaultConnectionId, STORAGE_CATALOG_FUNCTIONS),
-    ]);
+    const catalogs: SessionBundleCatalog[] = [];
+    for (const { connectionId } of registry == null ? [] : stored.connections) {
+        const [relations, functions] = await Promise.all([
+            registry!.loadConnectionFile(connectionId, STORAGE_CATALOG_RELATIONS),
+            registry!.loadConnectionFile(connectionId, STORAGE_CATALOG_FUNCTIONS),
+        ]);
+        if (relations != null || functions != null) catalogs.push({ connectionId, relations, functions });
+    }
     const data = await Promise.all((await backend.listDataFiles(sessionId))
         .map(async file => ({ name: file.name, bytes: await backend.loadDataFile(sessionId, file.name) })));
     const files = sanitizeSessionFiles(stored);
     const session: SessionData = { ...stored, scripts: files.scripts, attachments: files.attachments };
-    return assembleSessionBundle({ session, schemaSql, functionsSql }, scripts, data);
+    return assembleSessionBundle({ session, catalogs }, scripts, data);
 }
 
 /// Write a fully parsed bundle to storage. This is deliberately not a replacement transaction:
@@ -249,14 +318,13 @@ export async function writeSessionBundle(
     }
     for (const file of bundle.data ?? []) validateDataFileName(file.name);
 
-    let session: SessionData = {
+    const session: SessionData = {
         ...bundle.session,
         sessionId,
         scripts: reconcileSessionScripts(bundle.session.scripts ?? [], bundle.scripts.map(script => script.name),
             bundle.session.defaultConnectionId).scripts,
         attachments: sessionAttachments((bundle.data ?? []).map(file => file.name)),
     };
-    if (options.regenerateConnectionIds) session = regenerateSessionConnectionIds(session);
     if (backend.getBackendType() === StorageBackendType.OPFS) {
         delete session.sessionPath;
         delete session.storageType;
@@ -292,27 +360,28 @@ export async function writeSessionBundle(
     return sessionId;
 }
 
-/// Seed the catalog of a connection from a bundle that was written as session `sessionId`.
+/// Seed the catalogs of the connections from a bundle that was written as session `sessionId`.
 ///
 /// A connection that has a catalog keeps it, the catalog of a bundle only describes a connection that
 /// is new to the app. Backends without connections are left alone.
-export async function seedConnectionCatalog(
+export async function seedConnectionCatalogs(
     backend: StorageBackend,
-    connectionId: string,
-    bundle: Pick<SessionBundle, 'session' | 'schemaSql' | 'functionsSql'>,
+    bundle: Pick<SessionBundle, 'session' | 'catalogs'>,
     sessionId: string,
 ): Promise<void> {
-    if (!isSessionRegistryBackend(backend) || (bundle.schemaSql == null && bundle.functionsSql == null)) return;
-    const files = [
-        [STORAGE_CATALOG_RELATIONS, bundle.schemaSql],
-        [STORAGE_CATALOG_FUNCTIONS, bundle.functionsSql],
-    ] as const;
-    const existing = await Promise.all(files.map(([fileName]) => backend.loadConnectionFile(connectionId, fileName)));
-    if (existing.some(text => text != null)) return;
-    for (const [fileName, text] of files) {
-        if (text == null) continue;
-        await backend.saveConnectionFile(connectionId, fileName,
-            rebaseSessionAttachmentPaths(text, bundle.session.sessionId, sessionId)!);
+    if (!isSessionRegistryBackend(backend)) return;
+    for (const catalog of bundle.catalogs) {
+        const files = [
+            [STORAGE_CATALOG_RELATIONS, catalog.relations],
+            [STORAGE_CATALOG_FUNCTIONS, catalog.functions],
+        ] as const;
+        const existing = await Promise.all(files.map(([fileName]) => backend.loadConnectionFile(catalog.connectionId, fileName)));
+        if (existing.some(text => text != null)) continue;
+        for (const [fileName, text] of files) {
+            if (text == null) continue;
+            await backend.saveConnectionFile(catalog.connectionId, fileName,
+                rebaseSessionAttachmentPaths(text, bundle.session.sessionId, sessionId)!);
+        }
     }
 }
 

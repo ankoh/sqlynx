@@ -27,8 +27,7 @@ const FILE_BUNDLE: SessionBundle = {
         attachments: [],
         metadata: { originType: 'FILE', originalFileName: 'local.dashql' },
     },
-    schemaSql: null,
-    functionsSql: null,
+    catalogs: [],
     scripts: [{ name: 'query.sql', sql: 'SELECT 1' }],
 };
 
