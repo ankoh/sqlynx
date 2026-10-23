@@ -3,7 +3,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Logger } from '../../../platform/logger/logger.js';
 import { TestLogger } from '../../../platform/logger/test_logger.js';
-import { findSessionsForConnection, syncSessionConnections, type ConnectionRegistry } from '../../connections/connection_registry.js';
+import type { ConnectionReferences, ConnectionRegistry } from '../../connections/connection_registry.js';
+import { sessionConnectionReferences } from '../scripts/session_scripts_registry.js';
 import { ConnectorType } from '../../connections/connector_info.js';
 import { CompositeStorageBackend } from '../../storage/composite_storage_backend.js';
 import { writePortableSessionFresh } from '../../storage/session_import_transaction.js';
@@ -122,8 +123,12 @@ describe('Session connections', () => {
     /// The connection registry of a restored app state
     const connectionRegistryOf = (restored: RestoredAppState): ConnectionRegistry => ({
         connections: restored.connectionStates,
-        attachedDatabasesBySession: restored.attachedDatabasesBySession,
         connectionsByType: restored.connectionStatesByType,
+    });
+    /// The connections that the sessions of a restored app state use
+    const referencesOf = (restored: RestoredAppState): ConnectionReferences => sessionConnectionReferences({
+        current: { sessionScriptsMap: restored.sessionScripts, sessionScriptsByConnection: restored.sessionScriptsByConnection },
+        subscribe: () => () => { },
     });
 
     describe('restoring', () => {
@@ -171,7 +176,7 @@ describe('Session connections', () => {
             await seedSession(backend, [['query.sql', HYPER_ID, 'select 1']]);
             const restored = await restore(backend);
 
-            expect(restored.attachedDatabasesBySession.get(SESSION_ID)).toEqual({ mainDatabaseId: HYPER_ID, attachedDatabaseIds: [] });
+            expect(sessionConnectionIds(sessionOf(restored))).toEqual([HYPER_ID]);
             expect(backend.sessions.get(SESSION_ID)!.connections.map(connection => connection.connectionId)).toEqual([HYPER_ID]);
             // The connection itself stays a connection of the app
             expect(restored.connectionStates.has(TRINO_ID)).toBe(true);
@@ -282,19 +287,17 @@ describe('Session connections', () => {
             const backend = new SessionTestBackend();
             await seedSession(backend, [['query.sql', TRINO_ID, 'select 1']]);
             let restored = await restore(backend);
-            let registry = connectionRegistryOf(restored);
-            expect(findSessionsForConnection(registry, TRINO_ID)).toEqual([SESSION_ID]);
+            expect(referencesOf(restored).sessionsOf(TRINO_ID)).toEqual([SESSION_ID]);
 
             const writer = new StorageWriter(logger, backend);
             const session = pickConnection(sessionOf(restored), restored, writer, 'query.sql', HYPER_ID);
-            // The connection registry follows the scripts right away
-            registry = syncSessionConnections(registry, new Map([[SESSION_ID, sessionConnectionIds(session)]]));
-            expect(findSessionsForConnection(registry, TRINO_ID)).toEqual([]);
+            // The references follow the scripts right away
+            expect(sessionConnectionIds(session)).not.toContain(TRINO_ID);
             await writer.flush();
             expect(backend.sessions.get(SESSION_ID)!.connections.map(connection => connection.connectionId)).toEqual([HYPER_ID]);
 
             restored = await restore(backend);
-            expect(findSessionsForConnection(connectionRegistryOf(restored), TRINO_ID)).toEqual([]);
+            expect(referencesOf(restored).sessionsOf(TRINO_ID)).toEqual([]);
         });
     });
 
@@ -312,7 +315,7 @@ describe('Session connections', () => {
                 connections: [{ connectionId: HYPER_ID, params: HYPER_PARAMS }, { connectionId: TRINO_ID, params: TRINO_PARAMS }],
                 scripts: [{ name: 'query.sql', connectionId: HYPER_ID }, { name: 'remote.sql', connectionId: TRINO_ID }],
             };
-            const stored = readStoredSessionScripts(connectionRegistryOf(restored), SESSION_ID, pulled, [
+            const stored = readStoredSessionScripts(connectionRegistryOf(restored), referencesOf(restored), SESSION_ID, pulled, [
                 { name: 'query.sql', sql: 'select 1' },
                 { name: 'remote.sql', sql: 'select 2' },
             ])!;
@@ -403,7 +406,7 @@ describe('Session connections', () => {
             const imported = sessionOf(restored, IMPORTED_SESSION_ID);
             // Both sessions share the connections of the app
             expect(scriptOf(imported, 'remote.sql').connection.catalog).toBe(restored.connectionStates.get(TRINO_ID)!.catalog);
-            expect(findSessionsForConnection(connectionRegistryOf(restored), TRINO_ID)).toEqual([SESSION_ID, IMPORTED_SESSION_ID]);
+            expect(referencesOf(restored).sessionsOf(TRINO_ID)).toEqual([SESSION_ID, IMPORTED_SESSION_ID]);
         });
     });
 });

@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as styles from './session_page.module.css';
 
 import { useSessionScripts } from '../scripts/session_scripts_registry.js';
-import { useConnectionRegistry, useConnectionState } from '../../connections/connection_registry.js';
+import { useConnectionRegistry, useDefaultConnection } from '../../connections/connection_registry.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
 import { sessionConnectionIds } from '../scripts/session_scripts.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
@@ -17,7 +17,7 @@ const LOG_CTX = 'session_page';
 
 export interface SessionPageDependencies {
     useSessionScripts: typeof useSessionScripts;
-    useConnectionState: typeof useConnectionState;
+    useDefaultConnection: typeof useDefaultConnection;
     useConnectionRegistry: typeof useConnectionRegistry;
     useLogger: typeof useLogger;
     useRouteContext: typeof useRouteContext;
@@ -28,7 +28,7 @@ export interface SessionPageDependencies {
 
 const DEFAULT_DEPENDENCIES: SessionPageDependencies = {
     useSessionScripts,
-    useConnectionState,
+    useDefaultConnection,
     useConnectionRegistry,
     useLogger,
     useRouteContext,
@@ -46,7 +46,7 @@ export const SessionPage: React.FC<Props> = (props: Props) => {
     const route = dependencies.useRouteContext();
     const logger = dependencies.useLogger();
     const [sessionScripts, modifySessionScripts] = dependencies.useSessionScripts(route.sessionId ?? null);
-    const [conn] = dependencies.useConnectionState(sessionScripts?.sessionId ?? null);
+    const [conn] = dependencies.useDefaultConnection(sessionScripts?.sessionId ?? null);
     // The connections that the scripts of the session run on
     const [connectionRegistry] = dependencies.useConnectionRegistry();
     const scriptConnections = new Map<string, ConnectionState>();

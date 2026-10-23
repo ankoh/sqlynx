@@ -9,7 +9,7 @@ import type { DashQL } from '@ankoh/dashql-core';
 import { Logger } from '../../../platform/logger/logger.js';
 import { ConnectorType } from '../../connections/connector_info.js';
 import { destroyRestoredSession, restoreAppState } from './app_state_loader.js';
-import { destroySessionScripts } from '../scripts/session_scripts.js';
+import { destroySessionScripts, sessionConnectionIds } from '../scripts/session_scripts.js';
 import type { StorageBackend } from '../../storage/storage_backend.js';
 import { StorageBackendType } from '../../storage/storage_backend.js';
 import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testConnections, testSession } from '../../storage/session_test_backend.js';
@@ -79,10 +79,7 @@ describe('V2 app state loader', () => {
 
     it('restores one attached database and flat scripts with natural initial focus', async () => {
         const result = await restoreAppState(core, backend, new NullLogger(), () => {}, processor);
-        expect(result.attachedDatabasesBySession.get(TEST_SESSION_ID)).toEqual({
-            mainDatabaseId: TEST_CONNECTION_ID,
-            attachedDatabaseIds: [],
-        });
+        expect(sessionConnectionIds(result.sessionScripts.get(TEST_SESSION_ID)!)).toEqual([TEST_CONNECTION_ID]);
         expect(result.connectionStatesByType[ConnectorType.HYPER]).toEqual([TEST_CONNECTION_ID]);
         const scripts = result.sessionScripts.get(TEST_SESSION_ID)!;
         // Files without an entry in the session file are appended in natural order
@@ -128,10 +125,7 @@ describe('V2 app state loader', () => {
             scripts: [{ name: '2_first.sql', connectionId: TEST_CONNECTION_ID }],
         }));
         const result = await restoreAppState(core, backend, new NullLogger(), () => {}, processor);
-        expect(result.attachedDatabasesBySession.get(TEST_SESSION_ID)).toEqual({
-            mainDatabaseId: remoteId,
-            attachedDatabaseIds: [TEST_CONNECTION_ID],
-        });
+        expect(sessionConnectionIds(result.sessionScripts.get(TEST_SESSION_ID)!)).toEqual([remoteId, TEST_CONNECTION_ID]);
         expect(result.connectionStates.size).toBe(2);
         expect(result.sessionScripts.get(TEST_SESSION_ID)?.connectionId).toBe(remoteId);
     });
@@ -306,7 +300,7 @@ describe('real-core startup catalog restoration', () => {
         // Only the functions seed the files of the connection
         expect([...backend.connectionFiles.keys()]).toEqual([`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`]);
         destroyRestoredSession({ sessionId: TEST_SESSION_ID, databases: [main],
-            mapping: restored.attachedDatabasesBySession.get(TEST_SESSION_ID)!, sessionScripts: restored.sessionScripts.get(TEST_SESSION_ID)! });
+            sessionScripts: restored.sessionScripts.get(TEST_SESSION_ID)! });
     });
 
     it('drops and clears the persisted relations and changes of an embedded connection', async () => {
@@ -332,7 +326,7 @@ describe('real-core startup catalog restoration', () => {
         expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-changes.sql`)).toBe('');
         expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`)).toBe(functions);
         destroyRestoredSession({ sessionId: TEST_SESSION_ID, databases: [main],
-            mapping: restored.attachedDatabasesBySession.get(TEST_SESSION_ID)!, sessionScripts: restored.sessionScripts.get(TEST_SESSION_ID)! });
+            sessionScripts: restored.sessionScripts.get(TEST_SESSION_ID)! });
     });
 
     it('routes restored relations/functions to the main catalog using receiver source identities and retains persisted SQL', async () => {
@@ -380,7 +374,7 @@ describe('real-core startup catalog restoration', () => {
         expect(candidate.catalogObjects[0].qualifiedName).toEqual(['db', 'public', 'restored_function']);
         query.destroy();
         destroyRestoredSession({ sessionId: TEST_SESSION_ID, databases: [main, attached],
-            mapping: restored.attachedDatabasesBySession.get(TEST_SESSION_ID)!, sessionScripts: session });
+            sessionScripts: session });
     });
 });
 

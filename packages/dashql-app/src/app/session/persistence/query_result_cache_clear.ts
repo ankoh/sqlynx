@@ -1,7 +1,8 @@
 import { STORAGE_CACHE_EXTENSION, type StorageBackend } from '../../storage/storage_backend.js';
 import { QUERY_CACHE_DELETED } from '../../../query/query_execution_state.js';
 import {
-    resolveSessionAttachedDatabases,
+    resolveSessionConnections,
+    type ConnectionReferences,
     type ConnectionRegistry,
     type DynamicConnectionDispatch,
 } from '../../connections/connection_registry.js';
@@ -24,12 +25,13 @@ export async function clearQueryResultCache(backend: StorageBackend, sessionId: 
 /// a cache entry. Returns the number of marked queries.
 export function markDeletedQueryResults(
     registry: ConnectionRegistry,
+    references: ConnectionReferences,
     dispatch: DynamicConnectionDispatch,
     sessionId: string,
     hashes: Iterable<string>,
 ): number {
     const deleted = new Set(hashes);
-    const databases = resolveSessionAttachedDatabases(registry, sessionId);
+    const databases = resolveSessionConnections(registry, references, sessionId);
     let marked = 0;
     for (const database of databases == null ? [] : [databases.main, ...databases.attached]) {
         for (const query of database.queriesFinished.values()) {

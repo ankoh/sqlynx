@@ -6,7 +6,7 @@ import { UpdateQueue, useStore, useStoreState, useUpdateQueue } from '../../../u
 import type { DashQLScript } from '@ankoh/dashql-core';
 import { createDefaultConnectionParamsForConnector } from '../../connections/connection_params.js';
 import { useStorageWriter } from '../../storage/storage_provider.js';
-import { syncSessionConnections, useConnectionRegistrySetter } from '../../connections/connection_registry.js';
+import { ConnectionReferencesProvider, type ConnectionReferences } from '../../connections/connection_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import {
     REPLACE_SESSION_SCRIPTS,
@@ -58,37 +58,35 @@ export const SessionScriptsRegistryProvider: React.FC<React.PropsWithChildren<Pr
     }));
     const queue = useUpdateQueue(store);
     const reg = useStoreState(store);
+    // The scripts own the references to their connections, the connection layer reads them from here
+    const references = React.useMemo<ConnectionReferences>(() => sessionConnectionReferences(store), [store]);
     return (
-        <SESSION_SCRIPTS_REGISTRY_QUEUE_CTX.Provider value={queue}>
-            <SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider value={store.update}>
-                <SESSION_SCRIPTS_REGISTRY_CTX.Provider value={reg}>
-                    {props.children}
-                </SESSION_SCRIPTS_REGISTRY_CTX.Provider>
-            </SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider>
-        </SESSION_SCRIPTS_REGISTRY_QUEUE_CTX.Provider>
+        <ConnectionReferencesProvider value={references}>
+            <SESSION_SCRIPTS_REGISTRY_QUEUE_CTX.Provider value={queue}>
+                <SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider value={store.update}>
+                    <SESSION_SCRIPTS_REGISTRY_CTX.Provider value={reg}>
+                        {props.children}
+                    </SESSION_SCRIPTS_REGISTRY_CTX.Provider>
+                </SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider>
+            </SESSION_SCRIPTS_REGISTRY_QUEUE_CTX.Provider>
+        </ConnectionReferencesProvider>
     );
 };
 
-export function useSessionScriptsRegistry(): [SessionScriptsRegistry, Dispatch<SetSessionScriptsRegistryAction>] {
-    return [React.useContext(SESSION_SCRIPTS_REGISTRY_CTX)!, React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!];
+/// The connections that the sessions of a scripts registry use
+export function sessionConnectionReferences(registry: { current: SessionScriptsRegistry; subscribe: (listener: () => void) => () => void }): ConnectionReferences {
+    return {
+        sessionsOf: connectionId => registry.current.sessionScriptsByConnection.get(connectionId) ?? [],
+        connectionsOf: sessionId => {
+            const scripts = registry.current.sessionScriptsMap.get(sessionId);
+            return scripts == null ? [] : sessionConnectionIds(scripts);
+        },
+        subscribe: registry.subscribe,
+    };
 }
 
-/// Let the connection registry follow the connections that the scripts of the sessions use.
-///
-/// The scripts own their connections. The connection layer sits outside of the scripts registry and
-/// keeps a projection to find the sessions of a connection, e.g. to refuse deleting a connection in
-/// use. This is the only place that updates the projection at runtime.
-export function SessionConnectionsSync(): null {
-    const [registry] = useSessionScriptsRegistry();
-    const setConnections = useConnectionRegistrySetter();
-    React.useLayoutEffect(() => {
-        const connectionIds = new Map<string, string[]>();
-        for (const [sessionId, scripts] of registry.sessionScriptsMap) {
-            connectionIds.set(sessionId, sessionConnectionIds(scripts));
-        }
-        setConnections(connections => syncSessionConnections(connections, connectionIds));
-    }, [registry, setConnections]);
-    return null;
+export function useSessionScriptsRegistry(): [SessionScriptsRegistry, Dispatch<SetSessionScriptsRegistryAction>] {
+    return [React.useContext(SESSION_SCRIPTS_REGISTRY_CTX)!, React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!];
 }
 
 /// Modify the registry without subscribing to its changes

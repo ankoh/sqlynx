@@ -17,7 +17,7 @@ import { useStorageReader } from '../../storage/storage_provider.js';
 import { StorageBackend } from '../../storage/storage_backend.js';
 import { IconButton } from '../../../ui/foundations/button.js';
 import { DASHQL_ARCHIVE_FILENAME_EXT } from '../../../globals.js';
-import { resolveSessionAttachedDatabases, useConnectionRegistry } from '../../connections/connection_registry.js';
+import { resolveSessionConnections, useConnectionReferences, useConnectionRegistry } from '../../connections/connection_registry.js';
 
 async function packAndCompressFile(
     backend: StorageBackend,
@@ -51,6 +51,7 @@ export const SessionFileSaveOverlay: React.FC<Props> = (props: Props) => {
     const fileDownloader = useFileDownloader();
     const storage = useStorageReader();
     const [databaseRegistry] = useConnectionRegistry();
+    const references = useConnectionReferences();
     const fileName = `${props.fileName ?? props.sessionScripts?.sessionMetadata.originalFileName ?? "session"}.${DASHQL_ARCHIVE_FILENAME_EXT}`;
 
     const [settings, setSettings] = React.useState<SessionExportSettings>({
@@ -72,7 +73,7 @@ export const SessionFileSaveOverlay: React.FC<Props> = (props: Props) => {
         const cancellation = new AbortController();
         setFileBytes(new Uint8Array());
         const pack = async () => {
-            const attached = resolveSessionAttachedDatabases(databaseRegistry, sessionScripts.sessionId);
+            const attached = resolveSessionConnections(databaseRegistry, references, sessionScripts.sessionId);
             if (attached == null) return;
             const fileBytes = await packAndCompressFile(
                 storage.backend,
@@ -88,7 +89,7 @@ export const SessionFileSaveOverlay: React.FC<Props> = (props: Props) => {
             if (!cancellation.signal.aborted) setFileBytes(new Uint8Array());
         });
         return () => cancellation.abort();
-    }, [databaseRegistry, settings, props.conn, props.sessionScripts, props.isOpen, storage.backend]);
+    }, [databaseRegistry, references, settings, props.conn, props.sessionScripts, props.isOpen, storage.backend]);
 
     const hasLoginHint = React.useMemo(
         () => props.conn != null && connectionParamsHaveLoginHint(getConnectionParamsFromStateDetails(props.conn.details)),

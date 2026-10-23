@@ -10,7 +10,8 @@ import { DatabaseIcon } from '../../../ui/foundations/symbol_icon.js';
 import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
 import type { ConnectorInfo } from '../../connections/connector_info.js';
 import {
-    resolveSessionAttachedDatabases,
+    resolveSessionConnections,
+    useConnectionReferences,
     useConnectionRegistry,
     useConnectionRegistryStore,
 } from '../../connections/connection_registry.js';
@@ -144,18 +145,19 @@ interface MenuProps {
 /// Subscribes to the registries only while it is open.
 function ScriptConnectionMenu(props: MenuProps) {
     const [connections] = useConnectionRegistry();
+    // Re-render when the sessions use other connections
     const [scripts] = useSessionScriptsRegistry();
+    const references = useConnectionReferences();
     const { sessionConnections, otherConnections, ordinals } = React.useMemo(() => {
-        const session = resolveSessionAttachedDatabases(connections, props.sessionId);
+        const session = resolveSessionConnections(connections, references, props.sessionId);
         const sessionConnections = session == null ? [] : [session.main, ...session.attached];
-        const sessionIds = new Set(scripts.sessionScriptsMap.keys());
-        const listed = listedConnections(connections, sessionIds, sessionConnections);
+        const listed = listedConnections(connections, references, sessionConnections);
         return {
             sessionConnections,
             otherConnections: listed.slice(sessionConnections.length),
-            ordinals: connectionOrdinals(connections, sessionIds),
+            ordinals: connectionOrdinals(connections, references),
         };
-    }, [connections, scripts, props.sessionId]);
+    }, [connections, references, scripts, props.sessionId]);
     const renderItem = (connection: ConnectionState) => (
         <ActionList.ListItem
             key={connection.connectionId}

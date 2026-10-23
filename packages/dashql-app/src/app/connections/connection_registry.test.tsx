@@ -17,9 +17,10 @@ import {
     type ConnectionRegistry,
     type DynamicConnectionDispatch,
     ConnectionRegistry as ConnectionRegistryProvider,
+    ConnectionReferencesProvider,
     didPersistedConnectionChange,
-    resolveSessionAttachedDatabases,
-    resolveSessionExecutionDatabase,
+    resolveSessionConnections,
+    resolveDefaultConnection,
     useConnectionRegistry,
     useDynamicConnectionDispatch,
 } from './connection_registry.js';
@@ -29,50 +30,44 @@ import { LoggerProvider } from '../../platform/logger/logger_provider.js';
 import { StorageProvider, useStorageWriter } from '../storage/storage_provider.js';
 import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testSession } from '../storage/session_test_backend.js';
 import type { StorageWriter } from '../storage/storage_writer.js';
+import { fixedConnectionReferences } from '../../tests/mocks/connection_references.js';
 
 function database(connectionId: string, health: ConnectionHealth): ConnectionState {
     return { connectionId: connectionId, connectionHealth: health } as ConnectionState;
 }
 
-function registry(attachedDatabaseId: string | null, mainDatabaseId = attachedDatabaseId ?? 'local'): ConnectionRegistry {
+function registry(): ConnectionRegistry {
     return {
         connections: new Map([
             ['local', database('local', ConnectionHealth.ONLINE)],
             ['remote', database('remote', ConnectionHealth.FAILED)],
         ]),
-        attachedDatabasesBySession: new Map([['session', {
-            mainDatabaseId,
-            attachedDatabaseIds: attachedDatabaseId == null ? [] : [attachedDatabaseId],
-        }]]),
         connectionsByType: [],
     };
 }
 
-describe('session attached database routing', () => {
-    it('resolves local and remote databases independently', () => {
-        const attached = resolveSessionAttachedDatabases(registry('remote'), 'session');
-        expect(attached?.main.connectionId).toBe('remote');
-        expect(attached?.attached.map(database => database.connectionId)).toEqual(['remote']);
+describe('session connection routing', () => {
+    it('resolves the default connection and the other connections of a session', () => {
+        const connections = resolveSessionConnections(registry(), fixedConnectionReferences({ session: ['local', 'remote'] }), 'session');
+        expect(connections?.main.connectionId).toBe('local');
+        expect(connections?.attached.map(database => database.connectionId)).toEqual(['remote']);
     });
 
-    it('routes execution to the remote main database even when it is offline', () => {
-        const execution = resolveSessionExecutionDatabase(registry('remote'), 'session');
-        expect(execution?.connectionId).toBe('remote');
-        expect(execution?.connectionHealth).toBe(ConnectionHealth.FAILED);
+    it('routes to the remote default connection even when it is offline', () => {
+        const connection = resolveDefaultConnection(registry(), fixedConnectionReferences({ session: ['remote'] }), 'session');
+        expect(connection?.connectionId).toBe('remote');
+        expect(connection?.connectionHealth).toBe(ConnectionHealth.FAILED);
     });
 
-    it('routes execution to the local main database even when a remote is attached', () => {
-        expect(resolveSessionExecutionDatabase(registry('remote', 'local'), 'session')?.connectionId).toBe('local');
-    });
-
-    it('routes execution to local when it is the only attached database', () => {
-        expect(resolveSessionExecutionDatabase(registry(null), 'session')?.connectionId).toBe('local');
+    it('routes to the local default connection even when scripts use a remote one', () => {
+        expect(resolveDefaultConnection(registry(), fixedConnectionReferences({ session: ['local', 'remote'] }), 'session')?.connectionId).toBe('local');
     });
 
     it('does not fall back to local when a configured remote is missing', () => {
-        const value = registry('remote', 'remote');
+        const value = registry();
         value.connections.delete('remote');
-        expect(resolveSessionExecutionDatabase(value, 'session')).toBeNull();
+        expect(resolveDefaultConnection(value, fixedConnectionReferences({ session: ['remote'] }), 'session')).toBeNull();
+        expect(resolveSessionConnections(value, fixedConnectionReferences({ session: ['local', 'remote'] }), 'session')).toBeNull();
     });
 });
 
@@ -153,16 +148,14 @@ describe('catalog refresh persistence', () => {
         try {
             await act(async () => root.render(React.createElement(LoggerProvider, null,
                 React.createElement(StorageProvider, { backend },
-                    React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness)),
+                    React.createElement(ConnectionReferencesProvider, { value: fixedConnectionReferences({ [TEST_SESSION_ID]: [TEST_CONNECTION_ID] }) }, React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness))),
                 ),
             )));
             await act(async () => setRegistry(reg => {
                 reg.connections.set(TEST_CONNECTION_ID, connection);
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
             expect(currentRegistry.connections.get(TEST_CONNECTION_ID)).toBe(connection);
-            expect(currentRegistry.attachedDatabasesBySession.get(TEST_SESSION_ID)?.mainDatabaseId).toBe(TEST_CONNECTION_ID);
             const task = {
                 taskId: 1, taskVariant: CatalogUpdateVariant.FULL_CATALOG_REFRESH,
                 status: CatalogUpdateTaskStatus.STARTED, cancellation: new AbortController(),
@@ -232,12 +225,11 @@ describe('catalog refresh persistence', () => {
         try {
             await act(async () => root.render(React.createElement(LoggerProvider, null,
                 React.createElement(StorageProvider, { backend },
-                    React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness)),
+                    React.createElement(ConnectionReferencesProvider, { value: fixedConnectionReferences({ [TEST_SESSION_ID]: [TEST_CONNECTION_ID] }) }, React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness))),
                 ),
             )));
             act(() => setRegistry(reg => {
                 reg.connections.set(TEST_CONNECTION_ID, embedded);
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
             // The refresh clears the recorded catalog changes as well
@@ -291,14 +283,11 @@ describe('catalog refresh persistence', () => {
         try {
             await act(async () => root.render(React.createElement(LoggerProvider, null,
                 React.createElement(StorageProvider, { backend },
-                    React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness)),
+                    React.createElement(ConnectionReferencesProvider, { value: fixedConnectionReferences({ [TEST_SESSION_ID]: [TEST_CONNECTION_ID, attachedId] }) }, React.createElement(ConnectionRegistryProvider, null, React.createElement(Harness))),
                 ),
             )));
             act(() => setRegistry(reg => {
                 reg.connections.set(attachedId, attached);
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, {
-                    mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [attachedId],
-                });
                 return { ...reg };
             }));
             act(() => dispatch(attachedId, { type: CATALOG_UPDATE_SUCCEEDED, value: [2] }));
@@ -355,16 +344,13 @@ describe('shared connection persistence', () => {
         const root = createRoot(container);
         await act(async () => root.render(React.createElement(LoggerProvider, null,
             React.createElement(StorageProvider, { backend },
-                React.createElement(ConnectionRegistryProvider, null,
+                React.createElement(ConnectionReferencesProvider, { value: fixedConnectionReferences(Object.fromEntries(sessionIds.map(sessionId => [sessionId, [TEST_CONNECTION_ID]]))) }, React.createElement(ConnectionRegistryProvider, null,
                     React.createElement(ConnectionPersistenceProvider, null, React.createElement(Harness)),
-                ),
+                )),
             ),
         )));
         await act(async () => setRegistry(reg => {
             reg.connections.set(TEST_CONNECTION_ID, connection);
-            for (const sessionId of sessionIds) {
-                reg.attachedDatabasesBySession.set(sessionId, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
-            }
             return { ...reg };
         }));
         return { backend, harness, unmount: () => { act(() => root.unmount()); container.remove(); } };

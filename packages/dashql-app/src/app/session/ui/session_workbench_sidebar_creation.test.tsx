@@ -19,9 +19,7 @@ const state = {
     refreshCatalog: vi.fn(),
     createConnectionStateFromParams: vi.fn(),
     deleteSession: vi.fn(),
-    allocateDatabase: vi.fn(),
     allocateConnection: vi.fn(),
-    attachConnection: vi.fn(),
     local: null as ConnectionState | null,
     overlayProps: null as { connectionId: string | null; headerTitle?: string; isOpen: boolean; onClose: () => void; onConnected?: (database: ConnectionState) => void } | null,
     shareProps: null as { isOpen: boolean; sessionId?: string } | null,
@@ -30,6 +28,17 @@ const state = {
     attachedDatabasesBySession: new Map<string, { mainDatabaseId: string; attachedDatabaseIds: string[] }>(),
     sessionScriptsMap: new Map<string, unknown>(),
     sessionAttachedDatabases: null as { main: ConnectionState; attached: ConnectionState[] } | null,
+};
+
+/// The connections that the sessions of the fake scripts registry use
+const references = {
+    connectionsOf: (sessionId: string) => {
+        const mapping = state.attachedDatabasesBySession.get(sessionId);
+        return mapping == null || !state.sessionScriptsMap.has(sessionId) ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds];
+    },
+    sessionsOf: (connectionId: string) => [...state.attachedDatabasesBySession.keys()]
+        .filter(sessionId => references.connectionsOf(sessionId).includes(connectionId)),
+    subscribe: () => () => { },
 };
 
 /// The connection ids of the fake registry by connector type
@@ -44,17 +53,14 @@ const dependencies = {
     useRouteContext: () => ({ sessionId: 'current-session', sessionSetupStatus: SessionSetupStatus.NONE }),
     useConnectionRegistry: () => [{
         connections: state.connections,
-        attachedDatabasesBySession: state.attachedDatabasesBySession,
     }, vi.fn()],
-    useSessionAttachedDatabases: () => state.sessionAttachedDatabases,
+    useConnectionReferences: () => references,
+    useSessionConnections: () => state.sessionAttachedDatabases,
     useDynamicConnectionDispatch: () => [{
         connections: state.connections,
-        attachedDatabasesBySession: state.attachedDatabasesBySession,
         connectionsByType: connectionsByType(),
     }, state.dispatchDatabase],
-    useAttachedDatabaseStateAllocator: () => state.allocateDatabase,
     useConnectionAllocator: () => state.allocateConnection,
-    useAttachConnection: () => state.attachConnection,
     ConnectionSettingsOverlay: (props: typeof state.overlayProps) => {
         state.overlayProps = props;
         return props?.isOpen ? <button onClick={() => props.onConnected?.(state.local!)}>Complete setup</button> : null;
@@ -131,9 +137,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
             details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } },
             ...EMPTY_CATALOG,
         } as unknown as ConnectionState;
-        state.allocateDatabase.mockReset().mockReturnValue(state.local);
-        state.allocateConnection.mockReset();
-        state.attachConnection.mockReset();
+        state.allocateConnection.mockReset().mockReturnValue(state.local);
         vi.spyOn(crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000001');
         act(() => root.render(<SessionWorkbenchSidebar sessionScripts={{
             sessionId: 'current-session',
@@ -231,7 +235,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
             '00000000-0000-4000-8000-000000000001',
             state.local,
         );
-        expect(state.allocateDatabase).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ active: true }));
+        expect(state.allocateConnection).toHaveBeenCalledWith(expect.objectContaining({ active: true }));
         expect(state.navigate).toHaveBeenCalledWith({
             type: SELECT_SESSION,
             value: '00000000-0000-4000-8000-000000000001',
@@ -241,7 +245,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
         }));
         expect(state.overlayProps?.isOpen).toBe(false);
         if (connector === 'Hyper') {
-            expect(state.allocateDatabase).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ type: 'local' }));
+            expect(state.allocateConnection).toHaveBeenCalledWith(expect.objectContaining({ type: 'local' }));
             expect(state.createConnectionStateFromParams).not.toHaveBeenCalled();
         } else {
             const params = state.createConnectionStateFromParams.mock.calls[0][1];
@@ -379,8 +383,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
         click('Create session');
         const existing = Array.from(document.querySelectorAll('button')).find(button => button.textContent?.includes('Trino'))!;
         act(() => existing.click());
-        expect(state.allocateDatabase).not.toHaveBeenCalled();
-        expect(state.attachConnection).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'trino-database');
+        expect(state.allocateConnection).not.toHaveBeenCalled();
         expect(state.setupSessionScripts).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', other);
         expect(state.navigate).toHaveBeenCalledWith({ type: SELECT_SESSION, value: '00000000-0000-4000-8000-000000000001' });
     });

@@ -16,7 +16,7 @@ import { displayPath } from '../../storage/session_locator.js';
 import { useStorage } from '../../storage/storage_provider.js';
 import { restoreSingleSession } from './app_state_loader.js';
 import { mergeRestoredSessionIntoConnections, mergeRestoredSessionIntoScripts } from './app_state_loader.js';
-import { connectionEntryFromState, connectionRefCount, findSessionQueries, useConnectionRegistrySetter, useConnectionRegistryStore } from '../../connections/connection_registry.js';
+import { connectionEntryFromState, findSessionQueries, useConnectionReferences, useConnectionRegistrySetter, useConnectionRegistryStore } from '../../connections/connection_registry.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
 import { useSessionScriptsRegistrySetter } from '../scripts/session_scripts_registry.js';
 import { useDashQLCoreSetup } from '../../providers/core_provider.js';
@@ -90,6 +90,7 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
     const [reader, writer] = useStorage();
     // Read the registry when importing instead of re-creating the import context for every query event
     const connectionStore = useConnectionRegistryStore();
+    const references = useConnectionReferences();
     const setConnections = useConnectionRegistrySetter();
     const setScripts = useSessionScriptsRegistrySetter();
     const cancelQuery = useCancelQuery();
@@ -123,7 +124,7 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
                 return connection == null ? entry : { ...entry, name: connection.name, params: connection.params };
             });
         for (const [connectionId, connection] of live.connections) {
-            if (!entries.some(entry => entry.id === connectionId) && connectionRefCount(live, connectionId) > 0) {
+            if (!entries.some(entry => entry.id === connectionId) && references.sessionsOf(connectionId).length > 0) {
                 entries.push(connectionEntryFromState({ ...connection, paramsDraft: undefined }));
             }
         }
@@ -145,14 +146,11 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
             connections: plan.map(item => item.decision.kind).join(','),
         }, 'session_import');
         return { ...bundle, session };
-    }, [backend, connectionStore, logger]);
+    }, [backend, connectionStore, logger, references]);
 
     const stopSessionWork = React.useCallback(async (sessionId: string) => {
-        const connections = connectionStore.current;
-        const mapping = connections.attachedDatabasesBySession.get(sessionId);
-        const databases = mapping == null ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds]
-            .filter((databaseId): databaseId is string => databaseId != null)
-            .map(databaseId => connections.connections.get(databaseId))
+        const databases = references.connectionsOf(sessionId)
+            .map(connectionId => connectionStore.current.connections.get(connectionId))
             .filter((database): database is ConnectionState => database != null);
         // Connections may be shared, only the queries of the session are cancelled
         await Promise.all(databases.flatMap(database => findSessionQueries(database, sessionId, false).map(queryId =>
@@ -165,7 +163,7 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
             writer.resume();
             throw error;
         }
-    }, [cancelQuery, connectionStore, writer]);
+    }, [cancelQuery, connectionStore, references, writer]);
 
     const restoreFreshPortable = React.useCallback(async (
         bundle: SessionBundle,

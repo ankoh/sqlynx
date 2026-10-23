@@ -75,7 +75,6 @@ describe('CatalogLoaderProvider queue', () => {
         } as unknown as ConnectionState;
         registry = {
             connections: new Map([['database', connection]]),
-            attachedDatabasesBySession: new Map(),
             connectionsByType: [],
         };
         // Deliberately do not rerender on dispatch: completion itself must wake the queue.

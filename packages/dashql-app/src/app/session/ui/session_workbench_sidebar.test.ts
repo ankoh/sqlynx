@@ -2,6 +2,7 @@ import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from
 import { type ConnectionState } from '../../connections/connection_state.js';
 import { connectionLabel, connectionLabelParts, connectionOrdinals } from '../../connections/ui/connection_label.js';
 import type { ConnectionRegistry } from '../../connections/connection_registry.js';
+import { fixedConnectionReferences } from '../../../tests/mocks/connection_references.js';
 import {
     connectionDisplayOrder,
     connectionTreeRowHeight,
@@ -73,22 +74,19 @@ describe('connections of the same connector', () => {
         connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
         details: { type: TRINO_CONNECTOR, value: { proto: { setupParams: {} } } },
     }) as ConnectionState;
-    const registryOf = (databases: ConnectionState[], sessions: Record<string, string[]> = {}) => {
+    const registryOf = (databases: ConnectionState[]) => {
         const connectionsByType: string[][] = [[], [], []];
         for (const database of databases) connectionsByType[database.connectorInfo.connectorType].push(database.connectionId);
         return {
             connections: new Map(databases.map(database => [database.connectionId, database])),
             connectionsByType,
-            attachedDatabasesBySession: new Map(Object.entries(sessions).map(([sessionId, [main, ...attached]]) => [
-                sessionId,
-                { mainDatabaseId: main, attachedDatabaseIds: attached },
-            ])),
         } as unknown as ConnectionRegistry;
     };
+    const noReferences = fixedConnectionReferences({});
 
     it('numbers unnamed connections only when their connector repeats', () => {
         const registry = registryOf([hyper('a'), trino('t'), hyper('b')]);
-        const ordinals = connectionOrdinals(registry, new Set());
+        const ordinals = connectionOrdinals(registry, noReferences);
         expect([...ordinals]).toEqual([['a', 1], ['b', 2]]);
         expect(connectionLabel(registry.connections.get('b')!, ordinals.get('b'))).toBe('Hyper #2 Http');
         expect(connectionLabel(registry.connections.get('t')!, ordinals.get('t') ?? null)).toBe('Trino Http');
@@ -97,18 +95,19 @@ describe('connections of the same connector', () => {
     it('labels named connections by their names and leaves them out of the numbering', () => {
         const named = hyper('a', { name: 'Production' });
         const registry = registryOf([named, hyper('b'), hyper('c')]);
-        const ordinals = connectionOrdinals(registry, new Set());
+        const ordinals = connectionOrdinals(registry, noReferences);
         expect([...ordinals]).toEqual([['b', 1], ['c', 2]]);
         expect(connectionLabelParts(named)).toEqual({ name: 'Production', connector: 'Hyper', named: true, detail: 'Http' });
         expect(connectionLabel(named)).toBe('Production (Hyper Http)');
-        expect(connectionOrdinals(registryOf([named, hyper('b')]), new Set()).size).toBe(0);
+        expect(connectionOrdinals(registryOf([named, hyper('b')]), noReferences).size).toBe(0);
     });
 
     it('does not number connections that are not listed', () => {
-        // The shell session is not part of the scripts registry, its connection is not listed
-        const registry = registryOf([hyper('a'), hyper('shell'), hyper('b', { active: false })], { session: ['a'], shell: ['shell'] });
-        expect(connectionOrdinals(registry, new Set(['session'])).size).toBe(0);
-        expect(listedConnections(registry, new Set(['session']), []).map(database => database.connectionId)).toEqual(['a']);
+        // Inactive connections that no session uses are not listed
+        const registry = registryOf([hyper('a', { active: false }), hyper('b', { active: false })]);
+        const references = fixedConnectionReferences({ session: ['a'] });
+        expect(connectionOrdinals(registry, references).size).toBe(0);
+        expect(listedConnections(registry, references, []).map(database => database.connectionId)).toEqual(['a']);
     });
 
     it('sizes the group headings of the connection tree', () => {

@@ -8,7 +8,7 @@ import {
     reduceConnectionState, type ConnectionState, type ConnectionAction,
 } from './connection_state.js';
 import {
-    ConnectionRegistry as RegistryProvider, useConnectionRegistry,
+    ConnectionRegistry as RegistryProvider, ConnectionReferencesProvider, useConnectionRegistry,
     useConnectionById, useConnectionDraftForm,
 } from './connection_registry.js';
 import { ConnectorType, CONNECTOR_INFOS } from './connector_info.js';
@@ -25,6 +25,7 @@ import { StorageProvider, useStorageWriter } from '../storage/storage_provider.j
 import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID } from '../storage/session_test_backend.js';
 import type { StorageWriter } from '../storage/storage_writer.js';
 import type { Logger } from '../../platform/logger/logger.js';
+import { fixedConnectionReferences } from '../../tests/mocks/connection_references.js';
 
 /// The draft of the test connection in the app manifest
 function globalDraft(backend: SessionTestBackend): ConnectionParams | undefined {
@@ -161,10 +162,9 @@ describe('durable connection drafts', () => {
         }
         const root = createRoot(document.createElement('div'));
         try {
-            await act(async () => root.render(<LoggerProvider><StorageProvider backend={backend}><RegistryProvider><Harness /></RegistryProvider></StorageProvider></LoggerProvider>));
+            await act(async () => root.render(<LoggerProvider><StorageProvider backend={backend}><ConnectionReferencesProvider value={fixedConnectionReferences({ [TEST_SESSION_ID]: [TEST_CONNECTION_ID] })}><RegistryProvider><Harness /></RegistryProvider></ConnectionReferencesProvider></StorageProvider></LoggerProvider>));
             await act(async () => setRegistry(reg => {
                 reg.connections.set(TEST_CONNECTION_ID, { ...database(ConnectorType.TRINO), active });
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
             await act(async () => edit('not a URL'));
@@ -208,10 +208,9 @@ describe('durable connection drafts', () => {
         }
         const root = createRoot(document.createElement('div'));
         try {
-            await act(async () => root.render(<LoggerProvider><StorageProvider backend={backend}><RegistryProvider><Harness /></RegistryProvider></StorageProvider></LoggerProvider>));
+            await act(async () => root.render(<LoggerProvider><StorageProvider backend={backend}><ConnectionReferencesProvider value={fixedConnectionReferences({ [TEST_SESSION_ID]: [TEST_CONNECTION_ID] })}><RegistryProvider><Harness /></RegistryProvider></ConnectionReferencesProvider></StorageProvider></LoggerProvider>));
             await act(async () => setRegistry(reg => {
                 reg.connections.set(TEST_CONNECTION_ID, database(ConnectorType.HYPER));
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
             const rows = [{ key: '', value: 'unfinished' }, { key: '', value: '' }];

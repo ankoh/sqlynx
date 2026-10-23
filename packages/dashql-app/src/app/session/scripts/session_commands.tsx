@@ -4,7 +4,7 @@ import { ConnectionHealth, printConnectionHealth } from '../../connections/conne
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
 import { getSelectedScriptRef, SELECT_NEXT_SCRIPT, SELECT_PREV_SCRIPT } from './session_scripts.js';
 import { useCatalogLoaderQueue } from '../../connections/catalog_loader.js';
-import { useConnectionRegistryStore, useConnectionState } from '../../connections/connection_registry.js';
+import { useConnectionRegistryStore, useDefaultConnection } from '../../connections/connection_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useQueryExecutor } from '../../connections/query_executor.js';
 import { useRouteContext } from '../../router/router.js';
@@ -34,7 +34,7 @@ interface Props {
 
 export interface SessionCommandsDependencies {
     useSessionScripts: typeof useSessionScripts;
-    useConnectionState: typeof useConnectionState;
+    useDefaultConnection: typeof useDefaultConnection;
     useConnectionRegistryStore: typeof useConnectionRegistryStore;
     useQueryExecutor: typeof useQueryExecutor;
     useCatalogLoaderQueue: typeof useCatalogLoaderQueue;
@@ -44,7 +44,7 @@ export interface SessionCommandsDependencies {
 }
 
 const DEFAULT_DEPENDENCIES: SessionCommandsDependencies = {
-    useSessionScripts, useConnectionState, useConnectionRegistryStore,
+    useSessionScripts, useDefaultConnection, useConnectionRegistryStore,
     useQueryExecutor, useCatalogLoaderQueue, useLogger, useAppConfig, useAppSettingsReady,
 };
 
@@ -102,7 +102,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
     const settingsReady = dependencies.useAppSettingsReady();
 
     const [sessionScripts, modifySessionScripts] = dependencies.useSessionScripts(route.sessionId ?? null);
-    const [connection, _dispatchConnection] = dependencies.useConnectionState(sessionScripts?.sessionId ?? null);
+    const [connection, _dispatchConnection] = dependencies.useDefaultConnection(sessionScripts?.sessionId ?? null);
     const connectionRegistryStore = dependencies.useConnectionRegistryStore();
     const connectionAttention = useSessionConnectionAttention(sessionScripts?.sessionId ?? null, connection?.connectionId ?? null, connection?.connectionHealth);
     const executeQuery = dependencies.useQueryExecutor();

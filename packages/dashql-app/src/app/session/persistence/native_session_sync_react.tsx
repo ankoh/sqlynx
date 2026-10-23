@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { connectionEntryFromState, connectionRefCount, registerConnection, useConnectionRegistry, type ConnectionRegistry } from '../../connections/connection_registry.js';
+import { connectionEntryFromState, registerConnection, resolveDefaultConnection, useConnectionReferences, useConnectionRegistry, type ConnectionReferences, type ConnectionRegistry } from '../../connections/connection_registry.js';
 import { catalogFileMatchesStorage, connectionCatalogMatchesStorage, replaceConnectionCatalogFromStorage } from '../../connections/connection_state.js';
 import { connectionCatalogIsDurable } from '../../connections/connection_params.js';
 import { reindexSessionScriptConnections, useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
@@ -45,9 +45,9 @@ const LOG_CTX = 'native_session_sync';
 /// The catalog files of a session are a copy of its connection's catalog. A connection that several
 /// sessions share keeps its catalog, an edited copy in one folder must not replace it for all of them.
 /// The catalog of a connection whose database doesn't outlive the app is described by its refreshes, not the files.
-function reloadableCatalogConnection(registry: ConnectionRegistry, sessionId: string): ConnectionState | null {
-    const connectionId = registry.attachedDatabasesBySession.get(sessionId)?.mainDatabaseId;
-    if (connectionId == null || connectionRefCount(registry, connectionId) > 1) return null;
+function reloadableCatalogConnection(registry: ConnectionRegistry, references: ConnectionReferences, sessionId: string): ConnectionState | null {
+    const connectionId = references.connectionsOf(sessionId)[0];
+    if (connectionId == null || references.sessionsOf(connectionId).length > 1) return null;
     const connection = registry.connections.get(connectionId) ?? null;
     return connection != null && connectionCatalogIsDurable(connection.params) ? connection : null;
 }
@@ -67,12 +67,12 @@ export interface StoredSessionScripts {
 
 export function readStoredSessionScripts(
     registry: ConnectionRegistry,
+    references: ConnectionReferences,
     sessionId: string,
     session: SessionData,
     scripts: ScriptData[],
 ): StoredSessionScripts | null {
-    const mapping = registry.attachedDatabasesBySession.get(sessionId);
-    const main = mapping == null ? undefined : registry.connections.get(mapping.mainDatabaseId);
+    const main = resolveDefaultConnection(registry, references, sessionId);
     if (main == null) return null;
     const created: ConnectionState[] = [];
     const resolved = resolveSessionScripts(session, scripts.map(script => script.name), main, (connectionId, copy) => {
@@ -188,6 +188,7 @@ export const NativeSessionSync: React.FC = () => {
     const [reader, writer] = useStorage();
     const [connectionRegistry, setConnectionRegistry] = useConnectionRegistry();
     const [sessionScriptsRegistry, setSessionScriptsRegistry] = useSessionScriptsRegistry();
+    const references = useConnectionReferences();
     const connectionRegistryRef = React.useRef(connectionRegistry);
     const sessionScriptsRegistryRef = React.useRef(sessionScriptsRegistry);
     connectionRegistryRef.current = connectionRegistry;
@@ -214,12 +215,12 @@ export const NativeSessionSync: React.FC = () => {
                 reader.backend.loadSessionFunctions(sessionId),
                 reader.backend.loadScripts(sessionId),
             ]);
-            stored = readStoredSessionScripts(connectionRegistryRef.current, sessionId, sessionFile, scripts);
+            stored = readStoredSessionScripts(connectionRegistryRef.current, references, sessionId, sessionFile, scripts);
             if (stored == null) {
                 return;
             }
             const snapshot = stored.snapshot;
-            const connection = reloadableCatalogConnection(connectionRegistryRef.current, sessionId);
+            const connection = reloadableCatalogConnection(connectionRegistryRef.current, references, sessionId);
             const currentSessionScripts = sessionScriptsRegistryRef.current.sessionScriptsMap.get(sessionId);
             const sessionUnchanged = currentSessionScripts != null && sessionScriptsMatchStorageSnapshot(currentSessionScripts, snapshot);
             const catalogUnchanged = connection == null || connectionCatalogMatchesStorage(connection, schema, functions);
@@ -283,7 +284,7 @@ export const NativeSessionSync: React.FC = () => {
                     DEBOUNCE_DURATION_SESSION_WRITE,
                 );
             }
-            const latestConnection = reloadableCatalogConnection(connectionRegistryRef.current, sessionId);
+            const latestConnection = reloadableCatalogConnection(connectionRegistryRef.current, references, sessionId);
             const latestSessionScripts = sessionScriptsRegistryRef.current.sessionScriptsMap.get(sessionId);
             const catalogChanged = latestConnection != null
                 ? replaceConnectionCatalogFromStorage(latestConnection, schema, functions)
@@ -366,11 +367,11 @@ export const NativeSessionSync: React.FC = () => {
         if (!isDesktopHost() || !serviceRef.current) {
             return;
         }
-        const sessions = [...connectionRegistry.attachedDatabasesBySession.keys()]
+        const sessions = [...sessionScriptsRegistry.sessionScriptsMap.keys()]
             .map(sessionId => nativeSessionWatchForLocation(sessionId, reader.getSessionLocation(sessionId)))
             .filter((watch): watch is NonNullable<typeof watch> => watch != null);
         void serviceRef.current.reconcile(sessions);
-    }, [connectionRegistry, reader]);
+    }, [sessionScriptsRegistry, reader]);
 
     return null;
 };

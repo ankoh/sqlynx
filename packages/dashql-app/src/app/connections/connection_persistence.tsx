@@ -11,7 +11,7 @@ import {
 import { COMMIT_CONNECTION_PARAMS, type ConnectionState } from './connection_state.js';
 import {
     connectionEntryFromState,
-    findSessionsForConnection,
+    useConnectionReferences,
     sessionConnectionFromState,
     useConnectionDispatch,
     useConnectionRegistryStore,
@@ -82,6 +82,7 @@ const IDLE_SAVE_STATE: ConnectionSaveState = { saving: false, result: null };
 export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElement }> = (props) => {
     const storageWriter = useStorageWriter();
     const registryStore = useConnectionRegistryStore();
+    const references = useConnectionReferences();
     const dispatch = useConnectionDispatch();
     const [states, setStates] = React.useState(() => new Map<string, ConnectionSaveState>());
 
@@ -118,7 +119,7 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
                 return result;
             }
             dispatch(connectionId, { type: COMMIT_CONNECTION_PARAMS, value: params });
-            const sessionIds = findSessionsForConnection(registryStore.current, connectionId);
+            const sessionIds = [...references.sessionsOf(connectionId)];
             const result: ConnectionSaveResult = { params, manifest, sessions: await writeSessionCopies(sessionCopy(connection, params), sessionIds) };
             setState(connectionId, { saving: false, result });
             return result;
@@ -127,7 +128,7 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
             setState(connectionId, { saving: false, result });
             return result;
         }
-    }, [dispatch, registryStore, setState, storageWriter, writeSessionCopies]);
+    }, [dispatch, references, registryStore, setState, storageWriter, writeSessionCopies]);
 
     const retry = React.useCallback(async (connectionId: string, sessionIds: string[]): Promise<ConnectionSaveResult | null> => {
         const last = states.get(connectionId)?.result;

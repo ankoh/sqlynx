@@ -38,7 +38,7 @@ import { UIExperimentPage } from './ui/demos/ui_demo.js';
 import { VersionCheck } from '../platform/version/version_check.js';
 import { SessionCommands } from './session/scripts/session_commands.js';
 import { SessionPage } from './session/ui/session_page.js';
-import { SessionConnectionsSync, SessionScriptsRegistryProvider } from './session/scripts/session_scripts_registry.js';
+import { SessionScriptsRegistryProvider } from './session/scripts/session_scripts_registry.js';
 import { getGlobalLogger, LoggerProvider } from '../platform/logger/logger_provider.js';
 import { stringifyError } from '../platform/logger/logger.js';
 import { EmbeddedDatabaseProvider } from '../platform/database/embedded_database_provider.js';
@@ -60,21 +60,21 @@ applyFlavorToDocument(APP_FLAVOR);
 
 // Note that the order among connection providers is important and non-obvious.
 // For example:
+// - SessionScriptsRegistryProvider comes first, the connection layer reads from it which sessions use a connection.
 // - SessionCatalogLoaderProvider requires SessionScriptsRegistryProvider to mark connection scripts as outdated.
 const SessionProviders = (props: { children: React.ReactElement }) => (
-    <ConnectionRegistry>
-        <ConnectionPersistenceProvider>
-            <SalesforceConnector>
-                <HyperSetupProvider>
-                    <TrinoConnector>
-                        <ComputationRegistry>
-                            <SessionComputeQueryExecutionProvider>
-                                <ComputationScheduler />
-                                <QueryExecutorProvider>
-                                    <SessionScriptsRegistryProvider>
+    <SessionScriptsRegistryProvider>
+        <ConnectionRegistry>
+            <ConnectionPersistenceProvider>
+                <SalesforceConnector>
+                    <HyperSetupProvider>
+                        <TrinoConnector>
+                            <ComputationRegistry>
+                                <SessionComputeQueryExecutionProvider>
+                                    <ComputationScheduler />
+                                    <QueryExecutorProvider>
                                         <SessionExecutionProvider>
                                             <NativeSessionSync />
-                                            <SessionConnectionsSync />
                                             <SessionCatalogLoaderProvider>
                                                 <SessionImportProvider>
                                                     <SessionCommands>
@@ -85,15 +85,15 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
                                                 </SessionImportProvider>
                                             </SessionCatalogLoaderProvider>
                                         </SessionExecutionProvider>
-                                    </SessionScriptsRegistryProvider>
-                                </QueryExecutorProvider>
-                            </SessionComputeQueryExecutionProvider>
-                        </ComputationRegistry>
-                    </TrinoConnector>
-                </HyperSetupProvider>
-            </SalesforceConnector>
-        </ConnectionPersistenceProvider>
-    </ConnectionRegistry>
+                                    </QueryExecutorProvider>
+                                </SessionComputeQueryExecutionProvider>
+                            </ComputationRegistry>
+                        </TrinoConnector>
+                    </HyperSetupProvider>
+                </SalesforceConnector>
+            </ConnectionPersistenceProvider>
+        </ConnectionRegistry>
+    </SessionScriptsRegistryProvider>
 );
 
 const AppProviders = (props: { children: React.ReactElement }) => (

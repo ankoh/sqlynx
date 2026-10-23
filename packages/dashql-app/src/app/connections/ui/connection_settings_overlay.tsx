@@ -7,7 +7,7 @@ import { OverlaySize } from '../../../ui/foundations/overlay.js';
 import { Button, ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
 import { SymbolIcon } from '../../../ui/foundations/symbol_icon.js';
 import { ConnectorType } from '../connector_info.js';
-import { findSessionsForConnection, useConnectionById, useConnectionRegistrySelector, useConnectionDraft } from '../connection_registry.js';
+import { useConnectionById, useConnectionDraft, useConnectionReferencesSelector } from '../connection_registry.js';
 import { failedSessionCopies, useConnectionSave, type ConnectionSaveResult } from '../connection_persistence.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
 import { ConnectionHealth, type ConnectionState } from '../connection_state.js';
@@ -129,8 +129,8 @@ interface FooterProps {
 /// The sessions that use the connection and the outcome of saving it
 function ConnectionSaveFooter(props: FooterProps): React.ReactElement | null {
     const connectionId = props.connectionId;
-    const sessionIds = useConnectionRegistrySelector(React.useCallback(
-        registry => connectionId == null ? '' : findSessionsForConnection(registry, connectionId).join(','),
+    const sessionIds = useConnectionReferencesSelector(React.useCallback(
+        references => connectionId == null ? '' : references.sessionsOf(connectionId).join(','),
         [connectionId],
     ));
     const sessionCount = sessionIds === '' ? 0 : sessionIds.split(',').length;

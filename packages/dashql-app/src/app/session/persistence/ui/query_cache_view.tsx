@@ -8,7 +8,7 @@ import { XIcon, TrashIcon, SyncIcon } from '../../../../ui/foundations/symbol_ic
 import { ButtonVariant, ButtonSize, IconButton } from '../../../../ui/foundations/button.js';
 import { CacheFileStat } from '../../../storage/query_result_cache_eviction.js';
 import { cacheFileHash, clearQueryResultCache, markDeletedQueryResults } from '../query_result_cache_clear.js';
-import { useDynamicConnectionDispatch } from '../../../connections/connection_registry.js';
+import { useConnectionReferences, useDynamicConnectionDispatch } from '../../../connections/connection_registry.js';
 import { formatBytes } from '../../../../utils/format.js';
 import { formatRelativeTime } from '../../../../utils/time_format.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';
@@ -79,6 +79,7 @@ export function QueryCacheView(props: { sessionId: string | null; onClose: () =>
     const { sessionId } = props;
     // The finished queries of the session learn about deleted results, the registry is read after the delete
     const [databaseRegistry, databaseDispatch] = useDynamicConnectionDispatch();
+    const references = useConnectionReferences();
     const databaseRegistryRef = React.useRef(databaseRegistry);
     databaseRegistryRef.current = databaseRegistry;
 
@@ -119,12 +120,12 @@ export function QueryCacheView(props: { sessionId: string | null; onClose: () =>
         try {
             const hash = cacheFileHash(name);
             await storageReader.backend.deleteQueryResultCache(sessionId, hash);
-            markDeletedQueryResults(databaseRegistryRef.current, databaseDispatch, sessionId, [hash]);
+            markDeletedQueryResults(databaseRegistryRef.current, references, databaseDispatch, sessionId, [hash]);
         } catch (e: any) {
             logger.warn('failed to delete query result cache entry', { error: String(e?.message ?? e) }, LOG_CTX);
         }
         await refresh();
-    }, [sessionId, storageReader, logger, refresh, databaseDispatch]);
+    }, [sessionId, storageReader, logger, refresh, databaseDispatch, references]);
 
     const clearAll = React.useCallback(async () => {
         if (sessionId == null) {
@@ -132,7 +133,7 @@ export function QueryCacheView(props: { sessionId: string | null; onClose: () =>
         }
         try {
             const hashes = await clearQueryResultCache(storageReader.backend, sessionId);
-            const queries = markDeletedQueryResults(databaseRegistryRef.current, databaseDispatch, sessionId, hashes);
+            const queries = markDeletedQueryResults(databaseRegistryRef.current, references, databaseDispatch, sessionId, hashes);
             logger.info('cleared the query result cache', {
                 sessionId,
                 entries: String(hashes.length),
@@ -142,7 +143,7 @@ export function QueryCacheView(props: { sessionId: string | null; onClose: () =>
             logger.warn('failed to clear the query result cache', { error: String(e?.message ?? e) }, LOG_CTX);
         }
         await refresh();
-    }, [sessionId, storageReader, logger, refresh, databaseDispatch]);
+    }, [sessionId, storageReader, logger, refresh, databaseDispatch, references]);
 
     // Aggregate totals for the header summary.
     const totalBytes = React.useMemo(() => entries.reduce((sum, e) => sum + e.size, 0), [entries]);

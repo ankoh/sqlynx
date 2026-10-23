@@ -3,7 +3,7 @@ import type { Logger } from '../../../platform/logger/logger.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
 import { ProgressCounter } from '../../../utils/progress.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
-import { registerConnection, sessionConnectionFromState, type ConnectionRegistry, type SessionAttachedDatabases } from '../../connections/connection_registry.js';
+import { registerConnection, sessionConnectionFromState, type ConnectionRegistry } from '../../connections/connection_registry.js';
 import type { SessionScripts, ScriptData } from '../scripts/session_scripts.js';
 import { addSessionScriptsForConnection, type SessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { createEmptyScriptData, destroySessionScripts, replaceScriptSessionText, scriptConnectionOf, sessionConnectionIds } from '../scripts/session_scripts.js';
@@ -24,7 +24,6 @@ const LOG_CTX = "app_state_loader";
 
 export interface RestoredAppState {
     connectionStates: Map<string, ConnectionState>;
-    attachedDatabasesBySession: Map<string, SessionAttachedDatabases>;
     connectionStatesByType: string[][];
     sessionScripts: Map<string, SessionScripts>;
     sessionScriptsByConnection: Map<string, string[]>;
@@ -326,7 +325,6 @@ function resolveSessionConnection(ctx: RestoreContext, sessionId: string, databa
 async function restoreSessionEntry(
     ctx: RestoreContext,
     sessionEntry: SessionEntry,
-    attachedDatabasesBySession: Map<string, SessionAttachedDatabases>,
     sessionScripts: Map<string, SessionScripts>,
     sessionScriptsByConnection: Map<string, string[]>,
     restoreConnections: ProgressCounter,
@@ -364,10 +362,6 @@ async function restoreSessionEntry(
     // The other connections of the session are the connections of its scripts, they are resolved with the scripts.
     const connectionState = resolveSessionConnection(ctx, sessionId, defaultSessionConnection(sessionData));
     const connectorInfo = connectionState.connectorInfo;
-    attachedDatabasesBySession.set(sessionId, {
-        mainDatabaseId: connectionState.connectionId,
-        attachedDatabaseIds: [],
-    });
     const resolveScriptConnection: SessionConnectionResolver = (connectionId, copy) => copy != null
         ? resolveSessionConnection(ctx, sessionId, copy)
         : ctx.connectionStates.get(ctx.aliases.get(connectionId) ?? connectionId) ?? null;
@@ -459,10 +453,6 @@ async function restoreSessionEntry(
             logger
         );
         restoredSessionScripts = restored.sessionScripts;
-        attachedDatabasesBySession.set(sessionId, {
-            mainDatabaseId: connectionState.connectionId,
-            attachedDatabaseIds: sessionConnectionIds(restoredSessionScripts).filter(id => id !== connectionState.connectionId),
-        });
         if (sessionScriptsResolutionChanged(sessionData, restored.session)) {
             const { defaultConnectionId, scripts, connections } = restored.session;
             ctx.pendingWrites.sessionScriptLists.push({ sessionId, defaultConnectionId, scripts, connections });
@@ -610,8 +600,6 @@ export interface RestoredSession {
     sessionId: string;
     /// The connections the session registered, connections that were already live are not included
     databases: ConnectionState[];
-    /// The connections the session references
-    mapping: SessionAttachedDatabases;
     /// The session scripts
     sessionScripts: SessionScripts;
 }
@@ -625,7 +613,6 @@ export function mergeRestoredSessionIntoConnections(
             registerConnection(reg, database);
         }
     }
-    reg.attachedDatabasesBySession.set(restored.sessionId, restored.mapping);
     return { ...reg };
 }
 
@@ -702,7 +689,6 @@ export async function restoreSingleSession(
             ctx.aliasesOf.set(entry.id, entry.aliases ?? []);
         }
     }
-    const attachedDatabasesBySession = new Map<string, SessionAttachedDatabases>();
     const sessionScripts = new Map<string, SessionScripts>();
     const sessionScriptsByConnection = new Map<string, string[]>();
 
@@ -711,7 +697,6 @@ export async function restoreSingleSession(
         await restoreSessionEntry(
             ctx,
             sessionEntry,
-            attachedDatabasesBySession,
             sessionScripts,
             sessionScriptsByConnection,
             new ProgressCounter(),
@@ -724,9 +709,8 @@ export async function restoreSingleSession(
         throw error;
     }
 
-    const mapping = attachedDatabasesBySession.get(sessionId);
     const scripts = sessionScripts.get(sessionId) ?? null;
-    if (mapping == null || !scripts) {
+    if (!scripts) {
         for (const database of ctx.newConnections.values()) destroyUnregisteredConnection(database);
         throw new Error(`imported session ${sessionId} did not restore its scripts`);
     }
@@ -734,7 +718,6 @@ export async function restoreSingleSession(
     return {
         sessionId,
         databases: [...ctx.newConnections.values()],
-        mapping,
         sessionScripts: scripts,
     };
 }
@@ -753,7 +736,6 @@ export async function restoreAppState(
     const startTime = performance.now();
 
     const ctx = createRestoreContext(core, backend, logger, processor);
-    const attachedDatabasesBySession = new Map<string, SessionAttachedDatabases>();
     const sessionScripts = new Map<string, SessionScripts>();
     const sessionScriptsByConnection = new Map<string, string[]>();
     const invalidSessions = new Map<string, InvalidSession>();
@@ -812,7 +794,6 @@ export async function restoreAppState(
                 await restoreSessionEntry(
                     ctx,
                     sessionEntry,
-                    attachedDatabasesBySession,
                     sessionScripts,
                     sessionScriptsByConnection,
                     restoreConnections,
@@ -892,7 +873,6 @@ export async function restoreAppState(
 
     return {
         connectionStates: ctx.connectionStates,
-        attachedDatabasesBySession,
         connectionStatesByType: ctx.connectionStatesByType,
         sessionScripts,
         sessionScriptsByConnection,

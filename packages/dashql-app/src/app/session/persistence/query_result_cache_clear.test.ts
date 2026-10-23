@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { cacheFileHash, clearQueryResultCache, markDeletedQueryResults } from './query_result_cache_clear.js';
+import { fixedConnectionReferences } from '../../../tests/mocks/connection_references.js';
 import { QUERY_CACHE_DELETED } from '../../../query/query_execution_state.js';
 
 describe('Query result cache clearing', () => {
@@ -30,10 +31,9 @@ describe('Query result cache clearing', () => {
                 ['attached', database('attached', [[5, 'b', false]])],
                 ['unrelated', database('unrelated', [[6, 'a', false]])],
             ]),
-            attachedDatabasesBySession: new Map([['session', { mainDatabaseId: 'main', attachedDatabaseIds: ['attached'] }]]),
         };
         const dispatch = vi.fn();
-        expect(markDeletedQueryResults(registry as any, dispatch, 'session', ['a', 'b'])).toBe(2);
+        expect(markDeletedQueryResults(registry as any, fixedConnectionReferences({ session: ['main', 'attached'] }), dispatch, 'session', ['a', 'b'])).toBe(2);
         expect(dispatch.mock.calls).toEqual([
             ['main', { type: QUERY_CACHE_DELETED, value: [1] }],
             ['attached', { type: QUERY_CACHE_DELETED, value: [5] }],

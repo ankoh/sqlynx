@@ -26,7 +26,7 @@ describe('global session execution feedback', () => {
     };
     const dependencies = {
         useSessionScripts: () => [sessionScripts, vi.fn()],
-        useConnectionState: (sessionId: string) => { resolveMain(sessionId); return [connection, vi.fn()]; },
+        useDefaultConnection: (sessionId: string) => { resolveMain(sessionId); return [connection, vi.fn()]; },
         useConnectionRegistryStore: () => ({ get current() { return { connections: new Map(connection == null ? [] : [['main', connection]]) }; } }),
         useQueryExecutor: () => execute,
         useCatalogLoaderQueue: () => vi.fn(),

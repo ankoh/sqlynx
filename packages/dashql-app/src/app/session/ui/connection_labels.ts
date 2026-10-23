@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { ConnectionState } from '../../connections/connection_state.js';
-import { useConnectionRegistryStore } from '../../connections/connection_registry.js';
+import { useConnectionReferences, useConnectionRegistryStore } from '../../connections/connection_registry.js';
 import { connectionLabelParts, connectionOrdinals, type ConnectionLabelParts } from '../../connections/ui/connection_label.js';
 import { useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 
@@ -10,14 +10,15 @@ const subscribeNever = () => () => {};
 /// The ordinals that tell unnamed connections of the same connector apart, see `connectionOrdinals`.
 /// The map keeps its identity while the ordinals are unchanged.
 export function useConnectionOrdinals(): ReadonlyMap<string, number> {
+    // Re-number when the sessions use other connections
     const [scripts] = useSessionScriptsRegistry();
-    const sessionIds = React.useMemo(() => new Set(scripts?.sessionScriptsMap.keys() ?? []), [scripts]);
+    const references = useConnectionReferences();
     // The registry changes with every query, the selector returns a string to compare by value
     const selectKey = React.useCallback(
-        (registry: Parameters<typeof connectionOrdinals>[0]) => [...connectionOrdinals(registry, sessionIds)]
+        (registry: Parameters<typeof connectionOrdinals>[0]) => [...connectionOrdinals(registry, references)]
             .map(([connectionId, ordinal]) => `${connectionId}=${ordinal}`)
             .join(','),
-        [sessionIds],
+        [references, scripts],
     );
     // Views outside of a connection registry (e.g. in tests) number no connections
     const store = useConnectionRegistryStore();

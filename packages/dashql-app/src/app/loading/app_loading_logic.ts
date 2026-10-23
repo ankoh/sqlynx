@@ -75,13 +75,12 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
         durationMs: restoreDuration.toFixed(2)
     }, "app_loading");
 
-    // Reset the attached database registry
-    traced.info("Updating attached database registry", {
+    // Reset the connection registry
+    traced.info("Updating connection registry", {
         connectionCount: state.connectionStates.size.toString()
     }, "app_loading");
     resetConnections({
         connections: state.connectionStates,
-        attachedDatabasesBySession: state.attachedDatabasesBySession,
         connectionsByType: state.connectionStatesByType,
     });
 

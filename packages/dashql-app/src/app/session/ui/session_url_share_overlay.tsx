@@ -13,7 +13,7 @@ import { classNames } from '../../../utils/classnames.js';
 import { exportSessionAsUrl, SessionLinkTarget } from '../persistence/session_export.js';
 import { connectionParamsHaveLoginHint, getConnectionParamsFromStateDetails } from '../../connections/connection_params.js';
 import { sleep } from '../../../utils/sleep.js';
-import { resolveSessionAttachedDatabases, useConnectionState, useConnectionRegistry } from '../../connections/connection_registry.js';
+import { resolveSessionConnections, useConnectionReferences, useDefaultConnection, useConnectionRegistry } from '../../connections/connection_registry.js';
 import { useRouteContext } from '../../router/router.js';
 import { useSessionScripts } from '../scripts/session_scripts_registry.js';
 import { useStorageReader } from '../../storage/storage_provider.js';
@@ -42,8 +42,9 @@ export const SessionURLShareOverlay: React.FC<Props> = (props: Props) => {
     const buttonRef = React.createRef<HTMLButtonElement>();
 
     const [sessionScripts] = useSessionScripts(props.sessionId ?? route.sessionId ?? null);
-    const [connection, _modifyConnection] = useConnectionState(sessionScripts?.sessionId ?? null);
+    const [connection, _modifyConnection] = useDefaultConnection(sessionScripts?.sessionId ?? null);
     const [databaseRegistry] = useConnectionRegistry();
+    const references = useConnectionReferences();
     const storage = useStorageReader();
     const [state, setState] = React.useState<State>(() => ({
         publicURLText: null,
@@ -69,7 +70,7 @@ export const SessionURLShareOverlay: React.FC<Props> = (props: Props) => {
         async function generateURL() {
             let setupUrl: URL | null = null;
             if (sessionScripts != null && connection != null) {
-                const attached = resolveSessionAttachedDatabases(databaseRegistry, sessionScripts.sessionId);
+                const attached = resolveSessionConnections(databaseRegistry, references, sessionScripts.sessionId);
                 if (attached != null) {
                     const params = new Map();
                     for (const database of [attached.main, ...attached.attached]) {
@@ -104,7 +105,7 @@ export const SessionURLShareOverlay: React.FC<Props> = (props: Props) => {
         return () => {
             cancelled = true;
         };
-    }, [databaseRegistry, settings, sessionScripts, connection, props.isOpen]);
+    }, [databaseRegistry, references, settings, sessionScripts, connection, props.isOpen]);
 
     // Copy the url to the clipboard
     const copyURL = React.useCallback(

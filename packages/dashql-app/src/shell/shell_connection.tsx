@@ -8,7 +8,6 @@ import { useConnectionRegistrySetter } from '../app/connections/connection_regis
 import { ShellQueryExecutionTracker } from './query_execution.js';
 
 export const SHELL_DATABASE_ID = 'shell';
-export const SHELL_SESSION_ID = 'shell';
 
 interface ShellConnectionContextValue {
     queryExecutions: ShellQueryExecutionTracker;
@@ -41,10 +40,6 @@ export const ShellConnectionProvider: React.FC<{ children: React.ReactElement }>
         stateRef.current = state;
         setRegistry(registry => {
             registry.connections.set(SHELL_DATABASE_ID, state);
-            registry.attachedDatabasesBySession.set(SHELL_SESSION_ID, {
-                mainDatabaseId: SHELL_DATABASE_ID,
-                attachedDatabaseIds: [],
-            });
             if (!registry.connectionsByType[ConnectorType.HYPER].includes(SHELL_DATABASE_ID)) {
                 registry.connectionsByType[ConnectorType.HYPER].push(SHELL_DATABASE_ID);
             }
@@ -72,7 +67,6 @@ export const ShellConnectionProvider: React.FC<{ children: React.ReactElement }>
         return () => {
             setRegistry(registry => {
                 registry.connections.delete(SHELL_DATABASE_ID);
-                registry.attachedDatabasesBySession.delete(SHELL_SESSION_ID);
                 registry.connectionsByType[ConnectorType.HYPER] = registry.connectionsByType[ConnectorType.HYPER]
                     .filter(connectionId => connectionId !== SHELL_DATABASE_ID);
                 return { ...registry };

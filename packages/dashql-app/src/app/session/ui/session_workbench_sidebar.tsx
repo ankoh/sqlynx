@@ -49,18 +49,16 @@ import {
     DELETE_CONNECTION,
 } from '../../connections/connection_state.js';
 import {
-    connectionRefCount,
-    detachSession,
     findSessionQueries,
     isListedConnection,
-    resolveSessionAttachedDatabases,
-    useAttachConnection,
+    useConnectionReferences,
     useConnectionRegistry,
     useConnectionAllocator,
-    useSessionAttachedDatabases,
-    useAttachedDatabaseStateAllocator,
+    useSessionConnections,
     useDynamicConnectionDispatch,
+    type ConnectionReferences,
     type ConnectionRegistry,
+    type ResolvedSessionConnections,
     sessionConnectionFromState,
 } from '../../connections/connection_registry.js';
 import {
@@ -188,9 +186,8 @@ export interface SessionWorkbenchSidebarDependencies {
     useDynamicConnectionDispatch: typeof useDynamicConnectionDispatch;
     useSessionScriptsRegistry: typeof useSessionScriptsRegistry;
     useConnectionRegistry: typeof useConnectionRegistry;
-    useAttachedDatabaseStateAllocator: typeof useAttachedDatabaseStateAllocator;
+    useConnectionReferences: typeof useConnectionReferences;
     useConnectionAllocator: typeof useConnectionAllocator;
-    useAttachConnection: typeof useAttachConnection;
     useSessionScriptsSetup: typeof useSessionScriptsSetup;
     useSessionScriptsDeletion: typeof useSessionScriptsDeletion;
     useComputationDispatch: typeof useComputationDispatch;
@@ -201,7 +198,7 @@ export interface SessionWorkbenchSidebarDependencies {
     usePlatformType: typeof usePlatformType;
     useLogger: typeof useLogger;
     useInvalidSessionRegistry: typeof useInvalidSessionRegistry;
-    useSessionAttachedDatabases: typeof useSessionAttachedDatabases;
+    useSessionConnections: typeof useSessionConnections;
     createDefaultHyperWasmConnectionState: typeof createDefaultHyperWasmConnectionState;
     createConnectionStateFromParams: typeof createConnectionStateFromParams;
     BundledSessionsOverlay: typeof BundledSessionsOverlay;
@@ -217,9 +214,8 @@ const DEFAULT_SESSION_WORKBENCH_SIDEBAR_DEPENDENCIES: SessionWorkbenchSidebarDep
     useDynamicConnectionDispatch,
     useSessionScriptsRegistry,
     useConnectionRegistry,
-    useAttachedDatabaseStateAllocator,
+    useConnectionReferences,
     useConnectionAllocator,
-    useAttachConnection,
     useSessionScriptsSetup,
     useSessionScriptsDeletion,
     useComputationDispatch,
@@ -230,7 +226,7 @@ const DEFAULT_SESSION_WORKBENCH_SIDEBAR_DEPENDENCIES: SessionWorkbenchSidebarDep
     usePlatformType,
     useLogger,
     useInvalidSessionRegistry,
-    useSessionAttachedDatabases,
+    useSessionConnections,
     createDefaultHyperWasmConnectionState,
     createConnectionStateFromParams,
     BundledSessionsOverlay,
@@ -642,23 +638,22 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
     );
 };
 
-export function connectionDisplayOrder(attached: NonNullable<ReturnType<typeof resolveSessionAttachedDatabases>>): ConnectionState[] {
+export function connectionDisplayOrder(attached: ResolvedSessionConnections): ConnectionState[] {
     return [attached.main, ...attached.attached];
 }
 
 /// The connections shown next to the sessions.
 /// The connections of the current session come first, followed by the connections of other
-/// sessions and connections that no session uses. Connections of internal hosts (e.g. the shell),
-/// which are referenced by no session of the scripts registry, are not shown.
+/// sessions and active connections that no session uses.
 export function listedConnections(
-    registry: Pick<ConnectionRegistry, 'connections' | 'attachedDatabasesBySession'>,
-    sessionIds: ReadonlySet<string>,
+    registry: Pick<ConnectionRegistry, 'connections'>,
+    references: ConnectionReferences,
     currentSessionConnections: readonly ConnectionState[],
 ): ConnectionState[] {
     const listed = [...currentSessionConnections];
     const seen = new Set(listed.map(database => database.connectionId));
     for (const [connectionId, database] of registry.connections) {
-        if (!seen.has(connectionId) && isListedConnection(registry, sessionIds, connectionId)) {
+        if (!seen.has(connectionId) && isListedConnection(registry, references, connectionId)) {
             listed.push(database);
         }
     }
@@ -1059,9 +1054,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const [databaseRegistry, databaseDispatch] = dependencies.useDynamicConnectionDispatch();
     const [scriptsRegistry, setScriptsRegistry] = dependencies.useSessionScriptsRegistry();
     const [, setDatabaseRegistry] = dependencies.useConnectionRegistry();
-    const allocateDatabase = dependencies.useAttachedDatabaseStateAllocator();
+    const references = dependencies.useConnectionReferences();
     const allocateConnection = dependencies.useConnectionAllocator();
-    const attachConnection = dependencies.useAttachConnection();
     const setupSessionScripts = dependencies.useSessionScriptsSetup();
     const deleteSessionScripts = dependencies.useSessionScriptsDeletion();
     const computationDispatch = dependencies.useComputationDispatch();
@@ -1072,7 +1066,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const platform = dependencies.usePlatformType();
     const logger = dependencies.useLogger();
     const { invalidSessions, deleteInvalidSession } = dependencies.useInvalidSessionRegistry();
-    const attached = dependencies.useSessionAttachedDatabases(props.sessionScripts.sessionId);
+    const attached = dependencies.useSessionConnections(props.sessionScripts.sessionId);
     const sessionConnectionRows = React.useMemo(
         () => attached == null ? [] : connectionDisplayOrder(attached),
         [attached?.main, attached?.attached],
@@ -1096,27 +1090,25 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     React.useEffect(() => {
         if (route.sessionSetupStatus !== SessionSetupStatus.CONFIGURING
             || route.sessionId !== props.sessionScripts.sessionId) return;
-        const mapping = databaseRegistry.attachedDatabasesBySession.get(route.sessionId);
-        const connectionId = mapping?.mainDatabaseId ?? null;
+        const connectionId = references.connectionsOf(route.sessionId)[0] ?? null;
         if (connectionId != null) {
             connectionSettingsAnchorRef.current = document.querySelector('[aria-label="Create session"]');
             setConnectionOverlayDatabaseId(connectionId);
         }
-    }, [databaseRegistry.attachedDatabasesBySession, props.sessionScripts.sessionId, route.sessionId, route.sessionSetupStatus]);
+    }, [references, scriptsRegistry, props.sessionScripts.sessionId, route.sessionId, route.sessionSetupStatus]);
 
     const sessions = React.useMemo<SessionItem[]>(() => {
         const rank = new Map(sessionOrder.map((sessionId, index) => [sessionId, index]));
         const items: SessionItem[] = [];
         for (const [sessionId, scripts] of scriptsRegistry.sessionScriptsMap) {
-            const mapping = databaseRegistry.attachedDatabasesBySession.get(sessionId);
-            const connectionId = mapping?.mainDatabaseId;
-            const database = connectionId == null ? null : databaseRegistry.connections.get(connectionId);
+            const [defaultConnectionId, ...otherConnectionIds] = references.connectionsOf(sessionId);
+            const database = defaultConnectionId == null ? null : databaseRegistry.connections.get(defaultConnectionId);
             if (database == null) continue;
+            const attachedDatabases = otherConnectionIds
+                .map(id => databaseRegistry.connections.get(id))
+                .filter((connection): connection is ConnectionState => connection != null);
             const location = storageReader.getSessionLocation(sessionId);
             const path = displayPath(sessionId, location);
-            const attachedDatabases = mapping!.attachedDatabaseIds
-                .map(id => databaseRegistry.connections.get(id))
-                .filter((attachedDatabase): attachedDatabase is ConnectionState => attachedDatabase != null);
             items.push({
                 sessionId,
                 database,
@@ -1132,7 +1124,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
             const rightRank = rank.get(right.sessionId) ?? Number.MAX_SAFE_INTEGER;
             return leftRank - rightRank;
         });
-    }, [databaseRegistry, scriptsRegistry, storageReader, sessionOrder]);
+    }, [databaseRegistry, references, scriptsRegistry, storageReader, sessionOrder]);
 
     React.useEffect(() => {
         const ids = sessionIds;
@@ -1154,18 +1146,18 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         };
     }), [invalidSessions, storageReader]);
     const sessionCount = sessions.length + invalidItems.length;
-    const listedSessionIds = React.useMemo(() => new Set(scriptsRegistry.sessionScriptsMap.keys()), [scriptsRegistry]);
+    // The references follow the scripts registry
     const connectionRows = React.useMemo(
-        () => listedConnections(databaseRegistry, listedSessionIds, sessionConnectionRows),
-        [databaseRegistry, listedSessionIds, sessionConnectionRows],
+        () => listedConnections(databaseRegistry, references, sessionConnectionRows),
+        [databaseRegistry, references, scriptsRegistry, sessionConnectionRows],
     );
     const sessionConnectionIds = React.useMemo(
         () => new Set(sessionConnectionRows.map(database => database.connectionId)),
         [sessionConnectionRows],
     );
     const ordinals = React.useMemo(
-        () => connectionOrdinals(databaseRegistry, listedSessionIds),
-        [databaseRegistry, listedSessionIds],
+        () => connectionOrdinals(databaseRegistry, references),
+        [databaseRegistry, references, scriptsRegistry],
     );
     const labelOf = React.useCallback(
         (database: ConnectionState) => connectionLabelParts(database, ordinals.get(database.connectionId) ?? null),
@@ -1173,9 +1165,9 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     );
     const connectionCount = connectionRows.length;
     const describeUsage = React.useCallback((connectionId: string): ConnectionUsage => ({
-        sessionCount: connectionRefCount(databaseRegistry, connectionId),
+        sessionCount: references.sessionsOf(connectionId).length,
         usedHere: sessionConnectionRows.some(database => database.connectionId === connectionId),
-    }), [sessionConnectionRows, databaseRegistry]);
+    }), [sessionConnectionRows, references, scriptsRegistry]);
     const initiallyExpanded = React.useCallback((database: ConnectionState, _count: number) => (
         sessionConnectionRows.includes(database)
         && isConnectionInitiallyExpanded(database, sessionConnectionRows.length)
@@ -1208,7 +1200,6 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const createSessionWithConnection = React.useCallback((database: ConnectionState) => {
         setCreateOpen(false);
         const sessionId = crypto.randomUUID();
-        attachConnection(sessionId, database.connectionId);
         setupSessionScripts(sessionId, database);
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
@@ -1216,7 +1207,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
-    }, [attachConnection, navigate, props.closeAfterSelection, setupSessionScripts, storageWriter]);
+    }, [navigate, props.closeAfterSelection, setupSessionScripts, storageWriter]);
 
     /// Create a connection that no session uses yet and open its settings
     const createConnection = React.useCallback((connector: ConnectorType) => {
@@ -1231,10 +1222,10 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     /// Delete a connection that no session uses
     const deleteConnection = React.useCallback((connectionId: string) => {
         const database = databaseRegistry.connections.get(connectionId);
-        if (database == null || connectionRefCount(databaseRegistry, connectionId) > 0) return;
+        if (database == null || references.sessionsOf(connectionId).length > 0) return;
         if (!window.confirm(`Delete the connection "${connectionLabelText(labelOf(database))}"?`)) return;
         databaseDispatch(connectionId, { type: DELETE_CONNECTION, value: null });
-    }, [databaseDispatch, databaseRegistry, labelOf]);
+    }, [databaseDispatch, databaseRegistry, labelOf, references]);
 
     const createSession = React.useCallback((connector: ConnectorType) => {
         setCreateOpen(false);
@@ -1244,7 +1235,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
             ? dependencies.createDefaultHyperWasmConnectionState(props.sessionScripts.instance)
             : dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params);
         // The session is committed now; settings must not switch its initialized script dialect.
-        const database = allocateDatabase(sessionId, { ...initialDatabase, active: true });
+        const database = allocateConnection({ ...initialDatabase, active: true });
         setupSessionScripts(sessionId, database);
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
@@ -1252,7 +1243,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
-    }, [allocateDatabase, dependencies, navigate, props.closeAfterSelection, props.sessionScripts.instance, setupSessionScripts, storageWriter]);
+    }, [allocateConnection, dependencies, navigate, props.closeAfterSelection, props.sessionScripts.instance, setupSessionScripts, storageWriter]);
 
     const closeConnectionOverlay = React.useCallback(() => {
         setConnectionOverlayDatabaseId(null);
@@ -1334,25 +1325,17 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         deleteSessionScripts(item.sessionId);
         // Connections outlive the sessions that reference them, only the session's own
         // computations are dropped.
-        const mapping = databaseRegistry.attachedDatabasesBySession.get(item.sessionId);
-        for (const connectionId of mapping == null ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds]) {
-            const database = databaseRegistry.connections.get(connectionId);
-            if (database == null) continue;
+        for (const database of item.connections) {
             for (const queryId of findSessionQueries(database, item.sessionId)) {
                 computationDispatch({ type: DELETE_COMPUTATION, value: [queryId] });
             }
         }
-        setDatabaseRegistry(registry => {
-            if (!registry.attachedDatabasesBySession.has(item.sessionId)) return registry;
-            detachSession(registry, item.sessionId);
-            return { ...registry };
-        });
 
         if (item.sessionId === props.sessionScripts.sessionId) {
             const next = sessions.find(session => session.sessionId !== item.sessionId);
             if (next != null) navigate({ type: OPEN_SESSION, value: next.sessionId });
         }
-    }, [computationDispatch, databaseRegistry, deleteSessionScripts, navigate, sessions, props.sessionScripts.sessionId, setDatabaseRegistry, storageWriter.backend]);
+    }, [computationDispatch, deleteSessionScripts, navigate, sessions, props.sessionScripts.sessionId, storageWriter.backend]);
 
     const openSession = React.useCallback((item: SessionItem) => {
         navigate({ type: SELECT_SESSION, value: item.sessionId });

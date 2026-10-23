@@ -7,7 +7,6 @@ import { ConnectionRegistry, useConnectionRegistry } from '../app/connections/co
 import { EXECUTE_QUERY, QUERY_SUCCEEDED, QueryExecutionStatus, QueryType, createQueryExecutionState } from '../query/query_execution_state.js';
 import {
     SHELL_DATABASE_ID,
-    SHELL_SESSION_ID,
     ShellConnectionProvider,
     useShellConnection,
 } from './shell_connection.js';
@@ -44,10 +43,6 @@ describe('ShellConnectionProvider', () => {
             </ConnectionRegistry>
         ));
 
-        expect(registry!.attachedDatabasesBySession.get(SHELL_SESSION_ID)).toEqual({
-            mainDatabaseId: SHELL_DATABASE_ID,
-            attachedDatabaseIds: [],
-        });
         expect(registry!.connections.get(SHELL_DATABASE_ID)?.connectionHealth).toBe(ConnectionHealth.NOT_STARTED);
 
         const query = createQueryExecutionState(
