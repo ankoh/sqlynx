@@ -75,10 +75,9 @@ export interface SessionReplacement {
     sessionId: string;
     /// The session name, null keeps the name on disk
     name: string | null;
-    /// The scripts in feed order, their text is read when the write runs
-    scripts: Array<{ fileName: string; connectionId: string; readText: () => string }>;
-    /// Copies of the connections of the scripts that the session file may not hold yet
-    connections: SessionConnection[];
+    /// The script files, their text is read when the write runs. The script list of the session file
+    /// is written by `WRITE_SESSION_SCRIPTS` alone, it is the only writer of the list.
+    scripts: Array<{ fileName: string; readText: () => string }>;
     /// The default connection of a session that is not stored yet
     defaultConnection: SessionConnection;
     /// The file name the session was created from, if any
@@ -775,8 +774,10 @@ export class StorageWriter {
                 let existingName: string | undefined;
                 let existingMetadata: StorageSessionMetadata | undefined;
                 let existingAttachments: SessionData['attachments'] = [];
+                let existingScripts: SessionData['scripts'] = [];
                 try {
                     const existingSession = await this.backend.loadSession(sessionId);
+                    existingScripts = existingSession.scripts ?? [];
                     defaultConnectionId = existingSession.defaultConnectionId;
                     connections = existingSession.connections;
                     createdAt = existingSession.metadata?.createdAt ?? new Date().toISOString();
@@ -805,7 +806,7 @@ export class StorageWriter {
                     attachments: existingAttachments,
                     metadata: sessionMetadata,
                     settings: session.settings,
-                }, session.scripts.map(script => ({ name: script.fileName, connectionId: script.connectionId })), session.connections);
+                }, existingScripts);
 
                 const sessionTimeBefore = new Date();
                 await this.backend.saveSessionManifest(sessionId, connData);

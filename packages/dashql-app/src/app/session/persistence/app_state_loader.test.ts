@@ -110,15 +110,14 @@ describe('V2 app state loader', () => {
         const scripts = result.sessionScripts.get(TEST_SESSION_ID)!;
         expect(scripts.scriptOrder).toEqual(['10_last.sql', '2_first.sql']);
         expect(scripts.scripts[scripts.scriptRefs['10_last.sql'].scriptId].connection.connectionId).toBe(remoteId);
-        // An unknown database falls back to the main database
-        expect(scripts.scripts[scripts.scriptRefs['2_first.sql'].scriptId].connection.connectionId).toBe(TEST_CONNECTION_ID);
+        // An unknown connection runs on the default connection, the session file keeps the reference
+        const first = scripts.scripts[scripts.scriptRefs['2_first.sql'].scriptId];
+        expect(first.connection.connectionId).toBe(TEST_CONNECTION_ID);
+        expect(first.unresolvedConnectionId).toBe('99999999-9999-4999-8999-999999999999');
         expect(result.sessionScriptsByConnection.get(remoteId)).toEqual([TEST_SESSION_ID]);
         expect(result.sessionScriptsByConnection.get(TEST_CONNECTION_ID)).toEqual([TEST_SESSION_ID]);
-        expect(backend.saveSessionManifest).toHaveBeenCalledWith(TEST_SESSION_ID, expect.objectContaining({
-            scripts: [
-                { name: '10_last.sql', connectionId: remoteId },
-                { name: '2_first.sql', connectionId: TEST_CONNECTION_ID },
-            ],
+        expect(backend.saveSessionManifest).not.toHaveBeenCalledWith(TEST_SESSION_ID, expect.objectContaining({
+            scripts: expect.arrayContaining([{ name: '2_first.sql', connectionId: TEST_CONNECTION_ID }]),
         }));
     });
 

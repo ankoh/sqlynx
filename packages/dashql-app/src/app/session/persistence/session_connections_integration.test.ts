@@ -13,7 +13,7 @@ import { StorageBackendType } from '../../storage/storage_backend.js';
 import { StorageWriter } from '../../storage/storage_writer.js';
 import { makeFsMock, resetFsStore } from '../../storage/test_fs_mock.js';
 import { SESSION_FORMAT_VERSION } from '../../../migration/versions.js';
-import { ANALYZE_OUTDATED_SCRIPT, analyzeScriptData, reduceSessionScripts, scriptConnectionOf, sessionConnectionIds, SET_SCRIPT_CONNECTION, type SessionScripts } from '../scripts/session_scripts.js';
+import { ANALYZE_OUTDATED_SCRIPT, analyzeScriptData, reduceSessionScripts, REORDER_SCRIPTS, scriptConnectionOf, sessionConnectionIds, SET_SCRIPT_CONNECTION, type SessionScripts } from '../scripts/session_scripts.js';
 import { restoreAppState, type RestoredAppState } from './app_state_loader.js';
 import { applyConnectionImportPlan, planConnectionImport, type ConnectionImportChoice } from './session_connection_import.js';
 import { exportSessionAsSharedZip } from './session_export.js';
@@ -249,6 +249,34 @@ describe('Session connections', () => {
                 { connectionId: TRINO_ID, params: TRINO_PARAMS },
             ]);
             expect(stored.scripts).toEqual([{ name: 'query.sql', connectionId: TRINO_ID }]);
+        });
+
+        it('keeps the reference to a connection that the app can not resolve', async () => {
+            const backend = new SessionTestBackend();
+            const unknownId = 'dddddddd-eeee-4fff-8aaa-bbbbbbbbbbbb';
+            // A hand-edited session file names a connection without a copy
+            await seedSession(backend, [['query.sql', unknownId, 'select 1'], ['other.sql', HYPER_ID, 'select 2']], [HYPER_ID]);
+            const restored = await restore(backend);
+            let session = sessionOf(restored);
+            const query = scriptOf(session, 'query.sql');
+            expect(query.connection.connectionId).toBe(HYPER_ID);
+            expect(query.unresolvedConnectionId).toBe(unknownId);
+            expect(backend.sessions.get(SESSION_ID)!.scripts[0]).toEqual({ name: 'query.sql', connectionId: unknownId });
+
+            // Other changes of the script list keep the reference
+            const writer = new StorageWriter(logger, backend);
+            session = reduceSessionScripts(session, { type: REORDER_SCRIPTS, value: ['other.sql', 'query.sql'] }, writer, logger, true);
+            await writer.flush();
+            expect(backend.sessions.get(SESSION_ID)!.scripts).toEqual([
+                { name: 'other.sql', connectionId: HYPER_ID },
+                { name: 'query.sql', connectionId: unknownId },
+            ]);
+            expect(backend.sessions.get(SESSION_ID)!.connections.map(connection => connection.connectionId)).toEqual([HYPER_ID]);
+
+            // Picking a connection replaces it
+            pickConnection(session, restored, writer, 'query.sql', TRINO_ID);
+            await writer.flush();
+            expect(backend.sessions.get(SESSION_ID)!.scripts[1]).toEqual({ name: 'query.sql', connectionId: TRINO_ID });
         });
 
         it('releases a connection after its last script moved away', async () => {

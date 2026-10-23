@@ -8,6 +8,8 @@ export interface ResolvedSessionScript {
     name: string;
     /// The connection of the app the script runs on
     connection: ConnectionState;
+    /// The connection that the session file names for the script if the app doesn't know it
+    unresolvedConnectionId?: string;
 }
 
 /// The scripts of a session file resolved to connections of the app
@@ -15,8 +17,8 @@ export interface ResolvedSessionScripts {
     /// The scripts in feed order
     scripts: ResolvedSessionScript[];
     /// The session file that describes the resolved scripts. It differs from the stored one when
-    /// script files were added or removed, connections were consolidated or couldn't be resolved,
-    /// or the session held copies of connections that no script uses.
+    /// script files were added or removed, connections were consolidated, or the session held
+    /// copies of connections that no script uses.
     session: SessionData;
 }
 
@@ -31,7 +33,7 @@ export type SessionConnectionResolver = (connectionId: string, copy: SessionConn
 /// import (through the restoration) and the reload of a native folder that changed on disk.
 /// The session file lists the scripts in feed order with the ids of their connections, script files
 /// without an entry are appended on the default connection. A script whose connection can't be
-/// resolved runs on the default connection.
+/// resolved runs on the default connection, the session file keeps its reference.
 export function resolveSessionScripts(
     session: SessionData,
     fileNames: readonly string[],
@@ -40,20 +42,21 @@ export function resolveSessionScripts(
     onUnresolved: (connectionId: string) => void = () => { },
 ): ResolvedSessionScripts {
     const copies = new Map(session.connections.map(connection => [connection.connectionId, connection]));
-    const resolved = new Map<string, ConnectionState>([[session.defaultConnectionId, defaultConnection]]);
-    const connectionOf = (connectionId: string): ConnectionState => {
-        let connection = resolved.get(connectionId);
-        if (connection == null) {
-            connection = resolve(connectionId, copies.get(connectionId) ?? null) ?? undefined;
+    const resolved = new Map<string, ConnectionState | null>([[session.defaultConnectionId, defaultConnection]]);
+    const scriptOf = (name: string, connectionId: string): ResolvedSessionScript => {
+        if (!resolved.has(connectionId)) {
+            const connection = resolve(connectionId, copies.get(connectionId) ?? null);
             if (connection == null) onUnresolved(connectionId);
-            connection ??= defaultConnection;
             resolved.set(connectionId, connection);
         }
-        return connection;
+        const connection = resolved.get(connectionId);
+        return connection != null
+            ? { name, connection }
+            : { name, connection: defaultConnection, unresolvedConnectionId: connectionId };
     };
     const listed = reconcileSessionScripts(sanitizeSessionFiles(session).scripts, fileNames, session.defaultConnectionId).scripts;
-    const scripts = listed.map(entry => ({ name: entry.name, connection: connectionOf(entry.connectionId) }));
-    const list: SessionScript[] = scripts.map(script => ({ name: script.name, connectionId: script.connection.connectionId }));
+    const scripts = listed.map(entry => scriptOf(entry.name, entry.connectionId));
+    const list: SessionScript[] = scripts.map(script => ({ name: script.name, connectionId: script.unresolvedConnectionId ?? script.connection.connectionId }));
     const used = [defaultConnection, ...scripts.map(script => script.connection)]
         .map(connection => ({ connectionId: connection.connectionId, params: connection.params }));
     return {

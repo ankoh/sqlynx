@@ -19,6 +19,8 @@ import {
     groupSessionConnectionCopyWrites,
     groupSessionManifestWrites,
     groupSessionScriptListWrites,
+    groupSessionWrites,
+    REPLACE_SESSION_SCRIPTS,
     WRITE_SESSION_SCRIPTS,
     storageWriteChainKey,
 } from './storage_writer.js';
@@ -95,6 +97,29 @@ describe('V2 storage writer flat mutations', () => {
         }, 0);
         await writer.flush();
         expect((await backend.loadSession(TEST_SESSION_ID)).connections).toEqual([testSession().connections[0]]);
+    });
+
+    it('keeps the latest script list when the session file is rewritten in between', async () => {
+        const backend = new SessionTestBackend();
+        const writer = new StorageWriter(new NullLogger(), backend);
+        await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
+        const list = (names: string[]) => ({ scripts: names.map(name => ({ name, connectionId: TEST_CONNECTION_ID })), connections: [] });
+        // The first list write arms the timer, the rewrite of the session file follows, the latest list
+        // supersedes the first one and keeps its earlier timer
+        const tasks = [
+            writer.write(groupSessionScriptListWrites(TEST_SESSION_ID), { type: WRITE_SESSION_SCRIPTS, value: [TEST_SESSION_ID, list(['a.sql'])] }, 10_000),
+            writer.write(groupSessionWrites(TEST_SESSION_ID), {
+                type: REPLACE_SESSION_SCRIPTS,
+                value: {
+                    sessionId: TEST_SESSION_ID, name: null, scripts: [{ fileName: 'a.sql', readText: () => 'SELECT 1' }],
+                    defaultConnection: testSession().connections[0], originalFileName: undefined, settings: { cacheQueryResults: false },
+                },
+            }, 10_000),
+            writer.write(groupSessionScriptListWrites(TEST_SESSION_ID), { type: WRITE_SESSION_SCRIPTS, value: [TEST_SESSION_ID, list(['b.sql', 'a.sql'])] }, 10_000),
+        ];
+        await writer.flush();
+        await Promise.all(tasks);
+        expect((await backend.loadSession(TEST_SESSION_ID)).scripts).toEqual(list(['b.sql', 'a.sql']).scripts);
     });
 
     it('writes drafts into the app manifest and never into sessions', async () => {

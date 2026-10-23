@@ -113,6 +113,13 @@ export interface StoredSessionScript {
     sql: string;
     /// The connection
     connection: ScriptConnection;
+    /// The connection that the session file names for the script while the app doesn't know it
+    unresolvedConnectionId?: string;
+}
+
+/// The id of the connection that the session file names for a script
+export function persistedConnectionId(script: { connection: ScriptConnection; unresolvedConnectionId?: string }): string {
+    return script.unresolvedConnectionId ?? script.connection.connectionId;
 }
 
 /// Storage-shaped session content used when an external filesystem change replaces the persisted
@@ -132,6 +139,7 @@ export function sessionScriptsMatchStorageSnapshot(state: SessionScripts, snapsh
         const script = ref == null ? undefined : state.scripts[ref.scriptId];
         return state.scriptOrder[i] === stored.name
             && script?.connection.connectionId === stored.connection.connectionId
+            && persistedConnectionId(script) === persistedConnectionId(stored)
             && script.scriptSession.getText() === stored.sql;
     });
 }
@@ -164,6 +172,10 @@ export interface ScriptData {
     fileName: string;
     /// The connection the script is analyzed and executed with
     connection: ScriptConnection;
+    /// The connection that the session file names for the script while the app doesn't know it, e.g.
+    /// after a hand edit. The script runs on the default connection meanwhile and the session file
+    /// keeps the reference until another connection is picked.
+    unresolvedConnectionId?: string;
 }
 
 export const SELECT_NEXT_SCRIPT = Symbol('SELECT_NEXT_SCRIPT');
@@ -271,7 +283,7 @@ export function getSelectedScriptIndex(state: SessionScripts): number {
 export function sessionScriptList(state: SessionScripts): SessionScript[] {
     return state.scriptOrder.flatMap(name => {
         const script = state.scripts[state.scriptRefs[name]?.scriptId];
-        return script == null ? [] : [{ name, connectionId: script.connection.connectionId }];
+        return script == null ? [] : [{ name, connectionId: persistedConnectionId(script) }];
     });
 }
 
@@ -285,12 +297,16 @@ export function sessionConnectionCopies(state: SessionScripts): SessionConnectio
     return [...copies.values()];
 }
 
+/// The script list of a session as the session file stores it
+export function sessionScriptListWrite(state: SessionScripts): SessionScriptList {
+    return { scripts: sessionScriptList(state), connections: sessionConnectionCopies(state) };
+}
+
 /// Persist the order and the connections of the cells, the session file follows with its connections
 function writeSessionScriptList(state: SessionScripts, storage: StorageWriter | null) {
-    const list: SessionScriptList = { scripts: sessionScriptList(state), connections: sessionConnectionCopies(state) };
     void storage?.write(
         groupSessionScriptListWrites(state.sessionId),
-        { type: WRITE_SESSION_SCRIPTS, value: [state.sessionId, list] },
+        { type: WRITE_SESSION_SCRIPTS, value: [state.sessionId, sessionScriptListWrite(state)] },
         DEBOUNCE_DURATION_SESSION_WRITE,
     );
 }
@@ -789,23 +805,26 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                 return state;
             }
             if (prev.connection.connectionId === connection.connectionId) {
+                if (prev.unresolvedConnectionId == null) return state;
+                // Picking the connection the script runs on replaces the unresolved reference
+                const next: SessionScripts = {
+                    ...state,
+                    scripts: { ...state.scripts, [prev.scriptKey]: { ...prev, unresolvedConnectionId: undefined } },
+                };
+                writeSessionScriptList(next, storage);
+                return next;
+            }
+            // A script session belongs to one catalog, the script moves into a new script session under
+            // its key. The new session is created first, a failure leaves the script untouched.
+            let moved: [number, ScriptData];
+            try {
+                moved = createMovedScriptData(state.instance, prev, connection);
+            } catch (e: any) {
+                logger.warn("Failed to move script to another connection", { fileName, error: stringifyError(e) }, LOG_CTX);
                 return state;
             }
-            // A script session belongs to one catalog, the script moves into a new script session under its key
-            const text = prev.scriptSession.getText();
-            try {
-                prev.scriptSession.dropFromCatalog();
-            } catch {
-                // The script may not have completed analysis and therefore may not be in the catalog.
-            }
-            destroyScriptData(prev);
-            let [scriptKey, scriptData] = createEmptyScriptData(state.instance, connection, fileName, prev.scriptKey);
-            scriptData = {
-                ...scriptData,
-                latestQueryId: prev.latestQueryId,
-                latestResultQueryId: prev.latestResultQueryId,
-            };
-            replaceScriptSessionText(scriptData.scriptSession, text);
+            let [scriptKey, scriptData] = moved;
+            dropScriptData(prev);
             try {
                 scriptData = analyzeScriptData(scriptData, logger);
             } catch (e: any) {
@@ -961,6 +980,29 @@ function destroyScriptData(data: ScriptData) {
     data.pendingDiff?.diffBuffer.destroy();
 }
 
+/// Drop a script from its catalog and destroy it
+function dropScriptData(data: ScriptData) {
+    try {
+        data.scriptSession.dropFromCatalog();
+    } catch {
+        // The script may not have completed analysis and therefore may not be in the catalog.
+    }
+    destroyScriptData(data);
+}
+
+/// Create the script data of a script that moves to another connection. The script keeps its key,
+/// its text and its results, the caller drops the previous script data afterwards.
+function createMovedScriptData(instance: core.DashQL, prev: ScriptData, connection: ScriptConnection): [number, ScriptData] {
+    const [scriptKey, scriptData] = createEmptyScriptData(instance, connection, prev.fileName, prev.scriptKey);
+    try {
+        replaceScriptSessionText(scriptData.scriptSession, prev.scriptSession.getText());
+    } catch (e) {
+        destroyScriptData(scriptData);
+        throw e;
+    }
+    return [scriptKey, { ...scriptData, latestQueryId: prev.latestQueryId, latestResultQueryId: prev.latestResultQueryId }];
+}
+
 export function destroySessionScripts(state: SessionScripts): SessionScripts {
     // Drop the session-owned scripts from the connection catalog.
     for (const scriptData of Object.values(state.scripts)) {
@@ -980,6 +1022,9 @@ export function destroySessionScripts(state: SessionScripts): SessionScripts {
 /// query history and UI references. A script that moved to another connection gets a new script
 /// session in the catalog of that connection. Added and removed paths allocate/free their WASM state
 /// here, where the catalog and script-registry lifetime rules are already centralized.
+///
+/// Every new script session is created before anything of the current state is changed or freed, a
+/// failure leaves the current state intact.
 export function replaceSessionScriptsFromStorage(
     state: SessionScripts,
     snapshot: SessionScriptsStorageSnapshot,
@@ -993,20 +1038,43 @@ export function replaceSessionScriptsFromStorage(
         }
     }
 
+    // Phase 1: create the script sessions of added and moved scripts, nothing is freed yet
+    const stored = snapshot.scripts.filter((entry, i) => snapshot.scripts.findIndex(other => other.name === entry.name) === i);
+    const created = new Map<string, ScriptData>();
+    try {
+        for (const entry of stored) {
+            const existing = existingByPath.get(entry.name);
+            if (existing != null && existing.connection.connectionId === entry.connection.connectionId) continue;
+            // A script that moved to another connection keeps its key and its results
+            const [, scriptData] = existing != null
+                ? createMovedScriptData(state.instance, existing, entry.connection)
+                : createEmptyScriptData(state.instance, entry.connection, entry.name);
+            created.set(entry.name, scriptData);
+            replaceScriptSessionText(scriptData.scriptSession, entry.sql);
+        }
+    } catch (e) {
+        for (const scriptData of created.values()) destroyScriptData(scriptData);
+        throw e;
+    }
+
+    // Phase 2: update the scripts that stay and free the replaced and removed ones
     const scripts: ScriptDataMap = {};
     const scriptRefs: { [fileName: string]: ScriptRef } = {};
     const scriptOrder: string[] = [];
     let contentChanged = false;
-
-    for (const stored of snapshot.scripts) {
-        if (scriptRefs[stored.name]) continue;
-        let scriptData = existingByPath.get(stored.name);
-        if (scriptData && scriptData.connection.connectionId === stored.connection.connectionId) {
-            existingByPath.delete(stored.name);
-            if (scriptData.scriptSession.getText() !== stored.sql) {
+    for (const entry of stored) {
+        const existing = existingByPath.get(entry.name);
+        existingByPath.delete(entry.name);
+        let scriptData = created.get(entry.name);
+        if (scriptData != null) {
+            if (existing != null) dropScriptData(existing);
+            contentChanged = true;
+        } else {
+            scriptData = existing!;
+            if (scriptData.scriptSession.getText() !== entry.sql) {
                 scriptData.pendingDiff?.diffBuffer.destroy();
                 scriptData.completion?.buffer.destroy();
-                replaceScriptSessionText(scriptData.scriptSession, stored.sql);
+                replaceScriptSessionText(scriptData.scriptSession, entry.sql);
                 scriptData = {
                     ...scriptData,
                     pendingDiff: null,
@@ -1015,40 +1083,18 @@ export function replaceSessionScriptsFromStorage(
                 };
                 contentChanged = true;
             }
-        } else {
-            // A script that moved to another connection keeps its key and its results
-            const moved = scriptData;
-            if (moved != null) {
-                existingByPath.delete(stored.name);
-                try {
-                    moved.scriptSession.dropFromCatalog();
-                } catch {
-                    // The script may not have completed analysis and therefore may not be in the catalog.
-                }
-                destroyScriptData(moved);
-            }
-            const [, created] = createEmptyScriptData(state.instance, stored.connection, stored.name, moved?.scriptKey);
-            replaceScriptSessionText(created.scriptSession, stored.sql);
-            scriptData = moved == null ? created : {
-                ...created,
-                latestQueryId: moved.latestQueryId,
-                latestResultQueryId: moved.latestResultQueryId,
-            };
-            contentChanged = true;
+        }
+        if (scriptData.unresolvedConnectionId !== entry.unresolvedConnectionId) {
+            scriptData = { ...scriptData, unresolvedConnectionId: entry.unresolvedConnectionId };
         }
         scripts[scriptData.scriptKey] = scriptData;
-        scriptRefs[stored.name] = createScriptRef(scriptData.scriptKey, stored.name);
-        scriptOrder.push(stored.name);
+        scriptRefs[entry.name] = createScriptRef(scriptData.scriptKey, entry.name);
+        scriptOrder.push(entry.name);
     }
 
     // Files no longer present on disk own WASM objects that must be detached before destruction.
     for (const removed of existingByPath.values()) {
-        try {
-            removed.scriptSession.dropFromCatalog();
-        } catch {
-            // The script may not have completed analysis and therefore may not be in the catalog.
-        }
-        destroyScriptData(removed);
+        dropScriptData(removed);
         contentChanged = true;
     }
 

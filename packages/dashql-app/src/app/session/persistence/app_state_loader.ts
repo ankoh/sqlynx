@@ -81,7 +81,8 @@ async function restoreSessionScripts(
             connectionId => logger.warn("Script references an unknown connection, using the default connection", { sessionId, connectionId }, LOG_CTX));
         const scriptRefs: { [fileName: string]: { scriptId: number; fileName: string } } = {};
         for (const entry of resolved.scripts) {
-            const [scriptKey, scriptData] = createEmptyScriptData(core, scriptConnectionOf(entry.connection), entry.name);
+            const [scriptKey, created] = createEmptyScriptData(core, scriptConnectionOf(entry.connection), entry.name);
+            const scriptData = entry.unresolvedConnectionId == null ? created : { ...created, unresolvedConnectionId: entry.unresolvedConnectionId };
             scripts[scriptKey] = scriptData;
 
             // Set SQL content. Ordinary session scripts remain outdated until first use.

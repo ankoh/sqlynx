@@ -12,7 +12,7 @@ import { useStorage } from '../../storage/storage_provider.js';
 import { getAppFlavor } from '../../flavor/flavor_resolution.js';
 import { NativeSessionSyncService, nativeSessionWatchForLocation } from './native_session_sync.js';
 import type { SessionScriptsStorageSnapshot, SessionScripts } from '../scripts/session_scripts.js';
-import { sessionScriptList } from '../scripts/session_scripts.js';
+import { persistedConnectionId, sessionScriptList } from '../scripts/session_scripts.js';
 import { connectionStateFromCopy, destroyUnregisteredConnection } from './app_state_loader.js';
 import { resolveSessionScripts, sessionScriptsResolutionChanged } from './session_script_connections.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
@@ -85,7 +85,12 @@ export function readStoredSessionScripts(
     const sqlByName = new Map(scripts.map(script => [script.name, script.sql]));
     return {
         snapshot: {
-            scripts: resolved.scripts.map(entry => ({ name: entry.name, sql: sqlByName.get(entry.name) ?? '', connection: scriptConnectionOf(entry.connection) })),
+            scripts: resolved.scripts.map(entry => ({
+                name: entry.name,
+                sql: sqlByName.get(entry.name) ?? '',
+                connection: scriptConnectionOf(entry.connection),
+                ...(entry.unresolvedConnectionId == null ? {} : { unresolvedConnectionId: entry.unresolvedConnectionId }),
+            })),
         },
         session: resolved.session,
         created,
@@ -148,7 +153,7 @@ function snapshotMatchesCompletedWrite(
     }
     let divergenceFound = false;
     // The order and the connections of the scripts are part of the session file
-    const diskList = snapshot.scripts.map(script => ({ name: script.name, connectionId: script.connection.connectionId }));
+    const diskList = snapshot.scripts.map(script => ({ name: script.name, connectionId: persistedConnectionId(script) }));
     if (sessionScripts && !sessionScriptsEqual(sessionScriptList(sessionScripts), diskList)) {
         divergenceFound = true;
         const completed = writer.getCompletedFileContent(`${sessionId}/${STORAGE_SESSION_FILE}`);

@@ -50,7 +50,7 @@ let dql: core.DashQL;
 const logger = new NullLogger();
 
 beforeAll(async () => { dql = await core.DashQL.create({ wasmBinary: await DASHQL_PRECOMPILED }); });
-afterEach(() => dql.resetUnsafe());
+afterEach(() => { vi.restoreAllMocks(); dql.resetUnsafe(); });
 
 /// A connection with a catalog of its own
 function connection(type = ConnectorType.HYPER): ScriptConnection {
@@ -382,5 +382,48 @@ describe('V2 flat session script mutations', () => {
             { name: '3_added.sql', sql: 'SELECT 3', connection: main },
             { name: '1_alpha.sql', sql: 'SELECT changed', connection: other },
         ] })).toBe(true);
+    });
+
+    it('keeps a script usable when it can not move to another connection', () => {
+        const current = state(['1_alpha.sql', '2_beta.sql']);
+        const scriptKey = current.scriptRefs['2_beta.sql'].scriptId;
+        const writer = new RecordingWriter(logger, new SessionTestBackend());
+        vi.spyOn(dql, 'createScriptSessionWithEntryId').mockImplementation(() => { throw new Error('no session'); });
+        expect(reduce(current, { type: SET_SCRIPT_CONNECTION, value: { fileName: '2_beta.sql', connection: connection() } }, writer)).toBe(current);
+        expect(current.scripts[scriptKey].scriptSession.getText()).toBe('SELECT 2');
+        expect(writer.records).toEqual([]);
+    });
+
+    it('keeps the current scripts when the scripts of storage can not be created', () => {
+        const current = state(['1_alpha.sql', '2_beta.sql']);
+        const main = defaultScriptConnection(current);
+        const alpha = current.scripts[current.scriptRefs['1_alpha.sql'].scriptId];
+        // The moved script is created, the added one fails
+        vi.spyOn(dql, 'createScriptSession').mockImplementation(() => { throw new Error('no session'); });
+        expect(() => replaceSessionScriptsFromStorage(current, { scripts: [
+            { name: '1_alpha.sql', sql: 'SELECT 1', connection: connection() },
+            { name: '2_beta.sql', sql: 'SELECT 2', connection: main },
+            { name: '3_added.sql', sql: 'SELECT 3', connection: main },
+        ] }, logger)).toThrow('no session');
+        expect(alpha.scriptSession.getText()).toBe('SELECT 1');
+        expect(alpha.scriptSession.getCatalogEntryId()).toBe(alpha.scriptKey);
+    });
+
+    it('keeps the reference to an unresolved connection until a connection is picked', () => {
+        const current = state(['1_alpha.sql']);
+        const unknownId = 'dddddddd-eeee-4fff-8aaa-bbbbbbbbbbbb';
+        const scriptKey = current.scriptRefs['1_alpha.sql'].scriptId;
+        current.scripts[scriptKey] = { ...current.scripts[scriptKey], unresolvedConnectionId: unknownId };
+        const writer = new RecordingWriter(logger, new SessionTestBackend());
+        const created = reduce(current, { type: CREATE_SCRIPT, value: { index: null } }, writer);
+        const listOf = (task: StorageWriteTaskVariant) => (task.value as [string, { scripts: Array<{ name: string; connectionId: string }> }])[1].scripts;
+        expect(listOf(writer.records.find(task => task.type === WRITE_SESSION_SCRIPTS)!)[0]).toEqual({ name: '1_alpha.sql', connectionId: unknownId });
+
+        // Picking the connection the script runs on replaces the reference
+        writer.records.length = 0;
+        const picked = reduce(created, { type: SET_SCRIPT_CONNECTION, value: { fileName: '1_alpha.sql', connection: defaultScriptConnection(created) } }, writer);
+        expect(picked.scripts[scriptKey].unresolvedConnectionId).toBeUndefined();
+        expect(picked.scripts[scriptKey].scriptSession).toBe(current.scripts[scriptKey].scriptSession);
+        expect(listOf(writer.records[0])[0]).toEqual({ name: '1_alpha.sql', connectionId: current.connectionId });
     });
 });

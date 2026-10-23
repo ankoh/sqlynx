@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptData, destroySessionScripts, reduceSessionScripts, sessionConnectionCopies, sessionConnectionIds } from './session_scripts.js';
+import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptData, destroySessionScripts, reduceSessionScripts, sessionConnectionIds, sessionScriptListWrite } from './session_scripts.js';
 import { Dispatch } from '../../../utils/variant.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
 import { CONNECTOR_TYPES, ConnectorType } from '../../connections/connector_info.js';
@@ -13,8 +13,10 @@ import {
     DEBOUNCE_DURATION_SESSION_WRITE,
     type SessionReplacement,
     groupSessionFunctionWrites,
+    groupSessionScriptListWrites,
     groupSessionWrites,
     WRITE_SESSION_FUNCTION_SCRIPT,
+    WRITE_SESSION_SCRIPTS,
 } from "../../storage/storage_writer.js";
 
 const LOG_CTX = 'session_scripts_registry';
@@ -116,6 +118,11 @@ export function useSessionScriptsAllocator(): SessionScriptsAllocator {
             type: REPLACE_SESSION_SCRIPTS,
             value: sessionReplacement(scripts),
         }, DEBOUNCE_DURATION_SESSION_WRITE);
+        // Scheduled after the session file is written, the script list has a single writer
+        storage.write(groupSessionScriptListWrites(scripts.sessionId), {
+            type: WRITE_SESSION_SCRIPTS,
+            value: [scripts.sessionId, sessionScriptListWrite(scripts)],
+        }, DEBOUNCE_DURATION_SESSION_WRITE);
         storage.write(groupSessionFunctionWrites(scripts.sessionId), {
             type: WRITE_SESSION_FUNCTION_SCRIPT,
             value: [scripts.sessionId, catalogFunctionScript]
@@ -133,11 +140,9 @@ export function sessionReplacement(scripts: SessionScripts): SessionReplacement 
             const script = scripts.scripts[scripts.scriptRefs[fileName]?.scriptId];
             return script == null ? [] : [{
                 fileName,
-                connectionId: script.connection.connectionId,
                 readText: () => script.scriptSession.getText(),
             }];
         }),
-        connections: sessionConnectionCopies(scripts),
         defaultConnection: {
             connectionId: scripts.connectionId,
             params: createDefaultConnectionParamsForConnector(scripts.connectorInfo),
