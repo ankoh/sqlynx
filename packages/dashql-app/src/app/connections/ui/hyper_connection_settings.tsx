@@ -19,7 +19,8 @@ import { useHyperGrpcClient, useHyperHttpClient } from '../hyper/hyperdb_grpc_cl
 import { flattenKeyValueList, KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../../ui/foundations/keyvalue_list.js';
 import { Dispatch } from '../../../utils/variant.js';
 import { useConnectionById, useConnectionDraftForm } from '../connection_registry.js';
-import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
+import { useConnectionSave } from '../connection_persistence.js';
+import { useConnectionSetup } from './connection_setup.js';
 import { ConnectionHealth, SET_CONNECTION_NAME } from '../connection_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useHyperSetup } from '../hyper/hyper_connection_setup.js';
@@ -28,7 +29,6 @@ import { CONNECTOR_INFOS, ConnectorType } from '../connector_info.js';
 import { isDesktopHost } from '../../../platform/native_globals.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { HYPERDB_WASM_ENGINE_SETTINGS } from '../../../platform/hyperdb/hyperdb_settings.js';
-import { cancelConnectionSetup, registerConnectionSetup } from '../connection_setup_cancellation.js';
 
 const LOG_CTX = "hyper_connector";
 
@@ -106,7 +106,7 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
 
     // Wire up the page state
     const [connectionState, dispatchConnectionState] = useConnectionById(props.connectionId);
-    const saveBeforeConnect = useSaveBeforeConnect(props.connectionId);
+    const connectionSetup = useConnectionSetup(props.connectionId);
     const { saving } = useConnectionSave(props.connectionId);
 
     const [pageState, setPageState] = useConnectionDraftForm(props.connectionId,
@@ -144,7 +144,6 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
 
     // Helper to setup the connection
     const setupParams = React.useMemo<connection.HyperConnectionParams>(() => buildHyperConnectionSetupParams(pageState), [pageState]);
-    const setupAbortController = React.useRef<AbortController | null>(null);
     const setupConnection = async () => {
         const hasTlsPaths = Boolean(pageState.mTlsKeyPath || pageState.mTlsPubPath || pageState.mTlsCaPath);
         let isHttps = false;
@@ -180,38 +179,18 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
             return;
         }
 
-        // Connections are set up with saved settings, unsaved edits are saved first
-        if (!await saveBeforeConnect()) return;
-
-        const controller = new AbortController();
-        const unregister = registerConnectionSetup(connectionState.connectionId, controller);
-        try {
-            // Setup the Hyper connection
-            setupAbortController.current = controller;
-            const hyperChannel = await hyperSetup.setup(dispatchConnectionState, setupParams, controller.signal);
-            if (hyperChannel != null && protocol !== 'WASM') {
-                await performHealthCheck(queryExecutor, connectionState.connectionId, { type: 'hyper', channel: hyperChannel }, dispatchConnectionState, controller.signal);
+        await connectionSetup.run(async signal => {
+            try {
+                const hyperChannel = await hyperSetup.setup(dispatchConnectionState, setupParams, signal);
+                if (hyperChannel != null && protocol !== 'WASM') {
+                    await performHealthCheck(queryExecutor, connectionState.connectionId, { type: 'hyper', channel: hyperChannel }, dispatchConnectionState, signal);
+                }
+            } catch {
+                // The setup and the health check update the connection state with the failure details.
             }
-
-            // Start the the inital catalog update
-            // XXX
-
-        } catch (error: any) {
-            // XXX
-        } finally {
-            unregister();
-            if (setupAbortController.current === controller) setupAbortController.current = null;
-        }
+        });
     };
-
-    // Helper to cancel and reset the authorization
-    const cancelSetup = () => {
-        if (props.connectionId != null) cancelConnectionSetup(props.connectionId);
-        if (setupAbortController.current) {
-            setupAbortController.current.abort(new DOMException('Connection setup cancelled', 'AbortError'));
-            setupAbortController.current = null;
-        }
-    };
+    const cancelSetup = connectionSetup.cancel;
     const resetSetup = async () => {
         if (hyperSetup) {
             await hyperSetup.reset(dispatchConnectionState);

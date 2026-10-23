@@ -5,7 +5,8 @@ import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 import { KeyIcon, PersonIcon } from '../../../ui/foundations/symbol_icon.js';
 
 import { useConnectionById, useConnectionDraftForm } from '../connection_registry.js';
-import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
+import { useConnectionSave } from '../connection_persistence.js';
+import { useConnectionSetup } from './connection_setup.js';
 import { ConnectionHealth, ConnectionStatus, SET_CONNECTION_NAME } from '../connection_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useQueryExecutor } from '../query_executor.js';
@@ -26,7 +27,6 @@ import { ConnectionStateDetailsVariant } from '../connection_state_details.js';
 import type { DetailedError } from '../../../utils/error.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { collectSalesforceAuthInfo } from '../salesforce/salesforce_api_client.js';
-import { cancelConnectionSetup, registerConnectionSetup } from '../connection_setup_cancellation.js';
 
 const LOG_CTX = "sf_connector";
 
@@ -322,7 +322,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
 
     // Resolve connection state
     const [connectionState, dispatchConnectionState] = useConnectionById(props.connectionId);
-    const saveBeforeConnect = useSaveBeforeConnect(props.connectionId);
+    const connectionSetup = useConnectionSetup(props.connectionId);
     const { saving } = useConnectionSave(props.connectionId);
     const salesforceConnection = getSalesforceConnectionDetails(connectionState);
     const editableParams = connectionState?.paramsDraft ?? connectionState?.params;
@@ -371,7 +371,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         appConsumerSecret: salesforceParams?.appConsumerSecret ?? '',
         login: pageState.login,
     }), [pageState, salesforceParams?.appConsumerSecret]);
-    const setupAbortController = React.useRef<AbortController | null>(null);
     const setupConnection = async () => {
         let validationSucceeded = true;
         if (pageState.instanceUrl == "") {
@@ -388,33 +387,18 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         }
         if (!validationSucceeded || !sfSetup) return;
 
-        // Connections are set up with saved settings, unsaved edits are saved first
-        if (!await saveBeforeConnect()) return;
-
-        const controller = new AbortController();
-        const unregister = connectionState == null ? () => {} : registerConnectionSetup(connectionState.connectionId, controller);
-        try {
-            setupAbortController.current = controller;
-            const sfChannel = await sfSetup.setup(dispatchConnectionState, setupParams, controller.signal);
-            if (connectionState != null) {
-                await performHealthCheck(queryExecutor, connectionState.connectionId, { type: 'salesforce', channel: sfChannel }, dispatchConnectionState, controller.signal);
+        await connectionSetup.run(async signal => {
+            try {
+                const sfChannel = await sfSetup.setup(dispatchConnectionState, setupParams, signal);
+                if (connectionState != null) {
+                    await performHealthCheck(queryExecutor, connectionState.connectionId, { type: 'salesforce', channel: sfChannel }, dispatchConnectionState, signal);
+                }
+            } catch {
+                // Setup updates connection state with the failure details.
             }
-        } catch {
-            // Setup updates connection state with the failure details.
-        } finally {
-            unregister();
-            if (setupAbortController.current === controller) setupAbortController.current = null;
-        }
+        });
     };
-
-    // Helper to cancel and reset the setup
-    const cancelSetup = () => {
-        if (props.connectionId != null) cancelConnectionSetup(props.connectionId);
-        if (setupAbortController.current) {
-            setupAbortController.current.abort(new DOMException('Connection setup cancelled', 'AbortError'));
-            setupAbortController.current = null;
-        }
-    };
+    const cancelSetup = connectionSetup.cancel;
     const resetSetup = async () => {
         if (sfSetup) {
             await sfSetup.reset(dispatchConnectionState);
