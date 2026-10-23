@@ -1,10 +1,11 @@
 import * as React from 'react';
 
-import { ConnectionHealth, printConnectionHealth } from '../../connections/connection_state.js';
+import { ConnectionHealth, printConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
-import { getSelectedScriptRef, SELECT_NEXT_SCRIPT, SELECT_PREV_SCRIPT } from './session_scripts.js';
+import { getSelectedScriptRef, SELECT_NEXT_SCRIPT, SELECT_PREV_SCRIPT, type ScriptData, type SessionScripts } from './session_scripts.js';
+import type { ScriptRef } from './script_types.js';
 import { useCatalogLoaderQueue } from '../../connections/catalog_loader.js';
-import { useConnectionRegistryStore, useDefaultConnection } from '../../connections/connection_registry.js';
+import { useConnectionRegistryStore, useDefaultConnection, type ConnectionRegistry } from '../../connections/connection_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useQueryExecutor } from '../../connections/query_executor.js';
 import { useRouteContext } from '../../router/router.js';
@@ -17,6 +18,20 @@ import { useAppSettingsReady } from '../../config/app_settings_sync.js';
 import { SessionConnectionAttentionContext, useSessionConnectionAttention } from '../ui/session_connection_attention.js';
 
 const LOG_CTX = "session_commands";
+
+/// The selected script and the connection it runs on, the default connection without a selected script
+function selectedScriptConnection(sessionScripts: SessionScripts, registry: ConnectionRegistry, defaultConnection: ConnectionState | null): {
+    entry: ScriptRef | undefined;
+    scriptData: ScriptData | undefined;
+    scriptConnection: ConnectionState | null;
+} {
+    const entry = getSelectedScriptRef(sessionScripts);
+    const scriptData = entry != null ? sessionScripts.scripts[entry.scriptId] : undefined;
+    const scriptConnection = scriptData != null
+        ? registry.connections.get(scriptData.connection.connectionId) ?? null
+        : defaultConnection;
+    return { entry, scriptData, scriptConnection };
+}
 
 export enum SessionCommandType {
     ExecuteEditorQuery = 1,
@@ -183,12 +198,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                         break;
                     }
                     {
-                        const entry = getSelectedScriptRef(sessionScripts);
-                        const scriptData = entry != null ? sessionScripts.scripts[entry.scriptId] : undefined;
-                        // The selected script runs on its own connection
-                        const scriptConnection = scriptData != null
-                            ? connectionRegistryStore.current.connections.get(scriptData.connection.connectionId) ?? null
-                            : connection;
+                        const { entry, scriptData, scriptConnection } = selectedScriptConnection(sessionScripts, connectionRegistryStore.current, connection);
                         if (scriptConnection == null || scriptConnection.connectionHealth !== ConnectionHealth.ONLINE) {
                             connectionAttention.request(sessionScripts.sessionId);
                             logger.warn("Cannot execute query command with an unhealthy connection", {
@@ -216,15 +226,18 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                         }
                     }
                     break;
-                case SessionCommandType.RefreshCatalog:
-                    if (connection?.connectionHealth != ConnectionHealth.ONLINE) {
+                case SessionCommandType.RefreshCatalog: {
+                    // The catalog of the connection that the selected script runs on is refreshed
+                    const { scriptConnection } = selectedScriptConnection(sessionScripts, connectionRegistryStore.current, connection);
+                    if (scriptConnection?.connectionHealth != ConnectionHealth.ONLINE) {
                         logger.warn("Cannot refresh the catalog of unhealthy connection", {}, LOG_CTX);
-                    } else if (isCatalogRefreshRunning(connection)) {
+                    } else if (isCatalogRefreshRunning(scriptConnection)) {
                         logger.debug("Catalog refresh already running", { sessionId: sessionScripts.sessionId }, LOG_CTX);
                     } else {
-                        refreshCatalog(connection.connectionId, true);
+                        refreshCatalog(scriptConnection.connectionId, true);
                     }
                     break;
+                }
                 case SessionCommandType.SelectPreviousSessionScript:
                     if (modifySessionScripts) {
                         modifySessionScripts({

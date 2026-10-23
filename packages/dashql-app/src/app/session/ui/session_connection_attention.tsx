@@ -25,14 +25,15 @@ export function useSessionConnectionAttention(sessionId: string | null, connecti
             timer.current = null;
         };
     }, [sessionId, connectionId, health]);
+    // Callers request attention for the connection a script runs on, which need not be the default connection
     const request = React.useCallback((targetSessionId: string) => {
-        if (targetSessionId !== sessionId || health === ConnectionHealth.ONLINE || timer.current != null) return;
+        if (targetSessionId !== sessionId || timer.current != null) return;
         setActive(true);
         timer.current = setTimeout(() => {
             timer.current = null;
             setActive(false);
         }, CONNECTION_ATTENTION_DURATION_MS);
-    }, [sessionId, health]);
+    }, [sessionId]);
     // The value is provided as context to every execute button in the feed, keep it stable
     const own = React.useMemo(() => ({ sessionId, active, request }), [sessionId, active, request]);
     return shared?.sessionId === sessionId ? shared : own;

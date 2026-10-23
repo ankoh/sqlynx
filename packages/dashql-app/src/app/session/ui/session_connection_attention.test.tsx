@@ -38,7 +38,7 @@ describe('session connection attention', () => {
         expect(document.activeElement).toBe(focused);
     });
 
-    it('clears on session, main database, or health changes and ignores online requests', () => {
+    it('clears on session, main database, or health changes and leaves the health of the target to the caller', () => {
         const render = (sessionId: string, health: ConnectionHealth, connectionId = 'main') =>
             act(() => root.render(<Probe sessionId={sessionId} health={health} databaseId={connectionId} />));
         render('a', ConnectionHealth.NOT_STARTED);
@@ -51,7 +51,8 @@ describe('session connection attention', () => {
         act(() => signal.request('b'));
         render('b', ConnectionHealth.ONLINE, 'replacement');
         expect(signal.active).toBe(false);
+        // A script on another connection may be blocked while the main database is online
         act(() => signal.request('b'));
-        expect(signal.active).toBe(false);
+        expect(signal.active).toBe(true);
     });
 });
