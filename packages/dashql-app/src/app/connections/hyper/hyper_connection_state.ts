@@ -9,10 +9,6 @@ import {
     ConnectionHealth,
     ConnectionStatus,
     ConnectionState,
-    HEALTH_CHECK_STARTED,
-    HEALTH_CHECK_CANCELLED,
-    HEALTH_CHECK_FAILED,
-    HEALTH_CHECK_SUCCEEDED,
     RESET_CONNECTION,
     DELETE_CONNECTION,
 } from '../connection_state.js';
@@ -63,10 +59,6 @@ export type HyperConnectorAction =
     | VariantKind<typeof HYPER_CHANNEL_SETUP_CANCELLED, DetailedError>
     | VariantKind<typeof HYPER_CHANNEL_SETUP_FAILED, DetailedError>
     | VariantKind<typeof HYPER_CHANNEL_READY, [HyperDatabaseChannel, connection.HyperConnectionParams]>
-    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
-    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
-    | VariantKind<typeof HEALTH_CHECK_FAILED, DetailedError>
-    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
 export function reduceHyperConnectorState(state: ConnectionState, action: HyperConnectorAction): ConnectionState | null {
@@ -183,88 +175,6 @@ export function reduceHyperConnectorState(state: ConnectionState, action: HyperC
                             },
                         },
                         channel,
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_STARTED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED,
-                connectionHealth: ConnectionHealth.CONNECTING,
-                details: {
-                    type: HYPER_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckStartedAt: dateToTimestamp(new Date()),
-                            },
-                        },
-                    },
-
-                },
-            };
-            break;
-        case HEALTH_CHECK_FAILED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED,
-                connectionHealth: ConnectionHealth.FAILED,
-                details: {
-                    type: HYPER_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckFailedAt: dateToTimestamp(new Date()),
-                            },
-                            healthCheckError: action.value,
-                        },
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_CANCELLED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED,
-                connectionHealth: ConnectionHealth.CANCELLED,
-                details: {
-                    type: HYPER_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckCancelledAt: dateToTimestamp(new Date()),
-                            },
-                        },
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_SUCCEEDED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED,
-                connectionHealth: ConnectionHealth.ONLINE,
-                details: {
-                    type: HYPER_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckSucceededAt: dateToTimestamp(new Date()),
-                            },
-                        },
                     }
                 },
             };

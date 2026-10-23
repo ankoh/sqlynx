@@ -9,10 +9,6 @@ import {
     ConnectionHealth,
     ConnectionStatus,
     ConnectionState,
-    HEALTH_CHECK_CANCELLED,
-    HEALTH_CHECK_FAILED,
-    HEALTH_CHECK_STARTED,
-    HEALTH_CHECK_SUCCEEDED,
     RESET_CONNECTION,
     DELETE_CONNECTION,
 } from '../connection_state.js';
@@ -79,10 +75,6 @@ export type TrinoConnectorAction =
     | VariantKind<typeof TRINO_CHANNEL_SETUP_FAILED, DetailedError>
     | VariantKind<typeof TRINO_CHANNEL_READY, TrinoChannelInterface>
     // Health check actions
-    | VariantKind<typeof HEALTH_CHECK_CANCELLED, DetailedError>
-    | VariantKind<typeof HEALTH_CHECK_FAILED, DetailedError>
-    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
-    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
 export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoConnectorAction): ConnectionState | null {
@@ -408,89 +400,6 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                             },
                         },
                         channel: action.value
-                    }
-                },
-            };
-            break;
-
-        // Health check actions
-        case HEALTH_CHECK_STARTED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED,
-                connectionHealth: ConnectionHealth.CONNECTING,
-                details: {
-                    type: TRINO_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckStartedAt: dateToTimestamp(new Date())
-                            },
-                        },
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_FAILED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED,
-                connectionHealth: ConnectionHealth.FAILED,
-                details: {
-                    type: TRINO_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckFailedAt: dateToTimestamp(new Date())
-                            },
-                            healthCheckError: action.value,
-                        },
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_CANCELLED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED,
-                connectionHealth: ConnectionHealth.CANCELLED,
-                details: {
-                    type: TRINO_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckCancelledAt: dateToTimestamp(new Date())
-                            },
-                        },
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_SUCCEEDED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED,
-                connectionHealth: ConnectionHealth.ONLINE,
-                details: {
-                    type: TRINO_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckSucceededAt: dateToTimestamp(new Date())
-                            },
-                        },
                     }
                 },
             };

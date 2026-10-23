@@ -47,6 +47,8 @@ import { HYPER_CHANNEL_SETUP_STARTED } from './hyper/hyper_connection_state.js';
 import { OAUTH_STARTED, TRINO_CHANNEL_SETUP_STARTED } from './trino/trino_connection_state.js';
 import { SETUP_STARTED } from './salesforce/salesforce_connection_state.js';
 import { cancelConnectionSetup } from './connection_setup_cancellation.js';
+import { dateToTimestamp } from './proto_helper.js';
+import type { DetailedError } from '../../utils/error.js';
 import { catalogNameDefaults } from './catalog_name_defaults.js';
 
 const LOG_CTX = 'connection_state';
@@ -220,6 +222,14 @@ export type CatalogAction =
     | VariantKind<typeof CATALOG_UPDATE_PARTIALLY_SUCCEEDED, [number, Error]>
     ;
 
+/// The health check of a connection, every connector runs it the same way
+export type HealthCheckAction =
+    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
+    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
+    | VariantKind<typeof HEALTH_CHECK_FAILED, DetailedError>
+    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
+    ;
+
 export type ConnectionAction =
     | VariantKind<typeof SET_CONNECTION_DRAFT, ConnectionParams>
     | VariantKind<typeof DISCARD_CONNECTION_DRAFT, null>
@@ -228,6 +238,7 @@ export type ConnectionAction =
     | VariantKind<typeof RESET_CONNECTION, null>
     | VariantKind<typeof SWITCH_CONNECTOR_TYPE, ConnectorType>
     | VariantKind<typeof SET_CONNECTION_NAME, string | null>
+    | HealthCheckAction
     | CatalogAction
     | QueryExecutionAction
     | HyperConnectorAction
@@ -387,7 +398,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                     setupAttemptDraft = state.paramsDraft;
                     break;
             }
-            let newState = reduceConnectorDetails(state, action);
+            let newState = reduceHealthCheck(state, action) ?? reduceConnectorDetails(state, action);
             if (newState == null) {
                 throw new Error(`failed to apply state action: ${String(action.type)}`);
             }
@@ -423,6 +434,39 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             return newState;
         }
     }
+}
+
+/// Apply a health check action, null for other actions
+function reduceHealthCheck(state: ConnectionState, action: ConnectionAction): ConnectionState | null {
+    const now = dateToTimestamp(new Date());
+    switch (action.type) {
+        case HEALTH_CHECK_STARTED:
+            return withConnectorProto({ ...state, connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED, connectionHealth: ConnectionHealth.CONNECTING },
+                proto => ({ ...proto, setupTimings: { ...proto.setupTimings, healthCheckStartedAt: now } }));
+        case HEALTH_CHECK_FAILED:
+            return withConnectorProto({ ...state, connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED, connectionHealth: ConnectionHealth.FAILED },
+                proto => ({ ...proto, setupTimings: { ...proto.setupTimings, healthCheckFailedAt: now }, healthCheckError: action.value }));
+        case HEALTH_CHECK_CANCELLED:
+            return withConnectorProto({ ...state, connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED, connectionHealth: ConnectionHealth.CANCELLED },
+                proto => ({ ...proto, setupTimings: { ...proto.setupTimings, healthCheckCancelledAt: now } }));
+        case HEALTH_CHECK_SUCCEEDED:
+            return withConnectorProto({ ...state, connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED, connectionHealth: ConnectionHealth.ONLINE },
+                proto => ({ ...proto, setupTimings: { ...proto.setupTimings, healthCheckSucceededAt: now } }));
+        default:
+            return null;
+    }
+}
+
+/// The setup timings and errors that the details of every connector keep
+type ConnectorProto = Pick<ConnectionStateDetailsVariant['value']['proto'], 'setupTimings' | 'healthCheckError'>;
+
+/// Update the setup timings and errors of the connector details
+function withConnectorProto(state: ConnectionState, patch: (proto: ConnectorProto) => ConnectorProto): ConnectionState {
+    const details = state.details.value;
+    return {
+        ...state,
+        details: { ...state.details, value: { ...details, proto: { ...details.proto, ...patch(details.proto) } } } as ConnectionStateDetailsVariant,
+    };
 }
 
 /// Let the reducer of the connector apply an action to the connection details

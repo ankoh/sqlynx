@@ -22,7 +22,7 @@ import { Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { SalesforceSetupApi } from './salesforce_connection_setup.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
-import { HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED, RESET_CONNECTION } from '../connection_state.js';
+import { RESET_CONNECTION } from '../connection_state.js';
 import { HyperDatabaseChannelMock } from '../hyper/hyperdb_grpc_client_mock.js';
 
 
@@ -109,21 +109,6 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         updateState({
             type: SF_CHANNEL_READY,
             value: sfChannel,
-        });
-        abortSignal.throwIfAborted();
-
-        // Simulate Health check
-        updateState({
-            type: HEALTH_CHECK_STARTED,
-            value: null,
-        });
-        abortSignal.throwIfAborted();
-
-        // Always succeed the health check
-        sleep(100);
-        updateState({
-            type: HEALTH_CHECK_SUCCEEDED,
-            value: null,
         });
         abortSignal.throwIfAborted();
 

@@ -11,10 +11,6 @@ import {
     ConnectionState,
     ConnectionStatus,
     DELETE_CONNECTION,
-    HEALTH_CHECK_CANCELLED,
-    HEALTH_CHECK_FAILED,
-    HEALTH_CHECK_STARTED,
-    HEALTH_CHECK_SUCCEEDED,
     RESET_CONNECTION,
 } from '../connection_state.js';
 import { dateToTimestamp } from "../proto_helper.js";
@@ -74,10 +70,6 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof SETUP_STARTED, connection.SalesforceConnectionParams>
     | VariantKind<typeof GENERATED_PKCE_CHALLENGE, auth.OAuthPKCEChallenge>
     | VariantKind<typeof GENERATING_PKCE_CHALLENGE, null>
-    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
-    | VariantKind<typeof HEALTH_CHECK_FAILED, DetailedError>
-    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
-    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     | VariantKind<typeof OAUTH_NATIVE_LINK_OPENED, null>
     | VariantKind<typeof OAUTH_WEB_WINDOW_CLOSED, null>
     | VariantKind<typeof OAUTH_WEB_WINDOW_OPENED, null>
@@ -537,87 +529,6 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                             },
                         },
                         channel: action.value
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_STARTED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED,
-                connectionHealth: ConnectionHealth.CONNECTING,
-                details: {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckStartedAt: dateToTimestamp(new Date()),
-                            },
-                        },
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_FAILED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED,
-                connectionHealth: ConnectionHealth.FAILED,
-                details: {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckFailedAt: dateToTimestamp(new Date()),
-                            },
-                            healthCheckError: action.value,
-                        },
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_CANCELLED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED,
-                connectionHealth: ConnectionHealth.CANCELLED,
-                details: {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckCancelledAt: dateToTimestamp(new Date()),
-                            },
-                        },
-                    }
-                },
-            };
-            break;
-        case HEALTH_CHECK_SUCCEEDED:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED,
-                connectionHealth: ConnectionHealth.ONLINE,
-                details: {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                healthCheckSucceededAt: dateToTimestamp(new Date()),
-                            },
-                        },
                     }
                 },
             };
