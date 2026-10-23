@@ -21,8 +21,6 @@ export class ShellQueryExecutionTracker implements QueryExecutionTracker {
     private snapshot: readonly QueryExecutionState[] = [];
     private readonly listeners = new Set<() => void>();
 
-    constructor(private readonly setState?: (state: QueryExecutionHistoryState) => void) {}
-
     readonly getSnapshot = (): readonly QueryExecutionState[] => this.snapshot;
 
     subscribe = (listener: () => void): (() => void) => {
@@ -51,7 +49,6 @@ export class ShellQueryExecutionTracker implements QueryExecutionTracker {
                 return execution == null ? [] : [execution];
             }),
         ];
-        this.setState?.(this.state);
         for (const listener of this.listeners) listener();
     }
 }

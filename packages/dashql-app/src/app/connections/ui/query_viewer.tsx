@@ -8,8 +8,6 @@ import {
 import { QueryType } from '../../../query/query_execution_state.js';
 import { useConnectionRegistry } from '../connection_registry.js';
 
-export * from '../../../query/ui/query_history_viewer.js';
-
 export function QueryViewer(props: {
     onClose: () => void;
 }) {

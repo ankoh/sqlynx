@@ -4,12 +4,12 @@ import { ComputeQueryExecutionProvider } from '../compute/computation_query_exec
 import { computationTaskTitle, type TaskVariant } from '../compute/computation_types.js';
 import { QueryType } from '../query/query_execution_state.js';
 import { executeTrackedQuery } from '../query/tracked_query_execution.js';
-import { useShellConnection } from './shell_connection.js';
+import { useShellQueryHistory } from './shell_query_history.js';
 
 const LOG_CTX = 'scheduler';
 
 export function ShellComputeQueryExecutionProvider(props: React.PropsWithChildren) {
-    const { queryExecutions } = useShellConnection();
+    const queryExecutions = useShellQueryHistory();
     const createExecution = React.useCallback((task: TaskVariant) => {
         return <T,>(query: string, execute: () => Promise<T>) => executeTrackedQuery({
             query,

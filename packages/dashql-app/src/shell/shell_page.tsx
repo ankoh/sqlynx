@@ -16,7 +16,7 @@ import { createEmbeddedDatabaseShellEnvironment } from './embedded_database_shel
 import { createLoginCommand, type SalesforceLoginAuthentication } from './commands/login.js';
 import { SalesforceLoginHistoryStore } from './salesforce_login_history.js';
 import { examplesCommand } from './commands/examples.js';
-import { useShellConnection } from './shell_connection.js';
+import { useShellQueryHistory } from './shell_query_history.js';
 import { createShellOutputCommand, type ShellOutputMode } from './shell_result.js';
 import {
     createShellFilesCommand,
@@ -72,7 +72,7 @@ function formatInstantiationProgress(bytesLoaded: number, bytesTotal: number): s
 export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     const logger = useLogger();
     const setupEmbeddedDatabase = useEmbeddedDatabaseSetup();
-    const { setConnected, queryExecutions } = useShellConnection();
+    const queryExecutions = useShellQueryHistory();
     const dispatchComputation = useComputationDispatch();
     const httpClient = useHttpClient();
     const appEvents = usePlatformEventListener();
@@ -162,7 +162,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                 return;
             }
             connection = nextConnection;
-            setConnected(true);
 
             setStatus('Instantiating shell');
             const getOutputMode = () => outputModeRef.current;
@@ -359,10 +358,9 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             shell?.destroy();
             shellRef.current = null;
             fileRegistryRef.current = null;
-            setConnected(false);
             void fileRegistry?.dispose().finally(() => connection?.close());
         };
-    }, [appEvents, dispatchComputation, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, shareDialog, showResultQuery]);
+    }, [appEvents, dispatchComputation, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setupEmbeddedDatabase, shareDialog, showResultQuery]);
 
     if (hyperDBSupportError != null) {
         return (

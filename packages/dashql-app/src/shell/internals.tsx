@@ -6,7 +6,7 @@ import { AnchoredOverlay } from '../ui/foundations/anchored_overlay.js';
 import { OverlaySize } from '../ui/foundations/overlay.js';
 import { VerticalTabs, VerticalTabVariant } from '../ui/foundations/vertical_tabs.js';
 import { LogViewer } from '../ui/logs/log_viewer.js';
-import { QueryViewer } from '../app/connections/ui/query_viewer.js';
+import { ShellQueryViewer } from './shell_query_history.js';
 import * as styles from './shell_navbar.module.css';
 
 enum TabKey {
@@ -47,7 +47,7 @@ export const ShellInternalsViewer: React.FC<ShellInternalsViewerProps> = props =
             tabKeys={[TabKey.LogViewer, TabKey.QueryViewer]}
             tabRenderers={{
                 [TabKey.LogViewer]: () => <LogViewer onClose={props.onClose} />,
-                [TabKey.QueryViewer]: () => <QueryViewer onClose={props.onClose} />,
+                [TabKey.QueryViewer]: () => <ShellQueryViewer onClose={props.onClose} />,
             }}
         />
     );
