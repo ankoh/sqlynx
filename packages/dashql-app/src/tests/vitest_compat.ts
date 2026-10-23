@@ -200,17 +200,17 @@ async function waitFor(assertion: () => unknown, options?: { interval?: number; 
     const interval = options?.interval ?? 10;
     const timeout = options?.timeout ?? 1000;
     const deadline = performance.now() + timeout;
-    let lastError: unknown;
-    do {
+    for (;;) {
+        // Check after every wait, a busy event loop may delay the last wait past the deadline.
+        const expired = performance.now() >= deadline;
         try {
             await assertion();
             return;
         } catch (error) {
-            lastError = error;
+            if (expired) throw error;
         }
         await new Promise(resolve => setTimeout(resolve, interval));
-    } while (performance.now() < deadline);
-    throw lastError;
+    }
 }
 
 function unsupportedModuleMocking(): never {

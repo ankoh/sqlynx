@@ -244,7 +244,7 @@ describe('injectVegaStableScaleDomains', () => {
 
         await vi.waitFor(() => expect(view.data(aggregateData!.name)).toEqual([
             expect.objectContaining({ category: 'B', count: 1 }),
-        ]));
+        ]), { timeout: 5_000 });
         expect(view.scale('x').domain()).toEqual(['A', 'B']);
         expect(view.scale('y').domain()).toEqual([0, 2]);
         updater.dispose();
