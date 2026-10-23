@@ -8,9 +8,9 @@ import {
     type QueryExecutionTracker,
 } from '../query/query_execution_state.js';
 import type { EmbeddedConnection } from '../platform/database/embedded_database.js';
-import { DashQLShellEnvironment } from './api.js';
+import { DashQLShellEnvironment } from '../shell/api.js';
 import { executeTrackedQuery } from '../query/tracked_query_execution.js';
-import { EMPTY_RESULT_IPC, reportShellTiming, SHELL_QUERY_METADATA, shouldShowResultUI, type ShellOutputMode } from './shell_result.js';
+import { EMPTY_RESULT_IPC, reportShellTiming, SHELL_QUERY_METADATA, shouldShowResultUI, type ShellOutputMode } from '../shell/shell_result.js';
 
 interface EmbeddedDatabaseShellEnvironmentOptions {
     getOutputMode?: () => ShellOutputMode;

@@ -9,7 +9,7 @@ import {
     createQueryExecutionState,
     QueryType,
 } from '../query/query_execution_state.js';
-import { SHELL_QUERY_HISTORY_LIMIT, ShellQueryExecutionTracker } from './query_execution.js';
+import { SHELL_QUERY_HISTORY_LIMIT, ShellQueryExecutionTracker } from '../shell/query_execution.js';
 import { useShellQueryResult } from './use_shell_query_result.js';
 
 function createExecution(queryId: number) {

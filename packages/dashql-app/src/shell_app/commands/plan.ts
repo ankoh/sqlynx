@@ -1,4 +1,4 @@
-import type { DashQLShellCommand } from '../api.js';
+import type { DashQLShellCommand } from '../../shell/api.js';
 
 export interface PlanCommandDependencies {
     requestDialog(signal?: AbortSignal): Promise<void>;

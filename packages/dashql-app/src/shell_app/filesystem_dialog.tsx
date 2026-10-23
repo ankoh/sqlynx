@@ -6,7 +6,7 @@ import { Overlay, OverlaySize } from '../ui/foundations/overlay.js';
 import { FileDirectoryIcon, FileIcon, PlusIcon, UnlinkIcon, XIcon } from '../ui/foundations/symbol_icon.js';
 import type { ExternalDirectoryMode } from '../platform/database/embedded_database.js';
 import { CopyToClipboardButton } from '../utils/clipboard.js';
-import type { ShellFileListing } from './shell_files.js';
+import type { ShellFileListing } from '../shell/shell_files.js';
 import * as styles from './filesystem_dialog.module.css';
 
 export interface FilesystemDialogActions {

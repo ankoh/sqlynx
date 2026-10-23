@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { DashQLShell } from '../api.js';
+import { DashQLShell } from '../../shell/api.js';
 import { examplesCommand, SHELL_EXAMPLES } from './examples.js';
 
 declare const DASHQL_SHELL_PRECOMPILED: Promise<Uint8Array>;

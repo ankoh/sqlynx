@@ -3,7 +3,7 @@ import * as arrow from 'apache-arrow';
 
 import { QueryExecutionStatus } from '../query/query_execution_state.js';
 import { createEmbeddedDatabaseShellEnvironment } from './embedded_database_shell_environment.js';
-import { ShellQueryExecutionTracker } from './query_execution.js';
+import { ShellQueryExecutionTracker } from '../shell/query_execution.js';
 
 function deferred<T>() {
     let resolve!: (value: T) => void;

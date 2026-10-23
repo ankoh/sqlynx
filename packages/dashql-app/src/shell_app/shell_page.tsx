@@ -7,8 +7,8 @@ import type { EmbeddedExternalDirectoryDatabase, EmbeddedExternalFileDatabase } 
 import { useEmbeddedDatabaseSetup } from '../platform/database/embedded_database_provider.js';
 import { stringifyError } from '../platform/logger/logger.js';
 import { useLogger } from '../platform/logger/logger_provider.js';
-import { createDashQLShell, type DashQLShell, type DashQLShellCommand } from './api.js';
-import type { BrowserShellController } from './browser_shell.js';
+import { createDashQLShell, type DashQLShell, type DashQLShellCommand } from '../shell/api.js';
+import type { BrowserShellController } from '../shell/browser_shell.js';
 import { analyzeTable } from '../compute/computation_logic.js';
 import { useComputationDispatch } from '../compute/computation_registry.js';
 import { ShellQueryResultOverlay } from '../app/session/shell/shell_query_result_overlay.js';
@@ -17,13 +17,13 @@ import { createLoginCommand, type SalesforceLoginAuthentication } from './comman
 import { SalesforceLoginHistoryStore } from './salesforce_login_history.js';
 import { examplesCommand } from './commands/examples.js';
 import { useShellQueryHistory } from './shell_query_history.js';
-import { createShellOutputCommand, type ShellOutputMode } from './shell_result.js';
+import { createShellOutputCommand, type ShellOutputMode } from '../shell/shell_result.js';
 import {
     createShellFilesCommand,
     selectPlatformDirectory,
     selectPlatformFiles,
     ShellFileRegistry,
-} from './shell_files.js';
+} from '../shell/shell_files.js';
 import { useMountDialog } from './filesystem_mount_dialog.js';
 import { useFilesystemDialog } from './filesystem_dialog.js';
 import { createFormatCommand } from './commands/format.js';
@@ -306,7 +306,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             shell = nextShell;
             shellRef.current = nextShell;
             nextShell.setKeywordCase(keywordCaseRef.current);
-            const { embedDashQLShell } = await import('./browser_shell.js');
+            const { embedDashQLShell } = await import('../shell/browser_shell.js');
             if (cancelled || containerRef.current == null) return;
             const nextController = await embedDashQLShell({
                 container: containerRef.current,

@@ -1,4 +1,4 @@
-import type { DashQLShellCommand } from '../api.js';
+import type { DashQLShellCommand } from '../../shell/api.js';
 
 export const SHELL_EXAMPLES = `-- Vega cars
 SELECT * FROM external('https://data.dashql.app/vega-cars/v1/cars.parquet') limit 10;
