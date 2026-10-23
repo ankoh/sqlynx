@@ -204,10 +204,12 @@ describe('ComputationState', () => {
         const tableLifetime = new AbortController();
         const action: ComputationAction = {
             type: COMPUTATION_FROM_QUERY_RESULT,
-            value: [1, inputTable, inputTableColumns, tableLifetime],
+            value: [1, inputTable, inputTableColumns, tableLifetime, 'connection'],
         };
         const output = reduceComputationState(state, action, memory);
         expect(Object.entries(output.tableComputations).length).toEqual(1);
+        // The computation queries are tracked on the connection that ran the query of the table
+        expect(output.tableComputations[1].connectionId).toBe('connection');
         expect(output.tableComputations[1].dataTable).toEqual(inputTable);
         expect(output.tableComputations[1].dataTableFieldsByName).toEqual(inputTableFieldIndex);
         expect(output.tableComputations[1].columnGroups).toEqual(inputTableColumns);

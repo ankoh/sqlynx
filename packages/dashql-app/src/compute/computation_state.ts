@@ -14,6 +14,9 @@ const LOG_CTX = 'computation_state';
 export interface TableComputationState {
     /// The table id
     tableId: number;
+    /// The connection that ran the query of the table, its query history lists the computation queries.
+    /// Null for a host without connections.
+    connectionId: string | null;
     /// The tasks
     tasks: TableComputationTasks;
 
@@ -110,9 +113,10 @@ export function createArrowFieldIndex(table: arrow.Table): Map<string, number> {
 }
 
 /// Create the table computation state
-export function createTableComputationState(computationId: number, table: arrow.Table, tableColumns: ColumnGroup[], tableLifetime: AbortController): TableComputationState {
+export function createTableComputationState(computationId: number, table: arrow.Table, tableColumns: ColumnGroup[], tableLifetime: AbortController, connectionId: string | null = null): TableComputationState {
     return {
         tableId: computationId,
+        connectionId,
         tasks: {
             filteringTask: null,
             orderingTask: null,
@@ -170,7 +174,7 @@ export type ComputationAction =
     | VariantKind<typeof UPDATE_SCHEDULER_TASK, [TaskVariant, Partial<TaskProgress>]>
     | VariantKind<typeof UNREGISTER_SCHEDULER_TASK, TaskVariant>
 
-    | VariantKind<typeof COMPUTATION_FROM_QUERY_RESULT, [number, arrow.Table, ColumnGroup[], AbortController]>
+    | VariantKind<typeof COMPUTATION_FROM_QUERY_RESULT, [number, arrow.Table, ColumnGroup[], AbortController, (string | null)?]>
     | VariantKind<typeof DELETE_COMPUTATION, [number]>
     | VariantKind<typeof CREATED_DATA_FRAME, [number, DataFrame]>
 
@@ -224,12 +228,12 @@ export function reduceComputationState(state: ComputationState, action: Computat
         }
 
         case COMPUTATION_FROM_QUERY_RESULT: {
-            const [tableId, table, tableColumns, tableLifetime] = action.value;
+            const [tableId, table, tableColumns, tableLifetime, connectionId] = action.value;
             const previousTableState = state.tableComputations[tableId];
             if (previousTableState !== undefined) {
                 destroyTableComputationState(previousTableState, memory);
             }
-            const tableState = createTableComputationState(tableId, table, tableColumns, tableLifetime);
+            const tableState = createTableComputationState(tableId, table, tableColumns, tableLifetime, connectionId ?? null);
             return {
                 ...state,
                 tableComputations: {

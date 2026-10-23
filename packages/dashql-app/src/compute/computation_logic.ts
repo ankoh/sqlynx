@@ -115,7 +115,7 @@ function getSmallIntegerDomainSize(minValue: unknown, maxValue: unknown, maxSize
 ///     Whenever a user updates a cross-filter (by brushing or selecting a distinct value), we just recompute the column summaries
 ///     with the new set of cross-filters and update the UI.
 ///
-export async function analyzeTable(tableId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, database: EmbeddedComputeDatabase, logger: LoggerLike, projection?: UmapRequest): Promise<void> {
+export async function analyzeTable(tableId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, database: EmbeddedComputeDatabase, logger: LoggerLike, projection?: UmapRequest, connectionId: string | null = null): Promise<void> {
     // Statements such as DDL can legitimately produce an Arrow table without columns. There is
     // nothing to summarize, and embedded databases reject importing a zero-column table.
     if (table.numCols === 0) {
@@ -126,7 +126,7 @@ export async function analyzeTable(tableId: number, table: arrow.Table, dispatch
     const computeAbortCtrl = new AbortController();
     dispatch({
         type: COMPUTATION_FROM_QUERY_RESULT,
-        value: [tableId, table!, gridColumnGroups, computeAbortCtrl]
+        value: [tableId, table!, gridColumnGroups, computeAbortCtrl, connectionId]
     });
 
     const inputTableName = generateTableName("__input");

@@ -544,3 +544,16 @@ export type TaskVariant =
     | ComputationTask<typeof FILTERED_COLUMN_AGGREGATION_TASK, WithFilter<ColumnAggregationTask>, WithFilterEpoch<ColumnAggregationVariant> | null>
     | ComputationTask<typeof DATA_SEARCH_TASK, DataSearchTask, DataSearchTable>
     ;
+
+/// The title of the queries of a task in the query history
+export function computationTaskTitle(task: TaskVariant): string {
+    switch (task.type) {
+        case COLUMN_AGGREGATION_TASK: return 'Column aggregation';
+        case TABLE_FILTERING_TASK: return 'Table filtering';
+        case TABLE_ORDERING_TASK: return 'Table ordering';
+        case TABLE_AGGREGATION_TASK: return 'Table aggregation';
+        case SYSTEM_COLUMN_COMPUTATION_TASK: return 'System column computation';
+        case FILTERED_COLUMN_AGGREGATION_TASK: return 'Filtered column aggregation';
+        case DATA_SEARCH_TASK: return 'Data search';
+    }
+}

@@ -244,7 +244,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                                     queryTracker.dispatch({ type: QUERY_PROCESSING_RESULTS, value: [queryId] });
                                     await measurePostprocessing(async () => {
                                         await yieldToBrowser();
-                                        await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection);
+                                        await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection, connectionId);
                                         initialState.cancellation.signal.throwIfAborted();
                                     });
                                     queryTracker.dispatch({ type: QUERY_PROCESSED_RESULTS, value: [queryId] });
@@ -323,7 +323,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                             queryTracker.dispatch({ type: QUERY_PROCESSING_RESULTS, value: [queryId] });
                             await measurePostprocessing(async () => {
                                 await yieldToBrowser();
-                                await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection);
+                                await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection, connectionId);
                                 initialState.cancellation.signal.throwIfAborted();
                             });
                             queryTracker.dispatch({ type: QUERY_PROCESSED_RESULTS, value: [queryId] });
@@ -506,7 +506,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
                         await measurePostprocessing(async () => {
                             await yieldToBrowser();
-                            await analyzeTable(queryId, table!, computeDispatch, computeDb, traced, args.projection);
+                            await analyzeTable(queryId, table!, computeDispatch, computeDb, traced, args.projection, connectionId);
                             initialState.cancellation.signal.throwIfAborted();
                         });
 

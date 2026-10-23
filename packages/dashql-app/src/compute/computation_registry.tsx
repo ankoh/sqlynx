@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ComputationAction, ComputationState, createComputationState, reduceComputationState } from "./computation_state.js";
 import { Dispatch } from '../utils/variant.js';
-import { useStore, useStoreState } from '../utils/store.js';
+import { Store, useStore, useStoreState } from '../utils/store.js';
 import { useLogger } from '../platform/logger/logger_provider.js';
 import { DataFrameRegistry } from './data_frame.js';
 
@@ -10,6 +10,7 @@ import { DataFrameRegistry } from './data_frame.js';
 const COMPUTATION_STATE_CTX = React.createContext<ComputationState | null>(null);
 const COMPUTATION_DISPATCH_CTX = React.createContext<Dispatch<ComputationAction> | null>(null);
 const DATA_FRAME_REGISTRY_CTX = React.createContext<DataFrameRegistry | null>(null);
+const COMPUTATION_STORE_CTX = React.createContext<Store<ComputationState> | null>(null);
 
 export const useComputationRegistry = (): [ComputationState, Dispatch<ComputationAction>, DataFrameRegistry] => [
     React.useContext(COMPUTATION_STATE_CTX)!,
@@ -18,6 +19,8 @@ export const useComputationRegistry = (): [ComputationState, Dispatch<Computatio
 ];
 export const useComputationDispatch = () => React.useContext(COMPUTATION_DISPATCH_CTX)!;
 export const useDataFrameRegistry = () => React.useContext(DATA_FRAME_REGISTRY_CTX)!;
+/// Get the computation state without subscribing to its changes
+export const useComputationStore = () => React.useContext(COMPUTATION_STORE_CTX)!;
 
 interface ComputationRegistryProps {
     children: React.ReactElement[] | React.ReactElement;
@@ -34,11 +37,13 @@ export function ComputationRegistry(props: ComputationRegistryProps) {
     }, [store, dataFrameMemory]);
     return (
         <DATA_FRAME_REGISTRY_CTX.Provider value={dataFrameMemory}>
-            <COMPUTATION_DISPATCH_CTX.Provider value={dispatch}>
-                <COMPUTATION_STATE_CTX.Provider value={state}>
-                    {props.children}
-                </COMPUTATION_STATE_CTX.Provider>
-            </COMPUTATION_DISPATCH_CTX.Provider>
+            <COMPUTATION_STORE_CTX.Provider value={store}>
+                <COMPUTATION_DISPATCH_CTX.Provider value={dispatch}>
+                    <COMPUTATION_STATE_CTX.Provider value={state}>
+                        {props.children}
+                    </COMPUTATION_STATE_CTX.Provider>
+                </COMPUTATION_DISPATCH_CTX.Provider>
+            </COMPUTATION_STORE_CTX.Provider>
         </DATA_FRAME_REGISTRY_CTX.Provider>
     );
 }
