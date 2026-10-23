@@ -124,8 +124,8 @@ importers:
         specifier: ^10.4.1
         version: 10.4.1(jiti@2.7.0)(supports-color@8.1.1)
       hyperdb-wasm:
-        specifier: 0.0.27104-dev.wasm.g5798514d
-        version: 0.0.27104-dev.wasm.g5798514d
+        specifier: 0.0.27105-dev.wasm.g4ca63968
+        version: 0.0.27105-dev.wasm.g4ca63968
       immutable:
         specifier: ^5.1.9
         version: 5.1.9
@@ -1880,8 +1880,8 @@ packages:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
 
-  hyperdb-wasm@0.0.27104-dev.wasm.g5798514d:
-    resolution: {integrity: sha512-KRFWrGIkmgpPjymsAHbhSouAyklSJluXjDZEu3xNPZMQcZhfi8u7jhpgfv+lbBkRdvW/qrIhxtAXybagZPuOcw==}
+  hyperdb-wasm@0.0.27105-dev.wasm.g4ca63968:
+    resolution: {integrity: sha512-KXi8CM6459Iqg/W6nYV6FFgkK5n45oocHOYe7pZjTkOhZYpX0nRPbWT7lcG6cNBEhkhHqB0AB1Iq4LIa0Ly5Jw==}
     engines: {node: '>=24'}
 
   iconv-lite@0.6.3:
@@ -5124,7 +5124,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  hyperdb-wasm@0.0.27104-dev.wasm.g5798514d:
+  hyperdb-wasm@0.0.27105-dev.wasm.g4ca63968:
     dependencies:
       apache-arrow: 21.1.0
     transitivePeerDependencies:
