@@ -7,17 +7,16 @@ import { registerConnection, sessionConnectionFromState, type ConnectionRegistry
 import type { SessionScripts, ScriptData } from '../scripts/session_scripts.js';
 import { addSessionScriptsForConnection, type SessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { createEmptyScriptData, destroySessionScripts, replaceScriptSessionText, scriptConnectionOf, sessionConnectionIds } from '../scripts/session_scripts.js';
-import { decodeConnectionFromProto, restoreConnectionState } from '../../connections/connection_import.js';
+import { connectionStateFromStorage, destroyUnregisteredConnection, restoreConnectionCatalog } from '../../connections/connection_restore.js';
 import { CONNECTOR_TYPES, ConnectorType } from '../../connections/connector_info.js';
 import type { StorageBackend, SessionEntry, SessionData, SessionRegistryBackend, ConnectionEntry, SessionConnection, SessionScript } from '../../storage/storage_backend.js';
-import { StorageBackendType, STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, defaultSessionConnection, isSessionRegistryBackend } from '../../storage/storage_backend.js';
-import { connectionCatalogIsDurable, connectionParamsEqual } from '../../connections/connection_params.js';
+import { StorageBackendType, defaultSessionConnection, isSessionRegistryBackend } from '../../storage/storage_backend.js';
+import { connectionParamsEqual } from '../../connections/connection_params.js';
 import { patchSessionConnection, upsertConnectionEntry } from '../../storage/storage_writer.js';
 import { withSessionScripts } from '../../storage/session_files.js';
 import { resolveSessionScripts, sessionScriptsResolutionChanged, type SessionConnectionResolver } from './session_script_connections.js';
 import { validateSessionData, describeInvalidSession, isValidUuid, SessionValidationError, type InvalidSession } from '../../storage/session_validation.js';
-import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../connections/catalog_update_state.js';
-import { beginCatalogBatch, invalidateCatalogBatch, publishCatalogBatch, type BatchProcessor, type CatalogBatchEntry } from '../../connections/catalog_batch.js';
+import type { BatchProcessor } from '../../connections/catalog_batch.js';
 import { readSessionSettings, type SessionSettings } from '../scripts/session_settings.js';
 
 const LOG_CTX = "app_state_loader";
@@ -48,6 +47,27 @@ export interface AppStateRestorationProgress {
     restoreConnections: ProgressCounter;
     restoreCatalogs: ProgressCounter;
     restoreSessionScripts: ProgressCounter;
+}
+
+/// The progress counters of a restoration, every change is reported to the consumer
+class RestoreProgress {
+    /// The restored connections of the sessions
+    readonly connections = new ProgressCounter();
+    /// The restored catalogs of the sessions
+    readonly catalogs = new ProgressCounter();
+    /// The restored session scripts
+    readonly sessionScripts = new ProgressCounter();
+
+    constructor(private readonly consumer: (progress: AppStateRestorationProgress) => void) { }
+
+    /// Report the current progress
+    report(): void {
+        this.consumer({
+            restoreConnections: this.connections.clone(),
+            restoreCatalogs: this.catalogs.clone(),
+            restoreSessionScripts: this.sessionScripts.clone(),
+        });
+    }
 }
 
 /// Restores session scripts from storage
@@ -156,22 +176,12 @@ interface RestoreContext {
 interface RestorePendingWrites {
     /// Connections that sessions registered, they are missing in the app manifest
     connectionEntries: ConnectionEntry[];
-    /// Catalog files of connections that older versions of the app wrote and that are cleared
-    connectionFiles: Array<{ connectionId: string; fileName: string; text: string }>;
+    /// Catalog files of connections that hold dropped relations or changes, they are cleared
+    staleConnectionFiles: Array<{ connectionId: string; fileName: string }>;
     /// Sessions whose copies of connection params are stale
     sessionCopies: Array<{ sessionId: string; connectionId: string }>;
     /// Sessions whose script lists or connections disagree with the restored scripts
     sessionScriptLists: Array<{ sessionId: string; defaultConnectionId: string; scripts: SessionScript[]; connections: SessionConnection[] }>;
-}
-
-/// The catalog texts of a connection
-interface CatalogTexts {
-    /// The relations
-    relations: string | null;
-    /// The functions
-    functions: string | null;
-    /// The catalog changes of executed statements
-    changes: string | null;
 }
 
 function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Logger, processor: BatchProcessor | undefined): RestoreContext {
@@ -187,54 +197,15 @@ function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Log
         aliasesOf: new Map(),
         catalogsRestored: new Set(),
         newConnections: new Map(),
-        pendingWrites: { connectionEntries: [], connectionFiles: [], sessionCopies: [], sessionScriptLists: [] },
+        pendingWrites: { connectionEntries: [], staleConnectionFiles: [], sessionCopies: [], sessionScriptLists: [] },
     };
-}
-
-/// Restore the catalog of a connection from its persisted SQL.
-/// The relations and changes of a connection whose database doesn't outlive the app describe a
-/// database that is gone, they are dropped. Such a catalog is described by a refresh on connect.
-async function restoreConnectionCatalog(
-    ctx: RestoreContext,
-    connectionState: ConnectionState,
-    load: () => Promise<CatalogTexts>,
-    logContext: Record<string, string>,
-): Promise<void> {
-    const validate = beginCatalogBatch(connectionState.catalog);
-    const loaded = await load();
-    validate();
-    const durable = connectionCatalogIsDurable(connectionState.params);
-    const relations = durable ? loaded.relations : null;
-    const functions = loaded.functions;
-    const changes = durable ? loaded.changes : null;
-    const { catalog, catalogRelationScript, catalogFunctionScript } = connectionState;
-    const catalogScripts: CatalogBatchEntry[] = [];
-    if (relations && relations.trim().length > 0) {
-        ctx.logger.info("Catalog schema loaded", { ...logContext, schemaLength: relations.length.toString() }, LOG_CTX);
-        catalogScripts.push({ script: catalogRelationScript, text: relations, rank: CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK });
-    }
-    if (functions && functions.trim().length > 0) {
-        ctx.logger.info("Catalog functions loaded", { ...logContext, functionsLength: functions.length.toString() }, LOG_CTX);
-        catalogScripts.push({ script: catalogFunctionScript, text: functions, rank: CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK });
-    }
-    if (catalogScripts.length > 0) {
-        await publishCatalogBatch(ctx.core, catalog, catalogScripts, { processor: ctx.processor }, validate);
-        // A restored catalog is kept until an explicit refresh, only restored relations make it one
-        if (durable) {
-            connectionState.catalogUpdates.restoredAt = new Date();
-        }
-    }
-    if (changes != null && changes.trim().length > 0) {
-        restoreCatalogChanges(connectionState, changes, ctx.logger, logContext);
-    }
 }
 
 /// Restore a connection of the app manifest
 async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntry): Promise<void> {
     let state: ConnectionState;
     try {
-        const [connectorInfo, details] = decodeConnectionFromProto(entry.params as any, entry.id);
-        state = restoreConnectionState(ctx.core, entry.id, connectorInfo, details, entry.paramsDraft, entry.name);
+        state = connectionStateFromStorage(ctx.core, entry.id, entry);
     } catch (error) {
         // Sessions referencing the connection register it again from their copies
         ctx.logger.warn("Failed to restore connection", { connectionId: entry.id, error: stringifyError(error) }, LOG_CTX);
@@ -246,13 +217,11 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
         ctx.aliases.set(alias, entry.id);
     }
     ctx.aliasesOf.set(entry.id, entry.aliases ?? []);
-    await restoreStoredConnectionCatalog(ctx, ctx.registry!, state, { connectionId: entry.id });
+    await restoreCatalog(ctx, ctx.registry!, state, { connectionId: entry.id });
 }
 
-/// Restore the catalog of a connection from the files of the connection.
-/// Catalog restoration is non-critical, the connection is still usable and refreshes on connect.
-/// Returns false if the restoration failed.
-async function restoreStoredConnectionCatalog(
+/// Restore the catalog of a connection once, returns false if the restoration failed
+async function restoreCatalog(
     ctx: RestoreContext,
     registry: SessionRegistryBackend,
     state: ConnectionState,
@@ -260,43 +229,11 @@ async function restoreStoredConnectionCatalog(
 ): Promise<boolean> {
     const connectionId = state.connectionId;
     ctx.catalogsRestored.add(connectionId);
-    try {
-        let stored: CatalogTexts = { relations: null, functions: null, changes: null };
-        await restoreConnectionCatalog(ctx, state, async () => {
-            const [relations, functions, changes] = await Promise.all([
-                registry.loadConnectionFile(connectionId, STORAGE_CATALOG_RELATIONS),
-                registry.loadConnectionFile(connectionId, STORAGE_CATALOG_FUNCTIONS),
-                registry.loadConnectionFile(connectionId, STORAGE_CATALOG_CHANGES),
-            ]);
-            stored = { relations, functions, changes };
-            return stored;
-        }, logContext);
-        // Clear the dropped relations and changes that older versions of the app wrote
-        if (!connectionCatalogIsDurable(state.params)) {
-            for (const [fileName, text] of [
-                [STORAGE_CATALOG_RELATIONS, stored.relations],
-                [STORAGE_CATALOG_CHANGES, stored.changes],
-            ] as const) {
-                if (text != null && text.length > 0) {
-                    ctx.pendingWrites.connectionFiles.push({ connectionId, fileName, text: '' });
-                }
-            }
-        }
-        return true;
-    } catch (error) {
-        ctx.logger.warn("Failed to restore connection catalog, will refresh on connect", {
-            ...logContext,
-            error: stringifyError(error),
-        }, LOG_CTX);
-        return false;
+    const restored = await restoreConnectionCatalog(ctx, registry, state, logContext);
+    for (const fileName of restored.staleFiles) {
+        ctx.pendingWrites.staleConnectionFiles.push({ connectionId, fileName });
     }
-}
-
-/// Create the state of a connection that the app doesn't know from the copy that a session holds.
-/// The connection is neither registered nor written, see `destroyUnregisteredConnection`.
-export function connectionStateFromCopy(core: DashQL, connectionId: string, copy: SessionConnection): ConnectionState {
-    const [connectorInfo, details] = decodeConnectionFromProto(copy.params as any, connectionId);
-    return restoreConnectionState(core, connectionId, connectorInfo, details, copy.paramsDraft, copy.name);
+    return restored.succeeded;
 }
 
 /// Resolve a session's reference to a connection.
@@ -310,7 +247,7 @@ function resolveSessionConnection(ctx: RestoreContext, sessionId: string, databa
         }
         return known;
     }
-    const state = connectionStateFromCopy(ctx.core, connectionId, database);
+    const state = connectionStateFromStorage(ctx.core, connectionId, database);
     ctx.connectionStates.set(state.connectionId, state);
     ctx.connectionStatesByType[state.connectorInfo.connectorType].push(state.connectionId);
     ctx.newConnections.set(state.connectionId, state);
@@ -334,10 +271,7 @@ async function restoreSessionEntry(
     sessionEntry: SessionEntry,
     sessionScripts: Map<string, SessionScripts>,
     sessionScriptsByConnection: Map<string, string[]>,
-    restoreConnections: ProgressCounter,
-    restoreCatalogs: ProgressCounter,
-    restoreSessionScriptsProgress: ProgressCounter,
-    progressConsumer: (progress: AppStateRestorationProgress) => void,
+    progress: RestoreProgress,
 ): Promise<void> {
     const { backend, logger } = ctx;
     // The session UUID is the authoritative identity and the key the backend routes on. Gate it up
@@ -356,12 +290,8 @@ async function restoreSessionEntry(
     // Phase 1: Resolve the connections
     logger.info("Restoring connection", { sessionId }, LOG_CTX);
     const connectionStartTime = performance.now();
-    restoreConnections.addStarted();
-    progressConsumer({
-        restoreConnections: restoreConnections.clone(),
-        restoreCatalogs: restoreCatalogs.clone(),
-        restoreSessionScripts: restoreSessionScriptsProgress.clone(),
-    });
+    progress.connections.addStarted();
+    progress.report();
 
     const sessionData = await loadValidSession(backend, logger, sessionEntry);
 
@@ -380,33 +310,25 @@ async function restoreSessionEntry(
         durationMs: connectionDuration.toFixed(2)
     }, LOG_CTX);
 
-    restoreConnections.addSucceeded();
+    progress.connections.addSucceeded();
 
     // Phase 2: Restore the catalog of a connection that the session registered. The connections of
     // the app manifest restored their catalogs already.
     logger.info("Restoring catalog", { sessionId }, LOG_CTX);
-    restoreCatalogs.addStarted();
-    progressConsumer({
-        restoreConnections: restoreConnections.clone(),
-        restoreCatalogs: restoreCatalogs.clone(),
-        restoreSessionScripts: restoreSessionScriptsProgress.clone(),
-    });
+    progress.catalogs.addStarted();
+    progress.report();
     if (ctx.registry == null || ctx.catalogsRestored.has(connectionState.connectionId)
-        || await restoreStoredConnectionCatalog(ctx, ctx.registry, connectionState, { sessionId, connectionId: connectionState.connectionId })) {
-        restoreCatalogs.addSucceeded();
+        || await restoreCatalog(ctx, ctx.registry, connectionState, { sessionId, connectionId: connectionState.connectionId })) {
+        progress.catalogs.addSucceeded();
     } else {
-        restoreCatalogs.addFailed();
+        progress.catalogs.addFailed();
     }
 
     // Phase 3: Restore session scripts
     logger.info("Restoring session scripts", { sessionId }, LOG_CTX);
     const sessionScriptsStartTime = performance.now();
-    restoreSessionScriptsProgress.addStarted();
-    progressConsumer({
-        restoreConnections: restoreConnections.clone(),
-        restoreCatalogs: restoreCatalogs.clone(),
-        restoreSessionScripts: restoreSessionScriptsProgress.clone(),
-    });
+    progress.sessionScripts.addStarted();
+    progress.report();
 
     let restoredSessionScripts: SessionScripts | null = null;
     try {
@@ -434,7 +356,7 @@ async function restoreSessionEntry(
             durationMs: sessionScriptsDuration.toFixed(2)
         }, LOG_CTX);
 
-        restoreSessionScriptsProgress.addSucceeded();
+        progress.sessionScripts.addSucceeded();
     } catch (sessionScriptsError) {
         const sessionScriptsDuration = performance.now() - sessionScriptsStartTime;
 
@@ -445,7 +367,7 @@ async function restoreSessionEntry(
             stack: (sessionScriptsError instanceof Error ? sessionScriptsError.stack : (sessionScriptsError as any)?.stack)?.substring(0, 500)
         }, LOG_CTX);
 
-        restoreSessionScriptsProgress.addFailed();
+        progress.sessionScripts.addFailed();
     }
 
     if (restoredSessionScripts != null) {
@@ -455,11 +377,7 @@ async function restoreSessionEntry(
         }
     }
 
-    progressConsumer({
-        restoreConnections: restoreConnections.clone(),
-        restoreCatalogs: restoreCatalogs.clone(),
-        restoreSessionScripts: restoreSessionScriptsProgress.clone(),
-    });
+    progress.report();
 }
 
 /// Load a session and validate its metadata
@@ -541,8 +459,8 @@ async function flushRestoredConnectionWrites(ctx: RestoreContext, registry: Sess
                 return next;
             });
         }
-        for (const { connectionId, fileName, text } of pendingWrites.connectionFiles) {
-            await registry.saveConnectionFile(connectionId, fileName, text);
+        for (const { connectionId, fileName } of pendingWrites.staleConnectionFiles) {
+            await registry.saveConnectionFile(connectionId, fileName, '');
         }
     } catch (error) {
         logger.warn("Failed to persist restored connections", { error: stringifyError(error) }, LOG_CTX);
@@ -596,31 +514,9 @@ export function mergeRestoredSessionIntoScripts(
     return { ...reg };
 }
 
-/// Apply the catalog changes of executed statements on top of the restored relation script.
-/// Unreadable changes are dropped, the next catalog refresh describes the relations anyway.
-function restoreCatalogChanges(connection: ConnectionState, changesSql: string, logger: Logger, logContext: Record<string, string>): void {
-    try {
-        connection.catalog.applyCatalogChangesSql(connection.catalogRelationScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, changesSql);
-        connection.catalogChangesSql = changesSql;
-        logger.info("Catalog changes restored", { ...logContext, changesLength: changesSql.length.toString() }, LOG_CTX);
-    } catch (error) {
-        logger.warn("Failed to restore the catalog changes", { ...logContext, error: stringifyError(error) }, LOG_CTX);
-    }
-}
-
 export function destroyRestoredSession(restored: RestoredSession): void {
     destroySessionScripts(restored.sessionScripts);
     for (const database of restored.databases) destroyUnregisteredConnection(database);
-}
-
-/// Destroy a connection that was created but never registered
-export function destroyUnregisteredConnection(connection: ConnectionState): void {
-    invalidateCatalogBatch(connection.catalog);
-    connection.catalog.dropDescriptor(connection.catalogRelationScript.catalog_entry_id);
-    connection.catalog.dropDescriptor(connection.catalogFunctionScript.catalog_entry_id);
-    connection.catalogRelationScript.destroy();
-    connection.catalogFunctionScript.destroy();
-    connection.catalog.destroy();
 }
 
 /// The live connections that a restored session resolves its references against
@@ -661,17 +557,13 @@ export async function restoreSingleSession(
     const sessionScripts = new Map<string, SessionScripts>();
     const sessionScriptsByConnection = new Map<string, string[]>();
 
-    const noopConsumer = () => { };
     try {
         await restoreSessionEntry(
             ctx,
             sessionEntry,
             sessionScripts,
             sessionScriptsByConnection,
-            new ProgressCounter(),
-            new ProgressCounter(),
-            new ProgressCounter(),
-            noopConsumer,
+            new RestoreProgress(() => { }),
         );
     } catch (error) {
         for (const database of ctx.newConnections.values()) destroyUnregisteredConnection(database);
@@ -709,10 +601,7 @@ export async function restoreAppState(
     const sessionScriptsByConnection = new Map<string, string[]>();
     const invalidSessions = new Map<string, InvalidSession>();
 
-    // Initialize progress counters
-    const restoreConnections = new ProgressCounter();
-    const restoreCatalogs = new ProgressCounter();
-    const restoreSessionScriptsProgress = new ProgressCounter();
+    const progress = new RestoreProgress(progressConsumer);
 
     try {
         // Load manifest
@@ -738,15 +627,11 @@ export async function restoreAppState(
         }
 
         // Set totals.
-        restoreConnections.addTotal(sessionEntries.length);
-        restoreCatalogs.addTotal(sessionEntries.length);
-        restoreSessionScriptsProgress.addTotal(sessionEntries.length);
+        progress.connections.addTotal(sessionEntries.length);
+        progress.catalogs.addTotal(sessionEntries.length);
+        progress.sessionScripts.addTotal(sessionEntries.length);
 
-        progressConsumer({
-            restoreConnections: restoreConnections.clone(),
-            restoreCatalogs: restoreCatalogs.clone(),
-            restoreSessionScripts: restoreSessionScriptsProgress.clone(),
-        });
+        progress.report();
 
         // Process each session
         logger.info("Restoring sessions", { count: sessionEntries.length.toString() }, LOG_CTX);
@@ -765,10 +650,7 @@ export async function restoreAppState(
                     sessionEntry,
                     sessionScripts,
                     sessionScriptsByConnection,
-                    restoreConnections,
-                    restoreCatalogs,
-                    restoreSessionScriptsProgress,
-                    progressConsumer,
+                    progress,
                 );
 
                 const sessionDuration = performance.now() - sessionStartTime;
@@ -786,15 +668,11 @@ export async function restoreAppState(
                     // rather than *failed* — nothing was attempted, the metadata was simply
                     // unusable. The session contributed no connection/catalog/scripts/scripts.
                     invalidSessions.set(error.invalid.sessionId, error.invalid);
-                    restoreConnections.addSkipped();
-                    restoreCatalogs.addSkipped();
-                    restoreSessionScriptsProgress.addSkipped();
+                    progress.connections.addSkipped();
+                    progress.catalogs.addSkipped();
+                    progress.sessionScripts.addSkipped();
 
-                    progressConsumer({
-                        restoreConnections: restoreConnections.clone(),
-                        restoreCatalogs: restoreCatalogs.clone(),
-                        restoreSessionScripts: restoreSessionScriptsProgress.clone(),
-                    });
+                    progress.report();
                     continue;
                 }
 
@@ -805,14 +683,10 @@ export async function restoreAppState(
                     error: stringifyError(error)
                 }, LOG_CTX);
 
-                restoreConnections.addFailed();
-                restoreCatalogs.addFailed();
-                restoreSessionScriptsProgress.addFailed();
-                progressConsumer({
-                    restoreConnections: restoreConnections.clone(),
-                    restoreCatalogs: restoreCatalogs.clone(),
-                    restoreSessionScripts: restoreSessionScriptsProgress.clone(),
-                });
+                progress.connections.addFailed();
+                progress.catalogs.addFailed();
+                progress.sessionScripts.addFailed();
+                progress.report();
             }
         }
     } catch (manifestError) {
@@ -823,20 +697,16 @@ export async function restoreAppState(
 
     await flushRestoreWrites(ctx);
 
-    progressConsumer({
-        restoreConnections: restoreConnections.clone(),
-        restoreCatalogs: restoreCatalogs.clone(),
-        restoreSessionScripts: restoreSessionScriptsProgress.clone(),
-    });
+    progress.report();
 
     const totalDuration = performance.now() - startTime;
     logger.info("Finished loading app state", {
         connections: ctx.connectionStates.size.toString(),
         sessionScripts: sessionScripts.size.toString(),
         invalidSessions: invalidSessions.size.toString(),
-        connectionsSucceeded: restoreConnections.succeeded.toString(),
-        connectionsFailed: restoreConnections.failed.toString(),
-        connectionsSkipped: restoreConnections.skipped.toString(),
+        connectionsSucceeded: progress.connections.succeeded.toString(),
+        connectionsFailed: progress.connections.failed.toString(),
+        connectionsSkipped: progress.connections.skipped.toString(),
         totalDurationMs: totalDuration.toFixed(2)
     }, LOG_CTX);
 

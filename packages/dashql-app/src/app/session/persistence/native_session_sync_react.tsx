@@ -11,7 +11,7 @@ import { getAppFlavor } from '../../flavor/flavor_resolution.js';
 import { NativeSessionSyncService, nativeSessionWatchForLocation } from './native_session_sync.js';
 import type { SessionScriptsStorageSnapshot, SessionScripts } from '../scripts/session_scripts.js';
 import { persistedConnectionId, sessionScriptList } from '../scripts/session_scripts.js';
-import { connectionStateFromCopy, destroyUnregisteredConnection } from './app_state_loader.js';
+import { connectionStateFromStorage, destroyUnregisteredConnection } from '../../connections/connection_restore.js';
 import { resolveSessionScripts, sessionScriptsResolutionChanged } from './session_script_connections.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
 import {
@@ -61,7 +61,7 @@ export function readStoredSessionScripts(
     const resolved = resolveSessionScripts(session, scripts.map(script => script.name), main, (connectionId, copy) => {
         const known = registry.connections.get(connectionId);
         if (known != null || copy == null) return known ?? null;
-        const connection = connectionStateFromCopy(main.instance, connectionId, copy);
+        const connection = connectionStateFromStorage(main.instance, connectionId, copy);
         created.push(connection);
         return connection;
     });
