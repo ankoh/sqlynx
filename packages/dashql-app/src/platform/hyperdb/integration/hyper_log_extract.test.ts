@@ -1,9 +1,8 @@
 import * as arrow from 'apache-arrow';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { createWebHyperDBClient } from '../hyperdb_provider_web.js';
-import { HYPERDB_WASM_ENGINE_SETTINGS } from '../hyperdb_settings.js';
-import { HyperDB, quoteIdentifier, type HyperDBConnection, type HyperDBEngineClient } from '../hyperdb_wasm.js';
+import { createTestHyperDBClient } from '../../../tests/hyperdb_test_client.js';
+import { HyperDB, HyperDBEngine, quoteIdentifier, type HyperDBConnection, type HyperDBClient } from '../hyperdb_wasm.js';
 import {
     HyperDBIncrementalExtract,
     type HyperDBIncrementalExtractOptions,
@@ -81,19 +80,11 @@ function countUserErrors(connection: HyperDBConnection, tag: string): Promise<nu
     return countQueryEnds(connection, 'query-end-user-error', tag);
 }
 
-async function createInitializedClient(): Promise<HyperDBEngineClient> {
-    const client = await createWebHyperDBClient();
-    await client.ready();
-    const result = await client.initialize(JSON.stringify(HYPERDB_WASM_ENGINE_SETTINGS));
-    if (result.state !== 'ok') throw new Error(`initialize HyperDB returned ${result.state}`);
-    return client;
-}
-
 describe('HyperDB Wasm log extract', () => {
     /// The client of the source Hyper whose log is extracted
-    let engineClient: HyperDBEngineClient;
+    let engineClient: HyperDBClient;
     /// The client of a separate sink Hyper process that holds the extract file
-    let sinkClient: HyperDBEngineClient;
+    let sinkClient: HyperDBClient;
     let database: HyperDB | null = null;
     let sinkDatabase: HyperDB | null = null;
     let nextDatabase = 1;
@@ -104,20 +95,20 @@ describe('HyperDB Wasm log extract', () => {
     beforeAll(async () => {
         engineClient = globalThis.__DASHQL_TEST_HYPERDB_CLIENT__
             ? await globalThis.__DASHQL_TEST_HYPERDB_CLIENT__()
-            : await createInitializedClient();
-        sinkClient = await createInitializedClient();
+            : await createTestHyperDBClient();
+        sinkClient = await createTestHyperDBClient();
     }, 60_000);
 
     beforeEach(async () => {
-        database = await HyperDB.create(engineClient, undefined, {
+        database = await HyperDB.create(new HyperDBEngine(engineClient), {
             computeDatabasePath: `/mnt/fs/dashql-log-extract-${nextDatabase++}.hyper`,
             defaultDatabasePath: `/mnt/fs/dashql-log-extract-${nextDatabase++}.hyper`,
-            terminateClient: false,
+            terminateEngine: false,
         });
-        sinkDatabase = await HyperDB.create(sinkClient, undefined, {
+        sinkDatabase = await HyperDB.create(new HyperDBEngine(sinkClient), {
             computeDatabasePath: `/mnt/fs/dashql-log-sink-${nextDatabase++}.hyper`,
             defaultDatabasePath: `/mnt/fs/dashql-log-sink-${nextDatabase++}.hyper`,
-            terminateClient: false,
+            terminateEngine: false,
         });
         extractPath = `/mnt/fs/${uniqueTag('hyper_log_extract')}.hyper`;
     }, 60_000);

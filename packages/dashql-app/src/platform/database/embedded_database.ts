@@ -6,10 +6,23 @@ export interface EmbeddedTableInsertOptions {
     create?: boolean;
 }
 
+/// The record batches of a running query
+export interface EmbeddedResultStream extends AsyncIterable<arrow.RecordBatch> {
+    /// The schema of the result
+    readonly schema: arrow.Schema;
+    /// Read the next record batch
+    next(): Promise<IteratorResult<arrow.RecordBatch>>;
+    /// Stop reading, a query that did not finish is cancelled
+    cancel(): Promise<void>;
+}
+
 export interface EmbeddedConnection {
     close(): Promise<void>;
-    query(query: string): Promise<arrow.Table>;
-    queryArrowIPC(query: string, abort?: AbortSignal): Promise<Uint8Array>;
+    /// Run a query and read its whole result, statements without a result give a table without columns.
+    query(query: string, abort?: AbortSignal): Promise<arrow.Table>;
+    /// Run a query and stream the result batches as the engine produces them.
+    /// The connection serves nothing else until the stream is read to the end or cancelled.
+    queryStream(query: string, abort?: AbortSignal): Promise<EmbeddedResultStream>;
     /// Run a statement without a result, returns the affected rows of COPY, DELETE, FETCH, INSERT, MERGE and UPDATE.
     execute(statement: string, abort?: AbortSignal): Promise<bigint | null>;
 }

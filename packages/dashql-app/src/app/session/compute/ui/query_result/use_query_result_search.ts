@@ -1,4 +1,3 @@
-import * as arrow from 'apache-arrow';
 import * as React from 'react';
 
 import {
@@ -91,10 +90,7 @@ export function useQueryResultSearch(
         dataFrameMemory.acquire(table.dataFrame);
         void (async () => {
             try {
-                const result = await table.dataFrame!.withConnection(async connection => {
-                    const bytes = await connection.queryArrowIPC(sql, execution.abort.signal);
-                    return new arrow.Table(arrow.RecordBatchReader.from(bytes));
-                });
+                const result = await table.dataFrame!.withConnection(async connection => await connection.query(sql, execution.abort.signal));
                 dispatch({
                     type: COLUMN_SEARCH_SUCCEEDED,
                     value: [table.tableId, table.dataFrame!, search.requestId, parseColumnSearchMatches(result)],

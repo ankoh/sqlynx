@@ -14,9 +14,8 @@ import {
     SquareFillIcon,
 } from '../ui/foundations/symbol_icon.js';
 import { TextInput } from '../ui/foundations/text_input.js';
-import { createWebHyperDBClient } from '../platform/hyperdb/hyperdb_provider_web.js';
-import { HYPERDB_WASM_ENGINE_SETTINGS } from '../platform/hyperdb/hyperdb_settings.js';
-import type { HyperDBEngineClient, HyperDBResult } from '../platform/hyperdb/hyperdb_wasm.js';
+import type { HyperDBClient } from '../platform/hyperdb/hyperdb_wasm.js';
+import { createTestHyperDBClient } from './hyperdb_test_client.js';
 import {
     BROWSER_TEST_MESSAGE_SOURCE,
     type BrowserTestCase,
@@ -37,25 +36,13 @@ declare global {
 const coreBytes = fetch(coreWasmUrl).then(response => response.bytes());
 globalThis.DASHQL_PRECOMPILED = coreBytes;
 
-function expectHyperDBOK(result: HyperDBResult, operation: string): void {
-    if (result.state !== 'ok') {
-        const detail = result.state === 'error' || result.state === 'busy' ? `: ${result.error}` : '';
-        throw new Error(`${operation} returned ${result.state}${detail}`);
-    }
-}
-
-function getHyperDBClient(): Promise<HyperDBEngineClient> {
+function getHyperDBClient(): Promise<HyperDBClient> {
     globalThis.__DASHQL_TEST_HYPERDB_CLIENT_PROMISE__ ??= (async () => {
         const creation = (globalThis.__DASHQL_TEST_HYPERDB_CLIENT_CREATIONS__ ?? 0) + 1;
         globalThis.__DASHQL_TEST_HYPERDB_CLIENT_CREATIONS__ = creation;
-        let client: HyperDBEngineClient | null = null;
         try {
-            client = await createWebHyperDBClient();
-            await client.ready();
-            expectHyperDBOK(await client.initialize(JSON.stringify(HYPERDB_WASM_ENGINE_SETTINGS)), 'initialize shared HyperDB');
-            return client;
+            return await createTestHyperDBClient();
         } catch (error) {
-            await client?.terminate();
             const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
             const failure = new Error(`Shared HyperDB startup #${creation} failed: ${detail}`);
             if (error instanceof Error && error.stack) failure.stack = `${failure.stack}\nCaused by: ${error.stack}`;

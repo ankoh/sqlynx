@@ -1,8 +1,8 @@
 import * as arrow from 'apache-arrow';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { createWebHyperDBClient } from '../hyperdb_provider_web.js';
-import { HyperDB, type HyperDBEngineClient } from '../hyperdb_wasm.js';
+import { createTestHyperDBClient } from '../../../tests/hyperdb_test_client.js';
+import { HyperDB, HyperDBEngine, type HyperDBClient } from '../hyperdb_wasm.js';
 
 function toPlainObjects(table: arrow.Table): Record<string, unknown>[] {
     return table.toArray().map(row => Object.fromEntries(Object.keys(row).map(key => [key, row[key]])));
@@ -17,21 +17,21 @@ async function ignoreCleanupFailure(cleanup: () => Promise<void>): Promise<void>
 }
 
 describe('HyperDB Wasm Iceberg integration', () => {
-    let engineClient: HyperDBEngineClient;
+    let engineClient: HyperDBClient;
     let database: HyperDB | null = null;
     let nextDatabase = 1;
 
     beforeAll(async () => {
         engineClient = globalThis.__DASHQL_TEST_HYPERDB_CLIENT__
             ? await globalThis.__DASHQL_TEST_HYPERDB_CLIENT__()
-            : await createWebHyperDBClient();
+            : await createTestHyperDBClient();
     });
 
     beforeEach(async () => {
-        database = await HyperDB.create(engineClient, undefined, {
+        database = await HyperDB.create(new HyperDBEngine(engineClient), {
             computeDatabasePath: `/mnt/fs/dashql-iceberg-${nextDatabase++}.hyper`,
             defaultDatabasePath: `/mnt/fs/dashql-iceberg-${nextDatabase++}.hyper`,
-            terminateClient: false,
+            terminateEngine: false,
         });
     }, 60_000);
 

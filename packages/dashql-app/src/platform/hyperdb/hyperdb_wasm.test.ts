@@ -1,13 +1,18 @@
 // @vitest-environment node
 import * as arrow from 'apache-arrow';
-import type { MountSource } from 'hyperdb-wasm/raw';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
     HyperDB,
-    type HyperDBEngineClient,
+    HyperDBEngine,
+    type HyperDBClient,
+    type HyperDBOptions,
     type HyperDBResult,
 } from './hyperdb_wasm.js';
+
+type MountSource = Parameters<HyperDBClient['mount']>[0];
+/// A scripted poll result, hold answers pending while the client holds queries
+type ScriptedPoll = HyperDBResult | 'hold';
 
 function handle(value: number): HyperDBResult {
     const payload = new Uint8Array(4);
@@ -19,13 +24,63 @@ function ipc(table: arrow.Table): Uint8Array {
     return arrow.tableToIPC(table, 'stream');
 }
 
-class FakeHyperDBEngineClient implements HyperDBEngineClient {
+/// The query information the engine reports when finishing a query
+const QUERY_INFO = {
+    version: 1,
+    status: 'succeeded',
+    started: true,
+    statementKind: null,
+    producesRows: false,
+    rowCount: null,
+    columnCount: null,
+    cancellationRequestedByUser: false,
+    queryPlan: null,
+    dependencies: [],
+    timings: {
+        elapsedSeconds: null,
+        parsingSeconds: null,
+        compilationSeconds: null,
+        executionSeconds: null,
+        commitSeconds: null,
+        timeToScheduleSeconds: null,
+        timeToFirstResultSeconds: null,
+        cancellationSeconds: null,
+    },
+    preExecutionMetrics: null,
+    executionMetrics: null,
+};
+
+function createDatabase(client: HyperDBClient, options?: HyperDBOptions): Promise<HyperDB> {
+    return HyperDB.create(new HyperDBEngine(client), options);
+}
+
+/// A directory handle that already holds the permissions of the requested mode
+function directoryHandle(name: string): FileSystemDirectoryHandle {
+    return {
+        kind: 'directory',
+        name,
+        queryPermission: async () => 'granted',
+        requestPermission: async () => 'granted',
+    } as unknown as FileSystemDirectoryHandle;
+}
+
+/// Record the object URLs that HyperDB creates and revokes for mounted files
+function trackObjectURLs(url: string): string[] {
+    const revoked: string[] = [];
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue(url);
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(revokedURL => { revoked.push(revokedURL); });
+    return revoked;
+}
+
+class FakeHyperDBEngineClient implements HyperDBClient {
     readonly calls: string[] = [];
     readonly queryResults = new Map<string, Uint8Array>();
     readonly temporaryFiles = new Map<string, Uint8Array>();
     readonly externalFiles = new Map<string, { url: string; size: number }>();
     readonly externalDirectories = new Map<string, { handle: FileSystemDirectoryHandle; mode: 'read' | 'readwrite' }>();
     readonly insertedTables = new Map<string, arrow.Table>();
+    /// The column descriptors of the external scans by target table
+    readonly insertedColumns = new Map<string, string>();
 
     connectCount = 0;
     disconnectCount = 0;
@@ -35,11 +90,15 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
     failStartQuery = false;
     failFinishQuery = false;
     failExternalFileRemoval = false;
+    /// Scripted polls hold the query pending while set
+    holdQueries = true;
+    /// Scripted poll results by SQL text, they take precedence over queryResults
+    readonly scriptedQueries = new Map<string, ScriptedPoll[]>();
 
     private nextConnection = 7;
     private nextQuery = 100;
     private nextFile = 1;
-    private readonly queries = new Map<number, HyperDBResult[]>();
+    private readonly queries = new Map<number, ScriptedPoll[]>();
 
     ready(): Promise<void> {
         this.calls.push('ready');
@@ -65,7 +124,29 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
     }
 
 
-    startQuery(connection: number, sql: string): Promise<HyperDBResult> {
+    async startQuery(connection: number, sql: string): Promise<HyperDBResult> {
+        const external = /^(CREATE TABLE|INSERT INTO) (.+?) (?:AS )?SELECT \* FROM external\('([^']+)', format => 'arrowstream', columns => descriptor\((.*)\)\)$/s.exec(sql);
+        if (external) {
+            const [, statement, target, path, columns] = external;
+            this.beginOperation();
+            this.calls.push(`insert:${connection}:${target}:${statement === 'CREATE TABLE'}`);
+            const query = this.nextQuery++;
+            const file = this.externalFiles.get(path);
+            if (!file) {
+                this.queries.set(query, [{ state: 'error', error: `missing external file: ${path}` }]);
+                return handle(query);
+            }
+            const table = arrow.tableFromIPC(new Uint8Array(await (await fetch(file.url)).arrayBuffer()));
+            const previous = this.insertedTables.get(target);
+            if (statement === 'INSERT INTO' && !previous) {
+                this.queries.set(query, [{ state: 'error', error: `missing table: ${target}` }]);
+                return handle(query);
+            }
+            this.insertedTables.set(target, previous && statement === 'INSERT INTO' ? previous.concat(table) : table);
+            this.insertedColumns.set(target, columns);
+            this.queries.set(query, [{ state: 'done' }]);
+            return handle(query);
+        }
         const lifecycleStatement = /^(?:CREATE|DROP|ATTACH|DETACH) DATABASE\b/.test(sql);
         if (lifecycleStatement) {
             this.beginOperation();
@@ -80,10 +161,13 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
         this.beginOperation();
         this.calls.push(`query:${connection}:${sql}`);
         const query = this.nextQuery++;
+        const scripted = this.scriptedQueries.get(sql);
         const result = this.queryResults.get(sql);
-        this.queries.set(query, result
-            ? [{ state: 'chunk', payload: result }, { state: 'done' }]
-            : [{ state: 'error', error: `unexpected query: ${sql}` }]);
+        this.queries.set(query, scripted
+            ? [...scripted]
+            : result
+                ? [{ state: 'chunk', payload: result }, { state: 'done' }]
+                : [{ state: 'error', error: `unexpected query: ${sql}` }]);
         return Promise.resolve(handle(query));
     }
 
@@ -153,7 +237,12 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
     pollQuery(query: number): Promise<HyperDBResult> {
         this.calls.push(`poll:${query}`);
         const results = this.queries.get(query);
-        return Promise.resolve(results?.shift() ?? { state: 'error', error: `missing query: ${query}` });
+        if (results?.[0] === 'hold') {
+            if (this.holdQueries) return Promise.resolve({ state: 'pending' });
+            results.shift();
+        }
+        const result = results?.shift();
+        return Promise.resolve(result === undefined || result === 'hold' ? { state: 'error', error: `missing query: ${query}` } : result);
     }
 
     cancelQuery(query: number): Promise<HyperDBResult> {
@@ -166,8 +255,7 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
         if (this.failFinishQuery) return Promise.resolve({ state: 'error', error: 'finish failed' });
         this.queries.delete(query);
         this.activeOperationCount--;
-        const info = { version: 1, statementKind: null, rowCount: null };
-        return Promise.resolve({ state: 'ok', payload: new TextEncoder().encode(JSON.stringify(info)) });
+        return Promise.resolve({ state: 'ok', payload: new TextEncoder().encode(JSON.stringify(QUERY_INFO)) });
     }
 
     shutdown(): Promise<HyperDBResult> {
@@ -192,13 +280,14 @@ function toPlainObjects(table: arrow.Table): Record<string, unknown>[] {
 }
 
 describe('HyperDB embedded database adapter', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('owns browser object URLs for external files', async () => {
         const client = new FakeHyperDBEngineClient();
-        const revoked: string[] = [];
-        const database = await HyperDB.create(client, undefined, {
-            createObjectURL: () => 'blob:test-file',
-            revokeObjectURL: url => { revoked.push(url); },
-        });
+        const revoked = trackObjectURLs('blob:test-file');
+        const database = await createDatabase(client);
 
         const path = await database.registerExternalFile('data.csv', new Blob(['id\n1\n']));
         expect(path).toBe('/mnt/external/data.csv');
@@ -213,8 +302,8 @@ describe('HyperDB embedded database adapter', () => {
 
     it('registers and removes browser directories at the requested path and mode', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
-        const handle = { kind: 'directory', name: 'exports' } as FileSystemDirectoryHandle;
+        const database = await createDatabase(client);
+        const handle = directoryHandle('exports');
 
         const path = await database.registerExternalDirectory(handle, '/mnt/external/exports', 'readwrite');
 
@@ -227,8 +316,8 @@ describe('HyperDB embedded database adapter', () => {
 
     it('registers browser directories at a path derived from the directory name', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
-        const handle = { kind: 'directory', name: 'exports' } as FileSystemDirectoryHandle;
+        const database = await createDatabase(client);
+        const handle = directoryHandle('exports');
 
         await expect(database.registerExternalDirectory(handle, undefined, 'read'))
             .resolves.toBe('/mnt/external/exports');
@@ -237,8 +326,8 @@ describe('HyperDB embedded database adapter', () => {
 
     it('rejects invalid browser directory mount paths before sending a request', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
-        const handle = { kind: 'directory', name: 'exports' } as FileSystemDirectoryHandle;
+        const database = await createDatabase(client);
+        const handle = directoryHandle('exports');
 
         await expect(database.registerExternalDirectory(handle, '/foo', 'read'))
             .rejects.toThrow('external mount path must be below /mnt/external/');
@@ -248,12 +337,12 @@ describe('HyperDB embedded database adapter', () => {
 
     it('sanitizes generated file paths while preserving explicit directory paths', async () => {
         const client = new FakeHyperDBEngineClient();
-        const first = await HyperDB.create(client, undefined, { terminateClient: false });
-        const second = await HyperDB.create(client, undefined, { terminateClient: false });
+        const first = await createDatabase(client, { terminateEngine: false });
+        const second = await createDatabase(client, { terminateEngine: false });
         const name = 'a folder/with spaces/'.repeat(20) + 'data.csv';
         const filePath = await first.registerExternalFile(name, new Blob(['1']));
         const directoryPath = await second.registerExternalDirectory(
-            { name } as FileSystemDirectoryHandle, '/mnt/external/directory', 'read',
+            directoryHandle(name), '/mnt/external/directory', 'read',
         );
         const anotherPath = await second.registerExternalFile('another.csv', new Blob(['2']));
 
@@ -271,11 +360,8 @@ describe('HyperDB embedded database adapter', () => {
     it('revokes object URLs when mounting fails', async () => {
         const client = new FakeHyperDBEngineClient();
         client.mount = async () => ({ state: 'error', error: 'mount failed' });
-        const revoked: string[] = [];
-        const database = await HyperDB.create(client, undefined, {
-            createObjectURL: () => 'blob:failed-mount',
-            revokeObjectURL: url => { revoked.push(url); },
-        });
+        const revoked = trackObjectURLs('blob:failed-mount');
+        const database = await createDatabase(client);
 
         await expect(database.registerExternalFile('data.csv', new Blob(['1']))).rejects.toThrow('mount failed');
         expect(revoked).toEqual(['blob:failed-mount']);
@@ -291,11 +377,8 @@ describe('HyperDB embedded database adapter', () => {
             abort.abort();
             return result;
         };
-        const revoked: string[] = [];
-        const database = await HyperDB.create(client, undefined, {
-            createObjectURL: () => 'blob:cancelled-mount',
-            revokeObjectURL: url => { revoked.push(url); },
-        });
+        const revoked = trackObjectURLs('blob:cancelled-mount');
+        const database = await createDatabase(client);
 
         await expect(database.registerExternalFile('data.csv', new Blob(['1']), undefined, abort.signal))
             .rejects.toThrow('aborted');
@@ -306,9 +389,9 @@ describe('HyperDB embedded database adapter', () => {
 
     it('cleans external directories during termination', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const path = await database.registerExternalDirectory(
-            { kind: 'directory', name: 'exports' } as FileSystemDirectoryHandle, '/mnt/external/exports',
+            directoryHandle('exports'), '/mnt/external/exports',
             'read',
         );
 
@@ -320,11 +403,8 @@ describe('HyperDB embedded database adapter', () => {
 
     it('retains object URLs when external-file removal is busy', async () => {
         const client = new FakeHyperDBEngineClient();
-        const revoked: string[] = [];
-        const database = await HyperDB.create(client, undefined, {
-            createObjectURL: () => 'blob:busy-file',
-            revokeObjectURL: url => { revoked.push(url); },
-        });
+        const revoked = trackObjectURLs('blob:busy-file');
+        const database = await createDatabase(client);
         const path = await database.registerExternalFile('data.csv', new Blob(['id\n1\n']));
         client.failExternalFileRemoval = true;
 
@@ -338,12 +418,8 @@ describe('HyperDB embedded database adapter', () => {
 
     it('cleans external files during wrapper termination with a shared client', async () => {
         const client = new FakeHyperDBEngineClient();
-        const revoked: string[] = [];
-        const database = await HyperDB.create(client, undefined, {
-            terminateClient: false,
-            createObjectURL: () => 'blob:shared-file',
-            revokeObjectURL: url => { revoked.push(url); },
-        });
+        const revoked = trackObjectURLs('blob:shared-file');
+        const database = await createDatabase(client, { terminateEngine: false });
         const path = await database.registerExternalFile('data.csv', new Blob(['id\n1\n']));
 
         await database.terminate();
@@ -355,7 +431,7 @@ describe('HyperDB embedded database adapter', () => {
 
     it('opens and closes physical connections', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const first = await database.connect();
         const second = await database.connect();
 
@@ -376,7 +452,7 @@ describe('HyperDB embedded database adapter', () => {
 
     it('reuses closed pooled connections without attaching again', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client, undefined, { computeDatabasePath: '/mnt/fs/compute.hyper' });
+        const database = await createDatabase(client, { computeDatabasePath: '/mnt/fs/compute.hyper' });
         const setupConnects = client.connectCount;
 
         for (let i = 0; i < 3; ++i) {
@@ -396,7 +472,7 @@ describe('HyperDB embedded database adapter', () => {
 
     it('does not reuse connections without opting into pooling', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client, undefined, { computeDatabasePath: '/mnt/fs/compute.hyper' });
+        const database = await createDatabase(client, { computeDatabasePath: '/mnt/fs/compute.hyper' });
         const setupConnects = client.connectCount;
 
         for (let i = 0; i < 2; ++i) {
@@ -413,7 +489,7 @@ describe('HyperDB embedded database adapter', () => {
 
     it('pools connections separately per default database', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client, undefined, {
+        const database = await createDatabase(client, {
             computeDatabasePath: '/mnt/fs/compute.hyper',
             defaultDatabasePath: '/mnt/fs/user.hyper',
         });
@@ -437,7 +513,7 @@ describe('HyperDB embedded database adapter', () => {
 
     it('gives concurrent pooled connections separate sessions and reuses both', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
 
         const [first, second] = await Promise.all([database.connect({ pooled: true }), database.connect({ pooled: true })]);
         await Promise.all([first.close(), second.close()]);
@@ -453,7 +529,7 @@ describe('HyperDB embedded database adapter', () => {
 
     it('closes pooled sessions beyond the idle limit', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
 
         const connections = await Promise.all(Array.from({ length: 6 }, () => database.connect({ pooled: true })));
         for (const connection of connections) {
@@ -469,7 +545,7 @@ describe('HyperDB embedded database adapter', () => {
     it('rejects a closed connection while its session serves the next connection', async () => {
         const client = new FakeHyperDBEngineClient();
         client.queryResults.set('SELECT 1 AS value', ipc(arrow.tableFromArrays({ value: new Int32Array([1]) })));
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const first = await database.connect({ pooled: true });
         await first.close();
         const second = await database.connect({ pooled: true });
@@ -485,7 +561,7 @@ describe('HyperDB embedded database adapter', () => {
     it('does not reuse a pooled session whose query could not be finished', async () => {
         const client = new FakeHyperDBEngineClient();
         client.queryResults.set('SELECT 1 AS value', ipc(arrow.tableFromArrays({ value: new Int32Array([1]) })));
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const first = await database.connect({ pooled: true });
 
         client.failFinishQuery = true;
@@ -501,34 +577,9 @@ describe('HyperDB embedded database adapter', () => {
         await database.terminate();
     });
 
-    it('initializes the engine settings before opening connections', async () => {
-        const client = new FakeHyperDBEngineClient();
-        await HyperDB.create(client, {
-            'global.experimental_view_creation': true,
-            'global.experimental_persisted_view_creation': true,
-            'global.http_location_allowlist': ['*'],
-        });
-
-        expect(client.calls).toContain(
-            'initialize:{"global.experimental_view_creation":true,"global.experimental_persisted_view_creation":true,"global.http_location_allowlist":["*"]}',
-        );
-    });
-
-    it('serializes global external table settings for the engine', async () => {
-        const client = new FakeHyperDBEngineClient();
-        await HyperDB.create(client, {
-            'global.experimental_external_metaquery': 1,
-            'global.experimental_persisted_external_tables': 1,
-        });
-
-        expect(client.calls).toContain(
-            'initialize:{"global.experimental_external_metaquery":1,"global.experimental_persisted_external_tables":1}',
-        );
-    });
-
     it('creates shared Arrow tables in the attached database', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const writer = await database.connect();
 
         await writer.insertArrowTable(arrow.tableFromArrays({
@@ -537,8 +588,9 @@ describe('HyperDB embedded database adapter', () => {
         }), { name: '__frame', create: true });
         await writer.close();
 
-        const inserted = client.insertedTables.get('public.__frame');
+        const inserted = client.insertedTables.get('"__frame"');
         expect(inserted).toBeDefined();
+        expect(client.insertedColumns.get('"__frame"')).toBe('"id" integer, "label" text');
         client.queryResults.set('SELECT * FROM "__frame"', ipc(inserted!));
 
         const reader = await database.connect();
@@ -549,16 +601,17 @@ describe('HyperDB embedded database adapter', () => {
             { id: 2, label: 'beta' },
             { id: 3, label: 'gamma' },
         ]);
-        expect(client.calls.some(call => /insert:\d+:\/tmp\/hyperdb\/test-1\.arrows:public:__frame:true:true/.test(call))).toBe(true);
+        expect(client.calls.some(call => /^insert:\d+:"__frame":true$/.test(call))).toBe(true);
+        expect(client.externalFiles.size).toBe(0);
         expect(client.connectCount).toBe(2);
 
         await reader.close();
         await database.terminate();
     });
 
-    it('uses Arrow IPC from DashQL Arrow and materializes dictionary columns', async () => {
+    it('materializes dictionary columns for the external scan', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const connection = await database.connect();
 
         await connection.insertArrowTable(arrow.tableFromArrays({ label: ['first', 'second'] }), {
@@ -566,17 +619,18 @@ describe('HyperDB embedded database adapter', () => {
             create: true,
         });
 
-        const inserted = client.insertedTables.get('public.labels');
+        const inserted = client.insertedTables.get('"labels"');
         expect(inserted?.schema.fields[0]?.type.toString()).toBe('Utf8');
-        expect(client.temporaryFiles.size).toBe(0);
+        expect(client.insertedColumns.get('"labels"')).toBe('"label" text');
+        expect(client.externalFiles.size).toBe(0);
 
         await connection.close();
         await database.terminate();
     });
 
-    it('preserves schema and append options while cleaning up staged IPC', async () => {
+    it('preserves schema and append options while cleaning up the mounted IPC', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const connection = await database.connect();
 
         await connection.insertArrowTable(arrow.tableFromArrays({ value: new Int32Array([1]) }), {
@@ -589,13 +643,13 @@ describe('HyperDB embedded database adapter', () => {
             create: false,
         });
 
-        expect(toPlainObjects(client.insertedTables.get('pg_temp.values')!)).toEqual([
+        expect(toPlainObjects(client.insertedTables.get('"pg_temp"."values"')!)).toEqual([
             { value: 1 },
             { value: 2 },
         ]);
-        expect(client.calls.some(call => /insert:\d+:\/tmp\/hyperdb\/test-1\.arrows:pg_temp:values:true:true/.test(call))).toBe(true);
-        expect(client.calls.some(call => /insert:\d+:\/tmp\/hyperdb\/test-2\.arrows:pg_temp:values:false:true/.test(call))).toBe(true);
-        expect(client.temporaryFiles.size).toBe(0);
+        expect(client.calls.some(call => /^insert:\d+:"pg_temp"\."values":true$/.test(call))).toBe(true);
+        expect(client.calls.some(call => /^insert:\d+:"pg_temp"\."values":false$/.test(call))).toBe(true);
+        expect(client.externalFiles.size).toBe(0);
 
         await connection.close();
         await database.terminate();
@@ -603,7 +657,7 @@ describe('HyperDB embedded database adapter', () => {
 
     it('creates derived relations in the attached database with quoted names', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const connection = await database.connect();
         client.queryResults.set(
             'CREATE TABLE "derived""rows" AS SELECT 1',
@@ -623,7 +677,7 @@ describe('HyperDB embedded database adapter', () => {
         const secondResult = ipc(arrow.tableFromArrays({ value: new Int32Array([2]) }));
         client.queryResults.set('SELECT 1 AS value', firstResult);
         client.queryResults.set('SELECT 2 AS value', secondResult);
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const first = await database.connect();
         const second = await database.connect();
 
@@ -646,7 +700,7 @@ describe('HyperDB embedded database adapter', () => {
     it('releases failed queries and leaves other connections usable', async () => {
         const client = new FakeHyperDBEngineClient();
         client.queryResults.set('SELECT 42 AS answer', ipc(arrow.tableFromArrays({ answer: new Int32Array([42]) })));
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const first = await database.connect();
         const second = await database.connect();
 
@@ -664,7 +718,7 @@ describe('HyperDB embedded database adapter', () => {
     it('leaves a connection usable when starting a query fails', async () => {
         const client = new FakeHyperDBEngineClient();
         client.failStartQuery = true;
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const first = await database.connect();
         const second = await database.connect();
 
@@ -681,7 +735,7 @@ describe('HyperDB embedded database adapter', () => {
 
     it('rejects use of a closed connection after closing its physical session', async () => {
         const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
+        const database = await createDatabase(client);
         const connection = await database.connect();
         await connection.close();
 
@@ -689,5 +743,103 @@ describe('HyperDB embedded database adapter', () => {
         expect(client.disconnectCount).toBe(1);
 
         await database.terminate();
+    });
+
+    it('cancels a query in the engine while it is still computing', async () => {
+        const client = new FakeHyperDBEngineClient();
+        client.scriptedQueries.set('SELECT slow', ['hold', { state: 'done' }]);
+        client.queryResults.set('SELECT 1 AS value', ipc(arrow.tableFromArrays({ value: new Int32Array([1]) })));
+        const database = await createDatabase(client);
+        const connection = await database.connect();
+        const abort = new AbortController();
+
+        const query = connection.query('SELECT slow', abort.signal);
+        await vi.waitFor(() => expect(client.calls.some(call => /^poll:/.test(call))).toBe(true));
+        abort.abort(new Error('stop the query'));
+
+        await expect(query).rejects.toThrow('stop the query');
+        expect(client.calls.some(call => call.startsWith('cancel:'))).toBe(true);
+        expect(client.activeOperationCount).toBe(0);
+        expect(toPlainObjects(await connection.query('SELECT 1 AS value'))).toEqual([{ value: 1 }]);
+
+        await connection.close();
+        await database.terminate();
+    });
+
+    it('streams result batches before the query finished', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const bytes = ipc(arrow.tableFromArrays({ value: new Int32Array([7]) }));
+        // The end-of-stream marker is split, Arrow reads ahead when a message ends with a chunk.
+        client.scriptedQueries.set('SELECT 7 AS value', [
+            { state: 'chunk', payload: bytes.subarray(0, bytes.byteLength - 4) },
+            'hold',
+            { state: 'chunk', payload: bytes.subarray(bytes.byteLength - 4) },
+            { state: 'done' },
+        ]);
+        const database = await createDatabase(client);
+        const connection = await database.connect();
+
+        const reader = await connection.queryStream('SELECT 7 AS value');
+        const first = await reader.next();
+        expect(first.done).toBe(false);
+        expect(first.value?.getChild('value')?.get(0)).toBe(7);
+        expect(client.calls.some(call => call.startsWith('finish:'))).toBe(false);
+        await expect(connection.close()).rejects.toThrow('connection has an active operation');
+
+        client.holdQueries = false;
+        expect((await reader.next()).done).toBe(true);
+        await vi.waitFor(() => expect(client.calls.some(call => call.startsWith('finish:'))).toBe(true));
+        await connection.close();
+        await database.terminate();
+    });
+
+    it('cancels a stream that is not read to the end', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const bytes = ipc(arrow.tableFromArrays({ value: new Int32Array([7]) }));
+        client.scriptedQueries.set('SELECT 7 AS value', [
+            { state: 'chunk', payload: bytes.subarray(0, bytes.byteLength - 4) },
+            'hold',
+            { state: 'done' },
+        ]);
+        const database = await createDatabase(client);
+        const connection = await database.connect();
+
+        const reader = await connection.queryStream('SELECT 7 AS value');
+        await reader.next();
+        await reader.cancel();
+
+        expect(client.calls.some(call => call.startsWith('cancel:'))).toBe(true);
+        expect(client.activeOperationCount).toBe(0);
+        await connection.close();
+        await database.terminate();
+    });
+
+    it('gives statements without a result an empty table', async () => {
+        const client = new FakeHyperDBEngineClient();
+        client.scriptedQueries.set('CREATE TABLE foo(a INT)', [{ state: 'done' }]);
+        const database = await createDatabase(client);
+        const connection = await database.connect();
+
+        const result = await connection.query('CREATE TABLE foo(a INT)');
+
+        expect(result.numCols).toBe(0);
+        expect(result.numRows).toBe(0);
+        await connection.close();
+        await database.terminate();
+    });
+
+    it('cancels running streams when the database terminates', async () => {
+        const client = new FakeHyperDBEngineClient();
+        client.scriptedQueries.set('SELECT slow', ['hold', { state: 'done' }]);
+        const database = await createDatabase(client);
+        const connection = await database.connect();
+
+        const query = connection.query('SELECT slow');
+        await vi.waitFor(() => expect(client.calls.some(call => /^poll:/.test(call))).toBe(true));
+        await database.terminate();
+
+        await expect(query).rejects.toThrow('database is terminating');
+        expect(client.calls.some(call => call.startsWith('cancel:'))).toBe(true);
+        expect(client.terminateCount).toBe(1);
     });
 });

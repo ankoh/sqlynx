@@ -41,18 +41,13 @@ export function createEmbeddedDatabaseShellEnvironment(
                     execute: async tracked => {
                         onProgress?.('Executing query');
                         const queryStartedAt = performance.now();
-                        let queryResult = await connection.queryArrowIPC(query, cancellation.signal);
+                        const table = await connection.query(query, cancellation.signal);
                         reportTiming('Results', performance.now() - queryStartedAt);
                         cancellation.signal.throwIfAborted();
                         const postprocessingStartedAt = performance.now();
                         try {
-                            const totalDataBytesReceived = queryResult.byteLength;
-                            if (queryResult.byteLength === 0) {
-                                queryResult = EMPTY_RESULT_IPC;
-                            }
-                            const table = arrow.tableFromIPC(queryResult);
                             const metrics = createQueryResponseStreamMetrics();
-                            metrics.totalDataBytesReceived = totalDataBytesReceived;
+                            metrics.totalDataBytesReceived = table.batches.reduce((bytes, batch) => bytes + batch.data.byteLength, 0);
                             metrics.totalBatchesReceived = table.batches.length;
                             metrics.totalRowsReceived = table.numRows;
                             tracked.dispatch({
@@ -81,8 +76,8 @@ export function createEmbeddedDatabaseShellEnvironment(
                                 onResult(tracked.queryId, table.numRows);
                                 return EMPTY_RESULT_IPC;
                             }
-                            if (outputMode === 'off') return EMPTY_RESULT_IPC;
-                            return queryResult;
+                            if (outputMode === 'off' || table.numCols === 0) return EMPTY_RESULT_IPC;
+                            return arrow.tableToIPC(table, 'stream');
                         } finally {
                             reportTiming('Postprocess', performance.now() - postprocessingStartedAt);
                         }

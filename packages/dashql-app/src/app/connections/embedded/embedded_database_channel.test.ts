@@ -2,24 +2,58 @@ import * as arrow from 'apache-arrow';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AsyncConsumerLambdas } from '../../../utils/async_consumer.js';
-import type { EmbeddedConnection } from '../../../platform/database/embedded_database.js';
-import { QueryExecutionStatus } from '../../../query/query_execution_state.js';
+import type { EmbeddedConnection, EmbeddedResultStream } from '../../../platform/database/embedded_database.js';
+import { QueryExecutionStatus, type QueryExecutionResponseStream } from '../../../query/query_execution_state.js';
 import { EmbeddedDatabaseChannel } from './embedded_database_channel.js';
 
-/// A connection that rejects a statement while another one is running, like a HyperDB session.
+/// A result stream over the batches of a table, onDone runs when it is read to the end or cancelled.
+async function readTable(table: arrow.Table, onDone: () => void = () => {}): Promise<EmbeddedResultStream> {
+    let next = 0;
+    let done = false;
+    const finish = () => {
+        if (!done) {
+            done = true;
+            onDone();
+        }
+    };
+    return {
+        schema: table.schema,
+        async next(): Promise<IteratorResult<arrow.RecordBatch>> {
+            if (next < table.batches.length) return { done: false, value: table.batches[next++] };
+            finish();
+            return { done: true, value: undefined };
+        },
+        async cancel() {
+            finish();
+        },
+        async *[Symbol.asyncIterator]() {
+            for (const batch of table.batches) yield batch;
+            finish();
+        },
+    };
+}
+
+/// Read a response stream to the end.
+async function produceAll(stream: QueryExecutionResponseStream): Promise<arrow.RecordBatch[]> {
+    const batches: arrow.RecordBatch[] = [];
+    await stream.produce(new AsyncConsumerLambdas((_stream, batch) => batches.push(batch)), new AsyncConsumerLambdas());
+    return batches;
+}
+
+/// A connection that rejects a statement while a result is still read, like a HyperDB session.
 function createExclusiveConnection() {
-    const running: { resolve: (bytes: Uint8Array) => void; reject: (error: Error) => void }[] = [];
+    const running: { resolve: (table: arrow.Table) => void; reject: (error: Error) => void }[] = [];
     let active = false;
     const connection: EmbeddedConnection = {
         close: vi.fn().mockResolvedValue(undefined),
         query: vi.fn(),
         execute: vi.fn(),
-        queryArrowIPC: vi.fn((): Promise<Uint8Array> => {
+        queryStream: vi.fn((): Promise<EmbeddedResultStream> => {
             if (active) return Promise.reject(new Error('connection has an active operation'));
             active = true;
-            return new Promise<Uint8Array>((resolve, reject) => {
+            return new Promise<EmbeddedResultStream>((resolve, reject) => {
                 running.push({
-                    resolve: bytes => { active = false; resolve(bytes); },
+                    resolve: table => { void readTable(table, () => { active = false; }).then(resolve); },
                     reject: error => { active = false; reject(error); },
                 });
             });
@@ -28,7 +62,7 @@ function createExclusiveConnection() {
     return { connection, running };
 }
 
-const ONE_ROW = arrow.tableToIPC(arrow.tableFromArrays({ value: [1] }), 'stream');
+const ONE_ROW = arrow.tableFromArrays({ value: [1] });
 
 describe('EmbeddedDatabaseChannel', () => {
     it('runs concurrent queries one at a time on the shared connection', async () => {
@@ -38,15 +72,18 @@ describe('EmbeddedDatabaseChannel', () => {
         const first = channel.executeQuery('select 1');
         const second = channel.executeQuery('select 2');
         await vi.waitFor(() => expect(running).toHaveLength(1));
-        expect(connection.queryArrowIPC).toHaveBeenCalledOnce();
-
         running[0].resolve(ONE_ROW);
+        const firstStream = await first;
+        // The second query waits until the result of the first one is read.
+        await new Promise(resolve => setTimeout(resolve, 0));
+        expect(connection.queryStream).toHaveBeenCalledOnce();
+
+        await produceAll(firstStream);
         await vi.waitFor(() => expect(running).toHaveLength(2));
         running[1].resolve(ONE_ROW);
 
-        await expect(first).resolves.toBeDefined();
-        await expect(second).resolves.toBeDefined();
-        expect(connection.queryArrowIPC).toHaveBeenNthCalledWith(2, 'select 2', undefined);
+        expect(await produceAll(await second)).toHaveLength(1);
+        expect(connection.queryStream).toHaveBeenNthCalledWith(2, 'select 2', undefined);
     });
 
     it('runs the next query after a failed query', async () => {
@@ -64,41 +101,58 @@ describe('EmbeddedDatabaseChannel', () => {
         await second;
     });
 
+    it('runs the next query after a result stream is cancelled', async () => {
+        const { connection, running } = createExclusiveConnection();
+        const channel = new EmbeddedDatabaseChannel(connection);
+
+        const first = channel.executeQuery('select 1');
+        const second = channel.executeQuery('select 2');
+        await vi.waitFor(() => expect(running).toHaveLength(1));
+        running[0].resolve(ONE_ROW);
+        const firstStream = await first;
+        await firstStream.cancel!();
+        expect(firstStream.getStatus()).toBe(QueryExecutionStatus.CANCELLED);
+
+        await vi.waitFor(() => expect(running).toHaveLength(2));
+        running[1].resolve(ONE_ROW);
+        await expect(second).resolves.toBeDefined();
+    });
+
     it('skips a waiting query that is cancelled', async () => {
         const { connection, running } = createExclusiveConnection();
         const channel = new EmbeddedDatabaseChannel(connection);
         const abort = new AbortController();
 
-        const first = expect(channel.executeQuery('select 1')).resolves.toBeDefined();
+        const first = channel.executeQuery('select 1');
         const second = expect(channel.executeQuery('select 2', abort.signal)).rejects.toMatchObject({ name: 'AbortError' });
         await vi.waitFor(() => expect(running).toHaveLength(1));
         abort.abort(new DOMException('cancelled', 'AbortError'));
         running[0].resolve(ONE_ROW);
+        await produceAll(await first);
 
-        await first;
         await second;
-        expect(connection.queryArrowIPC).toHaveBeenCalledOnce();
+        expect(connection.queryStream).toHaveBeenCalledOnce();
     });
 
-    it('adapts Arrow IPC results to the query response stream', async () => {
+    it('streams the result batches to the query response stream', async () => {
         const table = arrow.tableFromArrays({ value: [1, 2, 3] });
-        const bytes = arrow.tableToIPC(table, 'stream');
         const connection: EmbeddedConnection = {
             close: vi.fn().mockResolvedValue(undefined),
             query: vi.fn(),
             execute: vi.fn(),
-            queryArrowIPC: vi.fn().mockResolvedValue(bytes),
+            queryStream: vi.fn(() => readTable(table)),
         };
         const channel = new EmbeddedDatabaseChannel(connection);
         const stream = await channel.executeQuery('select 1');
-        const batches: arrow.RecordBatch[] = [];
+        expect(stream.getStatus()).toBe(QueryExecutionStatus.RUNNING);
 
-        await stream.produce(new AsyncConsumerLambdas((_stream, batch) => batches.push(batch)), new AsyncConsumerLambdas());
+        const batches = await produceAll(stream);
 
-        expect(connection.queryArrowIPC).toHaveBeenCalledWith('select 1', undefined);
+        expect(connection.queryStream).toHaveBeenCalledWith('select 1', undefined);
         expect(stream.getStatus()).toBe(QueryExecutionStatus.SUCCEEDED);
         expect(stream.getMetrics().totalRowsReceived).toBe(3);
         expect(stream.getMetrics().totalBatchesReceived).toBe(table.batches.length);
+        expect(stream.getMetrics().totalDataBytesReceived).toBeGreaterThan(0);
         expect(new arrow.Table((await stream.getSchema())!, batches).numRows).toBe(3);
     });
 
@@ -107,14 +161,14 @@ describe('EmbeddedDatabaseChannel', () => {
             close: vi.fn().mockResolvedValue(undefined),
             query: vi.fn(),
             execute: vi.fn(),
-            queryArrowIPC: vi.fn(),
+            queryStream: vi.fn(),
         };
         const channel = new EmbeddedDatabaseChannel(connection);
         const abort = new AbortController();
         abort.abort();
 
         await expect(channel.executeQuery('select 1', abort.signal)).rejects.toMatchObject({ name: 'AbortError' });
-        expect(connection.queryArrowIPC).not.toHaveBeenCalled();
+        expect(connection.queryStream).not.toHaveBeenCalled();
         await channel.close();
         expect(connection.close).toHaveBeenCalledOnce();
     });
@@ -125,9 +179,9 @@ describe('EmbeddedDatabaseChannel', () => {
             close: vi.fn().mockResolvedValue(undefined),
             query: vi.fn(),
             execute: vi.fn(),
-            queryArrowIPC: vi.fn((_query, abort): Promise<Uint8Array> => {
+            queryStream: vi.fn((_query, abort): Promise<EmbeddedResultStream> => {
                 signal = abort;
-                return new Promise<Uint8Array>((_resolve, reject) => {
+                return new Promise<EmbeddedResultStream>((_resolve, reject) => {
                     abort?.addEventListener('abort', () => reject(abort.reason), { once: true });
                 });
             }),
@@ -135,7 +189,7 @@ describe('EmbeddedDatabaseChannel', () => {
         const channel = new EmbeddedDatabaseChannel(connection);
         const abort = new AbortController();
         const execution = channel.executeQuery('select slow()', abort.signal);
-        await vi.waitFor(() => expect(connection.queryArrowIPC).toHaveBeenCalled());
+        await vi.waitFor(() => expect(connection.queryStream).toHaveBeenCalled());
 
         abort.abort(new DOMException('cancelled', 'AbortError'));
 

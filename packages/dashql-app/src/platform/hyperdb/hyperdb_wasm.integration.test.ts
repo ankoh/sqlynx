@@ -1,14 +1,14 @@
 import * as arrow from 'apache-arrow';
-import type { MountSource } from 'hyperdb-wasm/raw';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { DataFrame, generateTableName } from '../../compute/data_frame.js';
 import { WebFile } from '../file/web_file.js';
 import { ShellFileRegistry } from '../../shell/shell_files.js';
-import { createWebHyperDBClient, setupWebHyperDB } from './hyperdb_provider_web.js';
+import { setupWebHyperDB } from './hyperdb_provider_web.js';
+import { createTestHyperDBClient } from '../../tests/hyperdb_test_client.js';
 import { HYPER_INSTANCE_LOGS_DIRECTORY, HYPER_INSTANCES_DIRECTORY } from './hyperdb_opfs_instance.js';
 import { TestLogger } from '../logger/test_logger.js';
-import { HyperDB, type HyperDBEngineClient, type HyperDBResult } from './hyperdb_wasm.js';
+import { HyperDB, HyperDBEngine, type HyperDBClient, type HyperDBResult } from './hyperdb_wasm.js';
 import { exportArrowTableAsParquet, PARQUET_EXPORT_DIRECTORY } from './hyperdb_parquet_export.js';
 
 function toPlainObjects(table: arrow.Table): Record<string, unknown>[] {
@@ -27,11 +27,11 @@ async function ignoreCleanupFailure(cleanup: () => Promise<void>): Promise<void>
     }
 }
 
-class CountingClient implements HyperDBEngineClient {
+class CountingClient implements HyperDBClient {
     connectCount = 0;
     disconnectCount = 0;
 
-    constructor(private readonly client: HyperDBEngineClient) {}
+    constructor(private readonly client: HyperDBClient) {}
 
     ready(): Promise<void> {
         return this.client.ready();
@@ -56,26 +56,7 @@ class CountingClient implements HyperDBEngineClient {
         return this.client.startQuery(connection, sql);
     }
 
-    insertArrowIPCFromPath(
-        connection: number,
-        path: string,
-        name: string,
-        schema: string | null,
-        create: boolean,
-        internal: boolean,
-    ): Promise<HyperDBResult> {
-        return this.client.insertArrowIPCFromPath(connection, path, name, schema, create, internal);
-    }
-
-    createTemporaryFile(bytes: Uint8Array): Promise<HyperDBResult> {
-        return this.client.createTemporaryFile(bytes);
-    }
-
-    removeFile(path: string): Promise<HyperDBResult> {
-        return this.client.removeFile(path);
-    }
-
-    mount(source: MountSource, path: string, mode: 'read' | 'readwrite'): Promise<HyperDBResult> {
+    mount(source: Parameters<HyperDBClient['mount']>[0], path: string, mode: 'read' | 'readwrite'): Promise<HyperDBResult> {
         return this.client.mount(source, path, mode);
     }
 
@@ -106,22 +87,22 @@ class CountingClient implements HyperDBEngineClient {
 
 describe('HyperDB embedded database integration', () => {
     let client: CountingClient;
-    let engineClient: HyperDBEngineClient;
+    let engineClient: HyperDBClient;
     let database: HyperDB | null = null;
     let nextDatabase = 1;
 
     beforeAll(async () => {
         engineClient = globalThis.__DASHQL_TEST_HYPERDB_CLIENT__
             ? await globalThis.__DASHQL_TEST_HYPERDB_CLIENT__()
-            : await createWebHyperDBClient();
+            : await createTestHyperDBClient();
     });
 
     beforeEach(async () => {
         client = new CountingClient(engineClient);
-        database = await HyperDB.create(client, undefined, {
+        database = await HyperDB.create(new HyperDBEngine(client), {
             computeDatabasePath: `/mnt/fs/dashql-integration-${nextDatabase++}.hyper`,
             defaultDatabasePath: `/mnt/fs/dashql-integration-${nextDatabase++}.hyper`,
-            terminateClient: false,
+            terminateEngine: false,
         });
     }, 60_000);
 
@@ -150,10 +131,10 @@ describe('HyperDB embedded database integration', () => {
             await database!.terminate();
             database = null;
 
-            database = await HyperDB.create(engineClient, undefined, {
+            database = await HyperDB.create(new HyperDBEngine(engineClient), {
                 computeDatabasePath: `/mnt/fs/dashql-integration-${nextDatabase++}.hyper`,
                 defaultDatabasePath: `/mnt/fs/dashql-integration-${nextDatabase++}.hyper`,
-                terminateClient: false,
+                terminateEngine: false,
             });
             const second = await database.connect();
             try {
@@ -366,13 +347,68 @@ describe('HyperDB embedded database integration', () => {
         await connection.close();
     });
 
-    it('returns no Arrow IPC chunks for successful DDL', async () => {
+    it('round-trips Arrow tables through external Arrow stream scans', async () => {
+        const connection = await database!.connect();
+        const table = new arrow.Table({
+            id: arrow.vectorFromArray([1, 2, null], new arrow.Int32()),
+            big: arrow.vectorFromArray([1n, 2n, 3n], new arrow.Int64()),
+            label: arrow.vectorFromArray(['a', 'b', 'a'], new arrow.Dictionary(new arrow.Utf8(), new arrow.Int32())),
+            long: arrow.vectorFromArray(['x', null, 'z'], new arrow.LargeUtf8()),
+            score: arrow.vectorFromArray([1.5, null, 3.5], new arrow.Float64()),
+            flag: arrow.vectorFromArray([true, false, null], new arrow.Bool()),
+            day: arrow.vectorFromArray([new Date(Date.UTC(2026, 0, 2)), null, null], new arrow.DateDay()),
+            at: arrow.vectorFromArray([new Date(Date.UTC(2026, 0, 2, 3, 4, 5)), null, null], new arrow.TimestampMillisecond()),
+            tags: arrow.vectorFromArray([['p', 'q'], null, []], new arrow.List(new arrow.Field('item', new arrow.Utf8(), true))),
+        });
+
+        await connection.insertArrowTable(table, { name: 'round_trip' });
+        await connection.insertArrowTable(table.slice(0, 1), { name: 'round_trip', create: false });
+
+        const result = await connection.query(`
+            SELECT id, big, label, long, score, flag, day::text AS day, at::text AS at, array_length(tags) AS tags
+            FROM round_trip ORDER BY big, id
+        `);
+        expect(toPlainObjects(result)).toEqual([
+            { id: 1, big: 1n, label: 'a', long: 'x', score: 1.5, flag: true, day: '2026-01-02', at: '2026-01-02 03:04:05', tags: 2 },
+            { id: 1, big: 1n, label: 'a', long: 'x', score: 1.5, flag: true, day: '2026-01-02', at: '2026-01-02 03:04:05', tags: 2 },
+            { id: 2, big: 2n, label: 'b', long: null, score: null, flag: false, day: null, at: null, tags: null },
+            { id: null, big: 3n, label: 'a', long: 'z', score: 3.5, flag: null, day: null, at: null, tags: 0 },
+        ]);
+        await connection.close();
+    });
+
+    it('returns a table without columns for successful DDL', async () => {
         const connection = await database!.connect();
 
-        const result = await connection.queryArrowIPC('CREATE TABLE foo(a INT)');
+        const result = await connection.query('CREATE TABLE foo(a INT)');
 
-        expect(result).toHaveLength(0);
+        expect(result.numCols).toBe(0);
         expect(toPlainObjects(await connection.query('SELECT * FROM foo'))).toEqual([]);
+        await connection.close();
+    });
+
+    it('streams large results batch by batch and cancels the rest', async () => {
+        const connection = await database!.connect();
+
+        const reader = await connection.queryStream('SELECT s.a FROM generate_series(1, 10000000) s(a)');
+        const first = await reader.next();
+        expect(first.done).toBe(false);
+        expect(first.value!.numRows).toBeLessThan(10_000_000);
+        await reader.cancel();
+
+        expect(toPlainObjects(await connection.query('SELECT 1::INTEGER AS one'))).toEqual([{ one: 1 }]);
+        await connection.close();
+    });
+
+    it('cancels a query that has not produced a result yet', async () => {
+        const connection = await database!.connect();
+        const abort = new AbortController();
+
+        const query = connection.query('SELECT count(*) FROM generate_series(1, 10000000000) s(a)', abort.signal);
+        setTimeout(() => abort.abort(new Error('stop counting')), 50);
+
+        await expect(query).rejects.toThrow('stop counting');
+        expect(toPlainObjects(await connection.query('SELECT 1::INTEGER AS one'))).toEqual([{ one: 1 }]);
         await connection.close();
     });
 

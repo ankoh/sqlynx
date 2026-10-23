@@ -1,4 +1,4 @@
-import * as arrow from 'apache-arrow';
+import type * as arrow from 'apache-arrow';
 
 import { Logger } from '../platform/logger/logger.js';
 import type {
@@ -51,10 +51,7 @@ export class DataFrame {
     }
 
     async readTable(abort?: AbortSignal): Promise<arrow.Table> {
-        return await this.withConnection(async conn => {
-            const bytes = await conn.queryArrowIPC(`SELECT * FROM "${this.tableName}"`, abort);
-            return new arrow.Table(arrow.RecordBatchReader.from(bytes));
-        });
+        return await this.withConnection(async conn => await conn.query(`SELECT * FROM "${this.tableName}"`, abort));
     }
 
     async destroy(): Promise<void> {

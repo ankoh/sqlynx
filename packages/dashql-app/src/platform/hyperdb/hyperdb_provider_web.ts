@@ -2,7 +2,7 @@ import type { Logger } from '../logger/logger.js';
 import { stringifyError } from '../logger/logger.js';
 import type { SetupProgress } from '../database/embedded_database_provider.js';
 
-import { HyperDB, type HyperDBEngineClient } from './hyperdb_wasm.js';
+import { HyperDB, HyperDBEngine, type HyperDBClient, type HyperDBSettings } from './hyperdb_wasm.js';
 import { HYPERDB_WASM_ENGINE_SETTINGS } from './hyperdb_settings.js';
 import { cleanupStaleHyperDBOPFSInstances, createHyperDBOPFSInstance } from './hyperdb_opfs_instance.js';
 import { getHyperDBWebSupportError } from './hyperdb_web_support.js';
@@ -10,8 +10,8 @@ import { getHyperDBWebSupportError } from './hyperdb_web_support.js';
 declare global {
     var __DASHQL_TEST_HYPERDB_CLIENT__: ((
         onSetupProgress?: (progress: SetupProgress) => void,
-    ) => Promise<HyperDBEngineClient>) | undefined;
-    var __DASHQL_TEST_HYPERDB_CLIENT_PROMISE__: Promise<HyperDBEngineClient> | undefined;
+    ) => Promise<HyperDBClient>) | undefined;
+    var __DASHQL_TEST_HYPERDB_CLIENT_PROMISE__: Promise<HyperDBClient> | undefined;
     var __DASHQL_TEST_HYPERDB_CLIENT_CREATIONS__: number | undefined;
     var __DASHQL_TEST_HYPERDB_UNLOAD_INSTALLED__: boolean | undefined;
     var __DASHQL_TEST_HYPERDB_FACTORY__: ((
@@ -40,35 +40,39 @@ function createEngineScript(): { url: string; revoke: () => void } {
     return { url, revoke: () => URL.revokeObjectURL(url) };
 }
 
-export async function createWebHyperDBClient(
-    onSetupProgress?: (progress: SetupProgress) => void,
-): Promise<HyperDBEngineClient> {
+/// The worker options of a browser engine client.
+/// The engine script is an object URL that must be revoked once the engine terminated.
+export function createWebHyperDBClientOptions(): { workerUrl: URL; engineUrl: string; wasmUrl: URL; revoke: () => void } {
     const supportError = getHyperDBWebSupportError();
     if (supportError != null) throw new Error(supportError);
-
-    const { BrowserWorker, HyperDBEngineClient: BrowserEngineClient } = await import('hyperdb-wasm/raw');
     const engineScript = createEngineScript();
-    let client: HyperDBEngineClient;
+    const workerUrl = new URL(workerBridgeUrl as string, import.meta.url);
+    workerUrl.searchParams.set('workerUrl', HYPERDB_WORKER_URL.href);
+    return { workerUrl, engineUrl: engineScript.url, wasmUrl: HYPERDB_WASM_URL, revoke: engineScript.revoke };
+}
+
+/// Start a HyperDB engine in a browser worker.
+async function createWebHyperDBEngine(
+    settings: HyperDBSettings,
+    onSetupProgress?: (progress: SetupProgress) => void,
+): Promise<HyperDBEngine> {
+    const { revoke, ...options } = createWebHyperDBClientOptions();
+    let engine: HyperDBEngine;
     try {
-        const bridgeUrl = new URL(workerBridgeUrl as string, import.meta.url);
-        bridgeUrl.searchParams.set('workerUrl', HYPERDB_WORKER_URL.href);
-        bridgeUrl.searchParams.set('engineUrl', engineScript.url);
-        bridgeUrl.searchParams.set('wasmUrl', HYPERDB_WASM_URL.href);
-        const worker = new Worker(bridgeUrl, { type: 'classic' });
-        client = new BrowserEngineClient(new BrowserWorker(worker), onSetupProgress);
+        engine = await HyperDBEngine.create({ ...options, onSetupProgress, settings });
     } catch (error) {
-        engineScript.revoke();
+        revoke();
         throw error;
     }
-    const terminate = client.terminate.bind(client);
-    client.terminate = async () => {
+    const terminate = engine.terminate.bind(engine);
+    engine.terminate = async () => {
         try {
             await terminate();
         } finally {
-            engineScript.revoke();
+            revoke();
         }
     };
-    return client;
+    return engine;
 }
 
 export async function setupWebHyperDB(
@@ -81,19 +85,19 @@ export async function setupWebHyperDB(
     }
     const initStart = performance.now();
     try {
-        logger.info('Creating HyperDB WASM client', { context }, 'hyperdb');
+        logger.info('Creating HyperDB WASM engine', { context }, 'hyperdb');
         await cleanupStaleHyperDBOPFSInstances();
-        const client = await createWebHyperDBClient(onSetupProgress);
         const instance = await createHyperDBOPFSInstance();
+        let engine: HyperDBEngine | null = null;
         try {
-            const database = await HyperDB.create(
-                client,
+            engine = await createWebHyperDBEngine(
                 { ...HYPERDB_WASM_ENGINE_SETTINGS, log_file_path: instance.logDirectoryPath },
-                {
-                    computeDatabasePath: instance.computeDatabasePath,
-                    defaultDatabasePath: instance.userDatabasePath,
-                },
+                onSetupProgress,
             );
+            const database = await HyperDB.create(engine, {
+                computeDatabasePath: instance.computeDatabasePath,
+                defaultDatabasePath: instance.userDatabasePath,
+            });
             const terminate = database.terminate.bind(database);
             database.terminate = async () => {
                 await terminate();
@@ -107,7 +111,7 @@ export async function setupWebHyperDB(
             return database;
         } catch (error) {
             try {
-                await client.terminate();
+                await engine?.terminate();
                 await instance.dispose();
             } catch (cleanupError) {
                 logger.warn('Cleaning up failed HyperDB setup failed', {
