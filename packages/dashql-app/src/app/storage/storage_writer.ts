@@ -118,6 +118,15 @@ export type StorageWriteTaskVariant =
     | VariantKind<typeof REFRESH_SESSION_ATTACHMENTS, string>
     ;
 
+/// The key of a write. Writes with the same key coalesce, the latest task wins.
+///
+/// Keys are logical paths, they are not the paths of the files:
+///   - Session keys start with the session UUID, e.g. `<sessionId>/scripts/01_query.sql`. The
+///     per-session operations (pause, pending writes, cancellation) select keys by this prefix.
+///   - Keys of the app storage start with `@`, e.g. `@manifest/connections/<id>` for a connection
+///     entry of the app manifest and `@connections/<id>/<file>` for the files of a connection in
+///     `connections/<id>/`. A UUID never starts with `@`, so these keys never match the prefix of a
+///     session and are never paused or cancelled with one. `storageWriteChainKey` orders them.
 export type StorageWriteKey = string;
 /// The manifest is keyed on its real file path (`<sessionId>/dashql-session.json`) so the key it is
 /// *scheduled* under matches the path its *completed* write is recorded under — otherwise the manifest
