@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { EmbeddedComputeDatabase } from '../platform/database/embedded_database.js';
 import { TestLogger } from '../platform/logger/test_logger.js';
-import { analyzeTable, computeTableAggregates } from './computation_logic.js';
+import { analyzeTable } from './analyze_table.js';
+import { computeTableAggregates } from './tasks/table_aggregation.js';
 import { ComputationStateVersion, ORDINAL_COLUMN, TableAggregationTask } from './computation_types.js';
 import { DataFrame } from './data_frame.js';
 

@@ -8,7 +8,7 @@ import { ScalarFilter } from '../../../../../compute/sql/sqlframe_builder.js';
 import { HistogramFilterCallback } from './histogram_cell.js';
 import { MostFrequentValueFilterCallback } from './mostfrequent_cell.js';
 import { DataTableLayout } from './data_table_layout.js';
-import { scheduleTask } from '../../../../../compute/computation_logic.js';
+import { scheduleTask } from '../../../../../compute/computation_tasks.js';
 import { forEachIntegerValue } from './visible_rows.js';
 
 /// Compare two scalar filter lists for equality.

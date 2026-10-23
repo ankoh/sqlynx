@@ -17,7 +17,7 @@ import {
     QueryExecutionTracker,
 } from '../../query/query_execution_state.js';
 import { useComputationDispatch } from '../../compute/computation_registry.js';
-import { analyzeTable } from '../../compute/computation_logic.js';
+import { analyzeTable } from '../../compute/analyze_table.js';
 import { DELETE_COMPUTATION } from '../../compute/computation_state.js';
 import { useComputeDatabase } from '../../compute/compute_connection_provider.js';
 import { useStorageReader } from '../storage/storage_provider.js';

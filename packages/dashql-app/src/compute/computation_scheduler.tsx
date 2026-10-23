@@ -1,6 +1,11 @@
 import * as React from 'react';
 
-import * as computationLogic from './computation_logic.js';
+import { computeColumnAggregates, computeFilteredColumnAggregates } from './tasks/column_aggregation.js';
+import { computeSystemColumns } from './tasks/system_columns.js';
+import { computeTableAggregates } from './tasks/table_aggregation.js';
+import { filterTable } from './tasks/table_filtering.js';
+import { searchData } from './tasks/data_search.js';
+import { sortTable } from './tasks/table_ordering.js';
 
 import { COLUMN_AGGREGATION_SUCCEEDED, ComputationAction, DATA_SEARCH_FAILED, DATA_SEARCH_SUCCEEDED, UNREGISTER_SCHEDULER_TASK, FILTERED_COLUMN_AGGREGATION_SUCCEEDED, SYSTEM_COLUMN_COMPUTATION_SUCCEEDED, TABLE_AGGREGATION_SUCCEEDED, TABLE_FILTERING_SUCCEEDED, TABLE_ORDERING_SUCCEDED, UPDATE_SCHEDULER_TASK } from './computation_state.js';
 import { Dispatch } from '../utils/variant.js';
@@ -9,19 +14,19 @@ import { createTrace } from '../platform/logger/trace_context.js';
 import { TaskStatus, TaskProgress, TaskVariant, COLUMN_AGGREGATION_TASK, DATA_SEARCH_TASK, FILTERED_COLUMN_AGGREGATION_TASK, SYSTEM_COLUMN_COMPUTATION_TASK, TABLE_AGGREGATION_TASK, TABLE_FILTERING_TASK, TABLE_ORDERING_TASK } from "./computation_types.js";
 import { useComputationRegistry } from "./computation_registry.js";
 import { useLogger } from '../platform/logger/logger_provider.js';
-import type { ComputeQueryExecution } from './computation_logic.js';
+import type { ComputeQueryExecution } from './computation_tasks.js';
 import { useCreateComputeQueryExecution } from './computation_query_execution.js';
 
 const LOG_CTX = 'scheduler';
 
 export const COMPUTATION_OPERATIONS = {
-    computeColumnAggregates: computationLogic.computeColumnAggregates,
-    computeFilteredColumnAggregates: computationLogic.computeFilteredColumnAggregates,
-    computeSystemColumns: computationLogic.computeSystemColumns,
-    computeTableAggregates: computationLogic.computeTableAggregates,
-    filterTable: computationLogic.filterTable,
-    searchData: computationLogic.searchData,
-    sortTable: computationLogic.sortTable,
+    computeColumnAggregates,
+    computeFilteredColumnAggregates,
+    computeSystemColumns,
+    computeTableAggregates,
+    filterTable,
+    searchData,
+    sortTable,
 };
 
 interface SchedulerState {

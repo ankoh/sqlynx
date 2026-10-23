@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { CLEAR_TABLE_ORDERING, type ComputationAction, type TableComputationState } from '../../../../../compute/computation_state.js';
-import { scheduleTask } from '../../../../../compute/computation_logic.js';
+import { scheduleTask } from '../../../../../compute/computation_tasks.js';
 import type { TableOrderingTask } from '../../../../../compute/computation_types.js';
 import { TABLE_ORDERING_TASK, TaskStatus } from '../../../../../compute/computation_types.js';
 import type { OrderByConstraint } from '../../../../../compute/sql/sqlframe_builder.js';

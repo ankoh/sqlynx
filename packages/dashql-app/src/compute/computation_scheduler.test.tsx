@@ -31,7 +31,7 @@ import {
 } from './computation_types.js';
 const computationLogic = COMPUTATION_OPERATIONS;
 import { Dispatch } from '../utils/variant.js';
-import type { ComputeQueryExecution } from './computation_logic.js';
+import type { ComputeQueryExecution } from './computation_tasks.js';
 import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { ComputeQueryExecution } from './computation_logic.js';
+import type { ComputeQueryExecution } from './computation_tasks.js';
 import type { TaskVariant } from './computation_types.js';
 
 export type CreateComputeQueryExecution = (task: TaskVariant) => ComputeQueryExecution;
