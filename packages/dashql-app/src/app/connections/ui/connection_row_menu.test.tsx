@@ -3,7 +3,7 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
+import { ConnectionHealth, type ConnectionState } from '../connection_state.js';
 
 const refreshCatalog = vi.fn();
 
@@ -13,7 +13,7 @@ import {
     ConnectionRefreshButton,
     ConnectionRowMenu,
     type ConnectionRefreshDependencies,
-} from './session_workbench_sidebar.js';
+} from './connection_tree.js';
 
 const dependencies: ConnectionRefreshDependencies = {
     useCatalogLoaderQueue: () => refreshCatalog,

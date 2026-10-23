@@ -21,7 +21,7 @@ import { CONNECTION_HEALTH_COLORS } from '../../connections/ui/connection_status
 import { connectionLabelParts, connectionLabelText, connectionOrdinals, type ConnectionLabelParts } from '../../connections/ui/connection_label.js';
 import { ConnectionLabelView, ConnectionProtocolTag } from '../../connections/ui/connection_label_view.js';
 import { useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
-import { listedConnections } from './session_workbench_sidebar.js';
+import { listedConnections } from '../../connections/ui/connection_tree.js';
 
 /// The fields of a connection that a script shows
 export interface ScriptConnectionView {

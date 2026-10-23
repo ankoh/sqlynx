@@ -1,7 +1,7 @@
-import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
-import { type ConnectionState } from '../../connections/connection_state.js';
-import { connectionLabel, connectionLabelParts, connectionOrdinals } from '../../connections/ui/connection_label.js';
-import type { ConnectionRegistry } from '../../connections/connection_registry.js';
+import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../connector_info.js';
+import { type ConnectionState } from '../connection_state.js';
+import { connectionLabel, connectionLabelParts, connectionOrdinals } from './connection_label.js';
+import type { ConnectionRegistry } from '../connection_registry.js';
 import { fixedConnectionReferences } from '../../../tests/mocks/connection_references.js';
 import {
     connectionDisplayOrder,
@@ -11,9 +11,9 @@ import {
     isConnectionInitiallyExpanded,
     isVisibleCatalogNode,
     type CatalogNode,
-} from './session_workbench_sidebar.js';
+} from './connection_tree.js';
 
-describe('session workbench database labels', () => {
+describe('connection labels', () => {
     it('labels the mandatory local database by its connector and Local', () => {
         const database = {
             connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
@@ -113,13 +113,13 @@ describe('connections of the same connector', () => {
     it('sizes the group headings of the connection tree', () => {
         const rows = [
             { type: 'connection-group', key: 'g', label: 'This session' },
-            { type: 'attached-database', key: 'a', database: hyper('a') },
+            { type: 'connection', key: 'a', database: hyper('a') },
         ] as any;
         expect(connectionTreeRowHeight(0, { rows })).toBeLessThan(connectionTreeRowHeight(1, { rows }));
     });
 });
 
-describe('session workbench catalog tree', () => {
+describe('connection catalog tree', () => {
     it('hides anonymous database and schema containers created by unqualified SQL declarations', () => {
         expect(isVisibleCatalogNode('database', '')).toBe(false);
         expect(isVisibleCatalogNode('schema', '   ')).toBe(false);

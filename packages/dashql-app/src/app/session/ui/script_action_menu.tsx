@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as dashql from '@ankoh/dashql-core';
-import * as styles from './action_menu.module.css';
+import * as styles from '../../ui/action_menu.module.css';
 
 import { ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
 import * as ActionList from '../../../ui/foundations/action_list.js';

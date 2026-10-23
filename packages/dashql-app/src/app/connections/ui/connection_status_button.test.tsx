@@ -3,10 +3,9 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
-import { SessionConnectionAttentionContext } from './session_connection_attention.js';
-import { ConnectionStatusButton } from './session_workbench_sidebar.js';
-import * as styles from './session_workbench_sidebar.module.css';
+import { ConnectionHealth, type ConnectionState } from '../connection_state.js';
+import { ConnectionStatusButton } from './connection_tree.js';
+import * as styles from './connection_tree.module.css';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
@@ -26,10 +25,8 @@ describe('Connection status button', () => {
     function render(health: ConnectionHealth, options: { usedHere?: boolean; attention?: boolean; onOpenSettings?: (anchor: HTMLButtonElement) => void } = {}) {
         const database = { connectionId: 'main', connectionHealth: health } as ConnectionState;
         act(() => root.render(
-            <SessionConnectionAttentionContext.Provider value={{ sessionId: 'session', active: options.attention ?? false, request: vi.fn() }}>
-                <ConnectionStatusButton database={database} label="Hyper Local" usedHere={options.usedHere ?? true}
-                    onOpenSettings={options.onOpenSettings ?? vi.fn()} />
-            </SessionConnectionAttentionContext.Provider>,
+            <ConnectionStatusButton database={database} label="Hyper Local" usedHere={options.usedHere ?? true}
+                attention={options.attention ?? false} onOpenSettings={options.onOpenSettings ?? vi.fn()} />,
         ));
         return container.querySelector<HTMLButtonElement>('button')!;
     }

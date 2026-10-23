@@ -1,0 +1,170 @@
+.entry_surface {
+    border: 1px solid transparent;
+    border-radius: var(--border_radius);
+    color: var(--base_color_neutral_8);
+    background: transparent;
+    text-align: left;
+}
+
+.entry_interactive:hover,
+.entry_interactive:focus-visible,
+.entry_interactive:focus-within {
+    border-color: var(--border_color_primary);
+    background: var(--base_color_neutral_0);
+}
+
+.connection_group_row {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 12px 4px;
+    color: var(--base_color_neutral_6);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.connection_group_row_first {
+    padding-top: 4px;
+}
+
+.database_list {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tree_row_container {
+    display: flex;
+    align-items: center;
+    padding-inline: 8px;
+}
+
+.database_row_container {
+    padding-bottom: 2px;
+}
+
+.database_row_container_first {
+    padding-top: 8px;
+}
+
+.tree_entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    height: 32px;
+    padding-right: 4px;
+}
+
+.tree_entry_main {
+    display: grid;
+    grid-template-columns: 12px 14px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    text-align: left;
+}
+
+.tree_entry_toggle {
+    cursor: pointer;
+}
+
+.tree_entry_toggle:focus-visible {
+    outline: 2px solid var(--border_color_primary);
+    outline-offset: 2px;
+}
+
+.tree_entry_spacer {
+    width: 12px;
+}
+
+.tree_entry_icon {
+    display: inline-flex;
+    color: var(--base_color_neutral_6);
+}
+
+.tree_entry_name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tree_entry_children {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.database_row {
+    height: 36px;
+}
+
+.database_row .tree_entry_name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.database_menu_button {
+    color: var(--base_color_neutral_6);
+}
+
+.database_refresh_button {
+    color: var(--base_color_neutral_6);
+}
+
+.database_status_button {
+    border: 1px solid transparent;
+}
+
+.database_status_attention {
+    animation: database_status_attention 450ms ease-in-out 2;
+}
+
+@keyframes database_status_attention {
+    35%, 55% {
+        border-color: hsl(212, 50%, 60%);
+        background-color: hsl(212, 70%, 96%);
+    }
+    0%, 100% {
+        border-color: transparent;
+        background-color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .database_status_button * {
+        animation: none !important;
+    }
+    .database_status_attention {
+        animation: none;
+        border-color: hsl(212, 65%, 45%);
+        background-color: hsl(212, 85%, 94%);
+    }
+}
+
+.catalog_row {
+    margin: 1px 0;
+}
+
+.catalog_row .tree_entry_name {
+    font-family: var(--font_family_mono);
+    font-size: 11px;
+}
+
+.catalog_node_kind {
+    color: var(--base_color_neutral_5);
+    font-size: 9px;
+    text-transform: uppercase;
+    margin-right: 4px;
+}
