@@ -5,6 +5,7 @@ import { VariantKind } from '../utils/variant.js';
 import { DataFrame } from './data_frame.js';
 import { ArrowTableFormatter } from './arrow_formatter.js';
 import { LoggableException } from '../platform/logger/logger.js';
+import { AsyncValue } from '../utils/async_value.js';
 
 export const TASK_FAILED = Symbol("TASK_FAILED");
 export const TASK_RUNNING = Symbol("TASK_RUNNING");
@@ -520,3 +521,26 @@ export type FrequentValuesTable<KeyType extends arrow.DataType = arrow.DataType>
 }>
 
 // ------------------------------------------------------------
+
+export type ComputationTask<Type, Task, Result> = VariantKind<Type, Task> & {
+    result: AsyncValue<Result, LoggableException>,
+    taskId?: number,
+};
+
+export const FILTERED_COLUMN_AGGREGATION_TASK = Symbol("FILTERED_COLUMN_AGGREGATION_TASK");
+export const COLUMN_AGGREGATION_TASK = Symbol("COLUMN_AGGREGATION_TASK");
+export const TABLE_FILTERING_TASK = Symbol("TABLE_FILTERING_TASK");
+export const TABLE_ORDERING_TASK = Symbol("TABLE_ORDERING_TASK");
+export const TABLE_AGGREGATION_TASK = Symbol("TABLE_AGGREGATION_TASK");
+export const SYSTEM_COLUMN_COMPUTATION_TASK = Symbol("SYSTEM_COLUMN_COMPUTATION_TASK");
+export const DATA_SEARCH_TASK = Symbol("DATA_SEARCH_TASK");
+
+export type TaskVariant =
+    | ComputationTask<typeof TABLE_FILTERING_TASK, TableFilteringTask, FilterTable | null>
+    | ComputationTask<typeof TABLE_ORDERING_TASK, TableOrderingTask, OrderingTable>
+    | ComputationTask<typeof TABLE_AGGREGATION_TASK, TableAggregationTask, [TableAggregation, ColumnGroup[]]>
+    | ComputationTask<typeof SYSTEM_COLUMN_COMPUTATION_TASK, SystemColumnComputationTask, [arrow.Table, DataFrame, ColumnGroup[]]>
+    | ComputationTask<typeof COLUMN_AGGREGATION_TASK, ColumnAggregationTask, ColumnAggregationVariant>
+    | ComputationTask<typeof FILTERED_COLUMN_AGGREGATION_TASK, WithFilter<ColumnAggregationTask>, WithFilterEpoch<ColumnAggregationVariant> | null>
+    | ComputationTask<typeof DATA_SEARCH_TASK, DataSearchTask, DataSearchTable>
+    ;

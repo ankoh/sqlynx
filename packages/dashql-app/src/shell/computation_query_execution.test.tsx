@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 
 import { ConnectionRegistry, useConnectionRegistry } from '../app/connections/connection_registry.js';
 import { useCreateComputeQueryExecution } from '../compute/computation_query_execution.js';
-import { TABLE_AGGREGATION_TASK, type TaskVariant } from '../compute/computation_scheduler.js';
+import { TABLE_AGGREGATION_TASK, type TaskVariant } from '../compute/computation_types.js';
 import { QueryExecutionStatus, QueryType } from '../query/query_execution_state.js';
 import { ShellComputeQueryExecutionProvider } from './computation_query_execution.js';
 import { ShellConnectionProvider, useShellConnection } from './shell_connection.js';

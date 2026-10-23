@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptData, destroySessionScripts, reduceSessionScripts, sessionConnectionIds, sessionScriptListWrite } from './session_scripts.js';
 import { Dispatch } from '../../../utils/variant.js';
+import { UpdateQueue, useStore, useStoreState, useUpdateQueue } from '../../../utils/store.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
 import { createDefaultConnectionParamsForConnector } from '../../connections/connection_params.js';
 import { useStorageWriter } from '../../storage/storage_provider.js';
@@ -44,20 +45,27 @@ export type ModifyConnectionSessionScripts = (conn: string, action: SessionScrip
 // Hooks that only modify the registry subscribe to the setter context and don't re-render on every update.
 const SESSION_SCRIPTS_REGISTRY_CTX = React.createContext<SessionScriptsRegistry | null>(null);
 const SESSION_SCRIPTS_REGISTRY_SETTER_CTX = React.createContext<Dispatch<SetSessionScriptsRegistryAction> | null>(null);
+// The session script actions of all components are applied in order through one queue
+const SESSION_SCRIPTS_REGISTRY_QUEUE_CTX = React.createContext<UpdateQueue<SessionScriptsRegistry> | null>(null);
 
 type Props = {};
 
 export const SessionScriptsRegistryProvider: React.FC<React.PropsWithChildren<Props>> = (props: React.PropsWithChildren<Props>) => {
-    const [reg, setReg] = React.useState<SessionScriptsRegistry>(() => ({
+    // Reducing session scripts mutates Wasm objects and schedules storage writes, the store runs every update once
+    const store = useStore<SessionScriptsRegistry>(() => ({
         sessionScriptsMap: new Map(),
         sessionScriptsByConnection: new Map(),
     }));
+    const queue = useUpdateQueue(store);
+    const reg = useStoreState(store);
     return (
-        <SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider value={setReg}>
-            <SESSION_SCRIPTS_REGISTRY_CTX.Provider value={reg}>
-                {props.children}
-            </SESSION_SCRIPTS_REGISTRY_CTX.Provider>
-        </SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider>
+        <SESSION_SCRIPTS_REGISTRY_QUEUE_CTX.Provider value={queue}>
+            <SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider value={store.update}>
+                <SESSION_SCRIPTS_REGISTRY_CTX.Provider value={reg}>
+                    {props.children}
+                </SESSION_SCRIPTS_REGISTRY_CTX.Provider>
+            </SESSION_SCRIPTS_REGISTRY_SETTER_CTX.Provider>
+        </SESSION_SCRIPTS_REGISTRY_QUEUE_CTX.Provider>
     );
 };
 
@@ -219,53 +227,9 @@ export function useSessionScriptsDeletion(): (sessionId: string) => void {
 
 export function useSessionScripts(id: string | null): [SessionScripts | null, ModifySessionScripts] {
     const registry = React.useContext(SESSION_SCRIPTS_REGISTRY_CTX)!;
-    const setRegistry = React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!;
+    const queue = React.useContext(SESSION_SCRIPTS_REGISTRY_QUEUE_CTX)!;
     const storageWriter = useStorageWriter();
     const logger = useLogger();
-
-    // Queue for batching rapid dispatch calls to avoid concurrent rendering issues
-    const pendingActionsRef = React.useRef<Array<{
-        sessionId: string;
-        action: SessionScriptsAction;
-        resolve: (state: SessionScripts | null) => void;
-    }>>([]);
-    const flushScheduledRef = React.useRef(false);
-
-    // Flush all pending actions in a single state update
-    const flushPendingActions = React.useCallback(() => {
-        flushScheduledRef.current = false;
-        const pending = pendingActionsRef.current;
-        if (pending.length === 0) return;
-        pendingActionsRef.current = [];
-        logger.debug('Flushing session script actions', {
-            sessionId: id,
-            actionCount: pending.length.toString(),
-            actionTypes: pending.map(({ action }) => action.type.description ?? action.type.toString()).join(','),
-        }, LOG_CTX);
-
-        setRegistry((reg: SessionScriptsRegistry) => {
-            let changed = false;
-            for (const { sessionId, action, resolve } of pending) {
-                const prev = reg.sessionScriptsMap.get(sessionId);
-                if (!prev) {
-                    logger.warn('No session scripts registered for session', { sessionId: id }, LOG_CTX);
-                    resolve(null);
-                    continue;
-                }
-                logger.debug('Reducing session script action', {
-                    sessionId: id,
-                    actionType: action.type.description ?? action.type.toString(),
-                }, LOG_CTX);
-                const next = reduceSessionScripts(prev, action, storageWriter, logger);
-                reg.sessionScriptsMap.set(sessionId, next);
-                reindexSessionScriptConnections(reg, prev, next);
-                changed ||= next !== prev;
-                resolve(next);
-            }
-            // Keep the registry identity if all actions were no-ops (e.g. re-selecting the hovered script)
-            return changed ? { ...reg } : reg;
-        });
-    }, [id, setRegistry, storageWriter, logger]);
 
     /// Wrapper to modify an individual session scripts collection
     const dispatch = React.useCallback((action: SessionScriptsAction) => {
@@ -274,18 +238,24 @@ export function useSessionScripts(id: string | null): [SessionScripts | null, Mo
             logger.debug('Queued session script action', {
                 sessionId: id,
                 actionType: action.type.description ?? action.type.toString(),
-                queueLength: (pendingActionsRef.current.length + 1).toString(),
             }, LOG_CTX);
-            // Queue the action
-            pendingActionsRef.current.push({ sessionId: id, action, resolve });
-
-            // Schedule a flush if not already scheduled
-            if (!flushScheduledRef.current) {
-                flushScheduledRef.current = true;
-                queueMicrotask(flushPendingActions);
-            }
+            queue.push(reg => {
+                const prev = reg.sessionScriptsMap.get(id);
+                if (!prev) {
+                    logger.warn('No session scripts registered for session', { sessionId: id }, LOG_CTX);
+                    resolve(null);
+                    return reg;
+                }
+                const next = reduceSessionScripts(prev, action, storageWriter, logger);
+                resolve(next);
+                // Keep the registry identity for no-ops (e.g. re-selecting the hovered script)
+                if (next === prev) return reg;
+                reg.sessionScriptsMap.set(id, next);
+                reindexSessionScriptConnections(reg, prev, next);
+                return { ...reg };
+            });
         });
-    }, [id, flushPendingActions]);
+    }, [id, queue, storageWriter, logger]);
 
     return [id == null ? null : registry.sessionScriptsMap.get(id) ?? null, dispatch];
 };
@@ -306,49 +276,24 @@ export async function ensureSessionScriptAnalyzed(
 }
 
 export function useConnectionScriptsDispatch(): ModifyConnectionSessionScripts {
-    const setRegistry = React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!;
+    const queue = React.useContext(SESSION_SCRIPTS_REGISTRY_QUEUE_CTX)!;
     const storage = useStorageWriter();
     const logger = useLogger();
 
-    // Queue for batching rapid dispatch calls to avoid concurrent rendering issues
-    const pendingActionsRef = React.useRef<Array<{ conn: string; action: SessionScriptsAction }>>([]);
-    const flushScheduledRef = React.useRef(false);
-
-    // Flush all pending actions in a single state update
-    const flushPendingActions = React.useCallback(() => {
-        flushScheduledRef.current = false;
-        const actions = pendingActionsRef.current;
-        if (actions.length === 0) return;
-        pendingActionsRef.current = [];
-
-        setRegistry((reg: SessionScriptsRegistry) => {
+    return React.useCallback<ModifyConnectionSessionScripts>((conn: string, action: SessionScriptsAction) => {
+        queue.push(reg => {
             let changed = false;
-            for (const { conn, action } of actions) {
-                // Every session with scripts that analyze with the connection receives the action
-                for (const sessionId of [...(reg.sessionScriptsByConnection.get(conn) ?? [])]) {
-                    const prev = reg.sessionScriptsMap.get(sessionId);
-                    if (prev) {
-                        const next = reduceSessionScripts(prev, action, storage, logger);
-                        reg.sessionScriptsMap.set(sessionId, next);
-                        reindexSessionScriptConnections(reg, prev, next);
-                        changed ||= next !== prev;
-                    }
+            // Every session with scripts that analyze with the connection receives the action
+            for (const sessionId of [...(reg.sessionScriptsByConnection.get(conn) ?? [])]) {
+                const prev = reg.sessionScriptsMap.get(sessionId);
+                if (prev) {
+                    const next = reduceSessionScripts(prev, action, storage, logger);
+                    reg.sessionScriptsMap.set(sessionId, next);
+                    reindexSessionScriptConnections(reg, prev, next);
+                    changed ||= next !== prev;
                 }
             }
             return changed ? { ...reg } : reg;
         });
-    }, [setRegistry, storage, logger]);
-
-    const dispatch = React.useCallback<ModifyConnectionSessionScripts>((conn: string, action: SessionScriptsAction) => {
-        // Queue the action
-        pendingActionsRef.current.push({ conn, action });
-
-        // Schedule a flush if not already scheduled
-        if (!flushScheduledRef.current) {
-            flushScheduledRef.current = true;
-            queueMicrotask(flushPendingActions);
-        }
-    }, [flushPendingActions]);
-
-    return dispatch;
+    }, [queue, storage, logger]);
 }

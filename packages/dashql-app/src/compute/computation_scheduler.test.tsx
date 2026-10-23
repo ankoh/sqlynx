@@ -18,9 +18,8 @@ import {
     DATA_SEARCH_SUCCEEDED,
     FILTERED_COLUMN_AGGREGATION_SUCCEEDED,
 } from './computation_state.js';
+import { processTask, ComputationScheduler, COMPUTATION_OPERATIONS } from './computation_scheduler.js';
 import {
-    processTask,
-    ComputationScheduler,
     TaskVariant,
     TABLE_FILTERING_TASK,
     TABLE_ORDERING_TASK,
@@ -29,8 +28,7 @@ import {
     COLUMN_AGGREGATION_TASK,
     DATA_SEARCH_TASK,
     FILTERED_COLUMN_AGGREGATION_TASK,
-    COMPUTATION_OPERATIONS,
-} from './computation_scheduler.js';
+} from './computation_types.js';
 const computationLogic = COMPUTATION_OPERATIONS;
 import { Dispatch } from '../utils/variant.js';
 import type { ComputeQueryExecution } from './computation_logic.js';

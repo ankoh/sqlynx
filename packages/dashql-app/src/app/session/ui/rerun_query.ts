@@ -1,6 +1,7 @@
 import type { QueryExecutor } from '../../connections/query_executor.js';
 import { QueryType } from '../../../query/query_execution_state.js';
-import { SessionScripts, ScriptData, REGISTER_QUERY, REGISTER_SCRIPT_RESULT, compileSessionQuery, createScriptExecution } from '../scripts/session_scripts.js';
+import { SessionScripts, ScriptData, REGISTER_QUERY, REGISTER_SCRIPT_RESULT } from '../scripts/session_scripts.js';
+import { compileSessionQuery, createScriptExecution } from '../scripts/script_compilation.js';
 import { ensureSessionScriptAnalyzed, ModifySessionScripts } from '../scripts/session_scripts_registry.js';
 import { projectionForVisualizeQuery } from '../scripts/script_types.js';
 import type { LoggerLike } from '../../../platform/logger/logger.js';

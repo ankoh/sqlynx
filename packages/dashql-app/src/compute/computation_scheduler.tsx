@@ -1,15 +1,12 @@
 import * as React from 'react';
-import * as arrow from 'apache-arrow';
 
 import * as computationLogic from './computation_logic.js';
 
-import { DataFrame } from './data_frame.js';
-import { AsyncValue } from '../utils/async_value.js';
 import { COLUMN_AGGREGATION_SUCCEEDED, ComputationAction, DATA_SEARCH_FAILED, DATA_SEARCH_SUCCEEDED, UNREGISTER_SCHEDULER_TASK, FILTERED_COLUMN_AGGREGATION_SUCCEEDED, SYSTEM_COLUMN_COMPUTATION_SUCCEEDED, TABLE_AGGREGATION_SUCCEEDED, TABLE_FILTERING_SUCCEEDED, TABLE_ORDERING_SUCCEDED, UPDATE_SCHEDULER_TASK } from './computation_state.js';
-import { Dispatch, VariantKind } from '../utils/variant.js';
+import { Dispatch } from '../utils/variant.js';
 import { LoggableException, Logger, stringifyError } from '../platform/logger/logger.js';
 import { createTrace } from '../platform/logger/trace_context.js';
-import { TaskStatus, TableFilteringTask, TableOrderingTask, TableAggregationTask, FilterTable, OrderingTable, TableAggregation, ColumnGroup, SystemColumnComputationTask, ColumnAggregationTask, ColumnAggregationVariant, TaskProgress, WithFilter, WithFilterEpoch, DataSearchTask, DataSearchTable } from "./computation_types.js";
+import { TaskStatus, TaskProgress, TaskVariant, COLUMN_AGGREGATION_TASK, DATA_SEARCH_TASK, FILTERED_COLUMN_AGGREGATION_TASK, SYSTEM_COLUMN_COMPUTATION_TASK, TABLE_AGGREGATION_TASK, TABLE_FILTERING_TASK, TABLE_ORDERING_TASK } from "./computation_types.js";
 import { useComputationRegistry } from "./computation_registry.js";
 import { useLogger } from '../platform/logger/logger_provider.js';
 import type { ComputeQueryExecution } from './computation_logic.js';
@@ -26,29 +23,6 @@ export const COMPUTATION_OPERATIONS = {
     searchData: computationLogic.searchData,
     sortTable: computationLogic.sortTable,
 };
-
-export type ComputationTask<Type, Task, Result> = VariantKind<Type, Task> & {
-    result: AsyncValue<Result, LoggableException>,
-    taskId?: number,
-};
-
-export const FILTERED_COLUMN_AGGREGATION_TASK = Symbol("FILTERED_COLUMN_AGGREGATION_TASK");
-export const COLUMN_AGGREGATION_TASK = Symbol("COLUMN_AGGREGATION_TASK");
-export const TABLE_FILTERING_TASK = Symbol("TABLE_FILTERING_TASK");
-export const TABLE_ORDERING_TASK = Symbol("TABLE_ORDERING_TASK");
-export const TABLE_AGGREGATION_TASK = Symbol("TABLE_AGGREGATION_TASK");
-export const SYSTEM_COLUMN_COMPUTATION_TASK = Symbol("SYSTEM_COLUMN_COMPUTATION_TASK");
-export const DATA_SEARCH_TASK = Symbol("DATA_SEARCH_TASK");
-
-export type TaskVariant =
-    | ComputationTask<typeof TABLE_FILTERING_TASK, TableFilteringTask, FilterTable | null>
-    | ComputationTask<typeof TABLE_ORDERING_TASK, TableOrderingTask, OrderingTable>
-    | ComputationTask<typeof TABLE_AGGREGATION_TASK, TableAggregationTask, [TableAggregation, ColumnGroup[]]>
-    | ComputationTask<typeof SYSTEM_COLUMN_COMPUTATION_TASK, SystemColumnComputationTask, [arrow.Table, DataFrame, ColumnGroup[]]>
-    | ComputationTask<typeof COLUMN_AGGREGATION_TASK, ColumnAggregationTask, ColumnAggregationVariant>
-    | ComputationTask<typeof FILTERED_COLUMN_AGGREGATION_TASK, WithFilter<ColumnAggregationTask>, WithFilterEpoch<ColumnAggregationVariant> | null>
-    | ComputationTask<typeof DATA_SEARCH_TASK, DataSearchTask, DataSearchTable>
-    ;
 
 interface SchedulerState {
     /// Started tasks

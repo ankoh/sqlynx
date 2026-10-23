@@ -10,7 +10,7 @@ import {
     TABLE_FILTERING_TASK,
     TABLE_ORDERING_TASK,
     type TaskVariant,
-} from '../../compute/computation_scheduler.js';
+} from '../../compute/computation_types.js';
 import { QueryType } from '../../query/query_execution_state.js';
 import { executeTrackedQuery } from '../../query/tracked_query_execution.js';
 import { useConnectionDispatch, useConnectionRegistryStore } from './connection_registry.js';

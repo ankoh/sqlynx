@@ -305,53 +305,11 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
         case QUERY_CACHE_DELETED:
             return reduceQueryAction(state, action);
 
-        // RESET_CONNECTION is a bit special since we want to clean up our details as well
+        // RESET_CONNECTION stops the connection and clears its catalog
         case RESET_CONNECTION: {
-            cancelConnectionSetup(state.connectionId);
-            // Reset the DashQL catalog
-            invalidateCatalogBatch(state.catalog);
-            for (const task of state.catalogUpdates.tasksRunning.values()) {
-                task.cancellation.abort(new DOMException('Attached database was reset', 'AbortError'));
-            }
+            // Pending catalog publishers are aborted before the catalog is cleared
+            const newState = stopConnection(state, action, 'reset');
             state.catalog.clear();
-
-            // XXX Cancel currently running queries
-
-            // Cleanup query executions and catalog
-            const cleaned: ConnectionState = {
-                ...state,
-                connectionStatus: ConnectionStatus.NOT_STARTED,
-                connectionHealth: ConnectionHealth.NOT_STARTED,
-                setupAttemptParams: undefined,
-                setupAttemptDraft: undefined,
-                metrics: createConnectionMetrics(),
-                catalogUpdates: {
-                    tasksRunning: new Map(),
-                    tasksFinished: new Map(),
-                    currentFullRefresh: null,
-                    lastFullRefresh: null,
-                    restoredAt: null,
-                },
-                queriesActive: new Map(),
-                queriesFinished: new Map(),
-            };
-            // Cleanup the details
-            let newState: ConnectionState | null = null;
-            switch (state.details.type) {
-                case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    newState = reduceSalesforceConnectionState(cleaned, action as SalesforceConnectionStateAction);
-                    break;
-                case HYPER_CONNECTOR:
-                    newState = reduceHyperConnectorState(cleaned, action as HyperConnectorAction);
-                    break;
-                case TRINO_CONNECTOR:
-                    newState = reduceTrinoConnectorState(cleaned, action as TrinoConnectorAction);
-                    break;
-            }
-
-            // Cleaning up details is best-effort. No need to check if RESET was actually consumed
-            newState = newState ?? cleaned;
-
             return newState;
         }
 
@@ -385,50 +343,10 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             return { ...state, name };
         }
 
-        /// DELETE_CONNECTION deletes the connection state
+        /// DELETE_CONNECTION stops the connection and destroys its catalog.
+        /// The registry refuses to delete connections that sessions reference.
         case DELETE_CONNECTION: {
-            cancelConnectionSetup(state.connectionId);
-            invalidateCatalogBatch(state.catalog);
-            for (const task of state.catalogUpdates.tasksRunning.values()) {
-                task.cancellation.abort(new DOMException('Attached database was deleted', 'AbortError'));
-            }
-            // XXX This must not be done if there are still sessions referencing the connection!
-
-            // XXX Cancel currently running queries
-
-            // Cleanup query executions and catalog
-            const cleaned: ConnectionState = {
-                ...state,
-                connectionStatus: ConnectionStatus.NOT_STARTED,
-                connectionHealth: ConnectionHealth.NOT_STARTED,
-                metrics: createConnectionMetrics(),
-                catalogUpdates: {
-                    tasksRunning: new Map(),
-                    tasksFinished: new Map(),
-                    currentFullRefresh: null,
-                    lastFullRefresh: null,
-                    restoredAt: null,
-                },
-                queriesActive: new Map(),
-                queriesFinished: new Map(),
-            };
-
-            // Dispatch to the individual state detail handlers
-            let newState: ConnectionState | null = null;
-            switch (state.details.type) {
-                case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    newState = reduceSalesforceConnectionState(cleaned, action as SalesforceConnectionStateAction);
-                    break;
-                case HYPER_CONNECTOR:
-                    newState = reduceHyperConnectorState(cleaned, action as HyperConnectorAction);
-                    break;
-                case TRINO_CONNECTOR:
-                    newState = reduceTrinoConnectorState(cleaned, action as TrinoConnectorAction);
-                    break;
-            }
-
-            // Cleaning up details is best-effort. No need to check if RESET was actually consumed
-            newState = newState ?? cleaned;
+            const newState = stopConnection(state, action, 'deleted');
 
             // Text-only source scripts do not own their published descriptors.
             try {
@@ -469,19 +387,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                     setupAttemptDraft = state.paramsDraft;
                     break;
             }
-            // Dispatch to the individual state detail handlers
-            let newState: ConnectionState | null = null;
-            switch (state.details.type) {
-                case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    newState = reduceSalesforceConnectionState(state, action as SalesforceConnectionStateAction);
-                    break;
-                case HYPER_CONNECTOR:
-                    newState = reduceHyperConnectorState(state, action as HyperConnectorAction);
-                    break;
-                case TRINO_CONNECTOR:
-                    newState = reduceTrinoConnectorState(state, action as TrinoConnectorAction);
-                    break;
-            }
+            let newState = reduceConnectorDetails(state, action);
             if (newState == null) {
                 throw new Error(`failed to apply state action: ${String(action.type)}`);
             }
@@ -517,6 +423,48 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             return newState;
         }
     }
+}
+
+/// Let the reducer of the connector apply an action to the connection details
+function reduceConnectorDetails(state: ConnectionState, action: ConnectionAction): ConnectionState | null {
+    switch (state.details.type) {
+        case SALESFORCE_DATA_CLOUD_CONNECTOR:
+            return reduceSalesforceConnectionState(state, action as SalesforceConnectionStateAction);
+        case HYPER_CONNECTOR:
+            return reduceHyperConnectorState(state, action as HyperConnectorAction);
+        case TRINO_CONNECTOR:
+            return reduceTrinoConnectorState(state, action as TrinoConnectorAction);
+    }
+}
+
+/// Stop a connection that is reset or deleted.
+/// Cancels the setup and the running catalog updates and drops the query executions.
+function stopConnection(state: ConnectionState, action: ConnectionAction, reason: 'reset' | 'deleted'): ConnectionState {
+    cancelConnectionSetup(state.connectionId);
+    invalidateCatalogBatch(state.catalog);
+    for (const task of state.catalogUpdates.tasksRunning.values()) {
+        task.cancellation.abort(new DOMException(`Connection was ${reason}`, 'AbortError'));
+    }
+    // XXX Cancel currently running queries
+    const cleaned: ConnectionState = {
+        ...state,
+        connectionStatus: ConnectionStatus.NOT_STARTED,
+        connectionHealth: ConnectionHealth.NOT_STARTED,
+        setupAttemptParams: undefined,
+        setupAttemptDraft: undefined,
+        metrics: createConnectionMetrics(),
+        catalogUpdates: {
+            tasksRunning: new Map(),
+            tasksFinished: new Map(),
+            currentFullRefresh: null,
+            lastFullRefresh: null,
+            restoredAt: null,
+        },
+        queriesActive: new Map(),
+        queriesFinished: new Map(),
+    };
+    // Cleaning up the details is best-effort, the connector may ignore the action
+    return reduceConnectorDetails(cleaned, action) ?? cleaned;
 }
 
 /// Apply the catalog changes of executed statements to the relation descriptor and record them as SQL.

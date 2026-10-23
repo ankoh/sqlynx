@@ -10,7 +10,6 @@ import { StorageWriter, WRITE_SESSION_PROPERTIES, WRITE_SESSION_SCRIPTS, type St
 import {
     ANALYZE_OUTDATED_SCRIPT,
     CATALOG_DID_UPDATE,
-    compileSessionQuery,
     CREATE_SCRIPT,
     DELETE_SCRIPT,
     defaultScriptConnection,
@@ -27,6 +26,7 @@ import {
     replaceSessionScriptsFromStorage,
     replaceScriptSessionText,
 } from './session_scripts.js';
+import { compileSessionQuery } from './script_compilation.js';
 import { runSessionScript } from '../ui/rerun_query.js';
 import { createEmptyAnnotations, createEmptyMetadata, createScriptRef } from './script_types.js';
 import { createDefaultSessionSettings, readSessionSettings } from './session_settings.js';

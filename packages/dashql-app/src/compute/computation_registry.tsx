@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ComputationAction, ComputationState, createComputationState, reduceComputationState } from "./computation_state.js";
 import { Dispatch } from '../utils/variant.js';
+import { useStore, useStoreState } from '../utils/store.js';
 import { useLogger } from '../platform/logger/logger_provider.js';
 import { DataFrameRegistry } from './data_frame.js';
 
@@ -25,10 +26,12 @@ interface ComputationRegistryProps {
 export function ComputationRegistry(props: ComputationRegistryProps) {
     const logger = useLogger();
     const dataFrameMemory = React.useMemo(() => new DataFrameRegistry(logger), []);
-    const reducer = React.useCallback((state: ComputationState, action: ComputationAction) => {
-        return reduceComputationState(state, action, dataFrameMemory);
-    }, [dataFrameMemory]);
-    const [state, dispatch] = React.useReducer(reducer, null, createComputationState);
+    // Reducing acquires and releases data frames, the store runs every action once
+    const store = useStore<ComputationState>(createComputationState);
+    const state = useStoreState(store);
+    const dispatch = React.useCallback((action: ComputationAction) => {
+        store.update(state => reduceComputationState(state, action, dataFrameMemory));
+    }, [store, dataFrameMemory]);
     return (
         <DATA_FRAME_REGISTRY_CTX.Provider value={dataFrameMemory}>
             <COMPUTATION_DISPATCH_CTX.Provider value={dispatch}>
