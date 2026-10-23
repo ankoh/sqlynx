@@ -91,4 +91,37 @@ describe('ConnectionInlineHeader', () => {
         expect(connectorInfo.children[1].textContent).toBe('Salesforce Data Cloud');
         expect(connectorInfo.children[2].textContent).toBe('History');
     });
+
+    it.each([
+        [ConnectionHealth.NOT_STARTED, false],
+        [ConnectionHealth.FAILED, false],
+        [ConnectionHealth.CONNECTING, true],
+        [ConnectionHealth.ONLINE, true],
+    ] as const)('locks the protocol with health %s: %s', (health, locked) => {
+        const connection = {
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
+            connectionHealth: health,
+            connectionStatus: ConnectionStatus.NOT_STARTED,
+            details: { type: Symbol('test'), value: null },
+        } as unknown as ConnectionState;
+        const changes: string[] = [];
+
+        act(() => root.render(
+            <LoggerProvider>
+                <ConnectionInlineHeader
+                    connector={connection.connectorInfo}
+                    connection={connection}
+                    wrongPlatform={false}
+                    protocol="WASM"
+                    protocols={["WASM", "V3_HTTP"]}
+                    onProtocolChange={p => changes.push(p)}
+                />
+            </LoggerProvider>,
+        ));
+
+        const http = Array.from(container.querySelectorAll('button')).find(b => b.textContent === 'HTTP')!;
+        expect(http.disabled).toBe(locked);
+        act(() => http.click());
+        expect(changes).toEqual(locked ? [] : ['V3_HTTP']);
+    });
 });

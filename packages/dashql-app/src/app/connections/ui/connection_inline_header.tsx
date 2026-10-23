@@ -48,9 +48,10 @@ export function ConnectionInlineHeader(props: Props): React.ReactElement {
     // Get the action button.
     // Suppress the header button when no setup/cancel/reset handler is provided.
     const headerActionsProvided = props.setupConnection || props.cancelSetup || props.resetSetup;
+    const connectionHealth = props.connectionHealth ?? props.connection?.connectionHealth;
     let connectButton: React.ReactElement = <div />;
     if (headerActionsProvided) {
-        switch (props.connectionHealth ?? props.connection?.connectionHealth) {
+        switch (connectionHealth) {
             case ConnectionHealth.NOT_STARTED:
             case ConnectionHealth.CANCELLED:
             case ConnectionHealth.FAILED:
@@ -92,6 +93,11 @@ export function ConnectionInlineHeader(props: Props): React.ReactElement {
         }
     }
 
+    // An open connection keeps its protocol, switching it would replace the settings page underneath it
+    const protocolLocked = props.freezeInput
+        || connectionHealth === ConnectionHealth.CONNECTING
+        || connectionHealth === ConnectionHealth.ONLINE;
+
     // Get the connection status
     let statusText: string = props.statusText ?? "";
     let indicatorStatus: IndicatorStatus = props.indicatorStatus ?? IndicatorStatus.None;
@@ -122,22 +128,24 @@ export function ConnectionInlineHeader(props: Props): React.ReactElement {
                 </div>
                 <div className={style.actions}>
                     {props.protocol !== undefined && props.onProtocolChange && props.protocols && props.protocols.length > 1 && (
-                        <SegmentedControl
-                            aria-label="Attached database protocol"
-                            onChange={(index) => {
-                                props.onProtocolChange!(props.protocols![index]);
-                            }}
-                        >
-                            {props.protocols.map(p => (
-                                <SegmentedControl.Button
-                                    key={p}
-                                    selected={props.protocol === p}
-                                    disabled={props.freezeInput}
-                                >
-                                    {PROTOCOL_LABELS[p]}
-                                </SegmentedControl.Button>
-                            ))}
-                        </SegmentedControl>
+                        <div title={protocolLocked ? "Disconnect to switch the protocol" : undefined}>
+                            <SegmentedControl
+                                aria-label="Attached database protocol"
+                                onChange={(index) => {
+                                    if (!protocolLocked) props.onProtocolChange!(props.protocols![index]);
+                                }}
+                            >
+                                {props.protocols.map(p => (
+                                    <SegmentedControl.Button
+                                        key={p}
+                                        selected={props.protocol === p}
+                                        disabled={protocolLocked}
+                                    >
+                                        {PROTOCOL_LABELS[p]}
+                                    </SegmentedControl.Button>
+                                ))}
+                            </SegmentedControl>
+                        </div>
                     )}
                     {props.onClose && (
                         <IconButton
