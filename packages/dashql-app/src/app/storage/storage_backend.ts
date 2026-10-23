@@ -111,21 +111,6 @@ export interface StorageBackend {
     /// Delete a session
     deleteSession(sessionId: string): Promise<void>;
 
-    /// Load session catalog schema SQL
-    loadSessionSchema(sessionId: string): Promise<string | null>;
-    /// Save session catalog schema SQL
-    saveSessionSchema(sessionId: string, sql: string): Promise<void>;
-
-    /// Load session catalog functions SQL
-    loadSessionFunctions(sessionId: string): Promise<string | null>;
-    /// Save session catalog functions SQL
-    saveSessionFunctions(sessionId: string, sql: string): Promise<void>;
-
-    /// Load the catalog changes of executed statements
-    loadSessionCatalogChanges(sessionId: string): Promise<string | null>;
-    /// Save the catalog changes of executed statements
-    saveSessionCatalogChanges(sessionId: string, sql: string): Promise<void>;
-
     /// Load the session's flat, naturally ordered script files. The order of the feed is the order
     /// of the scripts in the session file.
     loadScripts(sessionId: string): Promise<ScriptData[]>;

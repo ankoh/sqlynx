@@ -15,9 +15,6 @@ import { SESSION_FORMAT_VERSION } from '../../migration/versions.js';
 
 export class SessionTestBackend implements StorageBackend {
     readonly sessions = new Map<string, SessionData>();
-    readonly schemas = new Map<string, string>();
-    readonly catalogChanges = new Map<string, string>();
-    readonly functions = new Map<string, string>();
     readonly scripts = new Map<string, Map<string, string>>();
     readonly data = new Map<string, Map<string, Uint8Array>>();
     readonly calls: string[] = [];
@@ -71,26 +68,8 @@ export class SessionTestBackend implements StorageBackend {
     async deleteSession(sessionId: string): Promise<void> {
         this.calls.push(`delete-session:${sessionId}`);
         this.sessions.delete(sessionId);
-        this.schemas.delete(sessionId);
-        this.catalogChanges.delete(sessionId);
-        this.functions.delete(sessionId);
         this.scripts.delete(sessionId);
         this.data.delete(sessionId);
-    }
-    async loadSessionSchema(sessionId: string): Promise<string | null> { return this.schemas.get(sessionId) ?? null; }
-    async saveSessionSchema(sessionId: string, sql: string): Promise<void> {
-        this.calls.push(`schema:${sessionId}`);
-        this.schemas.set(sessionId, sql);
-    }
-    async loadSessionCatalogChanges(sessionId: string): Promise<string | null> { return this.catalogChanges.get(sessionId) ?? null; }
-    async saveSessionCatalogChanges(sessionId: string, sql: string): Promise<void> {
-        this.calls.push(`catalog-changes:${sessionId}`);
-        this.catalogChanges.set(sessionId, sql);
-    }
-    async loadSessionFunctions(sessionId: string): Promise<string | null> { return this.functions.get(sessionId) ?? null; }
-    async saveSessionFunctions(sessionId: string, sql: string): Promise<void> {
-        this.calls.push(`functions:${sessionId}`);
-        this.functions.set(sessionId, sql);
     }
     async loadScripts(sessionId: string): Promise<ScriptData[]> {
         return [...(this.scripts.get(sessionId) ?? new Map())]

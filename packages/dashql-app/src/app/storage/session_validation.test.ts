@@ -14,7 +14,7 @@ const REMOTE_CONNECTION_ID = '66666666-7777-8888-9999-aaaaaaaaaaaa';
 
 function session(extra: Partial<SessionData> = {}): SessionData {
     return {
-        formatVersion: 6,
+        formatVersion: 7,
         sessionId: UUID,
         defaultConnectionId: CONNECTION_ID,
         connections: [{ connectionId: CONNECTION_ID, params: { hyper: {} } as any }],
@@ -84,7 +84,7 @@ describe('validateSessionData', () => {
     });
 
     it('rejects missing, older, and unknown format versions', () => {
-        for (const formatVersion of [undefined, 1, 2, 3, 4, 5, 7]) {
+        for (const formatVersion of [undefined, 1, 2, 3, 4, 5, 6, 8]) {
             expect(validateSessionData(session({ formatVersion } as any))).toEqual({
                 ok: false,
                 error: SessionValidationError.UnsupportedFormatVersion,

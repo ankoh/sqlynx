@@ -32,7 +32,7 @@ export function useSessionCreation(): SessionCreation {
             scriptOrder: [],
             scriptFocus: { fileName: '' },
             semanticUserFocus: null,
-        }, database.catalogFunctionScript);
+        });
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
             { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionConnectionFromState(database)]] },

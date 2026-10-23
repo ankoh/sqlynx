@@ -106,8 +106,8 @@ describe('V2 session export', () => {
     it('exports only flat scripts and includes catalogs on request', async () => {
         const backend = new SessionTestBackend();
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
-        await backend.saveSessionSchema(TEST_SESSION_ID, 'schema');
-        await backend.saveSessionFunctions(TEST_SESSION_ID, 'functions');
+        await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-relations.sql', 'schema');
+        await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-functions.sql', 'functions');
         await backend.saveScript(TEST_SESSION_ID, '01_first.sql', 'SELECT 1');
         await backend.saveScript(TEST_SESSION_ID, '02_second.sql', 'SELECT 2');
 
@@ -134,8 +134,8 @@ describe('V2 session export', () => {
     it('omits catalogs from URL exports by default', async () => {
         const backend = new SessionTestBackend();
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
-        await backend.saveSessionSchema(TEST_SESSION_ID, 'schema');
-        await backend.saveSessionFunctions(TEST_SESSION_ID, 'functions');
+        await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-relations.sql', 'schema');
+        await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-functions.sql', 'functions');
 
         const url = await exportSessionAsUrl(backend, TEST_SESSION_ID, new Map(), SessionLinkTarget.WEB);
         const eventJson = new TextDecoder().decode(BASE64URL_CODEC.decode(url.searchParams.get('data')!));
@@ -149,8 +149,8 @@ describe('V2 session export', () => {
     it('includes catalogs in shared ZIP exports by default', async () => {
         const backend = new SessionTestBackend();
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
-        await backend.saveSessionSchema(TEST_SESSION_ID, 'schema');
-        await backend.saveSessionFunctions(TEST_SESSION_ID, 'functions');
+        await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-relations.sql', 'schema');
+        await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-functions.sql', 'functions');
 
         const archive = await JSZip.loadAsync(await exportSessionAsSharedZip(
             backend,

@@ -7,7 +7,7 @@ import {
     STORAGE_SCRIPTS_FOLDER,
 } from '../../storage/storage_backend.js';
 import type { SessionBundle, SessionBundleWriteOptions } from '../../storage/session_bundle.js';
-import { assembleSessionBundle, readSessionBundleHead, writeSessionBundle } from '../../storage/session_bundle.js';
+import { assembleSessionBundle, readSessionBundleHead, seedConnectionCatalog, writeSessionBundle } from '../../storage/session_bundle.js';
 import { MemoryFolder } from '../../../migration/migration_folder.js';
 
 export interface SessionZipImportOptions extends SessionBundleWriteOptions { }
@@ -101,7 +101,11 @@ export async function importSessionFromZip(
     const options = typeof optionsInput === 'function'
         ? { targetSessionId: optionsInput(), targetIsFresh: true, regenerateConnectionIds: true }
         : optionsInput;
-    return await writeSessionBundle(bundle, backend, options);
+    const sessionId = await writeSessionBundle(bundle, backend, options);
+    // Fresh connection ids are chosen while writing
+    const { defaultConnectionId } = await backend.loadSession(sessionId);
+    await seedConnectionCatalog(backend, defaultConnectionId, bundle, sessionId);
+    return sessionId;
 }
 
 function normalizeBundlePath(input: string): string {

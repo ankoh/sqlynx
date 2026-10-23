@@ -27,9 +27,8 @@ describe('session migration', () => {
     it('brings a notebook folder to the current format', async () => {
         const folder = notebookFolder();
         expect(await migrateSessionFolder(folder)).toBe(SessionMigrationResult.Migrated);
-        expect([...folder.files.keys()].sort()).toEqual([
-            'dashql-catalog-functions.sql', 'dashql-catalog-relations.sql', 'dashql-session.json',
-        ]);
+        // The catalog copies are gone, the catalog belongs to the connection
+        expect([...folder.files.keys()]).toEqual(['dashql-session.json']);
         const metadata = JSON.parse(folder.files.get('dashql-session.json')!);
         expect(metadata).toEqual({
             formatVersion: SESSION_FORMAT_VERSION, sessionId: SESSION_ID, sessionPath: 'opfs://notebooks/x', name: 'n',
@@ -38,7 +37,6 @@ describe('session migration', () => {
         expect(Object.keys(metadata)).toEqual([
             'formatVersion', 'sessionId', 'sessionPath', 'name', 'scripts', 'attachments', 'defaultConnectionId', 'connections',
         ]);
-        expect(folder.files.get('dashql-catalog-relations.sql')).toBe('relations');
 
         // A migrated folder stays as it is
         const before = new Map(folder.files);
@@ -95,7 +93,7 @@ describe('session migration', () => {
         expect(await migrateSessionFolder(folder)).toBe(SessionMigrationResult.Migrated);
         const metadata = JSON.parse(folder.files.get('dashql-session.json')!);
         expect(metadata).toEqual({
-            formatVersion: 6, sessionId: SESSION_ID, name: 'n',
+            formatVersion: SESSION_FORMAT_VERSION, sessionId: SESSION_ID, name: 'n',
             defaultConnectionId: main.databaseId,
             connections: [
                 { connectionId: main.databaseId, params: main.params },
@@ -121,7 +119,7 @@ describe('session migration', () => {
         expect(await migrateSessionFolder(folder)).toBe(SessionMigrationResult.Migrated);
         const metadata = JSON.parse(folder.files.get('dashql-session.json')!);
         expect(metadata).toEqual({
-            formatVersion: 6, sessionId: SESSION_ID,
+            formatVersion: SESSION_FORMAT_VERSION, sessionId: SESSION_ID,
             defaultConnectionId: main.databaseId,
             connections: [
                 { connectionId: main.databaseId, params: main.params },
@@ -145,7 +143,7 @@ describe('session migration', () => {
         expect(await migrateSessionFolder(folder)).toBe(SessionMigrationResult.Migrated);
         expect(folder.files.has('dashql-session-index.json')).toBe(false);
         const metadata = JSON.parse(folder.files.get('dashql-session.json')!);
-        expect(metadata.formatVersion).toBe(6);
+        expect(metadata.formatVersion).toBe(SESSION_FORMAT_VERSION);
         expect(metadata.scripts).toEqual([{ name: '10_b.sql', connectionId }, { name: '2_a.sql', connectionId }]);
         expect(metadata.attachments).toEqual([{ name: 'x.csv' }]);
 
@@ -177,6 +175,18 @@ describe('session migration', () => {
         expect(base.files).toEqual(before);
         expect(await overlay.exists('dashql-notebook.json')).toBe(false);
         expect(JSON.parse((await overlay.readText('dashql-session.json'))!).sessionId).toBe(SESSION_ID);
-        expect(await overlay.readText('dashql-catalog-functions.sql')).toBe('functions');
+        expect(await overlay.readText('dashql-catalog-functions.sql')).toBeNull();
+    });
+
+    it('removes the catalog copies of a version 6 session', async () => {
+        const folder = new MemoryFolder([
+            ['dashql-session.json', JSON.stringify({ formatVersion: 6, sessionId: SESSION_ID, defaultConnectionId: 'x', connections: [] })],
+            ['dashql-catalog-relations.sql', 'relations'],
+            ['dashql-catalog-functions.sql', 'functions'],
+            ['dashql-catalog-changes.sql', 'changes'],
+        ]);
+        expect(await migrateSessionFolder(folder)).toBe(SessionMigrationResult.Migrated);
+        expect([...folder.files.keys()]).toEqual(['dashql-session.json']);
+        expect(JSON.parse(folder.files.get('dashql-session.json')!).formatVersion).toBe(7);
     });
 });

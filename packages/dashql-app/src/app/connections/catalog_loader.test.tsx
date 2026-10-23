@@ -207,11 +207,23 @@ describe('CatalogLoaderProvider queue', () => {
         await vi.waitFor(() => expect(updateHyperCatalog).toHaveBeenCalledTimes(2));
     });
 
-    it('keeps the catalog of a durable connection when it comes online', async () => {
+    it('keeps the restored catalog of a durable connection when it comes online', async () => {
         const connection = registry.connections.get('database')!;
-        registry.connections.set('database', { ...connection, params: { hyper: { protocol: 'V3_HTTP', endpoint: 'http://hyper.example' } }, connectionHealth: ConnectionHealth.ONLINE } as ConnectionState);
+        registry.connections.set('database', {
+            ...connection,
+            params: { hyper: { protocol: 'V3_HTTP', endpoint: 'http://hyper.example' } },
+            connectionHealth: ConnectionHealth.ONLINE,
+            catalogUpdates: { ...connection.catalogUpdates, restoredAt: new Date() },
+        } as ConnectionState);
         await render();
         await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
         expect(updateHyperCatalog).not.toHaveBeenCalled();
+    });
+
+    it('describes the catalog of a durable connection without one when it comes online', async () => {
+        const connection = registry.connections.get('database')!;
+        registry.connections.set('database', { ...connection, params: { hyper: { protocol: 'V3_HTTP', endpoint: 'http://hyper.example' } }, connectionHealth: ConnectionHealth.ONLINE } as ConnectionState);
+        await render();
+        await vi.waitFor(() => expect(updateHyperCatalog).toHaveBeenCalledTimes(1));
     });
 });

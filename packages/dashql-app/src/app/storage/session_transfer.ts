@@ -8,14 +8,14 @@ const LOG_CTX = 'session_transfer';
 export interface SessionTransferResult {
     /// The number of sessions copied
     sessionCount: number;
-    /// The number of files written (manifests + schema + functions + scripts + data)
+    /// The number of files written (session file, scripts and data)
     fileCount: number;
 }
 
 /// Copy a single session's files from `source` to `target`, keyed by the same UUID.
 ///
 /// The UUID is the authoritative identity and is preserved verbatim - nothing is re-prefixed. The
-/// session manifest, schema, functions, flat scripts, and binary data are copied as
+/// session file, the flat scripts and the binary data are copied as
 /// they are. `source` is left untouched; the caller deletes the source copy only after the copy is
 /// verified.
 export async function copySession(
@@ -30,27 +30,6 @@ export async function copySession(
     const sessionData = await source.loadSession(sessionId);
     await target.saveSessionManifest(sessionId, sessionData);
     fileCount++;
-
-    // Schema
-    const schema = await source.loadSessionSchema(sessionId);
-    if (schema != null) {
-        await target.saveSessionSchema(sessionId, schema);
-        fileCount++;
-    }
-
-    // Catalog changes of executed statements
-    const catalogChangesSql = await source.loadSessionCatalogChanges(sessionId);
-    if (catalogChangesSql != null) {
-        await target.saveSessionCatalogChanges(sessionId, catalogChangesSql);
-        fileCount++;
-    }
-
-    // Functions
-    const functions = await source.loadSessionFunctions(sessionId);
-    if (functions != null) {
-        await target.saveSessionFunctions(sessionId, functions);
-        fileCount++;
-    }
 
     for (const script of await source.loadScripts(sessionId)) {
         await target.saveScript(sessionId, script.name, script.sql);
@@ -92,24 +71,6 @@ export async function cloneSession(
 
         await target.saveSessionManifest(newSessionId, sessionData);
         fileCount++;
-
-        const schema = rebaseSessionAttachmentPaths(await source.loadSessionSchema(sourceSessionId), sourceSessionId, newSessionId);
-        if (schema != null) {
-            await target.saveSessionSchema(newSessionId, schema);
-            fileCount++;
-        }
-
-        const catalogChangesSql = await source.loadSessionCatalogChanges(sourceSessionId);
-        if (catalogChangesSql != null) {
-            await target.saveSessionCatalogChanges(newSessionId, catalogChangesSql);
-            fileCount++;
-        }
-
-        const functions = rebaseSessionAttachmentPaths(await source.loadSessionFunctions(sourceSessionId), sourceSessionId, newSessionId);
-        if (functions != null) {
-            await target.saveSessionFunctions(newSessionId, functions);
-            fileCount++;
-        }
 
         for (const script of await source.loadScripts(sourceSessionId)) {
             await target.saveScript(newSessionId, script.name,

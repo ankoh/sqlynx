@@ -100,9 +100,19 @@ describe('V2 session ZIP import', () => {
 
         expect(await backend.loadSession(target)).toMatchObject({ sessionId: target });
         expect(await backend.loadScripts(target)).toEqual([{ name: '01_query.sql', sql: 'SELECT 1' }]);
-        expect(await backend.loadSessionSchema(target)).toBe('schema');
-        expect(await backend.loadSessionFunctions(target)).toBe('');
+        // The catalog of the bundle seeds the default connection
+        expect([...backend.connectionFiles]).toEqual([[`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`, 'schema']]);
         expect(backend.sessions.has(TEST_SESSION_ID)).toBe(false);
+    });
+
+    it('keeps the catalog of a connection that has one', async () => {
+        const backend = new SessionTestBackend();
+        await backend.saveConnectionFile(TEST_CONNECTION_ID, 'dashql-catalog-functions.sql', 'stored');
+        await importSessionFromZip(await zip({
+            [STORAGE_SESSION_FILE]: JSON.stringify(testSession()),
+            'dashql-catalog-relations.sql': 'schema',
+        }), backend);
+        expect([...backend.connectionFiles]).toEqual([[`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`, 'stored']]);
     });
 
     it('rolls back only a caller-declared fresh target', async () => {

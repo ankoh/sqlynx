@@ -23,6 +23,7 @@ import {
     readSessionBundle,
     readSessionBundleHead,
     reconcileStoredSessionFiles,
+    seedConnectionCatalog,
     writeSessionBundle,
     type SessionBundle,
 } from './session_bundle.js';
@@ -252,24 +253,6 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         this.nativeCache.delete(sessionId);
     }
 
-    async loadSessionSchema(sessionId: string): Promise<string | null> {
-        return (await this.backendFor(sessionId)).loadSessionSchema(sessionId);
-    }
-    async saveSessionSchema(sessionId: string, sql: string): Promise<void> {
-        return (await this.backendFor(sessionId)).saveSessionSchema(sessionId, sql);
-    }
-    async loadSessionCatalogChanges(sessionId: string): Promise<string | null> {
-        return (await this.backendFor(sessionId)).loadSessionCatalogChanges(sessionId);
-    }
-    async saveSessionCatalogChanges(sessionId: string, sql: string): Promise<void> {
-        return (await this.backendFor(sessionId)).saveSessionCatalogChanges(sessionId, sql);
-    }
-    async loadSessionFunctions(sessionId: string): Promise<string | null> {
-        return (await this.backendFor(sessionId)).loadSessionFunctions(sessionId);
-    }
-    async saveSessionFunctions(sessionId: string, sql: string): Promise<void> {
-        return (await this.backendFor(sessionId)).saveSessionFunctions(sessionId, sql);
-    }
     async loadScripts(sessionId: string): Promise<ScriptData[]> {
         return (await this.backendFor(sessionId)).loadScripts(sessionId);
     }
@@ -376,12 +359,12 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
 
     /// Read durable data from the physical location currently registered for a session.
     readSessionBundle(sessionId: string): Promise<SessionBundle> {
-        return readSessionBundle(sessionId, this, true);
+        return readSessionBundle(sessionId, this);
     }
 
     /// Read durable data explicitly from OPFS, bypassing composite location routing.
     readPortableSessionBundle(sessionId: string): Promise<SessionBundle> {
-        return readSessionBundle(sessionId, this.opfs, true);
+        return readSessionBundle(sessionId, this.opfs);
     }
 
     /// Write a complete bundle explicitly to OPFS, bypassing a current native route.
@@ -436,6 +419,8 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         if (!validation.ok) {
             throw new Error(`Session in ${prepared.dir} is invalid: ${describeSessionValidationError(validation.error)}`);
         }
+        // The catalog of the folder was read before its migration removes it
+        await seedConnectionCatalog(this.opfs, prepared.bundle.session.defaultConnectionId, prepared.bundle, sessionId);
         await migrateSessionFolder(new NativeFolder(prepared.dir));
         const native = new NativeStorageBackend(prepared.dir);
         await reconcileStoredSessionFiles(native, sessionId);

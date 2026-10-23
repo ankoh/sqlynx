@@ -5,8 +5,6 @@ import {
     STORAGE_ATTACHMENTS_FOLDER,
     STORAGE_SESSION_FILE,
     STORAGE_SCRIPTS_FOLDER,
-    STORAGE_CATALOG_FUNCTIONS,
-    STORAGE_CATALOG_RELATIONS,
 } from '../../storage/storage_backend.js';
 
 const LOG_CTX = 'native_session_sync';
@@ -39,8 +37,6 @@ export function isSessionContentWatchEvent(event: WatchEvent, dir: string): bool
         const path = rawPath.replace(/\\/g, '/');
         const relative = path === normalizedDir ? '' : path.slice(normalizedDir.length + 1);
         return relative === STORAGE_SESSION_FILE
-            || relative === STORAGE_CATALOG_RELATIONS
-            || relative === STORAGE_CATALOG_FUNCTIONS
             || relative === STORAGE_SCRIPTS_FOLDER
             || relative.startsWith(`${STORAGE_SCRIPTS_FOLDER}/`)
             || relative === STORAGE_ATTACHMENTS_FOLDER

@@ -6,8 +6,6 @@ import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testSession } 
 
 async function seed(backend: SessionTestBackend): Promise<void> {
     await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
-    await backend.saveSessionSchema(TEST_SESSION_ID, 'schema');
-    await backend.saveSessionFunctions(TEST_SESSION_ID, 'functions');
     await backend.saveScript(TEST_SESSION_ID, '01_a.sql', 'SELECT 1');
     await backend.saveScript(TEST_SESSION_ID, '02_b.sql', 'SELECT 2');
 }
@@ -19,7 +17,7 @@ describe('session transfer', () => {
         await seed(source);
         const bytes = new Uint8Array([0, 255, 128]);
         await source.saveDataFile(TEST_SESSION_ID, 'payload.bin', bytes);
-        expect(await copySession(TEST_SESSION_ID, source, target, new TestLogger())).toEqual({ sessionCount: 1, fileCount: 6 });
+        expect(await copySession(TEST_SESSION_ID, source, target, new TestLogger())).toEqual({ sessionCount: 1, fileCount: 4 });
         expect(await verifySession(TEST_SESSION_ID, source, target)).toBe(true);
         const cloneId = '99999999-8888-4777-8666-555555555555';
         await cloneSession(TEST_SESSION_ID, source, target, cloneId, new TestLogger());
@@ -32,7 +30,7 @@ describe('session transfer', () => {
         const target = new SessionTestBackend();
         await seed(source);
         await expect(copySession(TEST_SESSION_ID, source, target, new TestLogger()))
-            .resolves.toEqual({ sessionCount: 1, fileCount: 5 });
+            .resolves.toEqual({ sessionCount: 1, fileCount: 3 });
         expect(await target.loadScripts(TEST_SESSION_ID)).toEqual(await source.loadScripts(TEST_SESSION_ID));
         expect(await verifySession(TEST_SESSION_ID, source, target)).toBe(true);
     });

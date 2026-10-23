@@ -5,6 +5,7 @@ import { listSessionFolders, readManifestJson, writeManifestJson } from './stora
 import { migrateSessionFolder, SessionMigrationResult } from './session_migration.js';
 import { notebooksToSessions } from './storage/v2_notebooks_to_sessions.js';
 import { globalConnections } from './storage/v3_global_connections.js';
+import { sessionCatalogsToConnections } from './storage/v4_session_catalogs_to_connections.js';
 
 const LOG_CTX = 'storage_migration';
 
@@ -35,6 +36,7 @@ export interface StorageMigrationStep {
 export const STORAGE_MIGRATION_STEPS: readonly StorageMigrationStep[] = [
     notebooksToSessions,
     globalConnections,
+    sessionCatalogsToConnections,
 ];
 
 /// Run an operation while holding the manifest lock, which the tabs of the app share

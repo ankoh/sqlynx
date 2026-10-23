@@ -1,6 +1,7 @@
 import { StorageBackendType, STORAGE_MANIFEST_FILE, type SessionEntry } from './storage_backend.js';
 import {
     assembleSessionBundle,
+    seedConnectionCatalog,
     type SessionBundle,
     sessionBundlesEqual,
 } from './session_bundle.js';
@@ -44,6 +45,7 @@ export async function writePortableSessionFresh(
     try {
         await backend.writePortableSessionBundle(bundle, targetSessionId, true);
         await verifyPortableBundle(backend, bundle, targetSessionId);
+        await seedConnectionCatalog(backend, bundle.session.defaultConnectionId, bundle, targetSessionId);
     } catch (error) {
         try {
             await backend.deletePortableSession(targetSessionId);
@@ -87,6 +89,7 @@ export async function replaceSessionWithPortableBundle(
         await backend.deletePortableSessionFiles(targetSessionId);
         await backend.writePortableSessionBundle(bundle, targetSessionId, false);
         await verifyPortableBundle(backend, bundle, targetSessionId);
+        await seedConnectionCatalog(backend, bundle.session.defaultConnectionId, bundle, targetSessionId);
         return targetSessionId;
     } catch (error) {
         operationError = error;
@@ -207,12 +210,9 @@ function normalizePortableBundle(bundle: SessionBundle, sessionId: string): Sess
     delete session.sessionPath;
     delete session.storageType;
     delete session.nativePath;
-    // The written session lists exactly the written scripts and attachments
-    return assembleSessionBundle({
-        session,
-        schemaSql: bundle.schemaSql,
-        functionsSql: bundle.functionsSql ?? '',
-    }, bundle.scripts, bundle.data ?? []);
+    // The written session lists exactly the written scripts and attachments, the catalog belongs to
+    // the connection
+    return assembleSessionBundle({ session, schemaSql: null, functionsSql: null }, bundle.scripts, bundle.data ?? []);
 }
 
 function requireMatchingSource(bundle: SessionBundle, targetSessionId: string): void {

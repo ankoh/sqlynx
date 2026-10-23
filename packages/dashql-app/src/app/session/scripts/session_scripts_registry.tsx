@@ -3,7 +3,6 @@ import * as React from 'react';
 import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptData, destroySessionScripts, reduceSessionScripts, sessionConnectionIds, sessionScriptListWrite } from './session_scripts.js';
 import { Dispatch } from '../../../utils/variant.js';
 import { UpdateQueue, useStore, useStoreState, useUpdateQueue } from '../../../utils/store.js';
-import type { DashQLScript } from '@ankoh/dashql-core';
 import { createDefaultConnectionParamsForConnector } from '../../connections/connection_params.js';
 import { useStorageWriter } from '../../storage/storage_provider.js';
 import { ConnectionReferencesProvider, type ConnectionReferences } from '../../connections/connection_registry.js';
@@ -12,10 +11,8 @@ import {
     REPLACE_SESSION_SCRIPTS,
     DEBOUNCE_DURATION_SESSION_WRITE,
     type SessionReplacement,
-    groupSessionFunctionWrites,
     groupSessionScriptListWrites,
     groupSessionWrites,
-    WRITE_SESSION_FUNCTION_SCRIPT,
     WRITE_SESSION_SCRIPTS,
 } from "../../storage/storage_writer.js";
 
@@ -34,10 +31,7 @@ export interface SessionScriptsRegistry {
 }
 
 export type SetSessionScriptsRegistryAction = React.SetStateAction<SessionScriptsRegistry>;
-export type SessionScriptsAllocator = (
-    scripts: SessionScripts,
-    catalogFunctionScript: DashQLScript,
-) => [string, SessionScripts];
+export type SessionScriptsAllocator = (scripts: SessionScripts) => [string, SessionScripts];
 export type ModifySessionScripts = (action: SessionScriptsAction) => Promise<SessionScripts | null> | void;
 export type ModifyConnectionSessionScripts = (conn: string, action: SessionScriptsAction) => void;
 
@@ -97,7 +91,7 @@ export function useSessionScriptsRegistrySetter(): Dispatch<SetSessionScriptsReg
 export function useSessionScriptsAllocator(): SessionScriptsAllocator {
     const storage = useStorageWriter();
     const setReg = React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!;
-    return React.useCallback((state: SessionScripts, catalogFunctionScript: DashQLScript) => {
+    return React.useCallback((state: SessionScripts) => {
         const sessionId = state.sessionId;
         const scripts: SessionScripts = { ...state };
 
@@ -122,10 +116,6 @@ export function useSessionScriptsAllocator(): SessionScriptsAllocator {
         storage.write(groupSessionScriptListWrites(scripts.sessionId), {
             type: WRITE_SESSION_SCRIPTS,
             value: [scripts.sessionId, sessionScriptListWrite(scripts)],
-        }, DEBOUNCE_DURATION_SESSION_WRITE);
-        storage.write(groupSessionFunctionWrites(scripts.sessionId), {
-            type: WRITE_SESSION_FUNCTION_SCRIPT,
-            value: [scripts.sessionId, catalogFunctionScript]
         }, DEBOUNCE_DURATION_SESSION_WRITE);
         return [sessionId, scripts];
     }, [setReg, storage]);

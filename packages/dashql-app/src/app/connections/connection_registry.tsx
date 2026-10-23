@@ -24,12 +24,6 @@ import type { Logger } from '../../platform/logger/logger.js';
 const LOG_CTX = 'connection_registry';
 import {
     DEBOUNCE_DURATION_SESSION_WRITE,
-    groupSessionFunctionWrites,
-    groupSessionSchemaWrites,
-    WRITE_SESSION_CATALOG_SCRIPT,
-    WRITE_SESSION_FUNCTION_SCRIPT,
-    WRITE_SESSION_CATALOG_CHANGES,
-    groupSessionCatalogChangesWrites,
     groupConnectionEntryWrites,
     groupConnectionFileWrites,
     groupSessionConnectionCopyWrites,
@@ -125,11 +119,6 @@ export function resolveDefaultConnection(
 ): ConnectionState | null {
     const connectionId = sessionId == null ? undefined : references.connectionsOf(sessionId)[0];
     return connectionId == null ? null : registry.connections.get(connectionId) ?? null;
-}
-
-/// Find the sessions that use a connection as their default connection
-export function findSessionsWithDefaultConnection(references: ConnectionReferences, connectionId: string): string[] {
-    return references.sessionsOf(connectionId).filter(sessionId => references.connectionsOf(sessionId)[0] === connectionId);
 }
 
 /// Is a connection listed next to the sessions?
@@ -370,10 +359,8 @@ function applyConnectionAction(reg: ConnectionRegistry, references: ConnectionRe
     if (!next.active) {
         return { ...reg };
     }
-    // The catalog of the connection is written into the app storage, sessions that use the
-    // connection as main database keep a copy to stay self-contained.
+    // The catalog of the connection is written into the app storage, sessions don't keep a copy.
     // The relations of a connection whose database doesn't outlive the app are never written.
-    const mainOf = findSessionsWithDefaultConnection(references, connectionId);
     const durable = connectionCatalogIsDurable(next.params);
     if (action.type === CATALOG_UPDATE_SUCCEEDED || action.type === CATALOG_UPDATE_PARTIALLY_SUCCEEDED) {
         const relationsSql = next.catalogRelationScript.toString();
@@ -390,20 +377,6 @@ function applyConnectionAction(reg: ConnectionRegistry, references: ConnectionRe
             { type: WRITE_CONNECTION_FILE, value: [connectionId, STORAGE_CATALOG_FUNCTIONS, functionsSql] },
             DEBOUNCE_DURATION_SESSION_WRITE,
         );
-        for (const sessionId of mainOf) {
-            if (durable) {
-                void storageWriter.write(
-                    groupSessionSchemaWrites(sessionId),
-                    { type: WRITE_SESSION_CATALOG_SCRIPT, value: [sessionId, next.catalogRelationScript] },
-                    DEBOUNCE_DURATION_SESSION_WRITE,
-                );
-            }
-            void storageWriter.write(
-                groupSessionFunctionWrites(sessionId),
-                { type: WRITE_SESSION_FUNCTION_SCRIPT, value: [sessionId, next.catalogFunctionScript] },
-                DEBOUNCE_DURATION_SESSION_WRITE,
-            );
-        }
     }
     // Executed statements record catalog changes, a refresh clears them
     if (durable && next.catalogChangesSql !== prev.catalogChangesSql) {
@@ -412,13 +385,6 @@ function applyConnectionAction(reg: ConnectionRegistry, references: ConnectionRe
             { type: WRITE_CONNECTION_FILE, value: [connectionId, STORAGE_CATALOG_CHANGES, next.catalogChangesSql] },
             DEBOUNCE_DURATION_SESSION_WRITE,
         );
-        for (const sessionId of mainOf) {
-            void storageWriter.write(
-                groupSessionCatalogChangesWrites(sessionId),
-                { type: WRITE_SESSION_CATALOG_CHANGES, value: [sessionId, next.catalogChangesSql] },
-                DEBOUNCE_DURATION_SESSION_WRITE,
-            );
-        }
     }
     return { ...reg };
 }

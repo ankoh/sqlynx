@@ -10,7 +10,7 @@ import { Logger } from '../../../platform/logger/logger.js';
 import { ConnectorType } from '../../connections/connector_info.js';
 import { destroyRestoredSession, restoreAppState } from './app_state_loader.js';
 import { destroySessionScripts, sessionConnectionIds } from '../scripts/session_scripts.js';
-import type { StorageBackend } from '../../storage/storage_backend.js';
+import type { SessionRegistryBackend } from '../../storage/storage_backend.js';
 import { StorageBackendType } from '../../storage/storage_backend.js';
 import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testConnections, testSession } from '../../storage/session_test_backend.js';
 
@@ -22,7 +22,8 @@ class NullLogger extends Logger {
 }
 
 describe('V2 app state loader', () => {
-    let backend: StorageBackend;
+    let backend: SessionRegistryBackend;
+    let connectionFiles: Map<string, string>;
     let core: DashQL;
     let processor: BatchProcessor;
 
@@ -56,14 +57,12 @@ describe('V2 app state loader', () => {
         processor = vi.fn(async (request: BatchRequest) => ({ scripts: request.scripts.map(script => ({
             id: script.id, diagnostics: [], catalogDescriptor: descriptor,
         })) }));
+        connectionFiles = new Map();
         backend = {
             getBackendType: () => StorageBackendType.OPFS,
             listSessions: vi.fn(async () => [{ path: TEST_SESSION_ID }]),
             loadAppSettings: vi.fn(async () => null), saveAppSettings: vi.fn(),
             loadSession: vi.fn(async () => testSession()), saveSessionManifest: vi.fn(), deleteSession: vi.fn(),
-            loadSessionSchema: vi.fn(async () => null), saveSessionSchema: vi.fn(),
-            loadSessionCatalogChanges: vi.fn(async () => null), saveSessionCatalogChanges: vi.fn(),
-            loadSessionFunctions: vi.fn(async () => null), saveSessionFunctions: vi.fn(),
             loadScripts: vi.fn(async () => [
                 { name: '10_last.sql', sql: 'SELECT 10' },
                 { name: '2_first.sql', sql: 'SELECT 2' },
@@ -74,8 +73,14 @@ describe('V2 app state loader', () => {
             loadQueryResultCache: vi.fn(async () => null), touchQueryResultCacheAccess: vi.fn(),
             saveQueryResultCache: vi.fn(), listQueryResultCache: vi.fn(async () => []),
             hasCachedQueryResult: vi.fn(async () => false), deleteQueryResultCache: vi.fn(),
+            upsertSessionEntry: vi.fn(), removeSessionEntry: vi.fn(), reorderSessions: vi.fn(), deleteSessionFiles: vi.fn(),
+            loadManifest: vi.fn(async () => ({ version: 1, sessions: [] }) as any), updateConnections: vi.fn(),
+            loadConnectionFile: vi.fn(async (connectionId: string, fileName: string) => connectionFiles.get(`${connectionId}/${fileName}`) ?? null),
+            saveConnectionFile: vi.fn(), deleteConnectionFiles: vi.fn(),
         };
     });
+    const relationsFile = `${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`;
+    const functionsFile = `${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`;
 
     it('restores one attached database and flat scripts with natural initial focus', async () => {
         const result = await restoreAppState(core, backend, new NullLogger(), () => {}, processor);
@@ -175,8 +180,8 @@ describe('V2 app state loader', () => {
                 params: { salesforce: { instanceUrl: 'https://example.my.salesforce.com' } } as any,
             }),
         }));
-        vi.mocked(backend.loadSessionSchema).mockResolvedValue(schemaSQL);
-        vi.mocked(backend.loadSessionFunctions).mockResolvedValue(functionsSQL);
+        connectionFiles.set(relationsFile, schemaSQL);
+        connectionFiles.set(functionsFile, functionsSQL);
 
         const result = await restoreAppState(core, backend, new NullLogger(), () => {}, processor);
         const connection = result.connectionStates.get(TEST_CONNECTION_ID)!;
@@ -194,7 +199,7 @@ describe('V2 app state loader', () => {
     });
 
     it('keeps initial source SQL and leaves restoration pending when batch processing fails', async () => {
-        vi.mocked(backend.loadSessionSchema).mockResolvedValue('CREATE TABLE restored(id int);');
+        connectionFiles.set(relationsFile, 'CREATE TABLE restored(id int);');
         vi.mocked(processor).mockRejectedValue(new Error('worker failed'));
         const result = await restoreAppState(core, backend, new NullLogger(), () => {}, processor);
         const connection = result.connectionStates.get(TEST_CONNECTION_ID)!;
@@ -206,8 +211,8 @@ describe('V2 app state loader', () => {
     });
 
     it.each(['relations', 'functions'])('rolls back only the failed %s source when descriptor publication fails', async source => {
-        vi.mocked(backend.loadSessionSchema).mockResolvedValue('CREATE TABLE restored(id int);');
-        vi.mocked(backend.loadSessionFunctions).mockResolvedValue('CREATE FUNCTION restored_fn() RETURNS int;');
+        connectionFiles.set(relationsFile, 'CREATE TABLE restored(id int);');
+        connectionFiles.set(functionsFile, 'CREATE FUNCTION restored_fn() RETURNS int;');
         const replaceDescriptor = vi.fn<dashql.DashQLCatalog['replaceDescriptor']>(() => { throw new Error('publication failed'); });
         if (source === 'functions') replaceDescriptor.mockImplementationOnce(() => {});
         vi.mocked(core.createCatalog).mockImplementation(() => ({
@@ -264,8 +269,8 @@ describe('real-core startup catalog restoration', () => {
             new dashql.buffers.catalog.CatalogChangeT(dashql.buffers.catalog.CatalogChangeType.DROP_RELATION, 'hyper', 'public', 'dropped'),
             new dashql.buffers.catalog.CatalogChangeT(dashql.buffers.catalog.CatalogChangeType.CREATE_RELATION, 'hyper', 'public', 'created', ['a']),
         ]);
-        backend.schemas.set(TEST_SESSION_ID, schema);
-        backend.catalogChanges.set(TEST_SESSION_ID, changesSql);
+        backend.connectionFiles.set(`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`, schema);
+        backend.connectionFiles.set(`${TEST_CONNECTION_ID}/dashql-catalog-changes.sql`, changesSql);
         const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
         const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
         const main = restored.connectionStates.get(TEST_CONNECTION_ID)!;
@@ -277,17 +282,17 @@ describe('real-core startup catalog restoration', () => {
         expect(tables.sort()).toEqual(['created', 'kept']);
     });
 
-    it('drops the persisted relations and changes of an embedded database seeded from a session', async () => {
+    it('drops the persisted relations and changes of an embedded connection that only a session knows', async () => {
         const backend = new SessionTestBackend();
         backend.sessions.set(TEST_SESSION_ID, testSession({
             ...testConnections({ connectionId: TEST_CONNECTION_ID, params: { hyper: { protocol: 'WASM' } } as any }),
         }));
         const functions = 'CREATE FUNCTION "hyper"."public"."kept_function"(value integer) RETURNS bigint;';
-        backend.schemas.set(TEST_SESSION_ID, 'CREATE TABLE "hyper"."public"."gone"(id integer);');
-        backend.catalogChanges.set(TEST_SESSION_ID, dql.appendCatalogChangesSql('', [
+        backend.connectionFiles.set(`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`, 'CREATE TABLE "hyper"."public"."gone"(id integer);');
+        backend.connectionFiles.set(`${TEST_CONNECTION_ID}/dashql-catalog-changes.sql`, dql.appendCatalogChangesSql('', [
             new dashql.buffers.catalog.CatalogChangeT(dashql.buffers.catalog.CatalogChangeType.CREATE_RELATION, 'hyper', 'public', 'created', ['a']),
         ]));
-        backend.functions.set(TEST_SESSION_ID, functions);
+        backend.connectionFiles.set(`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`, functions);
         const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
         const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
         const main = restored.connectionStates.get(TEST_CONNECTION_ID)!;
@@ -297,8 +302,9 @@ describe('real-core startup catalog restoration', () => {
         expect(main.catalogFunctionScript.toString()).toBe(functions);
         // The catalog is refreshed on connect instead
         expect(main.catalogUpdates.restoredAt).toBeNull();
-        // Only the functions seed the files of the connection
-        expect([...backend.connectionFiles.keys()]).toEqual([`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`]);
+        expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`)).toBe('');
+        expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-changes.sql`)).toBe('');
+        expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`)).toBe(functions);
         destroyRestoredSession({ sessionId: TEST_SESSION_ID, databases: [main],
             sessionScripts: restored.sessionScripts.get(TEST_SESSION_ID)! });
     });
@@ -338,8 +344,8 @@ describe('real-core startup catalog restoration', () => {
         }));
         const schema = 'CREATE TABLE db.public.restored_items(id integer, name text);';
         const functions = 'CREATE FUNCTION db.public.restored_function(first integer, second numeric(12, 3)) RETURNS bigint;';
-        backend.schemas.set(TEST_SESSION_ID, schema);
-        backend.functions.set(TEST_SESSION_ID, functions);
+        backend.connectionFiles.set(`${remoteId}/dashql-catalog-relations.sql`, schema);
+        backend.connectionFiles.set(`${remoteId}/dashql-catalog-functions.sql`, functions);
         backend.scripts.set(TEST_SESSION_ID, new Map([['01_query.sql', 'SELECT id FROM db.public.restored_items;'], ['02_local.sql', 'SELECT 1;']]));
         const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
         const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
@@ -442,13 +448,16 @@ describe('global connections', () => {
         const backend = new SessionTestBackend();
         backend.connections = [];
         seed(backend, TEST_SESSION_ID, TEST_CONNECTION_ID, trino('https://unknown'));
-        backend.schemas.set(TEST_SESSION_ID, 'CREATE TABLE db.public.seeded(id integer);');
+        // E.g. an imported session seeded the catalog of the connection
+        backend.connectionFiles.set(`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`, 'CREATE TABLE db.public.seeded(id integer);');
         const processor = vi.fn(async (request: BatchRequest) => dql.processBatch(request));
         const restored = await restoreAppState(dql, backend, new NullLogger(), () => {}, processor);
 
-        expect(restored.connectionStates.get(TEST_CONNECTION_ID)!.params).toEqual(trino('https://unknown'));
+        const connection = restored.connectionStates.get(TEST_CONNECTION_ID)!;
+        expect(connection.params).toEqual(trino('https://unknown'));
         expect(backend.connections).toMatchObject([{ id: TEST_CONNECTION_ID, params: trino('https://unknown') }]);
-        expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`)).toBe('CREATE TABLE db.public.seeded(id integer);');
+        expect(connection.catalogRelationScript.toString()).toBe('CREATE TABLE db.public.seeded(id integer);');
+        expect(connection.catalogUpdates.restoredAt).toBeInstanceOf(Date);
         for (const session of restored.sessionScripts.values()) destroySessionScripts(session);
     });
 });

@@ -1,8 +1,16 @@
 import type { DashQL, FlatBufferPtr, buffers } from '@ankoh/dashql-core';
 import type { DataFileData, SessionData, ScriptData, StorageBackend } from './storage_backend.js';
-import { STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, STORAGE_SESSION_FILE, StorageBackendType, validateDataFileName } from './storage_backend.js';
+import {
+    isSessionRegistryBackend,
+    STORAGE_CATALOG_FUNCTIONS,
+    STORAGE_CATALOG_RELATIONS,
+    STORAGE_SESSION_FILE,
+    StorageBackendType,
+    validateDataFileName,
+} from './storage_backend.js';
 import type { MigrationFolder } from '../../migration/migration_folder.js';
 import { migrateSessionFolder, SessionMigrationResult } from '../../migration/session_migration.js';
+import { SESSION_CATALOG_COPY_FORMAT_VERSION } from '../../migration/versions.js';
 import {
     describeSessionValidationError,
     isValidUuid,
@@ -17,9 +25,10 @@ export interface SessionBundle {
     /// The session file. Its script list names every script of `scripts` in feed order and its
     /// attachment list names every file of `data`.
     session: SessionData;
-    /// The catalog relations
+    /// The catalog relations of the default connection. Sessions don't store a catalog, bundles carry
+    /// the one of the connection so that a connection new to the app starts with it.
     schemaSql: string | null;
-    /// The catalog functions
+    /// The catalog functions of the default connection
     functionsSql: string | null;
     /// The script files
     scripts: ScriptData[];
@@ -83,8 +92,14 @@ function sessionAttachmentsEqual(a: SessionData['attachments'] | undefined, b: S
 ///
 /// The folder is usually held in memory, e.g. the files of an import or an `OverlayFolder` over a
 /// folder that must stay untouched. Errors start with `errorPrefix`, e.g. "Invalid ZIP".
+/// The catalog files are read before the migration removes the catalog copies of older sessions.
 export async function readSessionBundleHead(folder: MigrationFolder, errorPrefix: string): Promise<SessionBundleHead> {
-    const migration = await migrateSessionFolder(folder);
+    const migration = await migrateSessionFolder(folder, SESSION_CATALOG_COPY_FORMAT_VERSION);
+    const [schemaSql, functionsSql] = await Promise.all([
+        folder.readText(STORAGE_CATALOG_RELATIONS),
+        folder.readText(STORAGE_CATALOG_FUNCTIONS),
+    ]);
+    await migrateSessionFolder(folder);
     if (migration === SessionMigrationResult.Missing) {
         throw new Error(`${errorPrefix}: missing ${STORAGE_SESSION_FILE}`);
     }
@@ -109,10 +124,6 @@ export async function readSessionBundleHead(folder: MigrationFolder, errorPrefix
     }
     const files = sanitizeSessionFiles(parsedSession);
     const session: SessionData = { ...parsedSession, scripts: files.scripts, attachments: files.attachments };
-    const [schemaSql, functionsSql] = await Promise.all([
-        folder.readText(STORAGE_CATALOG_RELATIONS),
-        folder.readText(STORAGE_CATALOG_FUNCTIONS),
-    ]);
     return { session, schemaSql, functionsSql, filesValid: files.valid };
 }
 
@@ -195,18 +206,21 @@ export interface SessionBundleWriteOptions {
     regenerateConnectionIds?: boolean;
 }
 
-/// Read the portable durable session data from a backend. Catalog SQL can be skipped for exports
-/// that intentionally omit it; all other durable files are always loaded.
+/// Read the portable durable session data from a backend. The catalog of the default connection is
+/// only read for exports that ask for it, and only from a backend that holds the connections.
 export async function readSessionBundle(
     sessionId: string,
     backend: StorageBackend,
-    withCatalog: boolean = true,
+    withCatalog: boolean = false,
 ): Promise<SessionBundle> {
-    const [stored, scripts, schemaSql, functionsSql] = await Promise.all([
+    const [stored, scripts] = await Promise.all([
         backend.loadSession(sessionId),
         backend.loadScripts(sessionId),
-        withCatalog ? backend.loadSessionSchema(sessionId) : null,
-        withCatalog ? backend.loadSessionFunctions(sessionId) : null,
+    ]);
+    const registry = withCatalog && isSessionRegistryBackend(backend) ? backend : null;
+    const [schemaSql, functionsSql] = registry == null ? [null, null] : await Promise.all([
+        registry.loadConnectionFile(stored.defaultConnectionId, STORAGE_CATALOG_RELATIONS),
+        registry.loadConnectionFile(stored.defaultConnectionId, STORAGE_CATALOG_FUNCTIONS),
     ]);
     const data = await Promise.all((await backend.listDataFiles(sessionId))
         .map(async file => ({ name: file.name, bytes: await backend.loadDataFile(sessionId, file.name) })));
@@ -257,12 +271,6 @@ export async function writeSessionBundle(
 
     try {
         await backend.saveSessionManifest(sessionId, session);
-        const schemaSql = rebaseSessionAttachmentPaths(bundle.schemaSql, bundle.session.sessionId, sessionId);
-        const functionsSql = rebaseSessionAttachmentPaths(bundle.functionsSql ?? '', bundle.session.sessionId, sessionId)!;
-        if (schemaSql != null) {
-            await backend.saveSessionSchema(sessionId, schemaSql);
-        }
-        await backend.saveSessionFunctions(sessionId, functionsSql);
         for (const script of bundle.scripts) {
             await backend.saveScript(sessionId, script.name,
                 rebaseSessionAttachmentPaths(script.sql, bundle.session.sessionId, sessionId)!);
@@ -282,6 +290,30 @@ export async function writeSessionBundle(
     }
 
     return sessionId;
+}
+
+/// Seed the catalog of a connection from a bundle that was written as session `sessionId`.
+///
+/// A connection that has a catalog keeps it, the catalog of a bundle only describes a connection that
+/// is new to the app. Backends without connections are left alone.
+export async function seedConnectionCatalog(
+    backend: StorageBackend,
+    connectionId: string,
+    bundle: Pick<SessionBundle, 'session' | 'schemaSql' | 'functionsSql'>,
+    sessionId: string,
+): Promise<void> {
+    if (!isSessionRegistryBackend(backend) || (bundle.schemaSql == null && bundle.functionsSql == null)) return;
+    const files = [
+        [STORAGE_CATALOG_RELATIONS, bundle.schemaSql],
+        [STORAGE_CATALOG_FUNCTIONS, bundle.functionsSql],
+    ] as const;
+    const existing = await Promise.all(files.map(([fileName]) => backend.loadConnectionFile(connectionId, fileName)));
+    if (existing.some(text => text != null)) return;
+    for (const [fileName, text] of files) {
+        if (text == null) continue;
+        await backend.saveConnectionFile(connectionId, fileName,
+            rebaseSessionAttachmentPaths(text, bundle.session.sessionId, sessionId)!);
+    }
 }
 
 /// Compare all portable durable content. Used to verify a staged replacement before touching the

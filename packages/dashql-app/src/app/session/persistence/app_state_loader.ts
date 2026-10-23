@@ -144,7 +144,7 @@ interface RestoreContext {
     aliases: Map<string, string>;
     /// The aliases of every connection (connectionId -> aliases)
     aliasesOf: Map<string, string[]>;
-    /// The connections whose catalog is restored, sessions no longer seed them
+    /// The connections whose catalog is restored or live
     catalogsRestored: Set<string>;
     /// The connections that were registered while restoring sessions
     newConnections: Map<string, ConnectionState>;
@@ -156,7 +156,7 @@ interface RestoreContext {
 interface RestorePendingWrites {
     /// Connections that sessions registered, they are missing in the app manifest
     connectionEntries: ConnectionEntry[];
-    /// Catalog files of connections that were seeded from sessions
+    /// Catalog files of connections that older versions of the app wrote and that are cleared
     connectionFiles: Array<{ connectionId: string; fileName: string; text: string }>;
     /// Sessions whose copies of connection params are stale
     sessionCopies: Array<{ sessionId: string; connectionId: string }>;
@@ -194,13 +194,12 @@ function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Log
 /// Restore the catalog of a connection from its persisted SQL.
 /// The relations and changes of a connection whose database doesn't outlive the app describe a
 /// database that is gone, they are dropped. Such a catalog is described by a refresh on connect.
-/// Returns the restored texts, null if there was no catalog to restore.
 async function restoreConnectionCatalog(
     ctx: RestoreContext,
     connectionState: ConnectionState,
     load: () => Promise<CatalogTexts>,
     logContext: Record<string, string>,
-): Promise<CatalogTexts | null> {
+): Promise<void> {
     const validate = beginCatalogBatch(connectionState.catalog);
     const loaded = await load();
     validate();
@@ -225,11 +224,9 @@ async function restoreConnectionCatalog(
             connectionState.catalogUpdates.restoredAt = new Date();
         }
     }
-    const hasChanges = changes != null && changes.trim().length > 0;
-    if (hasChanges) {
+    if (changes != null && changes.trim().length > 0) {
         restoreCatalogChanges(connectionState, changes, ctx.logger, logContext);
     }
-    return catalogScripts.length > 0 || hasChanges ? { relations, functions, changes } : null;
 }
 
 /// Restore a connection of the app manifest
@@ -249,22 +246,31 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
         ctx.aliases.set(alias, entry.id);
     }
     ctx.aliasesOf.set(entry.id, entry.aliases ?? []);
+    await restoreStoredConnectionCatalog(ctx, ctx.registry!, state, { connectionId: entry.id });
+}
 
-    const registry = ctx.registry!;
+/// Restore the catalog of a connection from the files of the connection.
+/// Catalog restoration is non-critical, the connection is still usable and refreshes on connect.
+/// Returns false if the restoration failed.
+async function restoreStoredConnectionCatalog(
+    ctx: RestoreContext,
+    registry: SessionRegistryBackend,
+    state: ConnectionState,
+    logContext: Record<string, string>,
+): Promise<boolean> {
+    const connectionId = state.connectionId;
+    ctx.catalogsRestored.add(connectionId);
     try {
         let stored: CatalogTexts = { relations: null, functions: null, changes: null };
-        const restored = await restoreConnectionCatalog(ctx, state, async () => {
+        await restoreConnectionCatalog(ctx, state, async () => {
             const [relations, functions, changes] = await Promise.all([
-                registry.loadConnectionFile(entry.id, STORAGE_CATALOG_RELATIONS),
-                registry.loadConnectionFile(entry.id, STORAGE_CATALOG_FUNCTIONS),
-                registry.loadConnectionFile(entry.id, STORAGE_CATALOG_CHANGES),
+                registry.loadConnectionFile(connectionId, STORAGE_CATALOG_RELATIONS),
+                registry.loadConnectionFile(connectionId, STORAGE_CATALOG_FUNCTIONS),
+                registry.loadConnectionFile(connectionId, STORAGE_CATALOG_CHANGES),
             ]);
             stored = { relations, functions, changes };
             return stored;
-        }, { connectionId: entry.id });
-        if (restored != null) {
-            ctx.catalogsRestored.add(entry.id);
-        }
+        }, logContext);
         // Clear the dropped relations and changes that older versions of the app wrote
         if (!connectionCatalogIsDurable(state.params)) {
             for (const [fileName, text] of [
@@ -272,16 +278,17 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
                 [STORAGE_CATALOG_CHANGES, stored.changes],
             ] as const) {
                 if (text != null && text.length > 0) {
-                    ctx.pendingWrites.connectionFiles.push({ connectionId: entry.id, fileName, text: '' });
+                    ctx.pendingWrites.connectionFiles.push({ connectionId, fileName, text: '' });
                 }
             }
         }
+        return true;
     } catch (error) {
-        // Catalog restoration is non-critical - the connection is still usable
         ctx.logger.warn("Failed to restore connection catalog, will refresh on connect", {
-            connectionId: entry.id,
+            ...logContext,
             error: stringifyError(error),
         }, LOG_CTX);
+        return false;
     }
 }
 
@@ -375,58 +382,20 @@ async function restoreSessionEntry(
 
     restoreConnections.addSucceeded();
 
-    // Phase 2: Restore the main database catalog. The catalog of a connection is persisted with the
-    // connection, the copy in the session only seeds connections whose catalog is unknown.
+    // Phase 2: Restore the catalog of a connection that the session registered. The connections of
+    // the app manifest restored their catalogs already.
     logger.info("Restoring catalog", { sessionId }, LOG_CTX);
-    const catalogStartTime = performance.now();
     restoreCatalogs.addStarted();
     progressConsumer({
         restoreConnections: restoreConnections.clone(),
         restoreCatalogs: restoreCatalogs.clone(),
         restoreSessionScripts: restoreSessionScriptsProgress.clone(),
     });
-
-    const connectionId = connectionState.connectionId;
-    if (ctx.catalogsRestored.has(connectionId)) {
+    if (ctx.registry == null || ctx.catalogsRestored.has(connectionState.connectionId)
+        || await restoreStoredConnectionCatalog(ctx, ctx.registry, connectionState, { sessionId, connectionId: connectionState.connectionId })) {
         restoreCatalogs.addSucceeded();
     } else {
-        try {
-            logger.info("Loading catalog scripts", { sessionId }, LOG_CTX);
-            const restored = await restoreConnectionCatalog(ctx, connectionState, async () => {
-                const [relations, functions, changes] = await Promise.all([
-                    backend.loadSessionSchema(sessionId),
-                    backend.loadSessionFunctions(sessionId),
-                    backend.loadSessionCatalogChanges(sessionId),
-                ]);
-                return { relations, functions, changes };
-            }, { sessionId });
-            if (restored != null) {
-                ctx.catalogsRestored.add(connectionId);
-                for (const [fileName, text] of [
-                    [STORAGE_CATALOG_RELATIONS, restored.relations],
-                    [STORAGE_CATALOG_FUNCTIONS, restored.functions],
-                    [STORAGE_CATALOG_CHANGES, restored.changes],
-                ] as const) {
-                    if (text != null) ctx.pendingWrites.connectionFiles.push({ connectionId, fileName, text });
-                }
-                logger.info("Catalog scripts restored", {
-                    sessionId,
-                    durationMs: (performance.now() - catalogStartTime).toFixed(2)
-                }, LOG_CTX);
-            } else {
-                logger.info("No catalog schema found for session", { sessionId }, LOG_CTX);
-            }
-            restoreCatalogs.addSucceeded();
-        } catch (catalogError) {
-            logger.warn("Failed to restore catalog, will refresh on connect", {
-                sessionId,
-                durationMs: (performance.now() - catalogStartTime).toFixed(2),
-                error: stringifyError(catalogError)
-            }, LOG_CTX);
-
-            // Catalog restoration is non-critical - connection is still usable
-            restoreCatalogs.addFailed();
-        }
+        restoreCatalogs.addFailed();
     }
 
     // Phase 3: Restore session scripts

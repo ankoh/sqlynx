@@ -1,4 +1,4 @@
-import { type StorageBackend, type SessionData, type ScriptData, type SessionEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_SESSION_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
+import { type StorageBackend, type SessionData, type ScriptData, type SessionEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_SESSION_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
@@ -104,40 +104,6 @@ export class NativeStorageBackend implements StorageBackend {
         // dashql only unregisters it — the registry entry lives in the OPFS root manifest and is
         // dropped by the composite backend. The files on disk are deliberately left intact so the
         // folder can be re-loaded later (and so we never destroy data the user put there).
-    }
-
-    async loadSessionSchema(_sessionId: string): Promise<string | null> {
-        return await this.readSessionFile(STORAGE_CATALOG_RELATIONS);
-    }
-
-    async saveSessionSchema(_sessionId: string, sql: string): Promise<void> {
-        await this.ensureDir('');
-        const schemaFile = await this.abs(STORAGE_CATALOG_RELATIONS);
-        await writeTextFile(schemaFile, sql);
-    }
-
-    async loadSessionCatalogChanges(_sessionId: string): Promise<string | null> {
-        const changesFile = await this.abs(STORAGE_CATALOG_CHANGES);
-        if (!(await exists(changesFile))) {
-            return null;
-        }
-        return await readTextFile(changesFile);
-    }
-
-    async saveSessionCatalogChanges(_sessionId: string, sql: string): Promise<void> {
-        await this.ensureDir('');
-        const changesFile = await this.abs(STORAGE_CATALOG_CHANGES);
-        await writeTextFile(changesFile, sql);
-    }
-
-    async loadSessionFunctions(_sessionId: string): Promise<string | null> {
-        return await this.readSessionFile(STORAGE_CATALOG_FUNCTIONS);
-    }
-
-    async saveSessionFunctions(_sessionId: string, sql: string): Promise<void> {
-        await this.ensureDir('');
-        const functionsFile = await this.abs(STORAGE_CATALOG_FUNCTIONS);
-        await writeTextFile(functionsFile, sql);
     }
 
     async loadScripts(_sessionId: string): Promise<ScriptData[]> {

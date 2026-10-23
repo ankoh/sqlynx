@@ -1,10 +1,9 @@
 import * as Immutable from 'immutable';
-import * as dashql from '@ankoh/dashql-core';
 
 import { Logger, stringifyError } from '../../platform/logger/logger.js';
 import { VariantKind } from '../../utils/variant.js';
 import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, SessionSettings, SessionConnection, ConnectionEntry, ConnectionParams, SessionRegistryBackend, SessionScript } from './storage_backend.js';
-import { STORAGE_SCRIPTS_FOLDER, STORAGE_SESSION_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CONNECTIONS_FOLDER, isSessionRegistryBackend } from './storage_backend.js';
+import { STORAGE_SCRIPTS_FOLDER, STORAGE_SESSION_FILE, STORAGE_CONNECTIONS_FOLDER, isSessionRegistryBackend } from './storage_backend.js';
 import { SESSION_FORMAT_VERSION } from '../../migration/versions.js';
 import { sessionAttachments, withSessionScripts } from './session_files.js';
 
@@ -85,9 +84,6 @@ export interface SessionReplacement {
     /// The session settings
     settings: SessionSettings;
 }
-export const WRITE_SESSION_CATALOG_SCRIPT = Symbol('WRITE_SESSION_CATALOG_SCRIPT');
-export const WRITE_SESSION_FUNCTION_SCRIPT = Symbol('WRITE_SESSION_FUNCTION_SCRIPT');
-export const WRITE_SESSION_CATALOG_CHANGES = Symbol('WRITE_SESSION_CATALOG_CHANGES');
 export const REPLACE_SESSION_SCRIPTS = Symbol('REPLACE_SESSION_SCRIPTS');
 export const WRITE_CONNECTION_ENTRY = Symbol('WRITE_CONNECTION_ENTRY');
 export const DELETE_CONNECTION_ENTRY = Symbol('DELETE_CONNECTION_ENTRY');
@@ -110,9 +106,6 @@ export interface SessionScriptList {
 export type StorageWriteTaskVariant =
     | VariantKind<typeof WRITE_SESSION_MANIFEST, [string, string, SessionConnection[]]>
     | VariantKind<typeof WRITE_SESSION_PROPERTIES, [string, SessionProperties]>
-    | VariantKind<typeof WRITE_SESSION_CATALOG_SCRIPT, [string, dashql.DashQLScript]>
-    | VariantKind<typeof WRITE_SESSION_FUNCTION_SCRIPT, [string, dashql.DashQLScript]>
-    | VariantKind<typeof WRITE_SESSION_CATALOG_CHANGES, [string, string]>
     | VariantKind<typeof REPLACE_SESSION_SCRIPTS, SessionReplacement>
     | VariantKind<typeof WRITE_CONNECTION_ENTRY, ConnectionEntry>
     | VariantKind<typeof DELETE_CONNECTION_ENTRY, string>
@@ -132,9 +125,6 @@ export type StorageWriteKey = string;
 /// file's write row). Keying both on the file also means a scheduled-but-not-yet-flushed manifest
 /// write coalesces onto the same statistics row as its completion.
 export const groupSessionManifestWrites = (sessionId: string) => `${sessionId}/${STORAGE_SESSION_FILE}`;
-export const groupSessionSchemaWrites = (sessionId: string) => `${sessionId}/${STORAGE_CATALOG_RELATIONS}`;
-export const groupSessionFunctionWrites = (sessionId: string) => `${sessionId}/${STORAGE_CATALOG_FUNCTIONS}`;
-export const groupSessionCatalogChangesWrites = (sessionId: string) => `${sessionId}/${STORAGE_CATALOG_CHANGES}`;
 export const groupSessionWrites = (sessionId: string) => `${sessionId}/${STORAGE_SCRIPTS_FOLDER}`;
 /// The connection entries are written into the app manifest, one key per connection.
 export const groupConnectionEntryWrites = (connectionId: string) => `@manifest/${STORAGE_CONNECTIONS_FOLDER}/${connectionId}`;
@@ -719,26 +709,6 @@ export class StorageWriter {
                     else delete next.name;
                     return next;
                 });
-                break;
-            }
-            case WRITE_SESSION_CATALOG_SCRIPT: {
-                const [sessionId, catalogRelationScript] = task.value;
-                this.logger.info("Writing session schema", { key, sessionId }, LOG_CTX);
-                const schemaSQL = catalogRelationScript.toString();
-                await this.timedWrite(`${sessionId}/${STORAGE_CATALOG_RELATIONS}`, schemaSQL, () => this.backend.saveSessionSchema(sessionId, schemaSQL));
-                break;
-            }
-            case WRITE_SESSION_FUNCTION_SCRIPT: {
-                const [sessionId, functionScript] = task.value;
-                this.logger.info("Writing session functions", { key, sessionId }, LOG_CTX);
-                const functionsSQL = functionScript.toString();
-                await this.timedWrite(`${sessionId}/${STORAGE_CATALOG_FUNCTIONS}`, functionsSQL, () => this.backend.saveSessionFunctions(sessionId, functionsSQL));
-                break;
-            }
-            case WRITE_SESSION_CATALOG_CHANGES: {
-                const [sessionId, changesSql] = task.value;
-                this.logger.info("Writing session catalog changes", { key, sessionId }, LOG_CTX);
-                await this.timedWrite(`${sessionId}/${STORAGE_CATALOG_CHANGES}`, changesSql, () => this.backend.saveSessionCatalogChanges(sessionId, changesSql));
                 break;
             }
             case REPLACE_SESSION_SCRIPTS: {

@@ -169,20 +169,14 @@ describe('catalog refresh persistence', () => {
             });
             await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
             expect(currentRegistry.connections.get(TEST_CONNECTION_ID)?.catalogUpdates.tasksFinished.has(1)).toBe(true);
-            // The refresh describes the changes of earlier statements, recorded catalog changes are cleared
-            expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([
-                `${TEST_SESSION_ID}/dashql-catalog-relations.sql`,
-                `${TEST_SESSION_ID}/dashql-catalog-functions.sql`,
-                ...(catalogChangesSql === '' ? [] : [`${TEST_SESSION_ID}/dashql-catalog-changes.sql`]),
-            ]);
+            // The connection owns the catalog, sessions don't keep a copy
+            expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([]);
             await writer.flush();
-            expect(backend.schemas.get(TEST_SESSION_ID)).toBe(schemaSQL);
-            expect(backend.functions.get(TEST_SESSION_ID)).toBe(functionsSQL);
-            expect(backend.catalogChanges.get(TEST_SESSION_ID)).toBe(catalogChangesSql === '' ? undefined : '');
             expect(backend.calls).not.toContain(`manifest:${TEST_SESSION_ID}`);
-            // The connection owns the catalog, the session keeps a copy
             expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`)).toBe(schemaSQL);
             expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`)).toBe(functionsSQL);
+            // The refresh describes the changes of earlier statements, recorded catalog changes are cleared
+            expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-changes.sql`)).toBe(catalogChangesSql === '' ? undefined : '');
         } finally {
             act(() => root.unmount());
             container.remove();
@@ -235,11 +229,7 @@ describe('catalog refresh persistence', () => {
             // The refresh clears the recorded catalog changes as well
             act(() => dispatch(TEST_CONNECTION_ID, { type: CATALOG_UPDATE_SUCCEEDED, value: [3] }));
             await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
-            expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([`${TEST_SESSION_ID}/dashql-catalog-functions.sql`]);
             await writer.flush();
-            expect(backend.functions.get(TEST_SESSION_ID)).toBe(functionsSQL);
-            expect(backend.schemas.has(TEST_SESSION_ID)).toBe(false);
-            expect(backend.catalogChanges.has(TEST_SESSION_ID)).toBe(false);
             expect([...backend.connectionFiles.keys()]).toEqual([`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`]);
         } finally {
             act(() => root.unmount());
@@ -247,7 +237,7 @@ describe('catalog refresh persistence', () => {
         }
     });
 
-    it('does not overwrite main catalog files when an attached database refreshes', async () => {
+    it('writes the catalog of an attached connection into the files of that connection', async () => {
         const backend = new SessionTestBackend();
         backend.sessions.set(TEST_SESSION_ID, testSession());
         const attachedId = 'ffffffff-eeee-4ddd-8ccc-bbbbbbbbbbbb';
@@ -293,6 +283,10 @@ describe('catalog refresh persistence', () => {
             act(() => dispatch(attachedId, { type: CATALOG_UPDATE_SUCCEEDED, value: [2] }));
             await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
             expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([]);
+            await writer.flush();
+            expect([...backend.connectionFiles.keys()].every(key => key.startsWith(`${attachedId}/`))).toBe(true);
+            expect(backend.connectionFiles.get(`${attachedId}/dashql-catalog-relations.sql`)).toBe(relationScript.toString());
+            expect(backend.connectionFiles.get(`${attachedId}/dashql-catalog-functions.sql`)).toBe(functionScript.toString());
         } finally {
             act(() => root.unmount());
             container.remove();

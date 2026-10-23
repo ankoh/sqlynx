@@ -291,7 +291,8 @@ export function CatalogLoaderProvider(props: CatalogLoaderProviderProps) {
     }, []);
 
     // The catalog of a connection whose database doesn't outlive the app is not restored from
-    // storage, it is described by a refresh whenever the connection comes online.
+    // storage, it is described by a refresh whenever the connection comes online. A connection that
+    // has neither a stored nor a refreshed catalog is described when it first comes online.
     const onlineRef = React.useRef(new Set<string>());
     React.useEffect(() => {
         const online = onlineRef.current;
@@ -300,7 +301,10 @@ export function CatalogLoaderProvider(props: CatalogLoaderProviderProps) {
                 online.delete(connectionId);
             } else if (!online.has(connectionId)) {
                 online.add(connectionId);
-                if (!connectionCatalogIsDurable(conn.params)) enqueue(connectionId, false);
+                const updates = conn.catalogUpdates;
+                if (!connectionCatalogIsDurable(conn.params) || (updates.restoredAt == null && updates.lastFullRefresh == null)) {
+                    enqueue(connectionId, false);
+                }
             }
         }
         for (const connectionId of [...online]) {

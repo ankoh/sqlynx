@@ -93,7 +93,7 @@ describe('storage migration', () => {
         const sessionA = json(`sessions/${SESSION_A}/dashql-session.json`);
         expect(sessionA.formatVersion).toBe(SESSION_FORMAT_VERSION);
         expect(sessionA.sessionId).toBe(SESSION_A);
-        expect(text(`sessions/${SESSION_A}/dashql-catalog-relations.sql`)).toBe('CREATE TABLE a(id int);');
+        expect(text(`sessions/${SESSION_A}/dashql-catalog-relations.sql`)).toBeUndefined();
         expect(text(`sessions/${SESSION_A}/scripts/1_a.sql`)).toBe('SELECT 1');
 
         // The native session references the consolidated connection
@@ -129,6 +129,45 @@ describe('storage migration', () => {
         files.set(`sessions/${SESSION_A}/dashql-notebook.json`, notebook(SESSION_A, DB_A));
 
         await migrateStorage(new NullLogger(), root);
+        expect(json(`sessions/${SESSION_A}/dashql-session.json`).formatVersion).toBe(SESSION_FORMAT_VERSION);
+    });
+
+    it('seeds connections without a catalog from the catalog copies of the sessions', async () => {
+        /// A session of format version 6 on a connection
+        const session = (sessionId: string, connectionId: string) => JSON.stringify({
+            formatVersion: 6, sessionId, defaultConnectionId: connectionId,
+            connections: [{ connectionId, params: WASM }], scripts: [], attachments: [], metadata: {},
+        });
+        const DB_C = 'aaaaaaaa-0000-4000-8000-00000000000c';
+        files.set('dashql-manifest.json', JSON.stringify({
+            sessions: [{ path: SESSION_A }, { path: SESSION_B, storageType: 'native', nativePath: NATIVE_DIR }],
+            connections: [{ id: DB_A, params: WASM, aliases: [DB_C] }, { id: DB_B, params: WASM }],
+            storageVersion: 3,
+        }));
+        // The OPFS session references the connection through an alias, the connection has no catalog
+        dirs.add('sessions');
+        dirs.add(`sessions/${SESSION_A}`);
+        files.set(`sessions/${SESSION_A}/dashql-session.json`, session(SESSION_A, DB_C));
+        files.set(`sessions/${SESSION_A}/dashql-catalog-relations.sql`, 'CREATE TABLE a(id int);');
+        files.set(`sessions/${SESSION_A}/dashql-catalog-changes.sql`, 'DROP TABLE a;');
+        // The connection of the native session has a catalog already
+        dirs.add('connections');
+        dirs.add(`connections/${DB_B}`);
+        files.set(`connections/${DB_B}/dashql-catalog-functions.sql`, 'CREATE FUNCTION kept() RETURNS int;');
+        fsStore.dirs.add(NATIVE_DIR);
+        fsStore.files.set(`${NATIVE_DIR}/dashql-session.json`, session(SESSION_B, DB_B));
+        fsStore.files.set(`${NATIVE_DIR}/dashql-catalog-relations.sql`, 'CREATE TABLE b(id int);');
+
+        await migrateStorage(new NullLogger(), root);
+
+        expect(json('dashql-manifest.json').storageVersion).toBe(STORAGE_VERSION);
+        expect(text(`connections/${DB_A}/dashql-catalog-relations.sql`)).toBe('CREATE TABLE a(id int);');
+        expect(text(`connections/${DB_A}/dashql-catalog-changes.sql`)).toBe('DROP TABLE a;');
+        expect(text(`connections/${DB_B}/dashql-catalog-relations.sql`)).toBeUndefined();
+        expect(text(`connections/${DB_B}/dashql-catalog-functions.sql`)).toBe('CREATE FUNCTION kept() RETURNS int;');
+        // The copies are removed from every session
+        expect([...files.keys()].filter(file => file.startsWith('sessions/'))).toEqual([`sessions/${SESSION_A}/dashql-session.json`]);
+        expect([...fsStore.files.keys()].filter(file => file.startsWith(NATIVE_DIR))).toEqual([`${NATIVE_DIR}/dashql-session.json`]);
         expect(json(`sessions/${SESSION_A}/dashql-session.json`).formatVersion).toBe(SESSION_FORMAT_VERSION);
     });
 

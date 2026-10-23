@@ -41,7 +41,7 @@ import { reduceQueryAction } from '../../query/query_execution_state.js';
 import { reduceTrinoConnectorState, TrinoConnectorAction } from './trino/trino_connection_state.js';
 import { ConnectionStateDetailsVariant, createConnectionStateDetails } from './connection_state_details.js';
 import { Logger, stringifyError } from '../../platform/logger/logger.js';
-import { invalidateCatalogBatch, publishCatalogBatchSync, type CatalogBatchEntry } from './catalog_batch.js';
+import { invalidateCatalogBatch } from './catalog_batch.js';
 import { connectionParamsEqual, connectionParamsWithoutDraftRows, getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';
 import { HYPER_CHANNEL_SETUP_STARTED } from './hyper/hyper_connection_state.js';
 import { OAUTH_STARTED, TRINO_CHANNEL_SETUP_STARTED } from './trino/trino_connection_state.js';
@@ -604,62 +604,4 @@ export function createConnectionState(dql: core.DashQL, info: ConnectorInfo, det
         queriesFinished: new Map(),
         queriesFinishedOrdered: [],
     };
-}
-
-/// Apply catalog files read from storage without scheduling a persistence write. The database
-/// object and catalog remain alive, so active channels, query history and consumers keep stable
-/// references while session scripts are subsequently re-analyzed against the refreshed catalog.
-export function replaceConnectionCatalogFromStorage(
-    state: ConnectionState,
-    schemaSql: string | null,
-    functionsSql: string | null,
-): boolean {
-    const entries: CatalogBatchEntry[] = [];
-    const replace = (script: core.DashQLScript, sql: string | null, emptyText: () => string) => {
-        const text = sql ?? emptyText();
-        const published = state.catalog.containsEntryId(script.catalog_entry_id);
-        if (sql == null && catalogScriptHasNoStatements(script.toString())) {
-            return;
-        }
-        if (script.toString() === text && published) {
-            return;
-        }
-        entries.push({ script, text, rank: CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK });
-    };
-    replace(state.catalogRelationScript, schemaSql, () => generateCatalogScriptHeader(CatalogSource.Unknown));
-    replace(state.catalogFunctionScript, functionsSql, () => generateFunctionScriptHeader(CatalogSource.Unknown));
-    const changed = entries.length > 0;
-    if (changed) {
-        publishCatalogBatchSync(state.instance, state.catalog, entries);
-        state.catalogUpdates.restoredAt = new Date();
-        // The republished relation descriptor lacks the changes of executed statements
-        if (state.catalogChangesSql.length > 0) {
-            state.catalog.applyCatalogChangesSql(state.catalogRelationScript.catalog_entry_id, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, state.catalogChangesSql);
-        }
-    }
-    return changed;
-}
-
-/// Generated empty catalog files contain only comments and whitespace. Treat those as equivalent to
-/// an absent file so unrelated session watcher events do not report a false external catalog edit.
-export function connectionCatalogMatchesStorage(
-    state: ConnectionState,
-    schemaSql: string | null,
-    functionsSql: string | null,
-): boolean {
-    const matches = (script: core.DashQLScript, sql: string | null) => {
-        const text = script.toString();
-        const textMatches = sql == null ? catalogScriptHasNoStatements(text) : text === sql;
-        return textMatches && (catalogScriptHasNoStatements(text) || state.catalog.containsEntryId(script.catalog_entry_id));
-    };
-    return matches(state.catalogRelationScript, schemaSql)
-        && matches(state.catalogFunctionScript, functionsSql);
-}
-
-export function catalogFileMatchesStorage(script: core.DashQLScript, sql: string | null): boolean {
-    return sql == null ? catalogScriptHasNoStatements(script.toString()) : script.toString() === sql;
-}
-
-function catalogScriptHasNoStatements(sql: string): boolean {
-    return sql.split('\n').every(line => line.trim() === '' || line.trimStart().startsWith('--'));
 }

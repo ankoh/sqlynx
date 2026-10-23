@@ -33,7 +33,8 @@ describe('native session sync', () => {
         expect(isSessionContentWatchEvent(modify(`${DIR}/cache/result.arrow`), DIR)).toBe(false);
         expect(isSessionContentWatchEvent(modify(`${DIR}/dashql-session.json`), DIR)).toBe(true);
         expect(isSessionContentWatchEvent(modify(`${DIR}/scripts/01_query.sql`), DIR)).toBe(true);
-        expect(isSessionContentWatchEvent(modify(`${DIR}/dashql-catalog-relations.sql`), DIR)).toBe(true);
+        // Sessions don't hold a catalog, the connection does
+        expect(isSessionContentWatchEvent(modify(`${DIR}/dashql-catalog-relations.sql`), DIR)).toBe(false);
     });
 
     it('normalizes windows paths before filtering cache events', () => {

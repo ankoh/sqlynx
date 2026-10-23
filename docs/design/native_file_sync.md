@@ -1,6 +1,6 @@
 # Native File Synchronization
 
-DashQL native sessions live in user-owned directories. DashQL writes scripts and catalog changes to
+DashQL native sessions live in user-owned directories. DashQL writes scripts and attachments to
 those directories through a debounced `StorageWriter`; users and external tools may also edit the
 same files. Native file synchronization detects those external changes and offers to reload them into
 the running application without reopening the session.
@@ -12,7 +12,7 @@ WASM and catalog lifecycles.
 
 ## Goals
 
-- Detect externally changed native scripts and catalog files.
+- Detect externally changed native scripts and attachments.
 - Reload added, removed, renamed, and edited scripts.
 - Preserve active connection state, query history, focus, and script identity where possible.
 - Prevent delayed events from DashQL's own writes from appearing as external changes.
@@ -37,26 +37,22 @@ WASM and catalog lifecycles.
 The synchronization boundary recognizes these session-relative paths:
 
 ```text
-dashql-catalog-relations.sql
-dashql-catalog-functions.sql
+dashql-session.json
 scripts/
-  dashql-draft.sql
-  <page>/
-    <script>.sql
+  <script>.sql
+attachments/
 ```
 
 It deliberately ignores:
 
 ```text
-dashql-session.json
-dashql-catalog-changes.sql
 cache/
 .gitignore
 <any other file>
 ```
 
-`dashql-catalog-changes.sql` records the catalog changes of executed statements. The app owns it and
-re-applies the changes after reloading `dashql-catalog-relations.sql`.
+Sessions don't hold a catalog. The catalog belongs to the connection and lives in the app storage
+(`connections/<id>/`); session format version 7 removed the catalog copies from session folders.
 
 The native session directory is resolved through `StorageReader.getSessionLocation`. Only locations
 with `StorageBackendType.Native` and a `nativePath` receive a watcher.
@@ -69,10 +65,8 @@ flowchart TD
     WS -->|session invalidated| RC[NativeSessionSync React coordinator]
     RC --> SW[StorageWriter coordination]
     RC --> SB[StorageBackend snapshot reads]
-    RC --> CS[Connection catalog reconciliation]
     RC --> NS[Session scripts reconciliation]
-    CS --> UI[Live application state]
-    NS --> UI
+    NS --> UI[Live application state]
 ```
 
 ### Watch Service
@@ -110,13 +104,6 @@ same storage and state APIs as before.
 
 ### Domain Reconciliation
 
-Connection catalog reconciliation stays in
-`packages/dashql-app/src/connection/connection_state.ts`:
-
-- `connectionCatalogMatchesStorage` compares relations/functions files with live scripts.
-- Missing catalog files are equivalent to generated scripts containing only comments and whitespace.
-- `replaceConnectionCatalogFromStorage` replaces changed catalog scripts without scheduling writes.
-
 Session scripts reconciliation stays in
 `packages/dashql-app/src/scripts/session_scripts.ts`:
 
@@ -128,7 +115,7 @@ Session scripts reconciliation stays in
 - Changed script text clears stale completion and pending-diff buffers.
 - Existing page/script focus is retained when that path still exists; otherwise focus falls back to
   the first sorted entry.
-- Any session or catalog change invalidates affected session analysis. Scripts are reanalyzed on
+- Any session change invalidates affected session analysis. Scripts are reanalyzed on
   demand when an editor, execution, or diagnostics flow needs current analysis.
 
 ## Reload Protocol
@@ -137,7 +124,7 @@ Session scripts reconciliation stays in
 flowchart TD
     E[Relevant watcher event] --> P[Pause writes for this session]
     P --> S[Await in-flight writes]
-    S --> R[Read catalog and session snapshot]
+    S --> R[Read session snapshot]
     R --> Q{Matches live state?}
     Q -->|yes| Z[Resume writes]
     Q -->|no| W{Matches DashQL completed write?}
@@ -148,15 +135,15 @@ flowchart TD
     D -->|yes| G{Write generation unchanged?}
     G -->|no| E
     G -->|yes| A[Cancel conflicting pending writes]
-    A --> U[Apply catalog and session snapshot]
+    A --> U[Apply session snapshot]
     U --> Z
 ```
 
 The coordinator follows these steps for one session at a time:
 
 1. Pause that session's debounced writes. Other sessions continue normally.
-2. Await writes that already started, then read relations, functions, script pages, and the
-   draft in parallel through `StorageBackend`.
+2. Await writes that already started, then read the session file and the scripts through
+   `StorageBackend`.
 3. Compare the snapshot with current state. Identical state ends the reload without a prompt.
 4. Check whether every disk/memory divergence equals content that `StorageWriter` most recently
    completed. If so, the event came from DashQL's own earlier write and is ignored.
@@ -167,9 +154,9 @@ The coordinator follows these steps for one session at a time:
 7. Recheck the relevant write generation after the dialog. The editor remains interactive while a
    native dialog is open; if another local edit was scheduled, the old decision is stale and the
    session is requeued for a fresh snapshot and decision.
-8. Cancel only conflicting pending session/catalog writes when the user accepted that consequence.
-9. Apply catalog state first, then reconcile the session and invalidate analysis that may depend on
-   the changed catalog or session contents. Reanalysis happens on demand.
+8. Cancel only conflicting pending session writes when the user accepted that consequence.
+9. Reconcile the session and invalidate analysis that may depend on the changed session contents.
+   Reanalysis happens on demand.
 10. Resume the session writer in a `finally` block.
 
 Repeated events for a session collapse in a `Set`. The processing loop serializes sessions, avoiding
@@ -260,8 +247,6 @@ bazel build //packages/dashql-native:compile
 
 - `dashql-session.json` changes require reopening the session.
 - Reload is snapshot replacement, not a three-way merge or per-file conflict UI.
-- Active catalog refresh work is not canceled by the watcher; a later refresh may produce another
-  catalog write and event.
 - Watchers and completed-content metadata are process-local and reset when the app restarts.
 - A native filesystem watcher can coalesce or omit low-level events. The design therefore rescans the
   complete reloadable session state after every accepted invalidation, but it cannot react to a change
@@ -273,7 +258,6 @@ bazel build //packages/dashql-native:compile
 - Reload coordinator: `packages/dashql-app/src/platform/storage/native_session_sync_react.tsx`
 - Native storage reads: `packages/dashql-app/src/platform/storage/native_storage_backend.ts`
 - Writer coordination: `packages/dashql-app/src/platform/storage/storage_writer.ts`
-- Catalog reconciliation: `packages/dashql-app/src/connection/connection_state.ts`
 - Session scripts reconciliation: `packages/dashql-app/src/scripts/session_scripts.ts`
 - Electron main/preload filesystem bridge: `packages/dashql-native/src/main.ts` and `src/preload.cjs`
 - Watcher tests: `packages/dashql-app/src/platform/storage/native_session_sync.test.ts`

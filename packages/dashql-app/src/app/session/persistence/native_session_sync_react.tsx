@@ -1,8 +1,6 @@
 import * as React from 'react';
 
 import { connectionEntryFromState, registerConnection, resolveDefaultConnection, useConnectionReferences, useConnectionRegistry, type ConnectionReferences, type ConnectionRegistry } from '../../connections/connection_registry.js';
-import { catalogFileMatchesStorage, connectionCatalogMatchesStorage, replaceConnectionCatalogFromStorage } from '../../connections/connection_state.js';
-import { connectionCatalogIsDurable } from '../../connections/connection_params.js';
 import { reindexSessionScriptConnections, useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { sessionScriptsMatchStorageSnapshot, replaceSessionScriptsFromStorage, scriptConnectionOf } from '../scripts/session_scripts.js';
 import { isDesktopHost } from '../../../platform/native_globals.js';
@@ -19,19 +17,15 @@ import type { ConnectionState } from '../../connections/connection_state.js';
 import {
     DEBOUNCE_DURATION_SESSION_WRITE,
     groupConnectionEntryWrites,
-    groupConnectionFileWrites,
     groupSessionAttachmentListWrites,
     groupSessionScriptListWrites,
     REFRESH_SESSION_ATTACHMENTS,
     WRITE_CONNECTION_ENTRY,
-    WRITE_CONNECTION_FILE,
     WRITE_SESSION_SCRIPTS,
     type StorageWriter,
 } from '../../storage/storage_writer.js';
 import {
     STORAGE_SCRIPTS_FOLDER,
-    STORAGE_CATALOG_FUNCTIONS,
-    STORAGE_CATALOG_RELATIONS,
     STORAGE_SESSION_FILE,
     type ScriptData,
     type SessionData,
@@ -40,17 +34,6 @@ import {
 import { sessionScriptsEqual } from '../../storage/session_files.js';
 
 const LOG_CTX = 'native_session_sync';
-
-/// The main connection of a session whose catalog the session's files may replace.
-/// The catalog files of a session are a copy of its connection's catalog. A connection that several
-/// sessions share keeps its catalog, an edited copy in one folder must not replace it for all of them.
-/// The catalog of a connection whose database doesn't outlive the app is described by its refreshes, not the files.
-function reloadableCatalogConnection(registry: ConnectionRegistry, references: ConnectionReferences, sessionId: string): ConnectionState | null {
-    const connectionId = references.connectionsOf(sessionId)[0];
-    if (connectionId == null || references.sessionsOf(connectionId).length > 1) return null;
-    const connection = registry.connections.get(connectionId) ?? null;
-    return connection != null && connectionCatalogIsDurable(connection.params) ? connection : null;
-}
 
 /// The scripts of a session as its folder holds them, resolved like the restoration of the app does.
 /// A connection that the app doesn't know is created from the copy of the session file, e.g. after
@@ -113,8 +96,6 @@ async function confirmExternalReload(hasPendingWrites: boolean): Promise<Session
 
 function isReloadedStorageKey(sessionId: string, key: string): boolean {
     return key === groupSessionScriptListWrites(sessionId)
-        || key === `${sessionId}/${STORAGE_CATALOG_RELATIONS}`
-        || key === `${sessionId}/${STORAGE_CATALOG_FUNCTIONS}`
         || key === `${sessionId}/${STORAGE_SCRIPTS_FOLDER}`
         || key.startsWith(`${sessionId}/${STORAGE_SCRIPTS_FOLDER}/`);
 }
@@ -122,24 +103,11 @@ function isReloadedStorageKey(sessionId: string, key: string): boolean {
 function snapshotMatchesCompletedWrite(
     sessionId: string,
     snapshot: SessionScriptsStorageSnapshot,
-    schema: string | null,
-    functions: string | null,
-    connection: ConnectionState | undefined,
     sessionScripts: SessionScripts | undefined,
     writer: StorageWriter,
 ): boolean {
     const diskFiles = new Map<string, string | null>();
     const memoryFiles = new Map<string, string | null>();
-    if (connection) {
-        diskFiles.set(`${sessionId}/${STORAGE_CATALOG_RELATIONS}`, schema);
-        diskFiles.set(`${sessionId}/${STORAGE_CATALOG_FUNCTIONS}`, functions);
-        memoryFiles.set(`${sessionId}/${STORAGE_CATALOG_RELATIONS}`, catalogFileMatchesStorage(connection.catalogRelationScript, null)
-            ? null
-            : connection.catalogRelationScript.toString());
-        memoryFiles.set(`${sessionId}/${STORAGE_CATALOG_FUNCTIONS}`, catalogFileMatchesStorage(connection.catalogFunctionScript, null)
-            ? null
-            : connection.catalogFunctionScript.toString());
-    }
     if (sessionScripts) {
         for (const ref of Object.values(sessionScripts.scriptRefs)) {
             const script = sessionScripts.scripts[ref.scriptId];
@@ -205,33 +173,26 @@ export const NativeSessionSync: React.FC = () => {
             // A write that started before the watcher event must finish before the stable disk read.
             await writer.settle();
             // Composite storage mirrors native attachments into the session's OPFS namespace while
-            // loading. Do this before the SQL/catalog unchanged fast path so attachment-only edits
+            // loading. Do this before the SQL unchanged fast path so attachment-only edits
             // refresh the files exposed to embedded HyperDB-WASM.
             const sessionFile = await reader.backend.loadSession(sessionId);
             // The session file lists the attachments, the write runs once the session resumes
             void writer.write(groupSessionAttachmentListWrites(sessionId), { type: REFRESH_SESSION_ATTACHMENTS, value: sessionId });
-            const [schema, functions, scripts] = await Promise.all([
-                reader.backend.loadSessionSchema(sessionId),
-                reader.backend.loadSessionFunctions(sessionId),
-                reader.backend.loadScripts(sessionId),
-            ]);
+            const scripts = await reader.backend.loadScripts(sessionId);
             stored = readStoredSessionScripts(connectionRegistryRef.current, references, sessionId, sessionFile, scripts);
             if (stored == null) {
                 return;
             }
             const snapshot = stored.snapshot;
-            const connection = reloadableCatalogConnection(connectionRegistryRef.current, references, sessionId);
             const currentSessionScripts = sessionScriptsRegistryRef.current.sessionScriptsMap.get(sessionId);
-            const sessionUnchanged = currentSessionScripts != null && sessionScriptsMatchStorageSnapshot(currentSessionScripts, snapshot);
-            const catalogUnchanged = connection == null || connectionCatalogMatchesStorage(connection, schema, functions);
-            if (sessionUnchanged && catalogUnchanged) {
+            if (currentSessionScripts != null && sessionScriptsMatchStorageSnapshot(currentSessionScripts, snapshot)) {
                 return;
             }
 
             // A delayed watcher event for our own completed write can arrive after a newer local edit
             // is already pending. The completed snapshot identifies that event without suppressing a
             // genuinely different external version.
-            if (snapshotMatchesCompletedWrite(sessionId, snapshot, schema, functions, connection ?? undefined, currentSessionScripts, writer)) {
+            if (snapshotMatchesCompletedWrite(sessionId, snapshot, currentSessionScripts, writer)) {
                 return;
             }
 
@@ -284,28 +245,9 @@ export const NativeSessionSync: React.FC = () => {
                     DEBOUNCE_DURATION_SESSION_WRITE,
                 );
             }
-            const latestConnection = reloadableCatalogConnection(connectionRegistryRef.current, references, sessionId);
             const latestSessionScripts = sessionScriptsRegistryRef.current.sessionScriptsMap.get(sessionId);
-            const catalogChanged = latestConnection != null
-                ? replaceConnectionCatalogFromStorage(latestConnection, schema, functions)
-                : false;
-            if (catalogChanged) {
-                setConnectionRegistry(registry => ({ ...registry }));
-                // The catalog of the connection follows its only session
-                const connectionId = latestConnection!.connectionId;
-                for (const [fileName, script] of [
-                    [STORAGE_CATALOG_RELATIONS, latestConnection!.catalogRelationScript],
-                    [STORAGE_CATALOG_FUNCTIONS, latestConnection!.catalogFunctionScript],
-                ] as const) {
-                    void writer.write(
-                        groupConnectionFileWrites(connectionId, fileName),
-                        { type: WRITE_CONNECTION_FILE, value: [connectionId, fileName, script.toString()] },
-                        DEBOUNCE_DURATION_SESSION_WRITE,
-                    );
-                }
-            }
             if (latestSessionScripts) {
-                const reloadedSessionScripts = replaceSessionScriptsFromStorage(latestSessionScripts, snapshot, logger, catalogChanged);
+                const reloadedSessionScripts = replaceSessionScriptsFromStorage(latestSessionScripts, snapshot, logger);
                 setSessionScriptsRegistry(registry => {
                     // Do not overwrite a session that was replaced by another lifecycle operation
                     // while the native confirmation dialog was open.

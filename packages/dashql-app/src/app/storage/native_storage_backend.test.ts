@@ -20,10 +20,8 @@ describe('NativeStorageBackend V2 flat storage', () => {
         delete globalThis.dashqlElectron;
     });
 
-    it('round-trips manifest, catalog, and naturally ordered flat scripts', async () => {
+    it('round-trips manifest and naturally ordered flat scripts', async () => {
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
-        await backend.saveSessionSchema(TEST_SESSION_ID, 'schema');
-        await backend.saveSessionFunctions(TEST_SESSION_ID, 'functions');
         await backend.saveScript(TEST_SESSION_ID, '10_last.sql', 'SELECT 10');
         await backend.saveScript(TEST_SESSION_ID, '2_first.sql', 'SELECT 2');
 

@@ -1016,7 +1016,6 @@ export function replaceSessionScriptsFromStorage(
     state: SessionScripts,
     snapshot: SessionScriptsStorageSnapshot,
     _logger: Logger,
-    catalogChanged: boolean = false,
 ): SessionScripts {
     const existingByPath = new Map<string, ScriptData>();
     for (const script of Object.values(state.scripts)) {
@@ -1099,8 +1098,8 @@ export function replaceSessionScriptsFromStorage(
         },
     };
 
-    if (contentChanged || catalogChanged) {
-        // Cross-script references can be affected by any add/remove/content or catalog change.
+    if (contentChanged) {
+        // Cross-script references can be affected by any add/remove/content change.
         // Invalidate the session and let each script reanalyze at its next explicit use.
         for (const key in next.scripts) {
             next.scripts[key] = {

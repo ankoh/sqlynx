@@ -1,4 +1,4 @@
-import { type SessionRegistryBackend, type ConnectionEntry, STORAGE_CONNECTIONS_FOLDER, type SessionData, type ScriptData, type SessionEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_SESSIONS_FOLDER, STORAGE_SESSION_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
+import { type SessionRegistryBackend, type ConnectionEntry, STORAGE_CONNECTIONS_FOLDER, type SessionData, type ScriptData, type SessionEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_SESSIONS_FOLDER, STORAGE_SESSION_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { STORAGE_VERSION } from '../../migration/versions.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
@@ -155,63 +155,6 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
                 throw error;
             }
         }
-    }
-
-    async loadSessionSchema(sessionId: string): Promise<string | null> {
-        try {
-            const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), false);
-            const schemaFile = await sessionDir.getFileHandle(STORAGE_CATALOG_RELATIONS, { create: false });
-            const file = await schemaFile.getFile();
-            return await file.text();
-        } catch {
-            return null;
-        }
-    }
-
-    async saveSessionSchema(sessionId: string, sql: string): Promise<void> {
-        const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), true);
-        const schemaFile = await sessionDir.getFileHandle(STORAGE_CATALOG_RELATIONS, { create: true });
-        const writable = await schemaFile.createWritable();
-        await writable.write(sql);
-        await writable.close();
-    }
-
-    async loadSessionCatalogChanges(sessionId: string): Promise<string | null> {
-        try {
-            const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), false);
-            const changesFile = await sessionDir.getFileHandle(STORAGE_CATALOG_CHANGES, { create: false });
-            const file = await changesFile.getFile();
-            return await file.text();
-        } catch {
-            return null;
-        }
-    }
-
-    async saveSessionCatalogChanges(sessionId: string, sql: string): Promise<void> {
-        const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), true);
-        const changesFile = await sessionDir.getFileHandle(STORAGE_CATALOG_CHANGES, { create: true });
-        const writable = await changesFile.createWritable();
-        await writable.write(sql);
-        await writable.close();
-    }
-
-    async loadSessionFunctions(sessionId: string): Promise<string | null> {
-        try {
-            const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), false);
-            const functionsFile = await sessionDir.getFileHandle(STORAGE_CATALOG_FUNCTIONS, { create: false });
-            const file = await functionsFile.getFile();
-            return await file.text();
-        } catch {
-            return null;
-        }
-    }
-
-    async saveSessionFunctions(sessionId: string, sql: string): Promise<void> {
-        const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), true);
-        const functionsFile = await sessionDir.getFileHandle(STORAGE_CATALOG_FUNCTIONS, { create: true });
-        const writable = await functionsFile.createWritable();
-        await writable.write(sql);
-        await writable.close();
     }
 
     async loadScripts(sessionId: string): Promise<ScriptData[]> {
