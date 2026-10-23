@@ -7,6 +7,7 @@ import { type SessionLocation } from './session_locator.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../platform/logger/logger.js';
 import { migrateStorage } from '../../migration/storage_migration.js';
+import { useAppHandOver } from '../../platform/crosstab/app_hand_over.js';
 
 // Storage context for the writer
 const StorageWriterContext = React.createContext<StorageWriter | null>(null);
@@ -33,6 +34,7 @@ interface StorageProviderProps {
 export const StorageProvider: React.FC<StorageProviderProps> = ({ backend: providedBackend, children }) => {
     const logger = useLogger();
     const [backend, setBackend] = React.useState<StorageBackend | null>(providedBackend || null);
+    const initialization = React.useRef<Promise<void> | null>(null);
 
     // Initialize the configured backend if no backend was provided
     React.useEffect(() => {
@@ -67,7 +69,7 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({ backend: provi
             setBackend(composite);
         };
 
-        initBackend();
+        initialization.current = initBackend();
     }, [providedBackend]);
 
     // Create storage writer instance
@@ -75,6 +77,13 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({ backend: provi
         if (!backend) return null;
         return new StorageWriter(logger, backend);
     }, [logger, backend]);
+
+    // Another tab takes over the app, the migration and the pending writes finish first
+    useAppHandOver(async () => {
+        await initialization.current;
+        writer?.pause();
+        await writer?.flush();
+    });
 
 
     // Create storage reader

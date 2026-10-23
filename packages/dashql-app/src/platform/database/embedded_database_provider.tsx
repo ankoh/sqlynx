@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { EmbeddedComputeDatabase } from './embedded_database.js';
 import type { Logger } from '../logger/logger.js';
 import { useLogger } from '../logger/logger_provider.js';
+import { useAppHandOver } from '../crosstab/app_hand_over.js';
 
 const SETUP_CTX = React.createContext<EmbeddedDatabaseSetupFn | null>(null);
 
@@ -48,6 +49,17 @@ export const EmbeddedDatabaseProvider: React.FC<Props> = (props: Props) => {
         });
         return await instantiation.current;
     }, [logger, props.setupDatabase]);
+
+    // Another tab takes over the app. The database closes the files it shares with the other tab, e.g.
+    // the log extracts of the connections, before that tab opens them.
+    useAppHandOver(async () => {
+        const pending = instantiation.current;
+        instantiation.current = null;
+        if (pending) {
+            const database = await pending.catch(() => null);
+            await database?.terminate();
+        }
+    });
 
     React.useEffect(() => {
         return () => {

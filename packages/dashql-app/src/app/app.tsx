@@ -4,6 +4,7 @@ import { Route, Routes, Navigate, BrowserRouter, HashRouter, useLocation } from 
 
 import { AppConfigProvider } from './config/app_config.js';
 import { AppLoader } from './loading/app_loader.js';
+import { AppOwnershipGate } from './crosstab/app_ownership_gate.js';
 import { AppSettingsSync } from './config/app_settings_sync.js';
 import { SessionCatalogLoaderProvider } from './session/scripts/session_catalog_loader.js';
 import { ComputationRegistry } from '../compute/computation_registry.js';
@@ -103,25 +104,27 @@ const AppProviders = (props: { children: React.ReactElement }) => (
             <AppConfigProvider>
                 <PlatformEventListenerProvider>
                     <VersionCheck>
-                        <StorageProvider>
-                            <HttpClientProvider>
-                                <AppSettingsSync>
-                                    <AIClientProvider>
-                                        <HyperDatabaseClientProvider>
-                                            <DashQLCoreProvider initialSetup={{ setupBatchWorker: true }}>
-                                                <EmbeddedDatabaseProvider>
-                                                    <ComputeConnectionProvider>
-                                                        <SessionProviders>
-                                                            {props.children}
-                                                        </SessionProviders>
-                                                    </ComputeConnectionProvider>
-                                                </EmbeddedDatabaseProvider>
-                                            </DashQLCoreProvider>
-                                        </HyperDatabaseClientProvider>
-                                    </AIClientProvider>
-                                </AppSettingsSync>
-                            </HttpClientProvider>
-                        </StorageProvider>
+                        <AppOwnershipGate>
+                            <StorageProvider>
+                                <HttpClientProvider>
+                                    <AppSettingsSync>
+                                        <AIClientProvider>
+                                            <HyperDatabaseClientProvider>
+                                                <DashQLCoreProvider initialSetup={{ setupBatchWorker: true }}>
+                                                    <EmbeddedDatabaseProvider>
+                                                        <ComputeConnectionProvider>
+                                                            <SessionProviders>
+                                                                {props.children}
+                                                            </SessionProviders>
+                                                        </ComputeConnectionProvider>
+                                                    </EmbeddedDatabaseProvider>
+                                                </DashQLCoreProvider>
+                                            </HyperDatabaseClientProvider>
+                                        </AIClientProvider>
+                                    </AppSettingsSync>
+                                </HttpClientProvider>
+                            </StorageProvider>
+                        </AppOwnershipGate>
                     </VersionCheck>
                 </PlatformEventListenerProvider>
             </AppConfigProvider>

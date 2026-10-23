@@ -153,7 +153,7 @@ const BrandIdentity = () => {
     );
 };
 
-export const CompactNavBar = (): React.ReactElement => {
+export const CompactNavBar = (props: { showInternals?: boolean }): React.ReactElement => {
     const route = useRouteContext();
     const platform = usePlatformType();
     const navbarClass = platform === PlatformType.DESKTOP ? styles.navbar_mac : styles.navbar_default;
@@ -162,7 +162,7 @@ export const CompactNavBar = (): React.ReactElement => {
         <header className={`${navbarClass} ${styles.navbar_overlay}`} data-electron-drag-region>
             <BrandIdentity />
             <div className={styles.navbar_actions}>
-                <InternalsButton sessionId={route.sessionId} />
+                {(props.showInternals ?? true) && <InternalsButton sessionId={route.sessionId} />}
                 <VersionButton />
             </div>
         </header>
