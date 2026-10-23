@@ -34,6 +34,7 @@ import { TrinoConnector } from './connections/trino/trino_connector.js';
 import { UIExperimentPage } from './ui/demos/ui_demo.js';
 import { VersionCheck } from '../platform/version/version_check.js';
 import { SessionCommands } from './session/scripts/session_commands.js';
+import { SessionViewModeProvider } from './session/ui/session_view_mode.js';
 import { SessionPage } from './session/ui/session_page.js';
 import { SessionScriptsRegistryProvider } from './session/scripts/session_scripts_registry.js';
 import { getGlobalLogger, LoggerProvider } from '../platform/logger/logger_provider.js';
@@ -74,11 +75,13 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
                                             <NativeSessionSync />
                                             <SessionCatalogLoaderProvider>
                                                 <SessionImportProvider>
-                                                    <SessionCommands>
-                                                        <AppLoader>
-                                                            {props.children}
-                                                        </AppLoader>
-                                                    </SessionCommands>
+                                                    <SessionViewModeProvider>
+                                                        <SessionCommands>
+                                                            <AppLoader>
+                                                                {props.children}
+                                                            </AppLoader>
+                                                        </SessionCommands>
+                                                    </SessionViewModeProvider>
                                                 </SessionImportProvider>
                                             </SessionCatalogLoaderProvider>
                                         </SessionExecutionProvider>

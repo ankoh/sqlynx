@@ -14,7 +14,7 @@ import { useLogger } from '../../platform/logger/logger_provider.js';
 import { SESSION_PATH, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../router/router.js';
 import { useVersionCheck } from '../../platform/version/version_check.js';
 import { useLocation } from 'react-router-dom';
-import { SessionViewMode, useSessionViewMode } from '../session/scripts/session_commands.js';
+import { SessionViewMode, useSessionViewMode } from '../session/ui/session_view_mode.js';
 import { FlavorLogo, useAppFlavor } from '../flavor/flavor_provider.js';
 
 const LOG_CTX = "navbar";

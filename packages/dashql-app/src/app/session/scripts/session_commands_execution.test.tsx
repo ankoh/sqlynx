@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionCommands, type SessionCommandsDependencies } from './session_commands.js';
 import { ConnectionHealth } from '../../connections/connection_state.js';
 import { SessionConnectionAttentionContext } from '../ui/session_connection_attention.js';
+import { SessionViewMode } from '../ui/session_view_mode.js';
 
 describe('global session execution feedback', () => {
     let container: HTMLDivElement;
@@ -31,8 +32,7 @@ describe('global session execution feedback', () => {
         useQueryExecutor: () => execute,
         useCatalogLoaderQueue: () => vi.fn(),
         useLogger: () => ({ info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
-        useAppConfig: () => null,
-        useAppSettingsReady: () => true,
+        useSessionViewMode: () => ({ mode: SessionViewMode.Session, setMode: vi.fn() }),
     } as unknown as SessionCommandsDependencies;
     function Probe() {
         attention = React.useContext(SessionConnectionAttentionContext);

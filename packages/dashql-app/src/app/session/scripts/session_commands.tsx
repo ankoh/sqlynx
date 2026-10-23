@@ -12,10 +12,8 @@ import { useRouteContext } from '../../router/router.js';
 import { useSessionScripts } from './session_scripts_registry.js';
 import { isCatalogRefreshRunning } from '../../connections/catalog_update_state.js';
 import { runSessionScript } from '../ui/rerun_query.js';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useAppConfig } from '../../config/app_config.js';
-import { useAppSettingsReady } from '../../config/app_settings_sync.js';
 import { SessionConnectionAttentionContext, useSessionConnectionAttention } from '../ui/session_connection_attention.js';
+import { SessionViewMode, useSessionViewMode } from '../ui/session_view_mode.js';
 
 const LOG_CTX = "session_commands";
 
@@ -54,67 +52,22 @@ export interface SessionCommandsDependencies {
     useQueryExecutor: typeof useQueryExecutor;
     useCatalogLoaderQueue: typeof useCatalogLoaderQueue;
     useLogger: typeof useLogger;
-    useAppConfig: typeof useAppConfig;
-    useAppSettingsReady: typeof useAppSettingsReady;
+    useSessionViewMode: typeof useSessionViewMode;
 }
 
 const DEFAULT_DEPENDENCIES: SessionCommandsDependencies = {
     useSessionScripts, useDefaultConnection, useConnectionRegistryStore,
-    useQueryExecutor, useCatalogLoaderQueue, useLogger, useAppConfig, useAppSettingsReady,
+    useQueryExecutor, useCatalogLoaderQueue, useLogger, useSessionViewMode,
 };
 
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
 export const useSessionCommandDispatch = () => React.useContext(COMMAND_DISPATCH_CTX)!;
 
-export enum SessionViewMode {
-    Session = 0,
-    Shell = 1,
-    Dashboard = 2,
-}
-
-export interface SessionViewModeContextValue {
-    mode: SessionViewMode;
-    setMode: React.Dispatch<React.SetStateAction<SessionViewMode>>;
-}
-const SESSION_VIEW_MODE_CTX = React.createContext<SessionViewModeContextValue | null>(null);
-export const useSessionViewMode = () => React.useContext(SESSION_VIEW_MODE_CTX)!;
-
-export function sessionViewModeFromSearch(search: string, dashboardsEnabled: boolean): SessionViewMode {
-    return dashboardsEnabled && new URLSearchParams(search).get('view') === 'dashboard'
-        ? SessionViewMode.Dashboard
-        : SessionViewMode.Session;
-}
-
-export function sessionViewSearch(search: string, mode: SessionViewMode): string {
-    const params = new URLSearchParams(search);
-    if (mode === SessionViewMode.Dashboard) params.set('view', 'dashboard');
-    else params.delete('view');
-    const next = params.toString();
-    return next ? `?${next}` : '';
-}
-
-export function sessionViewNavigation(
-    location: { pathname: string; search: string; hash: string; state: unknown },
-    mode: SessionViewMode,
-) {
-    return {
-        to: {
-            pathname: location.pathname,
-            search: sessionViewSearch(location.search, mode),
-            hash: location.hash,
-        },
-        options: { replace: true as const, state: location.state },
-    };
-}
-
 export const SessionCommands: React.FC<Props> = (props: Props) => {
     const dependencies = props.dependencies ?? DEFAULT_DEPENDENCIES;
     const route = useRouteContext();
-    const location = useLocation();
-    const navigate = useNavigate();
     const logger = dependencies.useLogger();
-    const dashboardsEnabled = dependencies.useAppConfig()?.settings?.experimental_dashboards === true;
-    const settingsReady = dependencies.useAppSettingsReady();
+    const viewMode = dependencies.useSessionViewMode().mode;
 
     const [sessionScripts, modifySessionScripts] = dependencies.useSessionScripts(route.sessionId ?? null);
     const [connection, _dispatchConnection] = dependencies.useDefaultConnection(sessionScripts?.sessionId ?? null);
@@ -122,64 +75,15 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
     const connectionAttention = useSessionConnectionAttention(sessionScripts?.sessionId ?? null, connection?.connectionId ?? null, connection?.connectionHealth);
     const executeQuery = dependencies.useQueryExecutor();
     const refreshCatalog = dependencies.useCatalogLoaderQueue();
-    const [sessionViewMode, setSessionViewModeState] = React.useState(() => sessionViewModeFromSearch(location.search, dashboardsEnabled));
-    const visibleViewMode = !dashboardsEnabled && sessionViewMode === SessionViewMode.Dashboard
-        ? SessionViewMode.Session : sessionViewMode;
-    const sessionViewModeRef = React.useRef(visibleViewMode);
-    const pendingViewSearchRef = React.useRef<string | null>(null);
-    sessionViewModeRef.current = visibleViewMode;
-    const setSessionViewMode = React.useCallback<React.Dispatch<React.SetStateAction<SessionViewMode>>>((update) => {
-        const next = typeof update === 'function' ? update(sessionViewModeRef.current) : update;
-        const allowed = next === SessionViewMode.Dashboard && !dashboardsEnabled ? SessionViewMode.Session : next;
-        sessionViewModeRef.current = allowed;
-        setSessionViewModeState(allowed);
-        const navigation = sessionViewNavigation(location, allowed);
-        if (navigation.to.search !== location.search) {
-            pendingViewSearchRef.current = navigation.to.search;
-            navigate(navigation.to, navigation.options);
-        }
-    }, [dashboardsEnabled, location.pathname, location.search, location.hash, location.state, navigate]);
-    const sessionViewModeValue = React.useMemo<SessionViewModeContextValue>(
-        () => ({ mode: visibleViewMode, setMode: setSessionViewMode }),
-        [visibleViewMode, setSessionViewMode],
-    );
-
-    React.useEffect(() => {
-        if (!settingsReady) return;
-        if (!dashboardsEnabled) {
-            pendingViewSearchRef.current = null;
-            if (sessionViewMode === SessionViewMode.Dashboard) {
-                sessionViewModeRef.current = SessionViewMode.Session;
-                setSessionViewModeState(SessionViewMode.Session);
-            }
-            if (new URLSearchParams(location.search).get('view') === 'dashboard') {
-                const navigation = sessionViewNavigation(location, SessionViewMode.Session);
-                navigate(navigation.to, navigation.options);
-            }
-            return;
-        }
-        if (pendingViewSearchRef.current != null) {
-            if (pendingViewSearchRef.current === location.search) pendingViewSearchRef.current = null;
-            return;
-        }
-        const requested = sessionViewModeFromSearch(location.search, dashboardsEnabled);
-        if (requested === SessionViewMode.Dashboard && sessionViewModeRef.current !== requested) {
-            sessionViewModeRef.current = requested;
-            setSessionViewModeState(requested);
-        } else if (requested !== SessionViewMode.Dashboard && sessionViewModeRef.current === SessionViewMode.Dashboard) {
-            sessionViewModeRef.current = SessionViewMode.Session;
-            setSessionViewModeState(SessionViewMode.Session);
-        }
-    }, [dashboardsEnabled, settingsReady, location.search, navigate]);
 
     // Setup command dispatch logic.
     // The session scripts change with every keystroke and the connection with every query event.
     // Read them through a ref to keep the dispatch (and the context value) stable.
-    const latest = React.useRef({ sessionScripts, modifySessionScripts, connection, connectionAttention, executeQuery, refreshCatalog, sessionId: route.sessionId });
-    latest.current = { sessionScripts, modifySessionScripts, connection, connectionAttention, executeQuery, refreshCatalog, sessionId: route.sessionId };
+    const latest = React.useRef({ sessionScripts, modifySessionScripts, connection, connectionAttention, executeQuery, refreshCatalog, viewMode, sessionId: route.sessionId });
+    latest.current = { sessionScripts, modifySessionScripts, connection, connectionAttention, executeQuery, refreshCatalog, viewMode, sessionId: route.sessionId };
     const commandDispatch = React.useCallback(
         async (command: SessionCommandType) => {
-            const { sessionScripts, modifySessionScripts, connection, connectionAttention, executeQuery, refreshCatalog, sessionId } = latest.current;
+            const { sessionScripts, modifySessionScripts, connection, connectionAttention, executeQuery, refreshCatalog, viewMode, sessionId } = latest.current;
             if (sessionScripts == null) {
                 logger.warn("Session is null", {});
                 return;
@@ -189,11 +93,11 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 case SessionCommandType.ExecuteEditorQuery:
                     logger.info("Ctrl+E session command received", {
                         sessionId,
-                        viewMode: sessionViewModeRef.current.toString(),
+                        viewMode: viewMode.toString(),
                         connectionHealth: printConnectionHealth(connection?.connectionHealth ?? ConnectionHealth.NOT_STARTED),
                         focusedFile: sessionScripts.scriptFocus.fileName,
                     }, LOG_CTX);
-                    if (sessionViewModeRef.current !== SessionViewMode.Session) {
+                    if (viewMode !== SessionViewMode.Session) {
                         logger.warn("Ignoring Ctrl+E outside session view", { sessionId }, LOG_CTX);
                         break;
                     }
@@ -287,9 +191,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
     return (
         <SessionConnectionAttentionContext.Provider value={connectionAttention}>
             <COMMAND_DISPATCH_CTX.Provider value={commandDispatch}>
-                <SESSION_VIEW_MODE_CTX.Provider value={sessionViewModeValue}>
-                    {props.children}
-                </SESSION_VIEW_MODE_CTX.Provider>
+                {props.children}
             </COMMAND_DISPATCH_CTX.Provider>
         </SessionConnectionAttentionContext.Provider>
     );

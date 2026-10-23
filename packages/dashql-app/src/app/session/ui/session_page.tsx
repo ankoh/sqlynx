@@ -9,7 +9,7 @@ import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useRouteContext } from '../../router/router.js';
 
 import { SessionFeedPage } from './feed/session_feed_page.js';
-import { SessionViewMode, useSessionViewMode } from '../scripts/session_commands.js';
+import { SessionViewMode, useSessionViewMode } from './session_view_mode.js';
 
 const SessionShellPage = React.lazy(() => import('../shell/session_shell_page.js'));
 

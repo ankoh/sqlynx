@@ -3,7 +3,7 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionFeedPage, type SessionFeedPageDependencies } from './session_feed_page.js';
-import { SessionViewMode } from '../../scripts/session_commands.js';
+import { SessionViewMode } from '../session_view_mode.js';
 import { SegmentedControl } from '../../../../ui/foundations/segmented_control.js';
 import { Button } from '../../../../ui/foundations/button.js';
 import { ConnectionHealth } from '../../../connections/connection_state.js';

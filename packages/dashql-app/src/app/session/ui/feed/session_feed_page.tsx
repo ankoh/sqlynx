@@ -18,7 +18,7 @@ import { SessionStorageOverlay } from '../../persistence/ui/session_storage_over
 import { ScriptDetails, TabKey as DetailsTabKey } from '../script_details.js';
 import { SessionFeed } from './session_feed.js';
 import { Dashboard } from '../../dashboard/dashboard.js';
-import { SessionViewMode, useSessionViewMode } from '../../scripts/session_commands.js';
+import { SessionViewMode, useSessionViewMode } from '../session_view_mode.js';
 import { SegmentedControl, SegmentedControlSize } from '../../../../ui/foundations/segmented_control.js';
 import { useAppConfig } from '../../../config/app_config.js';
 import { useSessionExecution } from '../../scripts/session_execution_provider.js';

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SessionViewMode } from '../scripts/session_commands.js';
+import { SessionViewMode } from './session_view_mode.js';
 import { SessionPage, type SessionPageDependencies } from './session_page.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);

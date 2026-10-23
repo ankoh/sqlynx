@@ -3,7 +3,7 @@ import * as styles from './session_shell_page.module.css';
 
 import type { ConnectionState } from '../../connections/connection_state.js';
 import { useCancelQuery, useQueryExecutor, useQueryState } from '../../connections/query_executor.js';
-import { SessionViewMode, useSessionViewMode } from '../scripts/session_commands.js';
+import { SessionViewMode, useSessionViewMode } from '../ui/session_view_mode.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
 import {

@@ -5,7 +5,7 @@ import {
     sessionViewModeFromSearch,
     sessionViewNavigation,
     sessionViewSearch,
-} from './session_commands.js';
+} from './session_view_mode.js';
 
 describe('session view URL state', () => {
     it('reads Dashboard from the view query parameter only when enabled', () => {
