@@ -64,7 +64,6 @@ export function buildPageStateFromParams(params: connection.TrinoConnectionParam
 interface Props {
     connectionId: string | null;
     onClose?: () => void;
-    headerActions?: React.ReactNode;
 }
 
 export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
@@ -322,7 +321,6 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
                 cancelSetup={cancelSetup}
                 resetSetup={resetSetup}
                 onClose={props.onClose}
-                headerActions={props.headerActions}
             />
             <div className={style.body_container}>
                 <div className={style.section}>

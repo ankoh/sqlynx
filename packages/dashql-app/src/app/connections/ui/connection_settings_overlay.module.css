@@ -23,7 +23,7 @@
 .footer {
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
     padding: 8px 12px 8px 20px;
@@ -42,4 +42,38 @@
 .footer_list {
     margin: 4px 0 0 0;
     padding-left: 16px;
+}
+
+.footer_actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 4px;
+}
+
+.footer_dirty {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--base_color_neutral_8);
+    font-weight: 600;
+}
+
+.footer_dirty_dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--base_color_orange_5);
+}
+
+.footer_hint {
+    margin-top: 2px;
+}
+
+.footer_saved {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--base_color_green_6);
 }

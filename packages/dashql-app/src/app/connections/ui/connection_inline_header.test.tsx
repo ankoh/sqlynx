@@ -91,24 +91,4 @@ describe('ConnectionInlineHeader', () => {
         expect(connectorInfo.children[1].textContent).toBe('Salesforce Data Cloud');
         expect(connectorInfo.children[2].textContent).toBe('History');
     });
-
-    it('places draft actions immediately before Close in the connector header', () => {
-        let closed = false;
-        act(() => root.render(
-            <LoggerProvider>
-                <ConnectionInlineHeader
-                    connector={CONNECTOR_INFOS[ConnectorType.HYPER]}
-                    connection={null}
-                    wrongPlatform={false}
-                    headerActions={<button aria-label="Discard Changes" />}
-                    onClose={() => { closed = true; }}
-                />
-            </LoggerProvider>,
-        ));
-        const discard = container.querySelector('[aria-label="Discard Changes"]')!;
-        const close = container.querySelector<HTMLButtonElement>('[aria-label="Close"]')!;
-        expect(discard.nextElementSibling).toBe(close);
-        act(() => close.click());
-        expect(closed).toBe(true);
-    });
 });

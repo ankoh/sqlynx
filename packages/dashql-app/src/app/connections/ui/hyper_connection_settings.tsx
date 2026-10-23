@@ -91,7 +91,6 @@ export function buildHyperConnectionSetupParams(pageState: HyperConnectionPageSt
 interface Props {
     connectionId: string | null;
     onClose?: () => void;
-    headerActions?: React.ReactNode;
 }
 
 export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
@@ -227,7 +226,6 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
                 freezeInput={freezeInput}
                 embedded={protocol === 'WASM'}
                 onClose={props.onClose}
-                headerActions={props.headerActions}
             />
             {protocol === 'WASM' ? (
                 <div className={style.body_container}>

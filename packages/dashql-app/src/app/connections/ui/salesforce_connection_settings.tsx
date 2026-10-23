@@ -123,7 +123,6 @@ export function getConnectionError(status: ConnectionStateDetailsVariant | null)
 interface Props {
     connectionId: string | null;
     onClose?: () => void;
-    headerActions?: React.ReactNode;
 }
 
 export interface SalesforceConnectionAliasField {
@@ -159,7 +158,6 @@ interface SalesforceConnectionSettingsPageProps {
     cancelSetup: () => void;
     resetSetup: () => void;
     onClose?: () => void;
-    headerActions?: React.ReactNode;
     alias?: SalesforceConnectionAliasField;
     connectorNameAction?: React.ReactNode;
     statusText?: string;
@@ -184,7 +182,6 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                 onProtocolChange={props.setHyperProtocol}
                 freezeInput={props.freezeInput}
                 onClose={props.onClose}
-                headerActions={props.headerActions}
                 statusText={props.statusText}
                 indicatorStatus={props.indicatorStatus}
                 statusError={props.statusError}
@@ -448,7 +445,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
             cancelSetup={cancelSetup}
             resetSetup={resetSetup}
             onClose={props.onClose}
-            headerActions={props.headerActions}
         />
     );
 };
