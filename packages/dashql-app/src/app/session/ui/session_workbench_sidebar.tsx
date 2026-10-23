@@ -64,7 +64,6 @@ import { displayPath } from '../../storage/session_locator.js';
 import { StorageBackendType } from '../../storage/storage_backend.js';
 import { SessionStorageOverlay } from '../persistence/ui/session_storage_overlay.js';
 import { useStorageReader, useStorageWriter } from '../../storage/storage_provider.js';
-import { CompositeStorageBackend } from '../../storage/composite_storage_backend.js';
 import { readSessionBundleFromBrowserFolder } from '../persistence/browser_session_folder.js';
 import { cloneSession } from '../../storage/session_transfer.js';
 import {
@@ -523,15 +522,16 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
             const next = [...current];
             const [moved] = next.splice(from, 1);
             next.splice(to, 0, moved);
-            if ('reorderSessions' in storageReader.backend) {
+            const sessionFolders = storageReader.sessionFolders;
+            if (sessionFolders != null) {
                 reorderWriteRef.current = reorderWriteRef.current
                     .catch(() => {})
-                    .then(() => (storageReader.backend as CompositeStorageBackend).reorderSessions(next))
+                    .then(() => sessionFolders.reorderSessions(next))
                     .catch(error => logger.warn('failed to persist session order', { error: String(error) }, 'session_workbench'));
             }
             return next;
         });
-    }, [logger, storageReader.backend]);
+    }, [logger, storageReader.sessionFolders]);
 
     /// Create a session that uses an existing connection
     const createSessionWithConnection = React.useCallback((database: ConnectionState) => {
@@ -613,7 +613,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     }, [databaseRegistry, logger, setDatabaseRegistry, setScriptsRegistry, setupCore, storageReader.backend, storageWriter.backend]);
 
     const openSessionFolder = React.useCallback(async () => {
-        if (!(storageReader.backend instanceof CompositeStorageBackend)) return;
+        if (storageReader.sessionFolders == null) return;
         if (platform === PlatformType.WEB) {
             folderInputRef.current?.click();
             return;
@@ -629,7 +629,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         } catch (error) {
             logger.error('adding native session from folder failed', { error: String(error) }, 'session_workbench');
         }
-    }, [logger, sessionImport, platform, storageReader.backend]);
+    }, [logger, sessionImport, platform, storageReader.sessionFolders]);
 
     const openBrowserSessionFolder = React.useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         const input = event.currentTarget;
@@ -701,7 +701,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                             triggerSize={ButtonSize.Small}
                             triggerIconSize={14}
                         />
-                        {storageReader.backend instanceof CompositeStorageBackend && (
+                        {storageReader.sessionFolders != null && (
                             <>
                                 <IconButton
                                     ref={folderButtonRef}

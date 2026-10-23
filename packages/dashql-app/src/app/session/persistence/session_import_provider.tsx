@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { filterInvalidSessionCatalogs, type SessionBundle } from '../../storage/session_bundle.js';
 import type { PreparedNativeSession } from '../../storage/composite_storage_backend.js';
-import { CompositeStorageBackend } from '../../storage/composite_storage_backend.js';
+import type { CompositeStorageBackend } from '../../storage/composite_storage_backend.js';
 import {
     findSessionImportConflict,
     type SessionImportConflict,
@@ -97,7 +97,7 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
     const [dialog, setDialog] = React.useState<ConflictDialogState | null>(null);
     const [connectionDialog, setConnectionDialog] = React.useState<ConnectionDialogState | null>(null);
 
-    const backend = reader.backend instanceof CompositeStorageBackend ? reader.backend : null;
+    const backend = reader.sessionFolders;
 
     const validatePortableBundle = React.useCallback(async (bundle: SessionBundle): Promise<SessionBundle> => {
         const core = await setupCore('session_import_validation');

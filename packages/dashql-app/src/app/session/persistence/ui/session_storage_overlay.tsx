@@ -9,7 +9,6 @@ import { ButtonVariant, IconButton } from '../../../../ui/foundations/button.js'
 import { OverlaySize } from '../../../../ui/foundations/overlay.js';
 import { PlatformType, usePlatformType } from '../../../../platform/platform_type.js';
 import { StorageBackendType } from '../../../storage/storage_backend.js';
-import { CompositeStorageBackend } from '../../../storage/composite_storage_backend.js';
 import { displayPath } from '../../../storage/session_locator.js';
 import { useStorageReader, useStorageWriter } from '../../../storage/storage_provider.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
@@ -101,17 +100,18 @@ export const SessionStorageViewer: React.FC<SessionStorageViewerProps> = (props)
         platform === PlatformType.MACOS &&
         !isNative &&
         props.sessionId != null &&
-        reader.backend instanceof CompositeStorageBackend;
+        reader.sessionFolders != null;
 
     const onRelocate = React.useCallback(async () => {
-        if (props.sessionId == null || !(reader.backend instanceof CompositeStorageBackend)) return;
+        const sessionFolders = reader.sessionFolders;
+        if (props.sessionId == null || sessionFolders == null) return;
         setMigrating(true);
         try {
-            await relocateSessionToNative(props.sessionId, reader.backend, writer, logger);
+            await relocateSessionToNative(props.sessionId, sessionFolders, writer, logger);
         } catch {
             setMigrating(false);
         }
-    }, [props.sessionId, reader.backend, writer, logger]);
+    }, [props.sessionId, reader.sessionFolders, writer, logger]);
 
     const backendValue = isNative ? 'Host File System' : 'Origin Private File System (Browser)';
     const schemaValue = props.sessionId && location ? displayPath(props.sessionId, location) : '';

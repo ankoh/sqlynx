@@ -14,6 +14,9 @@ const StorageWriterContext = React.createContext<StorageWriter | null>(null);
 // Storage context for reading
 export interface StorageReader {
     backend: StorageBackend;
+    /// The backend that routes sessions between the app storage and native folders.
+    /// Null for a bare backend without per-session routing, e.g. an injected test backend.
+    sessionFolders: CompositeStorageBackend | null;
     /// The physical location of a session's files (used by the UI for a display path).
     getSessionLocation(sessionId: string): SessionLocation;
     /// The user-facing session order (manifest array order), as session UUIDs. Empty for a bare
@@ -78,21 +81,20 @@ export const StorageProvider: React.FC<StorageProviderProps> = ({ backend: provi
     const reader = React.useMemo<StorageReader | null>(() => {
         if (!backend) return null;
 
+        const sessionFolders = backend instanceof CompositeStorageBackend ? backend : null;
         return {
             backend,
+            sessionFolders,
             getSessionLocation(sessionId: string): SessionLocation {
-                if (backend instanceof CompositeStorageBackend) {
-                    return backend.getSessionLocation(sessionId);
+                if (sessionFolders != null) {
+                    return sessionFolders.getSessionLocation(sessionId);
                 }
                 // A bare backend (e.g. an injected test backend) has no per-session routing.
                 return { type: backend.getBackendType() === StorageBackendType.Native ? StorageBackendType.Native : StorageBackendType.OPFS };
             },
             getSessionOrder(): string[] {
-                if (backend instanceof CompositeStorageBackend) {
-                    return backend.getSessionOrder();
-                }
                 // A bare backend has no manifest-order registry; the caller falls back to its own order.
-                return [];
+                return sessionFolders?.getSessionOrder() ?? [];
             },
         };
     }, [backend, logger]);
