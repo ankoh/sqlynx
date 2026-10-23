@@ -72,9 +72,9 @@ import {
 } from '../persistence/app_state_loader.js';
 import { useSessionImport } from '../persistence/session_import_provider.js';
 import { describeSessionValidationError } from '../../storage/session_validation.js';
-import { useInvalidSessionRegistry } from '../persistence/invalid_session_registry.js';
 import type { SessionScripts } from '../scripts/session_scripts.js';
 import {
+    useInvalidSessions,
     useSessionScriptsDeletion,
     useSessionScriptsRegistry,
 } from '../scripts/session_scripts_registry.js';
@@ -134,7 +134,7 @@ export interface SessionWorkbenchSidebarDependencies {
     useSessionImport: typeof useSessionImport;
     usePlatformType: typeof usePlatformType;
     useLogger: typeof useLogger;
-    useInvalidSessionRegistry: typeof useInvalidSessionRegistry;
+    useInvalidSessions: typeof useInvalidSessions;
     useSessionConnections: typeof useSessionConnections;
     createDefaultHyperWasmConnectionState: typeof createDefaultHyperWasmConnectionState;
     createConnectionStateFromParams: typeof createConnectionStateFromParams;
@@ -162,7 +162,7 @@ const DEFAULT_SESSION_WORKBENCH_SIDEBAR_DEPENDENCIES: SessionWorkbenchSidebarDep
     useSessionImport,
     usePlatformType,
     useLogger,
-    useInvalidSessionRegistry,
+    useInvalidSessions,
     useSessionConnections,
     createDefaultHyperWasmConnectionState,
     createConnectionStateFromParams,
@@ -395,7 +395,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const sessionImport = dependencies.useSessionImport();
     const platform = dependencies.usePlatformType();
     const logger = dependencies.useLogger();
-    const { invalidSessions, deleteInvalidSession } = dependencies.useInvalidSessionRegistry();
+    const { invalidSessions, deleteInvalidSession } = dependencies.useInvalidSessions();
     const attached = dependencies.useSessionConnections(props.sessionScripts.sessionId);
     const connectionAttention = React.useContext(SessionConnectionAttentionContext);
     const sessionConnectionRows = React.useMemo(

@@ -91,7 +91,7 @@ const dependencies = {
         return props?.isOpen ? <div data-testid="file-save-overlay" /> : null;
     },
     useSessionImport: () => ({}),
-    useInvalidSessionRegistry: () => ({ invalidSessions: new Map(), deleteInvalidSession: vi.fn() }),
+    useInvalidSessions: () => ({ invalidSessions: new Map(), deleteInvalidSession: vi.fn() }),
     useDashQLCoreSetup: () => vi.fn(),
     usePlatformType: () => 0,
     useLogger: () => ({ warn: vi.fn(), error: vi.fn() }),

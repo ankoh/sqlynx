@@ -91,6 +91,7 @@ export async function loadApp(logger: TracedLogger, core: dashql.DashQL, storage
     resetSessionScripts({
         sessionScriptsMap: state.sessionScripts,
         sessionScriptsByConnection: state.sessionScriptsByConnection,
+        invalidSessions: state.invalidSessions,
     });
 
     const totalAppLoadDuration = performance.now() - appLoadStartTime;

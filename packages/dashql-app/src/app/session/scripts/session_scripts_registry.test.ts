@@ -12,6 +12,7 @@ function registry(sessionIds: string[]): SessionScriptsRegistry {
     const reg: SessionScriptsRegistry = {
         sessionScriptsMap: new Map(),
         sessionScriptsByConnection: new Map(),
+        invalidSessions: new Map(),
     };
     for (const sessionId of sessionIds) {
         reg.sessionScriptsMap.set(sessionId, scripts(sessionId));

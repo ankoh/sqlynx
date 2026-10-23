@@ -18,7 +18,6 @@ import { useAppConfig, useAppReconfigure } from '../config/app_config.js';
 import { useStorage } from '../storage/storage_provider.js';
 import { useSessionScriptsRegistrySetter } from '../session/scripts/session_scripts_registry.js';
 import { useEmbeddedDatabaseSetup } from '../../platform/database/embedded_database_provider.js';
-import { InvalidSession } from '../storage/session_validation.js';
 import { AppHost, getAppHost } from '../../platform/native_globals.js';
 import { readSessionBundleFromZip } from '../session/persistence/session_import.js';
 import { useSessionImport } from '../session/persistence/session_import_provider.js';
@@ -34,7 +33,6 @@ import { SessionImportCard } from '../session/ui/session_import_card.js';
 import { IndicatorStatus } from '../../ui/foundations/status_indicator.js';
 import { createDefaultHyperWasmConnectionState } from '../connections/connection_params.js';
 import { useAppSettingsReady } from '../config/app_settings_sync.js';
-import { InvalidSessionRegistryProvider } from '../session/persistence/invalid_session_registry.js';
 import { useHyperSetup } from '../connections/hyper/hyper_connection_setup.js';
 import { useInitialMemorySetup } from './initial_memory_setup.js';
 import { SessionSetupStatus } from './session_setup_status.js';
@@ -68,7 +66,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const routeContext = useRouteContext();
     const setupCore = useDashQLCoreSetup();
     const createSession = useSessionCreation();
-    const [storageReader, storageWriter] = useStorage();
+    const [storageReader] = useStorage();
     const allocateConnection = useConnectionAllocator();
     const [, setConnReg] = useConnectionRegistry();
     const [defaultConnection] = useDefaultConnection(routeContext.sessionId ?? null);
@@ -94,9 +92,6 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const remoteSessionAbortRef = React.useRef<AbortController | null>(null);
     // Normal startup must not replace the route selected by an inline session import.
     const initialInlineSetupRef = React.useRef<Promise<boolean> | null>(null);
-    // Sessions whose metadata was refused a load. Surfaced (marked invalid, blocked, deletable) in
-    // the session workbench instead of being silently dropped.
-    const [invalidSessions, setInvalidSessions] = React.useState<Map<string, InvalidSession>>(() => new Map());
     const [loadingProgress, setLoadingProgress] = React.useState<AppLoadingProgress>(() => ({
         restoreConnections: new ProgressCounter(),
         restoreCatalogs: new ProgressCounter(),
@@ -326,14 +321,13 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
                 }, setConnReg, setSessionScriptsRegistry, setLoadingProgress),
             );
 
-            // Surface any sessions that were refused a load in the selector. This is just an
+            // The scripts registry lists the sessions that were refused a load. This is just an
             // aggregate count for the log — each refused session already logs a WARN with its path
             // and reason, so a second WARN here would only duplicate the diagnostic. Keep it at INFO.
             if (loaded.invalidSessions.size > 0) {
                 traced.info("Some sessions were refused a load", {
                     count: loaded.invalidSessions.size.toString()
                 }, "app_loader");
-                setInvalidSessions(loaded.invalidSessions);
             }
 
             const totalDuration = performance.now() - totalStartTime;
@@ -379,27 +373,6 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
         });
     }, [appSettingsReady, config]);
 
-    // Delete an invalid session: remove its files from storage and drop it from the selector list.
-    // Invalid sessions never entered the connection/session registries, so there is nothing to
-    // dispatch there — only the persisted files and our local list need cleaning up.
-    const deleteInvalidSession = React.useCallback(async (sessionId: string) => {
-        try {
-            await storageWriter.deleteSession(sessionId);
-        } catch (e) {
-            logger.error("Failed to delete invalid session", { sessionId, error: String(e) }, "app_loader");
-        }
-        setInvalidSessions(prev => {
-            if (!prev.has(sessionId)) return prev;
-            const next = new Map(prev);
-            next.delete(sessionId);
-            return next;
-        });
-    }, [storageWriter, logger]);
-    const invalidSessionRegistry = React.useMemo(
-        () => ({ invalidSessions, deleteInvalidSession }),
-        [invalidSessions, deleteInvalidSession],
-    );
-
     if (showNarrowScreenWarning) {
         return <NarrowScreenWarning onEnable={() => reconfigure(value => value == null ? null : {
             ...value,
@@ -432,11 +405,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     // Setup done and session selected? Show main interface
     const pauseAfterSetup = config?.settings?.pauseAfterAppSetup ?? false;
     if (canShowSession(routeContext, pauseAfterSetup)) {
-        return (
-            <InvalidSessionRegistryProvider value={invalidSessionRegistry}>
-                {props.children}
-            </InvalidSessionRegistryProvider>
-        );
+        return props.children;
     } else {
         // Otherwise show the app loading page
         return <AppLoadingPage

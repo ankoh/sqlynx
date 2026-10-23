@@ -127,7 +127,7 @@ describe('Session connections', () => {
     });
     /// The connections that the sessions of a restored app state use
     const referencesOf = (restored: RestoredAppState): ConnectionReferences => sessionConnectionReferences({
-        current: { sessionScriptsMap: restored.sessionScripts, sessionScriptsByConnection: restored.sessionScriptsByConnection },
+        current: { sessionScriptsMap: restored.sessionScripts, sessionScriptsByConnection: restored.sessionScriptsByConnection, invalidSessions: restored.invalidSessions },
         subscribe: () => () => { },
     });
 

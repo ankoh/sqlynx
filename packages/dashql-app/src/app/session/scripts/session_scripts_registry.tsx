@@ -7,6 +7,8 @@ import { createDefaultConnectionParamsForConnector } from '../../connections/con
 import { useStorageWriter } from '../../storage/storage_provider.js';
 import { ConnectionReferencesProvider, type ConnectionReferences } from '../../connections/connection_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
+import { stringifyError } from '../../../platform/logger/logger.js';
+import type { InvalidSession } from '../../storage/session_validation.js';
 import {
     REPLACE_SESSION_SCRIPTS,
     DEBOUNCE_DURATION_SESSION_WRITE,
@@ -28,6 +30,9 @@ export interface SessionScriptsRegistry {
     sessionScriptsMap: Map<string, SessionScripts>;
     /// The index to find the sessions with scripts that analyze with a connection (connectionId -> sessionIds)
     sessionScriptsByConnection: Map<string, string[]>;
+    /// The sessions that were refused a load (sessionId -> reason). They never enter the scripts map,
+    /// the workbench lists them as invalid and they can only be deleted.
+    invalidSessions: Map<string, InvalidSession>;
 }
 
 export type SetSessionScriptsRegistryAction = React.SetStateAction<SessionScriptsRegistry>;
@@ -49,6 +54,7 @@ export const SessionScriptsRegistryProvider: React.FC<React.PropsWithChildren<Pr
     const store = useStore<SessionScriptsRegistry>(() => ({
         sessionScriptsMap: new Map(),
         sessionScriptsByConnection: new Map(),
+        invalidSessions: new Map(),
     }));
     const queue = useUpdateQueue(store);
     const reg = useStoreState(store);
@@ -86,6 +92,35 @@ export function useSessionScriptsRegistry(): [SessionScriptsRegistry, Dispatch<S
 /// Modify the registry without subscribing to its changes
 export function useSessionScriptsRegistrySetter(): Dispatch<SetSessionScriptsRegistryAction> {
     return React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!;
+}
+
+/// The sessions that were refused a load
+export interface InvalidSessions {
+    /// The invalid sessions (sessionId -> reason)
+    invalidSessions: ReadonlyMap<string, InvalidSession>;
+    /// Delete the files of an invalid session and drop it from the list
+    deleteInvalidSession: (sessionId: string) => Promise<void>;
+}
+
+export function useInvalidSessions(): InvalidSessions {
+    const reg = React.useContext(SESSION_SCRIPTS_REGISTRY_CTX)!;
+    const setReg = React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!;
+    const storage = useStorageWriter();
+    const logger = useLogger();
+    const deleteInvalidSession = React.useCallback(async (sessionId: string) => {
+        try {
+            await storage.deleteSession(sessionId);
+        } catch (error) {
+            logger.error('Failed to delete invalid session', { sessionId, error: stringifyError(error) }, LOG_CTX);
+        }
+        setReg(reg => {
+            if (!reg.invalidSessions.has(sessionId)) return reg;
+            const invalidSessions = new Map(reg.invalidSessions);
+            invalidSessions.delete(sessionId);
+            return { ...reg, invalidSessions };
+        });
+    }, [logger, setReg, storage]);
+    return React.useMemo(() => ({ invalidSessions: reg.invalidSessions, deleteInvalidSession }), [reg.invalidSessions, deleteInvalidSession]);
 }
 
 export function useSessionScriptsAllocator(): SessionScriptsAllocator {
