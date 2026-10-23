@@ -1,24 +1,125 @@
 {
-  "formatVersion": 4,
+  "formatVersion": 6,
   "sessionId": "de246c14-208b-4493-a3c3-89c7c6aba032",
-  "mainDatabase": {
-    "databaseId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9",
-    "params": {
-      "hyper": {
-        "protocol": "WASM",
-        "endpoint": "",
-        "tls": {
-          "clientKeyPath": "",
-          "clientCertPath": "",
-          "caCertsPath": ""
-        },
-        "attachedDatabases": [],
-        "metadata": {},
-        "queryParameters": {}
+  "defaultConnectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9",
+  "connections": [
+    {
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9",
+      "params": {
+        "hyper": {
+          "protocol": "WASM",
+          "endpoint": "",
+          "tls": {
+            "clientKeyPath": "",
+            "clientCertPath": "",
+            "caCertsPath": ""
+          },
+          "attachedDatabases": [],
+          "metadata": {},
+          "queryParameters": {}
+        }
       }
     }
-  },
-  "attachedDatabases": [],
+  ],
+  "scripts": [
+    {
+      "name": "01_hyper_version.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "02_test_data.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "03_tpch_q1.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "04_tpch_q2.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "05_tpch_q3.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "06_tpch_q4.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "07_tpch_q5.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "08_tpch_q6.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "09_tpch_q7.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "10_tpch_q8.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "11_tpch_q9.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "12_tpch_q10.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "13_tpch_q11.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "14_tpch_q12.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "15_tpch_q13.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "16_tpch_q14.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "17_tpch_q15.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "18_tpch_q16.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "19_tpch_q17.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "20_tpch_q18.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "21_tpch_q19.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "22_tpch_q20.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "23_tpch_q21.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    },
+    {
+      "name": "24_tpch_q22.sql",
+      "connectionId": "c53bdf11-e5e8-4dac-b290-ceaa5a710fe9"
+    }
+  ],
+  "attachments": [],
   "metadata": {
     "createdAt": "2026-09-03T06:52:24.149Z",
     "originalFileName": "hyper"

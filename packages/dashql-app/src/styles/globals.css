@@ -65,6 +65,9 @@
 
     --log_border_color: hsl(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%);
 
+    /* The muted text and icon color of the controls in card headers, status bars and toolbars */
+    --card_control_color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 36%);
+
     --shadow_small: 0 1px 0 hsla(var(--neutral_hue), calc(12.7% * var(--neutral_tint)), 13.9%, 0.04);
     --shadow_medium: 0 3px 6px hsla(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%, 0.15);
     --shadow_large: 0 8px 24px hsla(var(--neutral_hue), calc(9% * var(--neutral_tint)), 58.6%, 0.2);

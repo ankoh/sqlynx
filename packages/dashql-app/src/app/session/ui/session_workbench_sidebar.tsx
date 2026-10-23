@@ -61,7 +61,7 @@ import {
     useAttachedDatabaseStateAllocator,
     useDynamicConnectionDispatch,
     type ConnectionRegistry,
-    sessionDatabaseFromState,
+    sessionConnectionFromState,
 } from '../../connections/connection_registry.js';
 import {
     createDefaultHyperWasmConnectionState,
@@ -73,6 +73,9 @@ import { ConnectionSettingsOverlay } from '../../connections/ui/connection_setti
 import { renderSessionName } from './session_name.js';
 import { useCatalogLoaderQueue } from '../../connections/catalog_loader.js';
 import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status_indicator.js';
+import { ConnectionHealth } from '../../connections/connection_state.js';
+import { CONNECTION_HEALTH_COLORS, CONNECTION_HEALTH_NAMES } from '../../connections/ui/connection_status.js';
+import { SessionConnectionAttentionContext } from './session_connection_attention.js';
 import { observeSize } from '../../../ui/foundations/size_observer.js';
 import { VerticalScrollShadows } from '../../../ui/foundations/vertical_scroll_shadows.js';
 import { displayPath } from '../../storage/session_locator.js';
@@ -101,7 +104,8 @@ import {
 } from '../scripts/session_scripts_registry.js';
 import { useSessionScriptsSetup } from '../scripts/session_scripts_setup.js';
 import { BundledSessionsOverlay } from '../../ui/bundled_sessions_overlay.js';
-import { connectionLabel, isHyperWasmConnection } from '../../connections/ui/connection_label.js';
+import { connectionLabel, connectionLabelParts, isHyperWasmConnection } from '../../connections/ui/connection_label.js';
+import { ConnectionLabelView, ConnectionProtocolTag } from '../../connections/ui/connection_label_view.js';
 import { useAppFlavor } from '../../flavor/flavor_provider.js';
 import { canRefreshConnection } from '../../connections/ui/connection_refresh.js';
 import { SessionURLShareOverlay } from './session_url_share_overlay.js';
@@ -317,6 +321,8 @@ function catalogIcon(kind: CatalogNode['kind']): React.ReactElement {
 
 interface ConnectionTreeEntryProps {
     name: string;
+    /// The rendered name, the plain name by default
+    label?: React.ReactNode;
     icon: React.ReactNode;
     depth: number;
     expanded?: boolean;
@@ -327,6 +333,7 @@ interface ConnectionTreeEntryProps {
 
 const ConnectionTreeEntry: React.FC<ConnectionTreeEntryProps> = ({
     name,
+    label,
     icon,
     depth,
     expanded,
@@ -350,13 +357,13 @@ const ConnectionTreeEntry: React.FC<ConnectionTreeEntryProps> = ({
                 >
                     {expanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
                     <span className={styles.tree_entry_icon} aria-hidden="true">{icon}</span>
-                    <span className={styles.tree_entry_name}>{name}</span>
+                    <span className={styles.tree_entry_name}>{label ?? name}</span>
                 </button>
             ) : (
                 <div className={styles.tree_entry_main}>
                     <span className={styles.tree_entry_spacer} />
                     <span className={styles.tree_entry_icon} aria-hidden="true">{icon}</span>
-                    <span className={styles.tree_entry_name}>{name}</span>
+                    <span className={styles.tree_entry_name}>{label ?? name}</span>
                 </div>
             )}
             {children != null && <span className={styles.tree_entry_children}>{children}</span>}
@@ -406,6 +413,7 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                 <ConnectionTreeEntry
                     className={styles.database_row}
                     name={label}
+                    label={<ConnectionLabelView parts={connectionLabelParts(row.database)} />}
                     depth={0}
                     expanded={expanded}
                     onToggle={() => props.onToggle(row.key)}
@@ -423,6 +431,12 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                             {usage.sessionCount === 0 ? 'unused' : usage.sessionCount}
                         </span>
                     )}
+                    <ConnectionStatusButton
+                        database={row.database}
+                        label={label}
+                        usedHere={usage?.usedHere ?? false}
+                        onOpenSettings={anchor => props.onOpenSettings(row.database.connectionId, anchor)}
+                    />
                     <ConnectionRefreshButton database={row.database} label={label} />
                     <ConnectionRowMenu
                         database={row.database}
@@ -832,6 +846,43 @@ export const ConnectionRefreshButton: React.FC<ConnectionRefreshButtonProps> = (
     );
 };
 
+interface ConnectionStatusButtonProps {
+    /// The connection
+    database: ConnectionState;
+    /// The label of the connection
+    label: string;
+    /// Does the current session use the connection?
+    usedHere: boolean;
+    /// Open the settings of the connection
+    onOpenSettings: (anchor: HTMLButtonElement) => void;
+}
+
+/// The health of a connection, opens its settings.
+/// Pulses while the current session asks for a connection to execute and the connection is not online.
+export const ConnectionStatusButton: React.FC<ConnectionStatusButtonProps> = ({ database, label, usedHere, onOpenSettings }) => {
+    const attention = React.useContext(SessionConnectionAttentionContext);
+    const health = database.connectionHealth;
+    const online = health === ConnectionHealth.ONLINE;
+    const pulse = usedHere && !online && attention?.active === true;
+    return (
+        <IconButton
+            size={ButtonSize.Small}
+            variant={ButtonVariant.Invisible}
+            className={classNames(styles.database_status_button, pulse && styles.database_status_attention)}
+            data-connection-attention={pulse ? 'true' : undefined}
+            aria-label={`${label}: ${CONNECTION_HEALTH_NAMES[health] ?? 'Disconnected'}`}
+            title={online ? `${label} connection settings` : 'Connect to execute queries'}
+            onClick={event => onOpenSettings(event.currentTarget)}
+        >
+            {health === ConnectionHealth.CONNECTING
+                ? <StatusIndicator status={IndicatorStatus.Running} width="14px" height="14px" />
+                : <svg width="14px" height="14px" viewBox="0 0 16 16" aria-hidden="true">
+                    <circle cx="8" cy="8" r="4" fill={CONNECTION_HEALTH_COLORS[health] ?? CONNECTION_HEALTH_COLORS[ConnectionHealth.NOT_STARTED]} />
+                </svg>}
+        </IconButton>
+    );
+};
+
 interface SessionRowProps {
     item: SessionItem;
     selected: boolean;
@@ -1041,7 +1092,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         setupSessionScripts(sessionId, database);
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
-            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionDatabaseFromState(database)]] },
+            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionConnectionFromState(database)]] },
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
@@ -1077,7 +1128,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         setupSessionScripts(sessionId, database);
         void storageWriter.write(
             groupSessionManifestWrites(sessionId),
-            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionDatabaseFromState(database)]] },
+            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionConnectionFromState(database)]] },
         );
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
@@ -1263,7 +1314,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                                                             <use xlinkHref={`${symbols}#${database.connectorInfo.icons.colored}`} />
                                                         </svg>
                                                     </ActionList.Leading>
-                                                    <ActionList.ItemText>{connectionLabel(database)}</ActionList.ItemText>
+                                                    <ActionList.ItemText>{connectionLabelParts(database).name}</ActionList.ItemText>
+                                                    <ActionList.Trailing><ConnectionProtocolTag detail={connectionLabelParts(database).detail} /></ActionList.Trailing>
                                                 </ActionList.ListItem>
                                             ))}
                                             <ActionList.GroupHeading>New connection</ActionList.GroupHeading>

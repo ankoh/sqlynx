@@ -91,7 +91,7 @@ export interface Script {
 export interface ScriptRef {
     // The script id
     scriptId: number;
-    // The explicit file name (e.g., "01-script.sql")
+    // The file name (e.g., "extract.sql")
     fileName: string;
 }
 
@@ -99,7 +99,7 @@ export interface ScriptRef {
 export interface Scripts {
     // The scripts
     scripts: Script[];
-    // The committed script references keyed by ordered file name
+    // The committed script references keyed by file name
     scriptRefs: { [fileName: string]: ScriptRef };
     // The session metadata
     sessionMetadata: SessionMetadata;
@@ -124,47 +124,17 @@ export function createEmptyMetadata(): SessionMetadata {
     };
 }
 
-/// Script file names mirror the page ordering-prefix scheme: a leading "<n>_" orders the file
-/// within its page and is hidden from the UI. The separator is normalised to "_" (matching pages),
-/// but we still parse a legacy hyphen ("01-script.sql") so sessions written before this scheme keep
-/// working and get normalised on the next reorder/rename. Anchored, requires the "<digits><sep>"
-/// shape; the same known ambiguity as pages applies (a file literally named "2024_report.sql" parses
-/// as prefix "2024" + clean "report.sql").
-const SCRIPT_ORDER_PREFIX_RE = /^(\d+)[-_]/;
 /// Trailing ".sql" extension, stripped for display.
 const SCRIPT_EXTENSION_RE = /\.sql$/i;
 
-/// The name of a script with any ordering prefix removed but the extension kept.
-/// "2_extract.sql" -> "extract.sql"; legacy "01-script.sql" -> "script.sql".
-export function normalizeScriptName(fileName: string): string {
-    return fileName.replace(SCRIPT_ORDER_PREFIX_RE, '');
-}
-
-/// The leading ordering prefix of a script file name *including* its separator ("2_extract.sql" ->
-/// "2_", legacy "01-script.sql" -> "01-"), or the empty string if it carries none. Returned verbatim
-/// so a plain rename preserves the file's position without churning the separator.
-export function scriptOrderPrefixString(fileName: string): string {
-    const m = SCRIPT_ORDER_PREFIX_RE.exec(fileName);
-    return m ? m[0] : '';
-}
-
-/// Format a 1-based script ordering prefix, zero-padded to just the digit count required by `total`
-/// (total <= 9 -> "1_"; total in 10..99 -> "01_"). Uses the "_" separator (matching pages); a plain
-/// lexicographic sort of the resulting names then matches numeric order.
-export function formatScriptOrderPrefix(index1: number, total: number): string {
-    const width = String(Math.max(total, 1)).length;
-    return `${String(index1).padStart(width, '0')}_`;
-}
-
-/// The display name of a script: ordering prefix and ".sql" extension both removed.
-/// "2_extract.sql" -> "extract"; "01-script.sql" -> "script". Used for tab/feed/details labels and
-/// to pre-fill the rename input.
+/// The display name of a script, its file name without the ".sql" extension.
+/// "01_extract.sql" -> "01_extract". Used for tab/feed/details labels and to pre-fill the rename input.
 export function scriptDisplayName(fileName: string): string {
-    return normalizeScriptName(fileName).replace(SCRIPT_EXTENSION_RE, '');
+    return fileName.replace(SCRIPT_EXTENSION_RE, '');
 }
 
-/// Return a script base name (no prefix, no extension) that is unique among the display names of the
-/// existing scripts, suffixing "-2", "-3", ... on collision.
+/// Return a script base name (no extension) that is unique among the display names of the existing
+/// scripts, suffixing "-2", "-3", ... on collision.
 export function uniqueScriptBase(
     base: string,
     existingScripts: { [fileName: string]: ScriptRef },
@@ -173,88 +143,24 @@ export function uniqueScriptBase(
     const taken = new Set<string>();
     for (const key of Object.keys(existingScripts)) {
         if (key === excludeFileName) continue;
-        taken.add(scriptDisplayName(key));
+        taken.add(scriptDisplayName(key).toLowerCase());
     }
     let candidate = base;
-    for (let suffix = 2; taken.has(candidate); ++suffix) {
+    for (let suffix = 2; taken.has(candidate.toLowerCase()); ++suffix) {
         candidate = `${base}-${suffix}`;
     }
     return candidate;
 }
 
-/// The numeric ordering prefix of a script file name, or 0 if it carries none.
-function scriptOrderIndex(fileName: string): number {
-    const m = SCRIPT_ORDER_PREFIX_RE.exec(fileName);
-    return m ? parseInt(m[1], 10) : 0;
-}
-
-/// A plan for inserting one script into a page: the name for the new script, plus any existing
-/// scripts that must be renamed to keep a dense, uniformly padded order.
-export interface ScriptInsertionPlan {
-    /// File name for the newly inserted script.
-    newFileName: string;
-    /// Existing scripts to rename so their prefix width matches the new one. Each keeps its numeric
-    /// position and clean name; only the zero-padding (and any legacy "-" separator) changes. Empty
-    /// when adding the script does not change the prefix width.
-    repad: { oldFileName: string; newFileName: string }[];
-}
-
-/// Plan the insertion of a new script at a zero-based index in the page.
-///
-/// With an explicit index, existing scripts retain their sorted relative order and are assigned dense
-/// 1-based prefixes around the insertion point. The index is clamped to `[0, script count]`. Omitting
-/// the index preserves the existing append planner, including sparse prefixes. The new script's clean
-/// base defaults to a random "<adjective>_<animal>" name, disambiguated against the page; callers may
-/// pass an explicit `base` for deterministic tests.
-export function planScriptInsertion(
-    existingScripts: { [fileName: string]: ScriptRef },
-    base?: string,
-    index?: number,
-): ScriptInsertionPlan {
-    const keys = Object.keys(existingScripts).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-    const requested = base ?? randomScriptName(new Set(keys.map(scriptDisplayName)));
-    const clean = uniqueScriptBase(requested, existingScripts);
-
-    if (index == null) {
-        let maxPrefix = 0;
-        for (const key of keys) {
-            maxPrefix = Math.max(maxPrefix, scriptOrderIndex(key));
-        }
-        const newIndex = Math.max(maxPrefix + 1, keys.length + 1);
-        const width = String(newIndex).length;
-        const repad: { oldFileName: string; newFileName: string }[] = [];
-        for (const key of keys) {
-            const currentIndex = scriptOrderIndex(key);
-            if (currentIndex === 0) continue;
-            const desired = `${String(currentIndex).padStart(width, '0')}_${normalizeScriptName(key)}`;
-            if (desired !== key) repad.push({ oldFileName: key, newFileName: desired });
-        }
-        return { newFileName: `${formatScriptOrderPrefix(newIndex, newIndex)}${clean}.sql`, repad };
-    }
-
-    const insertIndex = Math.max(0, Math.min(Math.trunc(index), keys.length));
-    const total = keys.length + 1;
-    const repad: { oldFileName: string; newFileName: string }[] = [];
-    for (let oldIndex = 0; oldIndex < keys.length; ++oldIndex) {
-        const key = keys[oldIndex];
-        const newIndex = oldIndex < insertIndex ? oldIndex : oldIndex + 1;
-        const desired = `${formatScriptOrderPrefix(newIndex + 1, total)}${normalizeScriptName(key)}`;
-        if (desired !== key) repad.push({ oldFileName: key, newFileName: desired });
-    }
-
-    return { newFileName: `${formatScriptOrderPrefix(insertIndex + 1, total)}${clean}.sql`, repad };
-}
-
-/// Helper to generate a script file name that doesn't collide with existing entries. The new script
-/// is always prefixed (placed last in order) with a disambiguated clean base — a random
-/// "<adjective>-<animal>" name by default, or the explicit `base` if given — e.g. "3_brave-otter.sql".
-/// The "<n>_name" prefix is hidden in the UI. Callers that also want the page re-padded to a uniform
-/// width on a digit-count change should use planScriptInsertion instead.
+/// Helper to generate a script file name that doesn't collide with existing entries, a random
+/// "<adjective>_<animal>" name by default or the explicit `base` if given, e.g. "brave_otter.sql".
+/// The order of the scripts lives in the session file, not in the file names.
 export function generateScriptFileName(
     existingScripts: { [fileName: string]: ScriptRef },
     base?: string,
 ): string {
-    return planScriptInsertion(existingScripts, base).newFileName;
+    const requested = base ?? randomScriptName(new Set(Object.keys(existingScripts).map(scriptDisplayName)));
+    return `${uniqueScriptBase(requested, existingScripts)}.sql`;
 }
 
 /// Helper to create a committed script entry.

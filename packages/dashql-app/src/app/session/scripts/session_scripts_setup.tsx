@@ -23,6 +23,7 @@ export function useSessionScriptsSetup(): SessionScriptsSetup {
             connectionCatalog: database.catalog,
             scripts: {},
             scriptRefs: {},
+            scriptOrder: [],
             scriptFocus: { fileName: '' },
             semanticUserFocus: null,
         }, database.catalogFunctionScript);

@@ -12,47 +12,58 @@ dashql-session.json
 dashql-catalog-relations.sql
 dashql-catalog-functions.sql
 scripts/
-  dashql-draft.sql
-  1_main/
-    1_query.sql
+  01_setup.sql
+  02_report.sql
+attachments/
+  sales.csv
 ```
 
 GitHub Pages serves these files with wildcard CORS, so `https://dashql.app` can fetch them directly.
 
-## Derived Index
+## Script And Attachment Lists
 
-Static HTTP servers cannot enumerate `scripts/`. DashQL therefore maintains a generated
-`dashql-session-index.json` next to the authoritative session files:
+Static HTTP servers cannot enumerate `scripts/` or `attachments/`. The session file therefore lists
+both folders next to the connections of the session:
 
 ```json
 {
-  "folders": [
-    {
-      "name": "1_main",
-      "scripts": [
-        { "name": "1_query.sql" }
-      ]
-    }
-  ]
+  "formatVersion": 6,
+  "defaultConnectionId": "22bdfa32-…",
+  "connections": [
+    { "connectionId": "22bdfa32-…", "params": { "…": "…" } },
+    { "connectionId": "9f0c6e1a-…", "params": { "…": "…" } }
+  ],
+  "scripts": [
+    { "name": "01_setup.sql", "connectionId": "22bdfa32-…" },
+    { "name": "02_report.sql", "connectionId": "9f0c6e1a-…" }
+  ],
+  "attachments": [{ "name": "sales.csv" }]
 }
 ```
 
-The index contains names only. It does not duplicate session metadata, SQL content, sizes, hashes,
-or timestamps. Array order follows DashQL's natural folder and script ordering and preserves empty
-folders.
+`connections` holds a copy of every connection the scripts use, so the folder stays self-contained.
+`defaultConnectionId` names the connection that new scripts use and whose catalog the catalog files
+copy. The script list is authoritative for the order of the scripts and for the connection each
+script is analyzed and executed with.
+File names carry no meaning of their own: a numeric prefix like `01_` is an ordinary part of the
+name, and reordering scripts only rewrites the list. The attachment list is kept in natural order.
 
-The index is derived, not authoritative:
+Every loader reconciles the list with the files it finds:
 
-- Local folder loading enumerates the filesystem.
-- `.dashql` loading enumerates the ZIP central directory.
-- Local writes regenerate the index when folder or script names change.
-- Importing a folder or ZIP regenerates the index in the imported destination.
-- Remote HTTP loading uses the index when available because the server cannot expose its directory
-  tree. A missing or malformed index produces a metadata-only session.
-- ZIP import ignores an index if one is present.
-- ZIP export never includes the index.
+- Entries without a file are dropped, the first of duplicate entries wins.
+- Script files without an entry are appended in natural order and run on the default connection.
+- Entries with unsafe names, draft scripts or invalid database ids are dropped; a remote session is
+  then reported as incomplete.
+- A connection id that the session does not reference falls back to the default connection.
 
-Fixed optional files are discovered by convention and are not listed in the index:
+Local folders, `.dashql` archives and remote sessions all carry the lists in `dashql-session.json`.
+Sessions of format version 4 kept the script names in a separate `dashql-session-index.json`. The
+migration to version 5 moves the order of the index into the script list, assigns every script to the
+main database and removes the index. Versions 4 and 5 referenced a `mainDatabase` and
+`attachedDatabases`; the migration to version 6 turns them into the connection list with the main
+database as the default connection, and the scripts reference the same ids as connections.
+
+Fixed optional files are discovered by convention and are not listed:
 
 - `dashql-catalog-relations.sql`
 - `dashql-catalog-functions.sql`
@@ -69,7 +80,7 @@ https://dashql.app/?session=https%3A%2F%2Fowner.github.io%2Frepository%2Fexample
 ```mermaid
 flowchart TD
     A[Read session query parameter] --> B[Fetch required manifest]
-    B --> C[Best-effort index, scripts, and fixed files]
+    B --> C[Best-effort listed scripts, attachments, and fixed files]
     C --> D[Construct SessionBundle]
     D --> E[Import through importPortableBundle]
     E --> F{UUID already registered?}
@@ -81,11 +92,10 @@ The query parameter is consumed before asynchronous loading so a refresh does no
 or reopen a conflict dialog.
 
 Remote loading accepts public HTTPS URLs ending in `dashql-session.json`. That manifest is the only
-required resource. The index, every indexed script, catalog files, and the draft are optional. Missing
-or malformed index entries and unavailable files are skipped, allowing stale generated indexes to
-degrade gracefully. Index entries are names, not URLs: folder and script names may not contain
-separators or traversal components, and all fetched files remain below the manifest's directory on
-the same origin.
+required resource. Every listed script and attachment, the catalog files, and the draft are optional.
+Unusable entries and unavailable files are skipped, allowing stale lists to degrade gracefully. List
+entries are names, not URLs: script and attachment names may not contain separators or traversal
+components, and all fetched files remain below the manifest's directory on the same origin.
 
 The downloaded tree becomes an editable local OPFS snapshot. Its metadata records `HTTP` provenance
 and the original manifest URL. Later edits do not write back to GitHub Pages.
@@ -117,7 +127,7 @@ https://dashql.app/static/examples/sessions/<name>/dashql-session.json
 ```
 
 Local cache directories and `.DS_Store` files are excluded from the build. The example subtree uses
-`Cache-Control: no-store, max-age=0` so every open requests its manifest, index, and SQL files again.
+`Cache-Control: no-store, max-age=0` so every open requests its manifest and SQL files again.
 Application assets retain their existing cache policy.
 
 `bundled_sessions.ts` is the typed registry of root `dashql-session.json` paths. On the web those

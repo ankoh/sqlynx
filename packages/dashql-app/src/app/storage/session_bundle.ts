@@ -9,19 +9,75 @@ import {
     SessionValidationError,
     validateSessionData,
 } from './session_validation.js';
+import { reconcileSessionScripts, remapSessionScripts, sanitizeSessionFiles, sessionAttachments } from './session_files.js';
 
 /// The durable, portable subset of a session. Derived cache files and storage-location metadata
 /// are intentionally not represented here.
 export interface SessionBundle {
+    /// The session file. Its script list names every script of `scripts` in feed order and its
+    /// attachment list names every file of `data`.
     session: SessionData;
+    /// The catalog relations
     schemaSql: string | null;
+    /// The catalog functions
     functionsSql: string | null;
+    /// The script files
     scripts: ScriptData[];
+    /// The attachments
     data?: DataFileData[];
 }
 
 /// The top-level files of a session bundle
-export type SessionBundleHead = Pick<SessionBundle, 'session' | 'schemaSql' | 'functionsSql'>;
+export interface SessionBundleHead extends Pick<SessionBundle, 'session' | 'schemaSql' | 'functionsSql'> {
+    /// False when unusable entries were removed from the file lists of the session file
+    filesValid: boolean;
+}
+
+/// Complete a bundle from its top-level files and the files of its folders.
+///
+/// The file lists of the session file are reconciled with the files: scripts without a file are
+/// dropped and script files without an entry are appended with the main database.
+export function assembleSessionBundle(
+    head: Pick<SessionBundle, 'session' | 'schemaSql' | 'functionsSql'>,
+    scripts: ScriptData[],
+    data: DataFileData[] = [],
+): SessionBundle {
+    const reconciled = reconcileSessionScripts(head.session.scripts, scripts.map(script => script.name), head.session.defaultConnectionId);
+    return {
+        session: {
+            ...head.session,
+            scripts: reconciled.scripts,
+            attachments: sessionAttachments(data.map(file => file.name)),
+        },
+        schemaSql: head.schemaSql,
+        functionsSql: head.functionsSql,
+        scripts,
+        data,
+    };
+}
+
+/// Reconcile the file lists of a stored session file with the stored files, writes the session file
+/// only when the lists changed. Must not race with writes of the session file.
+export async function reconcileStoredSessionFiles(backend: StorageBackend, sessionId: string): Promise<SessionData> {
+    const [session, scripts, dataFiles] = await Promise.all([
+        backend.loadSession(sessionId),
+        backend.loadScripts(sessionId),
+        backend.listDataFiles(sessionId),
+    ]);
+    const sanitized = sanitizeSessionFiles(session);
+    const reconciled = reconcileSessionScripts(sanitized.scripts, scripts.map(script => script.name), session.defaultConnectionId);
+    const attachments = sessionAttachments(dataFiles.map(file => file.name));
+    const next: SessionData = { ...session, scripts: reconciled.scripts, attachments };
+    if (!sanitized.valid || reconciled.changed || !sessionAttachmentsEqual(session.attachments, attachments)) {
+        await backend.saveSessionManifest(sessionId, next);
+    }
+    return next;
+}
+
+/// Do two attachment lists name the same files in the same order?
+function sessionAttachmentsEqual(a: SessionData['attachments'] | undefined, b: SessionData['attachments']): boolean {
+    return a != null && a.length === b.length && a.every((file, i) => file.name === b[i].name);
+}
 
 /// Migrate the top-level files of a session to the current format and read them.
 ///
@@ -46,16 +102,18 @@ export async function readSessionBundleHead(folder: MigrationFolder, errorPrefix
     if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) {
         throw new Error(`${errorPrefix}: invalid ${STORAGE_SESSION_FILE}`);
     }
-    const session = parsed as SessionData;
-    const validation = validateSessionData(session);
+    const parsedSession = parsed as SessionData;
+    const validation = validateSessionData(parsedSession);
     if (!validation.ok) {
         throw new Error(`${errorPrefix}: invalid ${STORAGE_SESSION_FILE}: ${describeSessionValidationError(validation.error)}`);
     }
+    const files = sanitizeSessionFiles(parsedSession);
+    const session: SessionData = { ...parsedSession, scripts: files.scripts, attachments: files.attachments };
     const [schemaSql, functionsSql] = await Promise.all([
         folder.readText(STORAGE_CATALOG_RELATIONS),
         folder.readText(STORAGE_CATALOG_FUNCTIONS),
     ]);
-    return { session, schemaSql, functionsSql };
+    return { session, schemaSql, functionsSql, filesValid: files.valid };
 }
 
 export interface SessionCatalogValidationResult {
@@ -63,15 +121,14 @@ export interface SessionCatalogValidationResult {
     invalidFiles: Array<typeof STORAGE_CATALOG_RELATIONS | typeof STORAGE_CATALOG_FUNCTIONS>;
 }
 
-export function regenerateSessionDatabaseIds(session: SessionData): SessionData {
-    const remap = (database: SessionData['mainDatabase']) => ({
-        ...database,
-        databaseId: crypto.randomUUID(),
-    });
+/// Give the connections of a session fresh ids, the default connection and the scripts follow them
+export function regenerateSessionConnectionIds(session: SessionData): SessionData {
+    const connectionIds = new Map(session.connections.map(connection => [connection.connectionId, crypto.randomUUID()]));
     return {
         ...session,
-        mainDatabase: remap(session.mainDatabase),
-        attachedDatabases: session.attachedDatabases.map(remap) as SessionData['attachedDatabases'],
+        defaultConnectionId: connectionIds.get(session.defaultConnectionId) ?? session.defaultConnectionId,
+        connections: session.connections.map(connection => ({ ...connection, connectionId: connectionIds.get(connection.connectionId)! })),
+        scripts: remapSessionScripts(session.scripts, connectionIds),
     };
 }
 
@@ -134,8 +191,8 @@ export interface SessionBundleWriteOptions {
     /// The caller guarantees the destination did not exist before this write. Only then may a
     /// failed whole-bundle write remove the destination as rollback.
     targetIsFresh?: boolean;
-    /// Generate fresh attached database identities for a clone/create-new import.
-    regenerateDatabaseIds?: boolean;
+    /// Generate fresh connection identities for a clone/create-new import.
+    regenerateConnectionIds?: boolean;
 }
 
 /// Read the portable durable session data from a backend. Catalog SQL can be skipped for exports
@@ -145,7 +202,7 @@ export async function readSessionBundle(
     backend: StorageBackend,
     withCatalog: boolean = true,
 ): Promise<SessionBundle> {
-    const [session, scripts, schemaSql, functionsSql] = await Promise.all([
+    const [stored, scripts, schemaSql, functionsSql] = await Promise.all([
         backend.loadSession(sessionId),
         backend.loadScripts(sessionId),
         withCatalog ? backend.loadSessionSchema(sessionId) : null,
@@ -153,7 +210,9 @@ export async function readSessionBundle(
     ]);
     const data = await Promise.all((await backend.listDataFiles(sessionId))
         .map(async file => ({ name: file.name, bytes: await backend.loadDataFile(sessionId, file.name) })));
-    return { session, schemaSql, functionsSql, scripts, data };
+    const files = sanitizeSessionFiles(stored);
+    const session: SessionData = { ...stored, scripts: files.scripts, attachments: files.attachments };
+    return assembleSessionBundle({ session, schemaSql, functionsSql }, scripts, data);
 }
 
 /// Write a fully parsed bundle to storage. This is deliberately not a replacement transaction:
@@ -179,8 +238,11 @@ export async function writeSessionBundle(
     let session: SessionData = {
         ...bundle.session,
         sessionId,
+        scripts: reconcileSessionScripts(bundle.session.scripts ?? [], bundle.scripts.map(script => script.name),
+            bundle.session.defaultConnectionId).scripts,
+        attachments: sessionAttachments((bundle.data ?? []).map(file => file.name)),
     };
-    if (options.regenerateDatabaseIds) session = regenerateSessionDatabaseIds(session);
+    if (options.regenerateConnectionIds) session = regenerateSessionConnectionIds(session);
     if (backend.getBackendType() === StorageBackendType.OPFS) {
         delete session.sessionPath;
         delete session.storageType;

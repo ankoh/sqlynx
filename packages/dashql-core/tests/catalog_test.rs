@@ -4,7 +4,7 @@
 //! (`CATALOG_SCRIPT_NOT_ANALYZED`) has no Rust counterpart.
 
 use dashql_buffers::status::StatusCode;
-use dashql_core::catalog::{Catalog, CatalogEntryId, CatalogObjectType, ExternalObjectId, QualifiedCatalogObjectId, Rank};
+use dashql_core::catalog::{Catalog, CatalogEntryId, CatalogObjectType, EntryIdSource, ExternalObjectId, QualifiedCatalogObjectId, Rank, INITIAL_ENTRY_ID};
 use dashql_core::script::Script;
 
 fn analyze(catalog: &Catalog, text: &str) -> Script {
@@ -362,4 +362,14 @@ fn database_and_schema_ids_are_reserved_once() {
     assert_eq!(schema.unpack_schema_id().0, first.unpack_database_id());
     let entry_a = catalog.allocate_entry_id();
     assert_eq!(catalog.allocate_entry_id(), entry_a + 1);
+}
+
+#[test]
+fn shared_entry_id_source() {
+    let source = EntryIdSource::new();
+    let first = Catalog::with_entry_ids(source.clone());
+    let second = Catalog::with_entry_ids(source);
+    assert_eq!(first.allocate_entry_id(), INITIAL_ENTRY_ID);
+    assert_eq!(second.allocate_entry_id(), INITIAL_ENTRY_ID + 1);
+    assert_eq!(Catalog::new().allocate_entry_id(), INITIAL_ENTRY_ID);
 }

@@ -284,13 +284,5 @@
 .format_bean {
     flex-shrink: 0;
     margin-left: 6px;
-    padding: 0 4px;
-    border-radius: 3px;
-    font-size: var(--font_size_badge);
-    font-weight: 500;
-    line-height: 1.4;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
-    background: hsl(var(--neutral_hue), calc(15% * var(--neutral_tint)), 93%);
-    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 38%);
 }

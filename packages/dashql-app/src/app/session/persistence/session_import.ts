@@ -7,7 +7,7 @@ import {
     STORAGE_SCRIPTS_FOLDER,
 } from '../../storage/storage_backend.js';
 import type { SessionBundle, SessionBundleWriteOptions } from '../../storage/session_bundle.js';
-import { readSessionBundleHead, writeSessionBundle } from '../../storage/session_bundle.js';
+import { assembleSessionBundle, readSessionBundleHead, writeSessionBundle } from '../../storage/session_bundle.js';
 import { MemoryFolder } from '../../../migration/migration_folder.js';
 
 export interface SessionZipImportOptions extends SessionBundleWriteOptions { }
@@ -78,7 +78,7 @@ export async function readSessionBundleFromZip(zipBlob: Blob): Promise<SessionBu
         .filter(entry => destinationKey(entry.path).startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`))
         .sort((a, b) => NATURAL_SORT.compare(a.path, b.path))
         .map(async entry => ({ name: entry.path.split('/')[1], bytes: await entry.file.async('uint8array') })));
-    return { ...head, scripts: parsedScripts, data };
+    return assembleSessionBundle(head, parsedScripts, data);
 }
 
 function validateDataPath(path: string): void {
@@ -99,7 +99,7 @@ export async function importSessionFromZip(
 ): Promise<string> {
     const bundle = await readSessionBundleFromZip(zipBlob);
     const options = typeof optionsInput === 'function'
-        ? { targetSessionId: optionsInput(), targetIsFresh: true, regenerateDatabaseIds: true }
+        ? { targetSessionId: optionsInput(), targetIsFresh: true, regenerateConnectionIds: true }
         : optionsInput;
     return await writeSessionBundle(bundle, backend, options);
 }

@@ -1,6 +1,6 @@
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
 import { type ConnectionState } from '../../connections/connection_state.js';
-import { connectionLabel } from '../../connections/ui/connection_label.js';
+import { connectionLabel, connectionLabelParts } from '../../connections/ui/connection_label.js';
 import {
     connectionDisplayOrder,
     flattenCatalogRows,
@@ -10,7 +10,7 @@ import {
 } from './session_workbench_sidebar.js';
 
 describe('session workbench database labels', () => {
-    it('labels the mandatory local database as Memory', () => {
+    it('labels the mandatory local database by its connector and Local', () => {
         const database = {
             connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
             details: {
@@ -19,7 +19,8 @@ describe('session workbench database labels', () => {
             },
         } as ConnectionState;
 
-        expect(connectionLabel(database)).toBe('Memory');
+        expect(connectionLabel(database)).toBe('Hyper Local');
+        expect(connectionLabelParts(database)).toEqual({ name: 'Hyper', detail: 'Local' });
     });
 
     it('keeps the connector and protocol label for remote Hyper databases', () => {
@@ -31,7 +32,8 @@ describe('session workbench database labels', () => {
             },
         } as ConnectionState;
 
-        expect(connectionLabel(database)).toBe('Hyper / HTTP');
+        expect(connectionLabel(database)).toBe('Hyper Http');
+        expect(connectionLabelParts(database)).toEqual({ name: 'Hyper', detail: 'Http' });
     });
 
     it('renders Memory first and initially collapses it only when another database exists', () => {

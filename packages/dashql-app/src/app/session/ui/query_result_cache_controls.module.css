@@ -14,17 +14,6 @@
 }
 
 .cached_result_bean {
-    display: inline-flex;
-    align-items: center;
     margin-right: 8px;
-    padding: 2px 6px;
-    border-radius: 3px;
-    color: hsl(var(--neutral_hue), calc(10% * var(--neutral_tint)), 46%);
-    background-color: hsl(var(--neutral_hue), calc(15% * var(--neutral_tint)), 91%);
-    font-size: var(--font_size_badge);
-    font-weight: 500;
-    line-height: 1.4;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
 }

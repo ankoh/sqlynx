@@ -1,6 +1,5 @@
-import { type StorageBackend, type SessionData, type ScriptData, type SessionEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_SESSION_FILE, STORAGE_SESSION_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
+import { type StorageBackend, type SessionData, type ScriptData, type SessionEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_SESSION_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
-import { serializeSessionIndex } from './session_index.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
 import { exists, join, mkdir, readDir, readFile, readTextFile, remove, rename, stat, writeFile, writeTextFile } from '../../platform/electron_fs.js';
@@ -96,20 +95,9 @@ export class NativeStorageBackend implements StorageBackend {
         await this.ensureDir('');
         const metaFile = await this.abs(STORAGE_SESSION_FILE);
         await writeTextFile(metaFile, JSON.stringify(data, null, 2));
-        await this.regenerateSessionIndex(_sessionId);
     }
 
-    async regenerateSessionIndex(sessionId: string): Promise<void> {
-        const indexFile = await this.abs(STORAGE_SESSION_INDEX_FILE);
-        await writeTextFile(indexFile, serializeSessionIndex(await this.loadScripts(sessionId), await this.listDataFiles(sessionId)));
-    }
 
-    async ensureSessionIndex(sessionId: string): Promise<void> {
-        const indexFile = await this.abs(STORAGE_SESSION_INDEX_FILE);
-        if (!(await exists(indexFile))) {
-            await this.regenerateSessionIndex(sessionId);
-        }
-    }
 
     async deleteSession(_sessionId: string): Promise<void> {
         // No-op: a native session lives in a user-owned folder on disk. Deleting the session in
@@ -192,18 +180,13 @@ export class NativeStorageBackend implements StorageBackend {
     ): Promise<void> {
         await this.ensureDir(STORAGE_SCRIPTS_FOLDER);
         const scriptFile = await this.abs(`${STORAGE_SCRIPTS_FOLDER}/${scriptName}`);
-        const isNew = !(await exists(scriptFile));
         await writeTextFile(scriptFile, sql);
-        if (isNew) {
-            await this.regenerateSessionIndex(_sessionId);
-        }
     }
 
     async deleteScript(_sessionId: string, scriptName: string): Promise<void> {
         const scriptFile = await this.abs(`${STORAGE_SCRIPTS_FOLDER}/${scriptName}`);
         if (await exists(scriptFile)) {
             await remove(scriptFile);
-            await this.regenerateSessionIndex(_sessionId);
         }
     }
 
@@ -221,7 +204,6 @@ export class NativeStorageBackend implements StorageBackend {
         // Atomic file rename. The new clean base is disambiguated unique within the folder, so the
         // destination is free.
         await rename(oldFile, newFile);
-        await this.regenerateSessionIndex(_sessionId);
     }
 
     async loadQueryResultCache(_sessionId: string, hash: string): Promise<CachedQueryResult | null> {
@@ -263,7 +245,6 @@ export class NativeStorageBackend implements StorageBackend {
         await this.ensureDir(STORAGE_ATTACHMENTS_FOLDER);
         const bytes = content instanceof Blob ? new Uint8Array(await content.arrayBuffer()) : content;
         await writeFile(await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${name}`), bytes);
-        await this.regenerateSessionIndex(sessionId);
     }
 
     async deleteDataFile(sessionId: string, name: string): Promise<void> {
@@ -271,7 +252,6 @@ export class NativeStorageBackend implements StorageBackend {
         const path = await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${name}`);
         if (!(await exists(path))) return;
         await remove(path);
-        await this.regenerateSessionIndex(sessionId);
     }
 
     async renameDataFile(sessionId: string, oldName: string, newName: string): Promise<void> {
@@ -281,7 +261,6 @@ export class NativeStorageBackend implements StorageBackend {
         const oldPath = await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${oldName}`);
         if (!(await exists(oldPath))) return;
         await rename(oldPath, await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${newName}`));
-        await this.regenerateSessionIndex(sessionId);
     }
 
     async saveQueryResultCache(sessionId: string, hash: string, bytes: Uint8Array): Promise<void> {

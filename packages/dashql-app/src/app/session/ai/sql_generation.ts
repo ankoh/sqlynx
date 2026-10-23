@@ -79,10 +79,12 @@ function describeConnectionRelations(instance: core.DashQL, relationScript: stri
     return relations;
 }
 
-/// Render the tables that the session scripts define as CREATE TABLE statements without types
+/// Render the tables that the session scripts define as CREATE TABLE statements without types.
+/// Generated SQL runs on the default connection, only the scripts on it are described.
 function describeSessionTables(sessionScripts: SessionScripts): string[] {
     const statements: string[] = [];
     for (const script of Object.values(sessionScripts.scripts)) {
+        if (script.connection.catalog !== sessionScripts.connectionCatalog) continue;
         let entries: core.FlatBufferPtr<core.buffers.catalog.CatalogEntries>;
         try {
             entries = sessionScripts.connectionCatalog.describeEntriesOf(script.scriptSession.getCatalogEntryId());

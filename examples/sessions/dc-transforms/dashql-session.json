@@ -1,25 +1,38 @@
 {
-  "formatVersion": 4,
+  "formatVersion": 6,
   "sessionId": "07b766f9-cb22-418e-bf94-42d1ecd9b775",
   "name": "Transforms",
-  "mainDatabase": {
-    "databaseId": "4bdb989e-4548-4d65-98b8-b2da19b1db33",
-    "params": {
-      "hyper": {
-        "protocol": "WASM",
-        "endpoint": "",
-        "tls": {
-          "clientKeyPath": "",
-          "clientCertPath": "",
-          "caCertsPath": ""
-        },
-        "attachedDatabases": [],
-        "metadata": {},
-        "queryParameters": {}
+  "defaultConnectionId": "4bdb989e-4548-4d65-98b8-b2da19b1db33",
+  "connections": [
+    {
+      "connectionId": "4bdb989e-4548-4d65-98b8-b2da19b1db33",
+      "params": {
+        "hyper": {
+          "protocol": "WASM",
+          "endpoint": "",
+          "tls": {
+            "clientKeyPath": "",
+            "clientCertPath": "",
+            "caCertsPath": ""
+          },
+          "attachedDatabases": [],
+          "metadata": {},
+          "queryParameters": {}
+        }
       }
     }
-  },
-  "attachedDatabases": [],
+  ],
+  "scripts": [
+    {
+      "name": "1_vivid_raven.sql",
+      "connectionId": "4bdb989e-4548-4d65-98b8-b2da19b1db33"
+    },
+    {
+      "name": "2_json_table.sql",
+      "connectionId": "4bdb989e-4548-4d65-98b8-b2da19b1db33"
+    }
+  ],
+  "attachments": [],
   "metadata": {
     "createdAt": "2026-08-31T20:54:27.758Z",
     "originalFileName": "hyper"

@@ -17,6 +17,7 @@ import {
     REGISTER_QUERY,
     REGISTER_SCRIPT_RESULT,
     replaceScriptSessionText,
+    SET_SCRIPT_CONNECTION,
     SET_SCRIPT_EXECUTION_VISUALIZATION,
     SET_SCRIPT_TEXT,
 } from './session_scripts.js';
@@ -38,19 +39,20 @@ afterEach(() => { vi.restoreAllMocks(); dql.resetUnsafe(); });
 
 function fixture(entries: Array<[string, string]>) {
     const catalog = dql.createCatalog();
+    const connection = { connectionId: crypto.randomUUID(), connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], catalog };
     const scripts: SessionScripts['scripts'] = {};
     const scriptRefs: SessionScripts['scriptRefs'] = {};
     for (const [fileName, text] of entries) {
-        const [scriptKey, script] = createEmptyScriptData(dql, catalog, fileName);
+        const [scriptKey, script] = createEmptyScriptData(dql, connection, fileName);
         replaceScriptSessionText(script.scriptSession, text);
         scripts[scriptKey] = script;
         scriptRefs[fileName] = createScriptRef(scriptKey, fileName);
     }
     let live: SessionScripts = {
         instance: dql, sessionId: crypto.randomUUID(), name: 'Execution integration', settings: { cacheQueryResults: false },
-        connectionId: crypto.randomUUID(), sessionMetadata: createEmptyMetadata(),
+        connectionId: connection.connectionId, sessionMetadata: createEmptyMetadata(),
         connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], connectionCatalog: catalog,
-        scripts, scriptRefs, scriptFocus: { fileName: entries[0]?.[0] ?? '' }, semanticUserFocus: null,
+        scripts, scriptRefs, scriptOrder: entries.map(([fileName]) => fileName).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })), scriptFocus: { fileName: entries[0]?.[0] ?? '' }, semanticUserFocus: null,
     };
     const writer = new StorageWriter(logger, new SessionTestBackend());
     const write = vi.spyOn(writer, 'write');
@@ -92,6 +94,32 @@ function fixture(entries: Array<[string, string]>) {
 }
 
 describe('session execution with real core planning', () => {
+    it('plans and runs the scripts of each connection in their own catalog, block after block', async () => {
+        const f = fixture([
+            ['1_create.sql', 'create table items (id int);'],
+            ['2_remote.sql', 'select 42;'],
+            ['3_query.sql', 'select id from items;'],
+        ]);
+        const remote = { connectionId: crypto.randomUUID(), connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO], catalog: dql.createCatalog() };
+        const remoteKey = f.script('2_remote.sql').scriptKey;
+        f.apply({ type: SET_SCRIPT_CONNECTION, value: { fileName: '2_remote.sql', connection: remote } });
+        expect(f.script('2_remote.sql').scriptKey).toBe(remoteKey);
+        await f.run();
+        expect(f.lastState()?.error).toBeNull();
+        const main = f.getSession().connectionId;
+        expect(f.plan.mock.calls.map(([input]) => input.map(session => session.getCatalogEntryId()))).toEqual([
+            [f.script('1_create.sql').scriptKey], [remoteKey], [f.script('3_query.sql').scriptKey],
+        ]);
+        expect(f.calls.map(call => [call.databaseId, call.sql])).toEqual([
+            [main, 'create table items (id int)'],
+            [remote.connectionId, 'select 42'],
+            [main, 'select id from items'],
+        ]);
+        // The last block resolves the table that the first block created in the same catalog
+        expect(f.graphs[2].unresolvedReferences).toEqual([]);
+        expect(f.lastState()).toMatchObject({ phase: 'succeeded', totalBlocks: 3, completedBlocks: 3, completedScripts: 3 });
+    });
+
     it('executes create, insert, and select across scripts in natural order with real dependencies', async () => {
         const f = fixture([
             ['10_query.sql', 'select id from items;'],
@@ -123,8 +151,8 @@ describe('session execution with real core planning', () => {
         ]));
         expect(f.lastState()).toEqual({
             phase: 'succeeded', totalScripts: 3, completedScripts: 3,
-            totalStatements: 3, completedStatements: 3, activeScriptKey: null,
-            activeFileName: null, activeStatementIndex: null, activeStatementCount: null, error: null,
+            totalStatements: 3, completedStatements: 3, totalBlocks: 1, completedBlocks: 1, activeConnectionId: null,
+            activeScriptKey: null, activeFileName: null, activeStatementIndex: null, activeStatementCount: null, error: null,
         });
         expect(f.cancelQuery).not.toHaveBeenCalled();
     });

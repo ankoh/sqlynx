@@ -16,18 +16,20 @@ const dependencies: SessionImportCardDependencies = {
 const RESULT: HttpSessionLoadResult = {
     bundle: {
         session: {
-            formatVersion: 4,
+            formatVersion: 6,
             sessionId: '11111111-2222-4333-8444-555555555555',
             name: 'Flat session',
-            mainDatabase: { databaseId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', params: { hyper: {} } as any },
-            attachedDatabases: [],
+            defaultConnectionId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+            connections: [{ connectionId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', params: { hyper: {} } as any }],
+            scripts: [{ name: '01_query.sql', connectionId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' }],
+            attachments: [],
             metadata: { originType: 'HTTP', originalHttpUrl: 'https://example.com/dashql-session.json' },
         },
         schemaSql: null,
         functionsSql: null,
         scripts: [{ name: '01_query.sql', sql: 'SELECT 1' }],
     },
-    indexedScriptCount: 1,
+    listedScriptCount: 1,
     loadedScriptCount: 1,
     incomplete: false,
 };
@@ -51,7 +53,7 @@ describe('SessionImportCard V2 ready state', () => {
     });
 
     it('surfaces incomplete index state and native replacement safety', () => {
-        act(() => root.render(<SessionImportCard phase="ready" result={{ ...RESULT, indexedScriptCount: 3, incomplete: true }}
+        act(() => root.render(<SessionImportCard phase="ready" result={{ ...RESULT, listedScriptCount: 3, incomplete: true }}
             conflictLocation="/tmp/native" conflictIsNative busy={false} onImport={() => {}} onReplace={() => {}}
             onCreateNew={() => {}} onClose={() => {}} dependencies={dependencies} />));
         expect(container.querySelectorAll('[role="status"]')).toHaveLength(2);

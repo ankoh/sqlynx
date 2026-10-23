@@ -9,7 +9,7 @@ import { CATALOG_DID_UPDATE } from './session_scripts.js';
 export function SessionCatalogLoaderProvider(props: { children?: React.ReactElement }) {
     const connScriptsDispatch = useConnectionScriptsDispatch();
     const onCatalogDidUpdate = React.useCallback((connectionId: string) => {
-        connScriptsDispatch(connectionId, { type: CATALOG_DID_UPDATE, value: null });
+        connScriptsDispatch(connectionId, { type: CATALOG_DID_UPDATE, value: connectionId });
     }, [connScriptsDispatch]);
     return (
         <CatalogLoaderProvider onCatalogDidUpdate={onCatalogDidUpdate}>

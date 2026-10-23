@@ -32,6 +32,7 @@ afterEach(() => { vi.restoreAllMocks(); dql.resetUnsafe(); });
 
 function fixture() {
     const catalog = dql.createCatalog();
+    const connection = { connectionId: crypto.randomUUID(), connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], catalog };
     const scripts: SessionScripts['scripts'] = {};
     const scriptRefs: SessionScripts['scriptRefs'] = {};
     for (const [fileName, text] of [
@@ -39,15 +40,15 @@ function fixture() {
         ['2_query.sql', 'select id from items;'],
         ['3_other.sql', 'select 3;'],
     ]) {
-        const [scriptKey, script] = createEmptyScriptData(dql, catalog, fileName);
+        const [scriptKey, script] = createEmptyScriptData(dql, connection, fileName);
         replaceScriptSessionText(script.scriptSession, text);
         scripts[scriptKey] = script;
         scriptRefs[fileName] = createScriptRef(scriptKey, fileName);
     }
     const state: SessionScripts = {
-        instance: dql, sessionId: crypto.randomUUID(), name: 'Test', connectionId: crypto.randomUUID(), settings: { cacheQueryResults: false },
+        instance: dql, sessionId: crypto.randomUUID(), name: 'Test', connectionId: connection.connectionId, settings: { cacheQueryResults: false },
         sessionMetadata: createEmptyMetadata(), connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
-        connectionCatalog: catalog, scripts, scriptRefs,
+        connectionCatalog: catalog, scripts, scriptRefs, scriptOrder: ['1_items.sql', '2_query.sql', '3_other.sql'],
         scriptFocus: { fileName: '2_query.sql' }, semanticUserFocus: null,
     };
     const [definition, query, other] = Object.values(scripts);

@@ -90,46 +90,6 @@
     flex-shrink: 0;
 }
 
-.connection_action {
-    flex-shrink: 0;
-    border: 1px solid transparent;
-}
-
-.connection_label {
-    white-space: nowrap;
-}
-
-.connection_spinner {
-    display: inline-flex;
-    vertical-align: middle;
-}
-
-.connection_attention {
-    animation: connection_attention 450ms ease-in-out 2;
-}
-
-@keyframes connection_attention {
-    35%, 55% {
-        border-color: hsl(212, 50%, 60%);
-        background-color: hsl(212, 70%, 96%);
-    }
-    0%, 100% {
-        border-color: transparent;
-        background-color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .connection_spinner * {
-        animation: none !important;
-    }
-    .connection_attention {
-        animation: none;
-        border-color: hsl(212, 65%, 45%);
-        background-color: hsl(212, 85%, 94%);
-    }
-}
-
 .execution_controls {
     display: flex;
     align-items: center;

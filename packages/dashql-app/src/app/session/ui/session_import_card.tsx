@@ -135,12 +135,12 @@ function LoadingCard({ state, dependencies }: { state: LoadingState; dependencie
 }
 
 function ReadyCard({ state, dependencies }: { state: ReadyState; dependencies: SessionImportCardDependencies }): React.ReactElement {
-    const { bundle, indexedScriptCount, loadedScriptCount, incomplete } = state.result;
+    const { bundle, listedScriptCount, loadedScriptCount, incomplete } = state.result;
     const sessionName = bundle.session.name?.trim() || bundle.session.metadata.originalFileName || 'Unnamed session';
     const scriptCount = incomplete
-        ? indexedScriptCount > 0 ? `${loadedScriptCount} of ${indexedScriptCount}` : `${loadedScriptCount} (index unavailable)`
+        ? listedScriptCount > 0 ? `${loadedScriptCount} of ${listedScriptCount}` : String(loadedScriptCount)
         : String(loadedScriptCount);
-    const displayedScriptCount = incomplete && indexedScriptCount > 0 ? indexedScriptCount : loadedScriptCount;
+    const displayedScriptCount = incomplete && listedScriptCount > 0 ? listedScriptCount : loadedScriptCount;
     const scriptSummary = formatScriptSummary(scriptCount, displayedScriptCount, 0);
     const hasConflict = state.conflictLocation != null;
     const actions = hasConflict ? (
@@ -347,7 +347,7 @@ function progressDetails(progress: HttpSessionLoadProgress): { status: string; s
     switch (progress.phase) {
         case 'preparing': return { status: 'Preparing session loader...', sessionName: null, sessionId: null };
         case 'manifest': return { status: 'Loading session manifest...', sessionName: null, sessionId: null };
-        case 'index': return { status: 'Discovering session files...', sessionName: progress.sessionName, sessionId: progress.sessionId };
+        case 'listing': return { status: 'Discovering session files...', sessionName: progress.sessionName, sessionId: progress.sessionId };
         case 'files': return {
             status: progress.totalScriptCount === 0 ? 'No indexed scripts' : `Loading scripts: ${progress.completedScriptCount} of ${progress.totalScriptCount}`,
             sessionName: progress.sessionName,

@@ -21,8 +21,8 @@ export function registerSessionScriptQuery(
     }).catch(() => { });
 }
 
+/// Run a script on its connection
 export function runSessionScript(
-    connectionId: string,
     sessionScripts: SessionScripts,
     scriptData: ScriptData,
     executeQuery: QueryExecutor,
@@ -31,7 +31,7 @@ export function runSessionScript(
 ): Promise<void> | void {
     if (isSessionExecutionRunning(sessionScripts)) return;
     logger?.info('Session script execution requested', {
-        connectionId,
+        connectionId: scriptData.connection.connectionId,
         sessionId: sessionScripts.sessionId,
         scriptKey: scriptData.scriptKey.toString(),
         analysisOutdated: scriptData.analysisOutdated.toString(),
@@ -49,7 +49,7 @@ export function runSessionScript(
                         scriptKey: scriptData.scriptKey.toString(),
                         analysisAvailable: analyzed.editorUpdate?.analysisAvailable.toString(),
                     }, 'session_execution');
-                    executeSessionScript(connectionId, analyzed, sessionScripts, executeQuery, modifySessionScripts, logger);
+                    executeSessionScript(analyzed, sessionScripts, executeQuery, modifySessionScripts, logger);
                 } else {
                     logger?.warn('Session execution stopped because analysis returned no script', {
                         sessionId: sessionScripts.sessionId,
@@ -58,11 +58,10 @@ export function runSessionScript(
                 }
             });
     }
-    executeSessionScript(connectionId, scriptData, sessionScripts, executeQuery, modifySessionScripts, logger);
+    executeSessionScript(scriptData, sessionScripts, executeQuery, modifySessionScripts, logger);
 }
 
 function executeSessionScript(
-    connectionId: string,
     scriptData: ScriptData,
     sessionScripts: SessionScripts,
     executeQuery: QueryExecutor,
@@ -70,7 +69,8 @@ function executeSessionScript(
     logger: LoggerLike,
 ): void {
     if (isSessionExecutionRunning(sessionScripts)) return;
-    const compiled = compileSessionQuery(scriptData, sessionScripts.connectorInfo.connectorType, logger);
+    const { connectionId, connectorInfo } = scriptData.connection;
+    const compiled = compileSessionQuery(scriptData, connectorInfo.connectorType, logger);
     const queryText = compiled.sql;
     if (queryText.trim().length === 0) {
         logger?.warn('Session execution stopped because compiled query is empty', {
@@ -80,7 +80,7 @@ function executeSessionScript(
     }
     const [queryId, execution] = executeQuery(connectionId, {
         query: queryText,
-        scriptExecution: createScriptExecution(scriptData, sessionScripts.connectorInfo.connectorType),
+        scriptExecution: createScriptExecution(scriptData, connectorInfo.connectorType),
         analyzeResults: true,
         replaceComputationId: scriptData.latestResultQueryId === undefined
             ? scriptData.latestQueryId : scriptData.latestResultQueryId,

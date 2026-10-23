@@ -26,15 +26,15 @@ export enum SessionValidationError {
     MissingSessionId = 'missing_session_id',
     /// The `sessionId` is present but is not a syntactically valid UUID.
     InvalidSessionId = 'invalid_session_id',
-    /// The session's main or attached database collection is malformed.
-    InvalidAttachedDatabases = 'invalid_attached_databases',
-    /// The attached database has no valid UUID `databaseId`.
-    InvalidDatabaseId = 'invalid_database_id',
-    /// The main database id is missing, malformed, or does not reference an attached database.
-    InvalidMainDatabaseId = 'invalid_main_database_id',
-    /// The attached database has no `params`.
-    MissingDatabaseParams = 'missing_database_params',
-    /// The database `params` do not match any known connector.
+    /// The connection list of the session is missing, empty or malformed.
+    InvalidConnections = 'invalid_connections',
+    /// A connection has no valid UUID `connectionId`, or the id is listed twice.
+    InvalidConnectionId = 'invalid_connection_id',
+    /// The default connection id does not reference a connection of the session.
+    InvalidDefaultConnectionId = 'invalid_default_connection_id',
+    /// A connection has no `params`.
+    MissingConnectionParams = 'missing_connection_params',
+    /// The connection `params` do not match any known connector.
     UnknownConnector = 'unknown_connector',
     /// The session is registered in the manifest but its files can't be read (e.g. a native session
     /// whose folder was moved or deleted on disk, or a corrupt/absent OPFS session). Unlike the
@@ -53,14 +53,14 @@ export function describeSessionValidationError(error: SessionValidationError): s
             return 'Missing session id';
         case SessionValidationError.InvalidSessionId:
             return 'Invalid session id';
-        case SessionValidationError.InvalidAttachedDatabases:
-            return 'Session must have one main database and a valid attached database list';
-        case SessionValidationError.InvalidDatabaseId:
-            return 'Invalid database id';
-        case SessionValidationError.InvalidMainDatabaseId:
-            return 'Main database must reference an attached database';
-        case SessionValidationError.MissingDatabaseParams:
-            return 'Missing database parameters';
+        case SessionValidationError.InvalidConnections:
+            return 'Session must list at least one connection';
+        case SessionValidationError.InvalidConnectionId:
+            return 'Invalid connection id';
+        case SessionValidationError.InvalidDefaultConnectionId:
+            return 'Default connection must reference a connection of the session';
+        case SessionValidationError.MissingConnectionParams:
+            return 'Missing connection parameters';
         case SessionValidationError.UnknownConnector:
             return 'Unknown connector';
         case SessionValidationError.SessionUnreadable:
@@ -76,7 +76,7 @@ export type SessionValidationResult =
 /// Validate a session's metadata before loading it.
 ///
 /// This is a fail-fast gate run up front in the loader: it rejects sessions whose metadata is
-/// structurally unusable (unsupported format, no id, or an invalid attached database).
+/// structurally unusable (unsupported format, no id, or an invalid connection).
 /// It deliberately does NOT attempt the full connection decode — `getConnectorInfoForParams` is a
 /// non-throwing connector probe, so a session that passes here can still be decoded by
 /// `decodeConnectionFromProto` during restore.
@@ -90,30 +90,35 @@ export function validateSessionData(data: SessionData): SessionValidationResult 
     if (!isValidUuid(data.sessionId)) {
         return { ok: false, error: SessionValidationError.InvalidSessionId };
     }
-    if (!data.mainDatabase || !Array.isArray((data as { attachedDatabases?: unknown }).attachedDatabases)) {
-        return { ok: false, error: SessionValidationError.InvalidAttachedDatabases };
+    const connections: unknown = (data as { connections?: unknown }).connections;
+    if (!Array.isArray(connections) || connections.length === 0) {
+        return { ok: false, error: SessionValidationError.InvalidConnections };
     }
-    const databaseIds = new Set<string>();
-    for (const database of [data.mainDatabase, ...data.attachedDatabases]) {
-        if (!database || !isValidUuid(database.databaseId) || databaseIds.has(database.databaseId)) {
-            return { ok: false, error: SessionValidationError.InvalidDatabaseId };
+    const connectionIds = new Set<string>();
+    for (const connection of connections as SessionData['connections']) {
+        if (!connection || typeof connection.connectionId !== 'string' || !isValidUuid(connection.connectionId)
+            || connectionIds.has(connection.connectionId)) {
+            return { ok: false, error: SessionValidationError.InvalidConnectionId };
         }
-        databaseIds.add(database.databaseId);
-        if (!database.params) {
-            return { ok: false, error: SessionValidationError.MissingDatabaseParams };
+        connectionIds.add(connection.connectionId);
+        if (!connection.params) {
+            return { ok: false, error: SessionValidationError.MissingConnectionParams };
         }
-        if (getConnectorInfoForParams(database.params as any) == null) {
+        if (getConnectorInfoForParams(connection.params as any) == null) {
             return { ok: false, error: SessionValidationError.UnknownConnector };
         }
-        if (database.paramsDraft != null && getConnectorInfoForParams(database.paramsDraft as any)?.connectorType
-            !== getConnectorInfoForParams(database.params as any)?.connectorType) {
+        if (connection.paramsDraft != null && getConnectorInfoForParams(connection.paramsDraft as any)?.connectorType
+            !== getConnectorInfoForParams(connection.params as any)?.connectorType) {
             return { ok: false, error: SessionValidationError.UnknownConnector };
         }
+    }
+    if (!connectionIds.has(data.defaultConnectionId)) {
+        return { ok: false, error: SessionValidationError.InvalidDefaultConnectionId };
     }
     return { ok: true };
 }
 
-export function isLocalHyperWasmParams(params: SessionData['attachedDatabases'][number]['params']): boolean {
+export function isLocalHyperWasmParams(params: SessionData['connections'][number]['params']): boolean {
     return 'hyper' in params && (params.hyper?.protocol ?? 'WASM') === 'WASM';
 }
 
@@ -147,7 +152,9 @@ export function describeInvalidSession(
     // must be handed to evict the session — not `data.sessionId`, which is exactly the field that
     // may be missing or malformed on an invalid session.
     const sessionId = entry.path;
-    const params = data?.mainDatabase?.params;
+    const params = Array.isArray(data?.connections)
+        ? data.connections.find(connection => connection?.connectionId === data.defaultConnectionId)?.params
+        : undefined;
     const connectorInfo = params
         ? getConnectorInfoForParams(params as any)
         : null;

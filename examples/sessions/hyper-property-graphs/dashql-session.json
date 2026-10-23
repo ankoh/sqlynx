@@ -1,25 +1,58 @@
 {
-  "formatVersion": 4,
+  "formatVersion": 6,
   "sessionId": "f52ad067-c479-4c03-a07a-8edb0cb79711",
   "name": "Hyper Property Graphs",
-  "mainDatabase": {
-    "databaseId": "819bc22c-e793-414f-b002-a613a4dcd991",
-    "params": {
-      "hyper": {
-        "protocol": "WASM",
-        "endpoint": "",
-        "tls": {
-          "clientKeyPath": "",
-          "clientCertPath": "",
-          "caCertsPath": ""
-        },
-        "attachedDatabases": [],
-        "metadata": {},
-        "queryParameters": {}
+  "defaultConnectionId": "819bc22c-e793-414f-b002-a613a4dcd991",
+  "connections": [
+    {
+      "connectionId": "819bc22c-e793-414f-b002-a613a4dcd991",
+      "params": {
+        "hyper": {
+          "protocol": "WASM",
+          "endpoint": "",
+          "tls": {
+            "clientKeyPath": "",
+            "clientCertPath": "",
+            "caCertsPath": ""
+          },
+          "attachedDatabases": [],
+          "metadata": {},
+          "queryParameters": {}
+        }
       }
     }
-  },
-  "attachedDatabases": [],
+  ],
+  "scripts": [
+    {
+      "name": "1_hyper_version.sql",
+      "connectionId": "819bc22c-e793-414f-b002-a613a4dcd991"
+    },
+    {
+      "name": "2_test_tables.sql",
+      "connectionId": "819bc22c-e793-414f-b002-a613a4dcd991"
+    },
+    {
+      "name": "3_customer_orders.sql",
+      "connectionId": "819bc22c-e793-414f-b002-a613a4dcd991"
+    },
+    {
+      "name": "4_order_fulfillment.sql",
+      "connectionId": "819bc22c-e793-414f-b002-a613a4dcd991"
+    },
+    {
+      "name": "5_commerce_network.sql",
+      "connectionId": "819bc22c-e793-414f-b002-a613a4dcd991"
+    },
+    {
+      "name": "6_bounded_traversal.sql",
+      "connectionId": "819bc22c-e793-414f-b002-a613a4dcd991"
+    },
+    {
+      "name": "7_path_steps.sql",
+      "connectionId": "819bc22c-e793-414f-b002-a613a4dcd991"
+    }
+  ],
+  "attachments": [],
   "metadata": {
     "createdAt": "2026-08-31T08:19:54.844Z",
     "originalFileName": "hyper"

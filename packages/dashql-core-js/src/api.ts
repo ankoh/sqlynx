@@ -152,6 +152,18 @@ export class DashQL {
         return new DashQLScriptSession(new Ptr(SCRIPT_SESSION_TYPE, this, native));
     }
 
+    /// Create a script session that takes over the catalog entry id of a script session of another
+    /// catalog, e.g. when a script moves to another connection. The entry id must not be in use in
+    /// the catalog.
+    public createScriptSessionWithEntryId(
+        catalog: DashQLCatalog,
+        entryId: number,
+        offsetUnit = buffers.editor.EditorOffsetUnit.UTF16_CODE_UNITS,
+    ): DashQLScriptSession {
+        const native = this.bindings.ScriptSession.withEntryId(catalog.ptr.assertNotNull(), offsetUnit, entryId);
+        return new DashQLScriptSession(new Ptr(SCRIPT_SESSION_TYPE, this, native));
+    }
+
     /// Plan current analysis in script order; callers prepare and publish script sessions explicitly.
     public plan(sessions: readonly DashQLScriptSession[]): FlatBufferPtr<buffers.execution.ExecutionGraph> {
         if (!Array.isArray(sessions)) {

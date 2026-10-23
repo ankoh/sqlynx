@@ -1,0 +1,28 @@
+/* Every tag has the same size and shape, only the colors differ */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 0 6px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    font-family: var(--font_family);
+    font-size: var(--font_size_badge);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 14px;
+    white-space: nowrap;
+}
+
+.muted {
+    background-color: var(--base_color_neutral_1);
+    border-color: var(--base_color_neutral_2);
+    color: var(--base_color_neutral_6);
+}
+
+/* Surfaces with other colors, e.g. the dark navbar, override the variables */
+.outline {
+    background-color: transparent;
+    border-color: var(--tag_outline_border_color, var(--base_color_neutral_2));
+    color: var(--tag_outline_color, var(--base_color_neutral_6));
+}

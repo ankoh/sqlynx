@@ -38,7 +38,7 @@ import {
     DELETE_CONNECTION_ENTRY,
     type StorageWriter,
 } from '../storage/storage_writer.js';
-import { STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, type AttachedDatabase, type ConnectionEntry } from '../storage/storage_backend.js';
+import { STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, type ConnectionEntry, type SessionConnection } from '../storage/storage_backend.js';
 import { connectionCatalogIsDurable, connectionParamsEqual, type ConnectionParams } from './connection_params.js';
 
 /// Drafts are written to the app manifest only, edits arrive with every keystroke
@@ -61,8 +61,15 @@ export interface ConnectionRegistry {
     connectionsBySignature: ConnectionSignatureMap;
 }
 
+/// The connections that a session uses.
+///
+/// The scripts of a session own their connections, this is a projection of them for the connection
+/// layer: the restoration builds it from the restored scripts and `syncSessionConnections` follows
+/// every change of the scripts. Nothing else writes the attached connections.
 export interface SessionAttachedDatabases {
+    /// The default connection of the session
     mainDatabaseId: string;
+    /// The other connections that scripts of the session use
     attachedDatabaseIds: string[];
 }
 
@@ -127,22 +134,29 @@ export function registerConnection(registry: ConnectionRegistry, database: Conne
     registry.connectionsBySignature.set(database.connectionSignature.signatureString, database.connectionId);
 }
 
-/// Let a session reference a connection (mutates the registry)
-export function attachDatabaseToSession(registry: ConnectionRegistry, sessionId: string, connectionId: string, role: AttachedDatabaseRole): void {
+/// Let a session use a connection as its default connection (mutates the registry)
+export function attachDatabaseToSession(registry: ConnectionRegistry, sessionId: string, connectionId: string): void {
     const current = registry.attachedDatabasesBySession.get(sessionId);
-    if (role === 'main') {
-        registry.attachedDatabasesBySession.set(sessionId, {
-            mainDatabaseId: connectionId,
-            attachedDatabaseIds: (current?.attachedDatabaseIds ?? []).filter(id => id !== connectionId),
-        });
-    } else {
-        if (current == null) throw new Error(`cannot attach a database before the main database for session ${sessionId}`);
-        if (current.mainDatabaseId === connectionId || current.attachedDatabaseIds.includes(connectionId)) return;
-        registry.attachedDatabasesBySession.set(sessionId, {
-            ...current,
-            attachedDatabaseIds: [...current.attachedDatabaseIds, connectionId],
-        });
+    registry.attachedDatabasesBySession.set(sessionId, {
+        mainDatabaseId: connectionId,
+        attachedDatabaseIds: (current?.attachedDatabaseIds ?? []).filter(id => id !== connectionId),
+    });
+}
+
+/// Follow the connections that the scripts of the sessions use (connection ids by session id).
+/// Sessions that the registry doesn't know are skipped, they reference their default connection
+/// first. Returns the registry itself when nothing changed.
+export function syncSessionConnections(registry: ConnectionRegistry, connectionIdsBySession: ReadonlyMap<string, readonly string[]>): ConnectionRegistry {
+    let changed = false;
+    for (const [sessionId, mapping] of registry.attachedDatabasesBySession) {
+        const connectionIds = connectionIdsBySession.get(sessionId);
+        if (connectionIds == null) continue;
+        const attached = connectionIds.filter(id => id !== mapping.mainDatabaseId && registry.connections.has(id));
+        if (attached.length === mapping.attachedDatabaseIds.length && attached.every((id, i) => id === mapping.attachedDatabaseIds[i])) continue;
+        registry.attachedDatabasesBySession.set(sessionId, { ...mapping, attachedDatabaseIds: attached });
+        changed = true;
     }
+    return changed ? { ...registry } : registry;
 }
 
 /// Drop the references of a session, the connections stay registered (mutates the registry)
@@ -168,8 +182,8 @@ export function connectionEntryFromState(database: ConnectionState): ConnectionE
 }
 
 /// Build the copy of a connection that a session file stores
-export function sessionDatabaseFromState(database: ConnectionState): AttachedDatabase {
-    return { databaseId: database.connectionId, params: database.params };
+export function sessionConnectionFromState(database: ConnectionState): SessionConnection {
+    return { connectionId: database.connectionId, params: database.params };
 }
 
 /// Did the saved params change?
@@ -202,7 +216,7 @@ export function scheduleConnectionParamsWrites(registry: ConnectionRegistry, dat
 
 export type SetConnectionRegistryAction = React.SetStateAction<ConnectionRegistry>;
 export type AttachedDatabaseRole = 'main' | 'attached';
-export type AttachedDatabaseAllocator = (sessionId: string, state: ConnectionStateWithoutId, role?: AttachedDatabaseRole) => ConnectionState;
+export type AttachedDatabaseAllocator = (sessionId: string, state: ConnectionStateWithoutId) => ConnectionState;
 export type ConnectionCloner = (state: ConnectionState) => ConnectionState;
 export type ConnectionDispatch = (action: ConnectionAction) => void;
 export type DynamicConnectionDispatch = (connectionId: string | null, action: ConnectionAction) => void;
@@ -284,9 +298,9 @@ export function useConnectionRegistrySetter(): Dispatch<SetConnectionRegistryAct
 export function useAttachedDatabaseStateAllocator(): AttachedDatabaseAllocator {
     const allocateConnection = useConnectionAllocator();
     const attachConnection = useAttachConnection();
-    return React.useCallback((sessionId: string, state: ConnectionStateWithoutId, role: AttachedDatabaseRole = 'main') => {
+    return React.useCallback((sessionId: string, state: ConnectionStateWithoutId) => {
         const database = allocateConnection(state);
-        attachConnection(sessionId, database.connectionId, role);
+        attachConnection(sessionId, database.connectionId);
         // The caller writes newly committed sessions. Subsequent edits and successful setups
         // persist through the dispatch boundary, including drafts before the first connection.
         return database;
@@ -317,14 +331,14 @@ export function useConnectionAllocator(): ConnectionAllocator {
     }, [setReg, storageWriter]);
 }
 
-export type ConnectionAttacher = (sessionId: string, connectionId: string, role?: AttachedDatabaseRole) => void;
+export type ConnectionAttacher = (sessionId: string, connectionId: string) => void;
 
-/// Let a session reference an existing connection
+/// Let a session use an existing connection as its default connection
 export function useAttachConnection(): ConnectionAttacher {
     const setReg = React.useContext(CONNECTION_REGISTRY_SETTER_CTX)!;
-    return React.useCallback((sessionId: string, connectionId: string, role: AttachedDatabaseRole = 'main') => {
+    return React.useCallback((sessionId: string, connectionId: string) => {
         setReg((reg) => {
-            attachDatabaseToSession(reg, sessionId, connectionId, role);
+            attachDatabaseToSession(reg, sessionId, connectionId);
             return { ...reg };
         });
     }, [setReg]);

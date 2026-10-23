@@ -6,13 +6,15 @@ import type { ConnectionState } from '../../connections/connection_state.js';
 import { registerConnection, type ConnectionRegistry, type SessionAttachedDatabases } from '../../connections/connection_registry.js';
 import type { SessionScripts, ScriptData } from '../scripts/session_scripts.js';
 import { addSessionScriptsForConnection, type SessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
-import { createEmptyScriptData, destroySessionScripts, replaceScriptSessionText } from '../scripts/session_scripts.js';
+import { createEmptyScriptData, destroySessionScripts, replaceScriptSessionText, scriptConnectionOf, sessionConnectionIds } from '../scripts/session_scripts.js';
 import { decodeConnectionFromProto, restoreConnectionState } from '../../connections/connection_import.js';
-import { CONNECTOR_TYPES, ConnectorType, type ConnectorInfo } from '../../connections/connector_info.js';
-import type { StorageBackend, SessionEntry, SessionData, SessionRegistryBackend, ConnectionEntry } from '../../storage/storage_backend.js';
-import { StorageBackendType, STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, isSessionRegistryBackend } from '../../storage/storage_backend.js';
+import { CONNECTOR_TYPES, ConnectorType } from '../../connections/connector_info.js';
+import type { StorageBackend, SessionEntry, SessionData, SessionRegistryBackend, ConnectionEntry, SessionConnection, SessionScript } from '../../storage/storage_backend.js';
+import { StorageBackendType, STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_RELATIONS, defaultSessionConnection, isSessionRegistryBackend } from '../../storage/storage_backend.js';
 import { connectionCatalogIsDurable, connectionParamsEqual } from '../../connections/connection_params.js';
 import { patchSessionConnection, upsertConnectionEntry } from '../../storage/storage_writer.js';
+import { withSessionScripts } from '../../storage/session_files.js';
+import { resolveSessionScripts, sessionScriptsResolutionChanged, type SessionConnectionResolver } from './session_script_connections.js';
 import { validateSessionData, describeInvalidSession, isValidUuid, SessionValidationError, type InvalidSession } from '../../storage/session_validation.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../connections/catalog_update_state.js';
 import { beginCatalogBatch, invalidateCatalogBatch, publishCatalogBatch, type BatchProcessor, type CatalogBatchEntry } from '../../connections/catalog_batch.js';
@@ -56,14 +58,13 @@ async function restoreSessionScripts(
     core: DashQL,
     backend: StorageBackend,
     sessionId: string,
-    databaseId: string,
     name: string | null,
     settings: SessionSettings,
-    connectorInfo: ConnectorInfo,
-    connectionCatalog: any,
-    sessionMetadata: any,
+    sessionData: SessionData,
+    mainConnection: ConnectionState,
+    resolveConnection: SessionConnectionResolver,
     logger: Logger
-): Promise<SessionScripts> {
+): Promise<{ sessionScripts: SessionScripts; session: SessionData }> {
     const scripts: Record<number, ScriptData> = {};
 
     try {
@@ -74,42 +75,42 @@ async function restoreSessionScripts(
             scriptCount: storedScripts.length.toString()
         }, LOG_CTX);
 
+        // The session file orders the scripts and names their connections
+        const sqlByName = new Map(storedScripts.map(script => [script.name, script.sql]));
+        const resolved = resolveSessionScripts(sessionData, storedScripts.map(script => script.name), mainConnection, resolveConnection,
+            connectionId => logger.warn("Script references an unknown connection, using the default connection", { sessionId, connectionId }, LOG_CTX));
         const scriptRefs: { [fileName: string]: { scriptId: number; fileName: string } } = {};
-        for (const scriptFile of storedScripts) {
-                const [scriptKey, scriptData] = createEmptyScriptData(
-                    core,
-                    connectionCatalog,
-                    scriptFile.name,
-                );
-                scripts[scriptKey] = scriptData;
+        for (const entry of resolved.scripts) {
+            const [scriptKey, scriptData] = createEmptyScriptData(core, scriptConnectionOf(entry.connection), entry.name);
+            scripts[scriptKey] = scriptData;
 
-                // Set SQL content. Ordinary session scripts remain outdated until first use.
-                replaceScriptSessionText(scriptData.scriptSession, scriptFile.sql);
+            // Set SQL content. Ordinary session scripts remain outdated until first use.
+            replaceScriptSessionText(scriptData.scriptSession, sqlByName.get(entry.name) ?? '');
 
-                scriptRefs[scriptFile.name] = {
-                    scriptId: scriptKey,
-                    fileName: scriptFile.name,
-                };
+            scriptRefs[entry.name] = {
+                scriptId: scriptKey,
+                fileName: entry.name,
+            };
         }
-
-        const initialFile = Object.keys(scriptRefs).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))[0] ?? '';
+        const scriptOrder = resolved.scripts.map(entry => entry.name);
 
         const sessionScripts: SessionScripts = {
             instance: core,
             sessionId,
             name,
             settings,
-            connectionId: databaseId,
-            sessionMetadata,
-            connectorInfo,
-            connectionCatalog,
+            connectionId: mainConnection.connectionId,
+            sessionMetadata: sessionData.metadata,
+            connectorInfo: mainConnection.connectorInfo,
+            connectionCatalog: mainConnection.catalog,
             scripts,
             scriptRefs,
-            scriptFocus: { fileName: initialFile },
+            scriptOrder,
+            scriptFocus: { fileName: scriptOrder[0] ?? '' },
             semanticUserFocus: null,
         };
 
-        return sessionScripts;
+        return { sessionScripts, session: resolved.session };
     } catch (error) {
         for (const scriptData of Object.values(scripts)) {
             scriptData.completion?.buffer.destroy();
@@ -163,6 +164,8 @@ interface RestorePendingWrites {
     connectionFiles: Array<{ connectionId: string; fileName: string; text: string }>;
     /// Sessions whose copies of connection params are stale
     sessionCopies: Array<{ sessionId: string; connectionId: string }>;
+    /// Sessions whose script lists or connections disagree with the restored scripts
+    sessionScriptLists: Array<{ sessionId: string; defaultConnectionId: string; scripts: SessionScript[]; connections: SessionConnection[] }>;
 }
 
 /// The catalog texts of a connection
@@ -189,7 +192,7 @@ function createRestoreContext(core: DashQL, backend: StorageBackend, logger: Log
         aliasesOf: new Map(),
         catalogsRestored: new Set(),
         newConnections: new Map(),
-        pendingWrites: { connectionEntries: [], connectionFiles: [], sessionCopies: [] },
+        pendingWrites: { connectionEntries: [], connectionFiles: [], sessionCopies: [], sessionScriptLists: [] },
     };
 }
 
@@ -287,21 +290,27 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
     }
 }
 
+/// Create the state of a connection that the app doesn't know from the copy that a session holds.
+/// The connection is neither registered nor written, see `destroyUnregisteredConnection`.
+export function connectionStateFromCopy(core: DashQL, connectionId: string, copy: SessionConnection, signatures: Map<string, string | null>): ConnectionState {
+    const [connectorInfo, details] = decodeConnectionFromProto(copy.params as any, connectionId);
+    return restoreConnectionState(core, connectionId, connectorInfo, details, signatures, copy.paramsDraft);
+}
+
 /// Resolve a session's reference to a connection.
 /// The app manifest wins over the copy in the session, an unknown connection is registered from the copy.
-function resolveSessionDatabase(ctx: RestoreContext, sessionId: string, database: SessionData['mainDatabase']): ConnectionState {
-    const connectionId = ctx.aliases.get(database.databaseId) ?? database.databaseId;
+function resolveSessionConnection(ctx: RestoreContext, sessionId: string, database: SessionConnection): ConnectionState {
+    const connectionId = ctx.aliases.get(database.connectionId) ?? database.connectionId;
     const known = ctx.connectionStates.get(connectionId);
     if (known != null) {
-        if (connectionId !== database.databaseId || database.paramsDraft != null || !connectionParamsEqual(database.params, known.params)) {
+        if (connectionId !== database.connectionId || database.paramsDraft != null || !connectionParamsEqual(database.params, known.params)) {
             ctx.pendingWrites.sessionCopies.push({ sessionId, connectionId });
         }
         return known;
     }
-    const [connectorInfo, details] = decodeConnectionFromProto(database.params as any, sessionId);
-    const state = restoreConnectionState(ctx.core, connectionId, connectorInfo, details, ctx.connectionSignatures, database.paramsDraft);
+    const state = connectionStateFromCopy(ctx.core, connectionId, database, ctx.connectionSignatures);
     ctx.connectionStates.set(state.connectionId, state);
-    ctx.connectionStatesByType[connectorInfo.connectorType].push(state.connectionId);
+    ctx.connectionStatesByType[state.connectorInfo.connectorType].push(state.connectionId);
     ctx.newConnections.set(state.connectionId, state);
     ctx.pendingWrites.connectionEntries.push({
         id: state.connectionId,
@@ -355,15 +364,17 @@ async function restoreSessionEntry(
 
     const sessionData = await loadValidSession(backend, logger, sessionEntry);
 
-    // Validation above guarantees the params map to a known connector
-    const connectionState = resolveSessionDatabase(ctx, sessionId, sessionData.mainDatabase);
-    const attachedConnectionStates = sessionData.attachedDatabases.map(database => resolveSessionDatabase(ctx, sessionId, database));
+    // Validation above guarantees the params map to a known connector and the default connection to exist.
+    // The other connections of the session are the connections of its scripts, they are resolved with the scripts.
+    const connectionState = resolveSessionConnection(ctx, sessionId, defaultSessionConnection(sessionData));
     const connectorInfo = connectionState.connectorInfo;
     attachedDatabasesBySession.set(sessionId, {
         mainDatabaseId: connectionState.connectionId,
-        attachedDatabaseIds: [...new Set(attachedConnectionStates.map(database => database.connectionId))]
-            .filter(id => id !== connectionState.connectionId),
+        attachedDatabaseIds: [],
     });
+    const resolveScriptConnection: SessionConnectionResolver = (connectionId, copy) => copy != null
+        ? resolveSessionConnection(ctx, sessionId, copy)
+        : ctx.connectionStates.get(ctx.aliases.get(connectionId) ?? connectionId) ?? null;
 
     const connectionDuration = performance.now() - connectionStartTime;
     logger.info("Connection restored", {
@@ -440,18 +451,26 @@ async function restoreSessionEntry(
 
     let restoredSessionScripts: SessionScripts | null = null;
     try {
-        restoredSessionScripts = await restoreSessionScripts(
+        const restored = await restoreSessionScripts(
             ctx.core,
             backend,
             sessionId,
-            connectionState.connectionId,
             sessionData.name?.trim() || null,
             readSessionSettings(sessionData.settings, connectorInfo),
-            connectorInfo,
-            connectionState.catalog,
-            sessionData.metadata,
+            sessionData,
+            connectionState,
+            resolveScriptConnection,
             logger
         );
+        restoredSessionScripts = restored.sessionScripts;
+        attachedDatabasesBySession.set(sessionId, {
+            mainDatabaseId: connectionState.connectionId,
+            attachedDatabaseIds: sessionConnectionIds(restoredSessionScripts).filter(id => id !== connectionState.connectionId),
+        });
+        if (sessionScriptsResolutionChanged(sessionData, restored.session)) {
+            const { defaultConnectionId, scripts, connections } = restored.session;
+            ctx.pendingWrites.sessionScriptLists.push({ sessionId, defaultConnectionId, scripts, connections });
+        }
 
         const sessionScriptsDuration = performance.now() - sessionScriptsStartTime;
         logger.info("Session scripts restored", {
@@ -476,7 +495,9 @@ async function restoreSessionEntry(
 
     if (restoredSessionScripts != null) {
         sessionScripts.set(sessionId, restoredSessionScripts);
-        sessionScriptsByConnection.set(connectionState.connectionId, [...(sessionScriptsByConnection.get(connectionState.connectionId) ?? []), sessionId]);
+        for (const id of sessionConnectionIds(restoredSessionScripts)) {
+            sessionScriptsByConnection.set(id, [...(sessionScriptsByConnection.get(id) ?? []), sessionId]);
+        }
         sessionScriptsByConnectionType[connectorInfo.connectorType].push(sessionId);
     }
 
@@ -529,8 +550,33 @@ async function loadValidSession(backend: StorageBackend, logger: Logger, session
 /// Perform the writes that bring the stored state in line with the restored one.
 /// Failures are logged, the next load attempts them again.
 async function flushRestoreWrites(ctx: RestoreContext): Promise<void> {
-    const { registry, logger, pendingWrites } = ctx;
-    if (registry == null) return;
+    const { registry, pendingWrites } = ctx;
+    if (registry != null) {
+        await flushRestoredConnectionWrites(ctx, registry);
+    }
+    for (const { sessionId, defaultConnectionId, scripts, connections } of pendingWrites.sessionScriptLists) {
+        await patchRestoredSession(ctx, sessionId, session => {
+            const next = withSessionScripts({ ...session, defaultConnectionId }, scripts, connections);
+            return sessionScriptsResolutionChanged(session, next) ? next : null;
+        });
+    }
+}
+
+/// Patch the file of a restored session, a failure is logged and the next load attempts it again
+async function patchRestoredSession(ctx: RestoreContext, sessionId: string, patch: (session: SessionData) => SessionData | null): Promise<void> {
+    try {
+        const next = patch(await ctx.backend.loadSession(sessionId));
+        if (next != null) {
+            await ctx.backend.saveSessionManifest(sessionId, next);
+        }
+    } catch (error) {
+        ctx.logger.warn("Failed to update a restored session", { sessionId, error: stringifyError(error) }, LOG_CTX);
+    }
+}
+
+/// Persist the connections that the restoration registered or consolidated
+async function flushRestoredConnectionWrites(ctx: RestoreContext, registry: SessionRegistryBackend): Promise<void> {
+    const { logger, pendingWrites } = ctx;
     try {
         if (pendingWrites.connectionEntries.length > 0) {
             await registry.updateConnections(connections => {
@@ -593,7 +639,9 @@ export function mergeRestoredSessionIntoScripts(
     restored: RestoredSession,
 ): SessionScriptsRegistry {
     reg.sessionScriptsMap.set(restored.sessionId, restored.sessionScripts);
-    addSessionScriptsForConnection(reg, restored.sessionScripts.connectionId, restored.sessionId);
+    for (const connectionId of sessionConnectionIds(restored.sessionScripts)) {
+        addSessionScriptsForConnection(reg, connectionId, restored.sessionId);
+    }
     reg.sessionScriptsByConnectionType[restored.sessionScripts.connectorInfo.connectorType].push(restored.sessionId);
     return { ...reg };
 }
@@ -612,10 +660,11 @@ function restoreCatalogChanges(connection: ConnectionState, changesSql: string, 
 
 export function destroyRestoredSession(restored: RestoredSession): void {
     destroySessionScripts(restored.sessionScripts);
-    for (const database of restored.databases) destroyRestoredConnection(database);
+    for (const database of restored.databases) destroyUnregisteredConnection(database);
 }
 
-function destroyRestoredConnection(connection: ConnectionState): void {
+/// Destroy a connection that was created but never registered
+export function destroyUnregisteredConnection(connection: ConnectionState): void {
     invalidateCatalogBatch(connection.catalog);
     connection.connectionSignature.signatures.delete(
         connection.connectionSignature.signatureString,
@@ -682,14 +731,14 @@ export async function restoreSingleSession(
             noopConsumer,
         );
     } catch (error) {
-        for (const database of ctx.newConnections.values()) destroyRestoredConnection(database);
+        for (const database of ctx.newConnections.values()) destroyUnregisteredConnection(database);
         throw error;
     }
 
     const mapping = attachedDatabasesBySession.get(sessionId);
     const scripts = sessionScripts.get(sessionId) ?? null;
     if (mapping == null || !scripts) {
-        for (const database of ctx.newConnections.values()) destroyRestoredConnection(database);
+        for (const database of ctx.newConnections.values()) destroyUnregisteredConnection(database);
         throw new Error(`imported session ${sessionId} did not restore its scripts`);
     }
     await flushRestoreWrites(ctx);
@@ -784,17 +833,6 @@ export async function restoreAppState(
                     restoreSessionScriptsProgress,
                     progressConsumer,
                 );
-
-                try {
-                    await backend.ensureSessionIndex?.(sessionEntry.path);
-                } catch (error) {
-                    // The index is a derived publication sidecar. A failure to backfill it must not
-                    // prevent an otherwise valid session from loading.
-                    logger.warn("Failed to ensure session index", {
-                        sessionId: sessionEntry.path,
-                        error: stringifyError(error),
-                    }, LOG_CTX);
-                }
 
                 const sessionDuration = performance.now() - sessionStartTime;
                 logger.info("Session restored", {

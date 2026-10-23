@@ -72,7 +72,9 @@ function fixture(sessionId: string, deferStream = false) {
     const session = {
         sessionId, connectionId: `${sessionId}-database`, instance: { plan }, connectionCatalog: {},
         scriptRefs: { '1_commands.sql': { scriptId: 1, fileName: '1_commands.sql' } },
-        scripts: { 1: { scriptKey: 1, fileName: '1_commands.sql', scriptSession, latestQueryId: null } },
+        scriptOrder: ['1_commands.sql'],
+        scripts: { 1: { scriptKey: 1, fileName: '1_commands.sql', scriptSession, latestQueryId: null,
+            connection: { connectionId: `${sessionId}-database` } } },
     } as unknown as SessionScripts;
     const database = {
         connectionId: session.connectionId, active: false,

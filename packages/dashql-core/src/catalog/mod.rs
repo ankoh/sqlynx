@@ -25,6 +25,7 @@ use dashql_buffers::status::StatusCode;
 use std::cell::RefCell;
 use crate::hash::HashMap;
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
 /// A published catalog entry
@@ -99,8 +100,42 @@ struct IdReservations {
     next_database_id: CatalogDatabaseId,
     /// The next schema id to reserve
     next_schema_id: CatalogSchemaId,
+}
+
+/// The source of catalog entry ids.
+///
+/// Catalogs that share a source never hand out the same entry id, so entry ids identify scripts and
+/// descriptor pools across all of these catalogs. A catalog created with [`Catalog::new`] has a
+/// source of its own.
+#[derive(Clone, Debug)]
+pub struct EntryIdSource {
     /// The next entry id to allocate
-    next_entry_id: CatalogEntryId,
+    next: Arc<AtomicU32>,
+}
+
+impl Default for EntryIdSource {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl EntryIdSource {
+    /// A source that starts at the initial entry id
+    pub fn new() -> Self {
+        Self { next: Arc::new(AtomicU32::new(INITIAL_ENTRY_ID)) }
+    }
+
+    /// Allocate an entry id
+    pub fn allocate(&self) -> CatalogEntryId {
+        let id = self.next.fetch_add(1, Ordering::Relaxed);
+        assert!(id != PROTO_NULL_U32, "catalog entry ID namespace exhausted");
+        id
+    }
+
+    /// Was the entry id allocated by this source?
+    pub fn allocated(&self, id: CatalogEntryId) -> bool {
+        id >= INITIAL_ENTRY_ID && id < self.next.load(Ordering::Relaxed)
+    }
 }
 
 /// The source of unique catalog ids
@@ -131,6 +166,8 @@ pub struct Catalog {
     schemas: BTreeMap<(Arc<str>, Arc<str>), Arc<SchemaDeclaration>>,
     /// The canonical ids
     ids: RefCell<IdReservations>,
+    /// The source of the entry ids
+    entry_ids: EntryIdSource,
 }
 
 impl Default for Catalog {
@@ -141,6 +178,11 @@ impl Default for Catalog {
 
 impl Catalog {
     pub fn new() -> Self {
+        Self::with_entry_ids(EntryIdSource::new())
+    }
+
+    /// A catalog that allocates its entry ids from a shared source
+    pub fn with_entry_ids(entry_ids: EntryIdSource) -> Self {
         Self {
             id: NEXT_CATALOG_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             version: 1,
@@ -157,8 +199,8 @@ impl Catalog {
                 schema_ids_by_name: HashMap::default(),
                 next_database_id: INITIAL_DATABASE_ID,
                 next_schema_id: INITIAL_SCHEMA_ID,
-                next_entry_id: INITIAL_ENTRY_ID,
             }),
+            entry_ids,
         }
     }
 
@@ -204,11 +246,12 @@ impl Catalog {
 
     /// Allocate an entry id
     pub fn allocate_entry_id(&self) -> CatalogEntryId {
-        let mut ids = self.ids.borrow_mut();
-        let id = ids.next_entry_id;
-        assert!(id != PROTO_NULL_U32, "catalog entry ID namespace exhausted");
-        ids.next_entry_id += 1;
-        id
+        self.entry_ids.allocate()
+    }
+
+    /// Was the entry id allocated by the id source of the catalog?
+    pub fn entry_id_allocated(&self, id: CatalogEntryId) -> bool {
+        self.entry_ids.allocated(id)
     }
 
     /// Reserve the canonical id of a database
@@ -376,9 +419,7 @@ impl Catalog {
 
     /// Replace a descriptor pool atomically (`ReplaceDescriptor`)
     pub fn replace_descriptor(&mut self, id: CatalogEntryId, rank: Rank, descriptor: &[u8]) -> Result<()> {
-        let next_entry_id = self.ids.borrow().next_entry_id;
-        if id < INITIAL_ENTRY_ID
-            || id >= next_entry_id
+        if !self.entry_id_allocated(id)
             || (self.entries.contains_key(&id) && !self.descriptor_entries.contains_key(&id))
         {
             return Err(Error::invalid_argument("invalid or colliding receiver catalog entry ID"));

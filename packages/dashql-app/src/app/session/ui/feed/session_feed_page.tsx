@@ -25,10 +25,6 @@ import { useSessionExecution } from '../../scripts/session_execution_provider.js
 import { IndicatorStatus, StatusIndicator } from '../../../../ui/foundations/status_indicator.js';
 import { AnchoredOverlay } from '../../../../ui/foundations/anchored_overlay.js';
 import { AnchorAlignment, AnchorSide } from '../../../../ui/foundations/anchored_position.js';
-import { ConnectionSettingsOverlay } from '../../../connections/ui/connection_settings_overlay.js';
-import { renderSessionName } from '../session_name.js';
-import { CONNECTION_HEALTH_COLORS } from '../../../connections/ui/connection_status.js';
-import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
 import { ExecuteConnectionGuard, SessionConnectionAttentionContext, useSessionConnectionAttention } from '../session_connection_attention.js';
 import { useAppFlavor } from '../../../flavor/flavor_provider.js';
 
@@ -47,7 +43,6 @@ export interface SessionFeedPageDependencies {
     SessionURLShareOverlay: typeof SessionURLShareOverlay;
     SessionFileSaveOverlay: typeof SessionFileSaveOverlay;
     SessionStorageOverlay: typeof SessionStorageOverlay;
-    ConnectionSettingsOverlay: typeof ConnectionSettingsOverlay;
     useSessionViewMode: typeof useSessionViewMode;
     useAppConfig: typeof useAppConfig;
     SegmentedControl: typeof SegmentedControl;
@@ -66,7 +61,6 @@ const DEFAULT_DEPENDENCIES: SessionFeedPageDependencies = {
     SessionURLShareOverlay,
     SessionFileSaveOverlay,
     SessionStorageOverlay,
-    ConnectionSettingsOverlay,
     useSessionViewMode,
     useAppConfig,
     SegmentedControl,
@@ -77,6 +71,8 @@ interface Props {
     sessionScripts: SessionScripts;
     modifySessionScripts: ModifySessionScripts;
     connection: ConnectionState | null;
+    /// The connections that the scripts of the session run on
+    scriptConnections?: ReadonlyMap<string, ConnectionState>;
     active: boolean;
     dependencies?: SessionFeedPageDependencies;
 }
@@ -95,16 +91,13 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
     const [exportOpen, setExportOpen] = React.useState(false);
     const archiveExport = useAppFlavor().features.sessionArchiveExport;
     const [storageOpen, setStorageOpen] = React.useState(false);
-    const [connectionOpen, setConnectionOpen] = React.useState(false);
-    const connectionTriggerRef = React.useRef<HTMLButtonElement>(null);
     const connectionHealth = props.connection?.connectionHealth;
     const disconnected = connectionHealth !== ConnectionHealth.ONLINE;
     const connectionAttention = useSessionConnectionAttention(props.sessionScripts.sessionId, props.connection?.connectionId ?? null, connectionHealth);
-    const embedded = props.connection?.details?.type === HYPER_CONNECTOR && props.connection.details.value.proto.setupParams?.protocol === 'WASM';
-    const connectionIdentity = embedded ? 'Embedded' : props.connection?.connectorInfo?.names.displayShort ?? 'Database';
-    const connectionLabel = connectionHealth === ConnectionHealth.CONNECTING ? 'Connecting'
-        : connectionHealth === ConnectionHealth.FAILED ? 'Failed' : disconnected ? 'Disconnected' : connectionIdentity;
-    React.useEffect(() => setConnectionOpen(false), [props.sessionScripts.sessionId, props.connection?.connectionId]);
+    // A session run takes every connection that a script runs on
+    const scriptConnections = props.scriptConnections ?? new Map(props.connection == null ? [] : [[props.connection.connectionId, props.connection]]);
+    const scriptConnectionsIdle = scriptConnections.size > 0 && [...scriptConnections.values()].every(connection =>
+        connection.connectionHealth === ConnectionHealth.ONLINE && (connection.queriesActive?.size ?? 0) === 0);
     const execution = dependencies.useSessionExecution(props.sessionScripts.sessionId);
     const run = execution.state;
     const [executionDetailsOpen, setExecutionDetailsOpen] = React.useState(false);
@@ -159,8 +152,8 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                     <dependencies.Button ref={executeRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible}
                         leadingVisual={execution.busy ? SquareFillIcon : PaperAirplaneIcon}
                         aria-label={execution.busy ? 'Stop session execution' : 'Execute All'}
-                        disabled={execution.busy ? run?.phase === 'stopping' : props.connection?.connectionHealth !== ConnectionHealth.ONLINE
-                            || (props.connection?.queriesActive?.size ?? 0) > 0 || Object.keys(props.sessionScripts.scriptRefs).length === 0}
+                        disabled={execution.busy ? run?.phase === 'stopping' : !scriptConnectionsIdle
+                            || props.sessionScripts.scriptOrder.length === 0}
                         onClick={() => execution.busy ? execution.stop() : !disconnected && execution.start(props.modifySessionScripts)}>
                         <span className={styles.action_label}>{execution.busy ? run?.phase === 'stopping' ? 'Stopping' : 'Stop' : 'Execute All'}</span>
                     </dependencies.Button>
@@ -198,34 +191,8 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                     </div>
                 </div>
                 <div className={styles.header_actions}>
-                    <dependencies.Button ref={connectionTriggerRef} size={ButtonSize.Small}
-                        variant={ButtonVariant.Invisible}
-                        leadingVisual={<span aria-hidden="true" className={styles.connection_spinner}>
-                            {connectionHealth === ConnectionHealth.CONNECTING
-                                ? <StatusIndicator width="16px" height="16px" status={IndicatorStatus.Running} />
-                                : <svg width="16px" height="16px" viewBox="0 0 16 16">
-                                    <circle cx="8" cy="8" r="4" fill={CONNECTION_HEALTH_COLORS[connectionHealth ?? ConnectionHealth.NOT_STARTED]} />
-                                </svg>}
-                        </span>}
-                        className={`${styles.connection_action} ${connectionAttention.active && disconnected ? styles.connection_attention : ''}`}
-                        data-connection-attention={connectionAttention.active && disconnected ? 'true' : undefined}
-                        aria-label={`${connectionLabel}: main execution database${embedded ? ' (embedded)' : ''}`}
-                        aria-expanded={connectionOpen} aria-haspopup="dialog"
-                        title={disconnected ? 'Connect to execute queries' : `${connectionIdentity} connection settings`}
-                        onClick={() => {
-                            setShareOpen(false);
-                            setExportOpen(false);
-                            setStorageOpen(false);
-                            setConnectionOpen(value => !value);
-                        }}>
-                        <span className={styles.connection_label}>{connectionLabel}</span>
-                    </dependencies.Button>
-                    <dependencies.ConnectionSettingsOverlay connectionId={props.connection?.connectionId ?? null}
-                        isOpen={connectionOpen} onClose={() => setConnectionOpen(false)} anchorRef={connectionTriggerRef}
-                        side={AnchorSide.OutsideBottom} renderSessionName={renderSessionName} />
                     <dependencies.Button ref={shareTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={LinkIcon} aria-label="Share as URL" aria-expanded={shareOpen} onClick={() => {
                         setExportOpen(false);
-                        setConnectionOpen(false);
                         setStorageOpen(false);
                         setShareOpen(value => !value);
                     }}>
@@ -236,8 +203,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                         <>
                             <dependencies.Button ref={exportTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={FileZipIcon} aria-label="Export .dashql" aria-expanded={exportOpen} onClick={() => {
                                 setShareOpen(false);
-                                setConnectionOpen(false);
-                                setStorageOpen(false);
+                                        setStorageOpen(false);
                                 setExportOpen(value => !value);
                             }}>
                                 <span className={styles.action_label}>Export .dashql</span>
@@ -257,8 +223,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                         isOpen={storageOpen}
                         onOpen={() => {
                             setShareOpen(false);
-                            setConnectionOpen(false);
-                            setExportOpen(false);
+                                setExportOpen(false);
                             setStorageOpen(true);
                         }}
                         onClose={() => setStorageOpen(false)}
@@ -283,6 +248,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                             scrollShadowContainer={feedShadowContainer}
                             showDetails={openDetails}
                             conn={props.connection}
+                            scriptConnections={props.scriptConnections}
                         />
                     </div>
                     {!dashboardActive && showDetails
@@ -290,6 +256,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                                     sessionScripts={props.sessionScripts}
                                     modifySessionScripts={props.modifySessionScripts}
                                     connection={props.connection}
+                                    scriptConnections={props.scriptConnections}
                                     hideDetails={() => {
                                         setShowDetails(false);
                                         setDetailsScriptId(undefined);

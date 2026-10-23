@@ -7,7 +7,7 @@
   "properties": {
     "formatVersion": {
       "type": "integer",
-      "enum": [4],
+      "enum": [6],
       "description": "Session persistence format. The app migrates older versions at startup and on import, see packages/dashql-app/src/migration."
     },
     "sessionId": {
@@ -31,16 +31,30 @@
       "type": "string",
       "description": "User-supplied session name shown as the primary label in the session bar and selector. Absent (or empty) means the user never named the session, and the UI falls back to the display path."
     },
-    "mainDatabase": {
-      "$ref": "#/definitions/AttachedDatabase",
-      "description": "Database used for session analysis, catalog operations, and user query execution."
+    "defaultConnectionId": {
+      "type": "string",
+      "description": "The connectionId of the connection that new scripts use and whose catalog the catalog files of the session copy."
     },
-    "attachedDatabases": {
+    "connections": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/AttachedDatabase"
+        "$ref": "#/definitions/SessionConnection"
       },
-      "description": "Additional databases attached to the main database. The application's internal compute database is never persisted here."
+      "description": "The connections that the scripts of the session use, the default connection included. The application's internal compute database is never persisted here."
+    },
+    "scripts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SessionScript"
+      },
+      "description": "The scripts of the session in feed order. Each entry names a file in scripts/ and the connection the script runs on. Files that are not listed are appended in natural order on load, entries without a file are dropped."
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SessionAttachment"
+      },
+      "description": "The files in attachments/ in natural order. Lets a session served over HTTP be fetched without a directory listing."
     },
     "metadata": {
       "$ref": "#/definitions/SessionMetadata",
@@ -61,14 +75,14 @@
       "description": "When was last accessed"
     }
   },
-  "required": ["formatVersion", "sessionId", "mainDatabase", "attachedDatabases", "metadata"],
+  "required": ["formatVersion", "sessionId", "defaultConnectionId", "connections", "scripts", "attachments", "metadata"],
   "additionalProperties": false,
   "definitions": {
-    "AttachedDatabase": {
+    "SessionConnection": {
       "type": "object",
       "description": "A connection referenced by the session",
       "properties": {
-        "databaseId": {
+        "connectionId": {
           "type": "string",
           "description": "The identifier (UUID) of the referenced connection in the connections of the app manifest"
         },
@@ -81,7 +95,35 @@
           "description": "Legacy unsaved edits, only read when migrating to global connections. Drafts are kept in the app manifest."
         }
       },
-      "required": ["databaseId", "params"],
+      "required": ["connectionId", "params"],
+      "additionalProperties": false
+    },
+    "SessionScript": {
+      "type": "object",
+      "description": "A script of the session",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The file name in scripts/, e.g. \"01_extract.sql\""
+        },
+        "connectionId": {
+          "type": "string",
+          "description": "The connectionId of the connection of the session that the script is analyzed and executed with"
+        }
+      },
+      "required": ["name", "connectionId"],
+      "additionalProperties": false
+    },
+    "SessionAttachment": {
+      "type": "object",
+      "description": "An attachment of the session",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The file name in attachments/"
+        }
+      },
+      "required": ["name"],
       "additionalProperties": false
     },
     "SessionOriginType": {

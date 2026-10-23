@@ -131,8 +131,9 @@
 .button_size_small .text {
     line-height: calc(20 / 12);
 }
+/* Buttons may widen the space between their visuals and the text with --button_visual_gap */
 .button_size_small .button_content > :not(:last-child) {
-    margin-right: 6px;
+    margin-right: var(--button_visual_gap, 6px);
 }
 .button_size_small .icon_button {
     width: 28px;

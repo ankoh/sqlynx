@@ -1,25 +1,58 @@
 {
-  "formatVersion": 4,
+  "formatVersion": 6,
   "sessionId": "92a09cb7-5f7d-4f8e-8c78-0dc39d8fff36",
   "name": "Demo",
-  "mainDatabase": {
-    "databaseId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33",
-    "params": {
-      "hyper": {
-        "protocol": "WASM",
-        "endpoint": "",
-        "tls": {
-          "clientKeyPath": "",
-          "clientCertPath": "",
-          "caCertsPath": ""
-        },
-        "attachedDatabases": [],
-        "metadata": {},
-        "queryParameters": {}
+  "defaultConnectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33",
+  "connections": [
+    {
+      "connectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33",
+      "params": {
+        "hyper": {
+          "protocol": "WASM",
+          "endpoint": "",
+          "tls": {
+            "clientKeyPath": "",
+            "clientCertPath": "",
+            "caCertsPath": ""
+          },
+          "attachedDatabases": [],
+          "metadata": {},
+          "queryParameters": {}
+        }
       }
     }
-  },
-  "attachedDatabases": [],
+  ],
+  "scripts": [
+    {
+      "name": "01_hyper_version.sql",
+      "connectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33"
+    },
+    {
+      "name": "02_test_tables.sql",
+      "connectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33"
+    },
+    {
+      "name": "03_json_table.sql",
+      "connectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33"
+    },
+    {
+      "name": "04_lucky_badger.sql",
+      "connectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33"
+    },
+    {
+      "name": "05_keen_cobra.sql",
+      "connectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33"
+    },
+    {
+      "name": "06_markdown_kpis.sql",
+      "connectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33"
+    },
+    {
+      "name": "07_markdown_customer_report.sql",
+      "connectionId": "22bdfa32-af01-4a1f-bcb6-36753fb83a33"
+    }
+  ],
+  "attachments": [],
   "metadata": {
     "createdAt": "2026-08-29T08:49:25.338Z"
   }

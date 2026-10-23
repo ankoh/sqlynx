@@ -9,18 +9,25 @@ import type { SessionData, SessionEntry } from './storage_backend.js';
 import { ConnectorType } from '../connections/connector_info.js';
 
 const UUID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
-const DATABASE_ID = '11111111-2222-3333-4444-555555555555';
-const REMOTE_DATABASE_ID = '66666666-7777-8888-9999-aaaaaaaaaaaa';
+const CONNECTION_ID = '11111111-2222-3333-4444-555555555555';
+const REMOTE_CONNECTION_ID = '66666666-7777-8888-9999-aaaaaaaaaaaa';
 
 function session(extra: Partial<SessionData> = {}): SessionData {
     return {
-        formatVersion: 4,
+        formatVersion: 6,
         sessionId: UUID,
-        mainDatabase: { databaseId: DATABASE_ID, params: { hyper: {} } as any },
-        attachedDatabases: [],
+        defaultConnectionId: CONNECTION_ID,
+        connections: [{ connectionId: CONNECTION_ID, params: { hyper: {} } as any }],
+        scripts: [],
+        attachments: [],
         metadata: {},
         ...extra,
     } as SessionData;
+}
+
+/// A session whose only connection is the default connection
+function withDefault(connection: Record<string, unknown>): SessionData {
+    return session({ defaultConnectionId: connection.connectionId as string, connections: [connection as any] });
 }
 
 describe('validateSessionData', () => {
@@ -29,24 +36,28 @@ describe('validateSessionData', () => {
     });
 
     it('accepts each known remote connector after the local database', () => {
-        const local = { databaseId: DATABASE_ID, params: { hyper: { protocol: 'WASM' } } as any };
-        const hyper = session({ mainDatabase: { databaseId: REMOTE_DATABASE_ID, params: { hyper: { protocol: 'V3_HTTP' } } as any }, attachedDatabases: [local] });
-        const sf = session({ mainDatabase: { databaseId: REMOTE_DATABASE_ID, params: { salesforce: {} } as any }, attachedDatabases: [local] });
-        const trino = session({ mainDatabase: { databaseId: REMOTE_DATABASE_ID, params: { trino: {} } as any }, attachedDatabases: [local] });
+        const local = { connectionId: CONNECTION_ID, params: { hyper: { protocol: 'WASM' } } as any };
+        const remote = (params: any) => session({
+            defaultConnectionId: REMOTE_CONNECTION_ID,
+            connections: [{ connectionId: REMOTE_CONNECTION_ID, params }, local],
+        });
+        const hyper = remote({ hyper: { protocol: 'V3_HTTP' } });
+        const sf = remote({ salesforce: {} });
+        const trino = remote({ trino: {} });
         expect(validateSessionData(hyper).ok).toBe(true);
         expect(validateSessionData(sf).ok).toBe(true);
         expect(validateSessionData(trino).ok).toBe(true);
     });
 
     it('rejects removed connector metadata', () => {
-        expect(validateSessionData(session({ mainDatabase: { databaseId: DATABASE_ID, params: { duckdb: {} } as any } }))).toEqual({
+        expect(validateSessionData(withDefault({ connectionId: CONNECTION_ID, params: { duckdb: {} } }))).toEqual({
             ok: false,
             error: SessionValidationError.UnknownConnector,
         });
     });
 
     it('rejects legacy dataless sessions', () => {
-        expect(validateSessionData(session({ mainDatabase: { databaseId: DATABASE_ID, params: { dataless: {} } as any } }))).toEqual({
+        expect(validateSessionData(withDefault({ connectionId: CONNECTION_ID, params: { dataless: {} } }))).toEqual({
             ok: false,
             error: SessionValidationError.UnknownConnector,
         });
@@ -73,7 +84,7 @@ describe('validateSessionData', () => {
     });
 
     it('rejects missing, older, and unknown format versions', () => {
-        for (const formatVersion of [undefined, 1, 2, 3, 5]) {
+        for (const formatVersion of [undefined, 1, 2, 3, 4, 5, 7]) {
             expect(validateSessionData(session({ formatVersion } as any))).toEqual({
                 ok: false,
                 error: SessionValidationError.UnsupportedFormatVersion,
@@ -81,45 +92,53 @@ describe('validateSessionData', () => {
         }
     });
 
-    it('requires an attached database array', () => {
+    it('requires a non-empty connection list', () => {
         const data = session();
-        delete (data as any).attachedDatabases;
+        delete (data as any).connections;
         expect(validateSessionData(data)).toEqual({
             ok: false,
-            error: SessionValidationError.InvalidAttachedDatabases,
+            error: SessionValidationError.InvalidConnections,
         });
-        expect(validateSessionData(session({ attachedDatabases: [] } as any))).toEqual({ ok: true });
+        expect(validateSessionData(session({ connections: [] }))).toEqual({
+            ok: false,
+            error: SessionValidationError.InvalidConnections,
+        });
     });
 
-    it('accepts multiple attached databases with unique ids', () => {
-        expect(validateSessionData(session({ attachedDatabases: [
-            { databaseId: REMOTE_DATABASE_ID, params: { trino: {} } as any },
-            { databaseId: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff', params: { salesforce: {} } as any },
+    it('accepts multiple connections with unique ids', () => {
+        expect(validateSessionData(session({ connections: [
+            { connectionId: CONNECTION_ID, params: { hyper: {} } as any },
+            { connectionId: REMOTE_CONNECTION_ID, params: { trino: {} } as any },
+            { connectionId: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff', params: { salesforce: {} } as any },
         ] }))).toEqual({ ok: true });
     });
 
-    it('rejects an attached database with an invalid databaseId', () => {
-        expect(validateSessionData(session({ attachedDatabases: [{ databaseId: 'not-a-uuid', params: { hyper: {} } as any }] }))).toEqual({
-            ok: false,
-            error: SessionValidationError.InvalidDatabaseId,
-        });
-    });
-
-    it('requires a valid main database', () => {
-        for (const databaseId of ['', 'not-a-uuid']) {
-            expect(validateSessionData(session({ mainDatabase: { databaseId, params: { hyper: {} } as any } }))).toEqual({
-                ok: false,
-                error: SessionValidationError.InvalidDatabaseId,
-            });
+    it('rejects invalid and duplicate connection ids', () => {
+        for (const connectionId of ['', 'not-a-uuid']) {
+            expect(validateSessionData(session({ connections: [
+                { connectionId: CONNECTION_ID, params: { hyper: {} } as any },
+                { connectionId, params: { hyper: {} } as any },
+            ] }))).toEqual({ ok: false, error: SessionValidationError.InvalidConnectionId });
         }
+        expect(validateSessionData(session({ connections: [
+            { connectionId: CONNECTION_ID, params: { hyper: {} } as any },
+            { connectionId: CONNECTION_ID, params: { trino: {} } as any },
+        ] }))).toEqual({ ok: false, error: SessionValidationError.InvalidConnectionId });
     });
 
-    it('rejects an attached database with missing or unknown params', () => {
-        expect(validateSessionData(session({ mainDatabase: { databaseId: DATABASE_ID } as any }))).toEqual({
+    it('requires the default connection to be a connection of the session', () => {
+        expect(validateSessionData(session({ defaultConnectionId: REMOTE_CONNECTION_ID }))).toEqual({
             ok: false,
-            error: SessionValidationError.MissingDatabaseParams,
+            error: SessionValidationError.InvalidDefaultConnectionId,
         });
-        expect(validateSessionData(session({ mainDatabase: { databaseId: DATABASE_ID, params: { garbage: 'data' } as any } }))).toEqual({
+    });
+
+    it('rejects a connection with missing or unknown params', () => {
+        expect(validateSessionData(withDefault({ connectionId: CONNECTION_ID }))).toEqual({
+            ok: false,
+            error: SessionValidationError.MissingConnectionParams,
+        });
+        expect(validateSessionData(withDefault({ connectionId: CONNECTION_ID, params: { garbage: 'data' } }))).toEqual({
             ok: false,
             error: SessionValidationError.UnknownConnector,
         });
@@ -169,7 +188,7 @@ describe('describeInvalidSession', () => {
     });
 
     it('has a null connector type when params are unknown', () => {
-        const data = session({ mainDatabase: { databaseId: DATABASE_ID, params: { garbage: 'data' } as any } });
+        const data = withDefault({ connectionId: CONNECTION_ID, params: { garbage: 'data' } });
         const inv = describeInvalidSession(entry, SessionValidationError.UnknownConnector, data);
         expect(inv.connectorType).toBeNull();
     });

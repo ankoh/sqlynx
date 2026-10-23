@@ -3,6 +3,7 @@ import * as styles from './navbar.module.css';
 import symbols from '@ankoh/dashql-svg-symbols';
 
 import { AnchorAlignment, AnchorSide } from '../../ui/foundations/anchored_position.js';
+import { Tag, TagVariant } from '../../ui/foundations/tag.js';
 import { HoverMode, NavBarButton, NavBarButtonWithRef } from './navbar_button.js';
 import { InternalsViewerOverlay } from './internals/internals_overlay.js';
 import { PlatformType, usePlatformType } from '../../platform/platform_type.js';
@@ -112,7 +113,7 @@ const BrandMark = (props: { children: React.ReactNode }) => {
     return (
         <span className={styles.brand_mark}>
             {props.children}
-            <span className={styles.brand_tagline}>{tagline}</span>
+            <Tag variant={TagVariant.Outline} className={styles.brand_tagline}>{tagline}</Tag>
         </span>
     );
 };

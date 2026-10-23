@@ -9,7 +9,6 @@ export type { CachedQueryResult } from '../../query/query_result_cache.js';
 export const STORAGE_MANIFEST_FILE = 'dashql-manifest.json';
 export const STORAGE_SESSIONS_FOLDER = 'sessions';
 export const STORAGE_SESSION_FILE = 'dashql-session.json';
-export const STORAGE_SESSION_INDEX_FILE = 'dashql-session-index.json';
 export const STORAGE_SCRIPTS_FOLDER = 'scripts';
 export const STORAGE_ATTACHMENTS_FOLDER = 'attachments';
 export const STORAGE_CACHE_FOLDER = 'cache';
@@ -31,15 +30,6 @@ export const STORAGE_CATALOG_FUNCTIONS = 'dashql-catalog-functions.sql';
 /// The catalog changes of executed statements since the last catalog refresh
 export const STORAGE_CATALOG_CHANGES = 'dashql-catalog-changes.sql';
 export const STORAGE_SCRIPT_EXTENSION = '.sql';
-
-export interface SessionIndexScript {
-    name: string;
-}
-
-export interface SessionIndexData {
-    scripts: SessionIndexScript[];
-    data?: SessionIndexScript[];
-}
 
 export interface DataFile {
     name: string;
@@ -69,8 +59,19 @@ export type ConnectionEntry = app_manifest.ConnectionEntry;
 export type SessionData = app_session.SessionData;
 export type SessionMetadata = app_session.SessionMetadata;
 export type SessionSettings = app_session.SessionSettings;
-export type AttachedDatabase = app_session.AttachedDatabase;
-export type ConnectionParams = AttachedDatabase['params'];
+export type SessionScript = app_session.SessionScript;
+export type SessionAttachment = app_session.SessionAttachment;
+export type SessionConnection = app_session.SessionConnection;
+export type ConnectionParams = SessionConnection['params'];
+
+/// The default connection of a validated session
+export function defaultSessionConnection(session: SessionData): SessionConnection {
+    const connection = session.connections.find(entry => entry.connectionId === session.defaultConnectionId);
+    if (connection == null) {
+        throw new Error(`Default connection ${session.defaultConnectionId} is missing in session ${session.sessionId}`);
+    }
+    return connection;
+}
 
 /// The kind of filesystem backend
 export enum StorageBackendType {
@@ -107,10 +108,6 @@ export interface StorageBackend {
     loadSession(sessionId: string): Promise<SessionData>;
     /// Save a session
     saveSessionManifest(sessionId: string, data: SessionData): Promise<void>;
-    /// Create the derived HTTP publication index only when it is missing.
-    ensureSessionIndex?(sessionId: string): Promise<void>;
-    /// Rewrite the derived HTTP publication index from the authoritative script and data trees.
-    regenerateSessionIndex?(sessionId: string): Promise<void>;
     /// Delete a session
     deleteSession(sessionId: string): Promise<void>;
 
@@ -129,7 +126,8 @@ export interface StorageBackend {
     /// Save the catalog changes of executed statements
     saveSessionCatalogChanges(sessionId: string, sql: string): Promise<void>;
 
-    /// Load the session's flat, naturally ordered script collection.
+    /// Load the session's flat, naturally ordered script files. The order of the feed is the order
+    /// of the scripts in the session file.
     loadScripts(sessionId: string): Promise<ScriptData[]>;
     /// Load a session script
     loadScript(sessionId: string, scriptName: string): Promise<ScriptData>;
@@ -218,7 +216,7 @@ export function isSessionRegistryBackend(backend: StorageBackend): backend is Se
 
 // Script data represents a single SQL script
 export interface ScriptData {
-    /// The script name (matches filename: "01-script.sql", "02-query.sql", etc.)
+    /// The script name, the file name in scripts/ (e.g. "extract.sql")
     name: string;
     /// The sql text
     sql: string;

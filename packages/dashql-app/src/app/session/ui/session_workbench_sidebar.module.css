@@ -285,6 +285,36 @@
     color: var(--base_color_neutral_6);
 }
 
+.database_status_button {
+    border: 1px solid transparent;
+}
+
+.database_status_attention {
+    animation: database_status_attention 450ms ease-in-out 2;
+}
+
+@keyframes database_status_attention {
+    35%, 55% {
+        border-color: hsl(212, 50%, 60%);
+        background-color: hsl(212, 70%, 96%);
+    }
+    0%, 100% {
+        border-color: transparent;
+        background-color: hsl(var(--neutral_hue), calc(29% * var(--neutral_tint)), 97%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .database_status_button * {
+        animation: none !important;
+    }
+    .database_status_attention {
+        animation: none;
+        border-color: hsl(212, 65%, 45%);
+        background-color: hsl(212, 85%, 94%);
+    }
+}
+
 .catalog_row {
     margin: 1px 0;
 }

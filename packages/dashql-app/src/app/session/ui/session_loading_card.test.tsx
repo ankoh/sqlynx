@@ -9,11 +9,12 @@ import { SessionImportCard, type SessionImportCardDependencies } from './session
 
 const FILE_BUNDLE: SessionBundle = {
     session: {
-        formatVersion: 4,
+        formatVersion: 6,
         sessionId: '11111111-2222-4333-8444-555555555555',
         name: 'Local session',
-        mainDatabase: {
-            databaseId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+        defaultConnectionId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+        connections: [{
+            connectionId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
             params: {
                 hyper: {
                     protocol: 'WASM',
@@ -21,8 +22,9 @@ const FILE_BUNDLE: SessionBundle = {
                     tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' },
                 },
             },
-        },
-        attachedDatabases: [],
+        }],
+        scripts: [],
+        attachments: [],
         metadata: { originType: 'FILE', originalFileName: 'local.dashql' },
     },
     schemaSql: null,

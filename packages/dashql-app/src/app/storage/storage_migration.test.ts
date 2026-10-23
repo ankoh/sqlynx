@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { TestLogger } from '../../platform/logger/test_logger.js';
 import { cloneSession, copySession, verifySession } from './storage_migration.js';
-import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from './session_test_backend.js';
+import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testSession } from './session_test_backend.js';
 
 async function seed(backend: SessionTestBackend): Promise<void> {
     await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
@@ -47,7 +47,7 @@ describe('V2 storage migration', () => {
         await cloneSession(TEST_SESSION_ID, source, target, cloneId, new TestLogger());
         const cloned = await target.loadSession(cloneId);
         expect(cloned).toMatchObject({ sessionId: cloneId, name: 'V2 Session (copy)' });
-        expect(cloned.mainDatabase.databaseId).toBe(TEST_DATABASE_ID);
+        expect(cloned.defaultConnectionId).toBe(TEST_CONNECTION_ID);
         expect(await target.loadScripts(cloneId)).toHaveLength(3);
         expect((await target.loadScript(cloneId, '03_attachment.sql')).sql).toContain(
             `/mnt/fs/sessions/${cloneId}/attachments/payload.bin`);

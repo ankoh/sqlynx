@@ -1,25 +1,78 @@
 {
-  "formatVersion": 4,
+  "formatVersion": 6,
   "sessionId": "8e63246c-9ab9-4c9c-aa7a-f268adf3fe7b",
   "name": "Calculated Insights",
-  "mainDatabase": {
-    "databaseId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b",
-    "params": {
-      "hyper": {
-        "protocol": "WASM",
-        "endpoint": "",
-        "tls": {
-          "clientKeyPath": "",
-          "clientCertPath": "",
-          "caCertsPath": ""
-        },
-        "attachedDatabases": [],
-        "metadata": {},
-        "queryParameters": {}
+  "defaultConnectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b",
+  "connections": [
+    {
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b",
+      "params": {
+        "hyper": {
+          "protocol": "WASM",
+          "endpoint": "",
+          "tls": {
+            "clientKeyPath": "",
+            "clientCertPath": "",
+            "caCertsPath": ""
+          },
+          "attachedDatabases": [],
+          "metadata": {},
+          "queryParameters": {}
+        }
       }
     }
-  },
-  "attachedDatabases": [],
+  ],
+  "scripts": [
+    {
+      "name": "01_hyper_version.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "02_setup_tables.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "03_aggregation.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "04_preagg_schema.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "05_preagg_sql.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "06_postagg_schema.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "07_rollupable.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "08_top_level_sort.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "09_top_level_window.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "10_static_group_by.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "11_limitation_preagg_expand_views.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    },
+    {
+      "name": "12_limitation_postagg_expand_views.sql",
+      "connectionId": "9c3a5e61-137d-4238-bd35-11f7fb28dd9b"
+    }
+  ],
+  "attachments": [],
   "metadata": {
     "createdAt": "2026-08-31T16:24:50.817Z",
     "originalFileName": "hyper"

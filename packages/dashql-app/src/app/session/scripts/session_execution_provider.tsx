@@ -1,11 +1,12 @@
 import * as React from 'react';
 
-import { ConnectionHealth } from '../../connections/connection_state.js';
+import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
 import { ConnectorType, HYPER_CONNECTOR } from '../../connections/connector_info.js';
 import { useConnectionRegistry } from '../../connections/connection_registry.js';
 import { useCancelQuery, useQueryExecutor } from '../../connections/query_executor.js';
 import { useSessionScriptsRegistry, type ModifySessionScripts } from './session_scripts_registry.js';
 import { runSessionExecution, type SessionExecutionState } from './session_execution.js';
+import { sessionConnectionIds } from './session_scripts.js';
 
 interface ExecutionContext {
     states: Map<string, SessionExecutionState>;
@@ -14,6 +15,15 @@ interface ExecutionContext {
 }
 
 const CONTEXT = React.createContext<ExecutionContext | null>(null);
+
+/// The number of statements of a session run that a connection executes at once
+function maxConcurrentQueries(connection: ConnectionState | undefined): number {
+    return connection != null
+        && connection.connectorInfo.connectorType === ConnectorType.HYPER
+        && connection.details.type === HYPER_CONNECTOR
+        && connection.details.value.proto?.setupParams?.protocol != null
+        && connection.details.value.proto.setupParams.protocol !== 'WASM' ? 4 : 1;
+}
 
 export function sessionExecutionIsBusy(state: SessionExecutionState | null | undefined): boolean {
     return state?.phase === 'planning' || state?.phase === 'running' || state?.phase === 'stopping';
@@ -47,7 +57,8 @@ export function SessionExecutionProvider(props: React.PropsWithChildren) {
     React.useEffect(() => {
         for (const [id, controller] of runs.current) {
             const session = registry.sessionScriptsMap.get(id);
-            if (!session || connections.connections.get(session.connectionId)?.connectionHealth !== ConnectionHealth.ONLINE) {
+            if (!session || sessionConnectionIds(session).some(connectionId =>
+                connections.connections.get(connectionId)?.connectionHealth !== ConnectionHealth.ONLINE)) {
                 controller.abort();
             }
         }
@@ -61,26 +72,29 @@ export function SessionExecutionProvider(props: React.PropsWithChildren) {
     const start = React.useCallback((sessionId: string, modifySessionScripts: ModifySessionScripts) => {
         const { registry, connections, executeQuery, cancelQuery } = latest.current;
         const session = registry.sessionScriptsMap.get(sessionId);
-        if (!session || runs.current.has(sessionId) || runningDatabases.current.has(session.connectionId)
-            || Object.keys(session.scriptRefs).length === 0) return;
-        const connection = connections.connections.get(session.connectionId);
-        if (connection?.connectionHealth !== ConnectionHealth.ONLINE || connection.queriesActive.size > 0) return;
+        if (!session || runs.current.has(sessionId) || session.scriptOrder.length === 0) return;
+        // A run takes every connection of the session, all of them must be idle
+        const connectionIds = sessionConnectionIds(session);
+        const idle = connectionIds.every(connectionId => {
+            const connection = connections.connections.get(connectionId);
+            return !runningDatabases.current.has(connectionId)
+                && connection?.connectionHealth === ConnectionHealth.ONLINE
+                && connection.queriesActive.size === 0;
+        });
+        if (!idle) return;
         const controller = new AbortController();
         runs.current.set(sessionId, controller);
-        runningDatabases.current.add(session.connectionId);
+        for (const connectionId of connectionIds) runningDatabases.current.add(connectionId);
         void runSessionExecution({
             session,
             getSession: () => latest.current.registry.sessionScriptsMap.get(sessionId) ?? null,
             executeQuery, cancelQuery, modifySessionScripts,
-            maxConcurrentQueries: connection.connectorInfo.connectorType === ConnectorType.HYPER
-                && connection.details.type === HYPER_CONNECTOR
-                && connection.details.value.proto?.setupParams?.protocol != null
-                && connection.details.value.proto.setupParams.protocol !== 'WASM' ? 4 : 1,
+            maxConcurrentQueries: connectionId => maxConcurrentQueries(connections.connections.get(connectionId)),
             signal: controller.signal,
             onState: state => setStates(previous => new Map(previous).set(sessionId, state)),
         }).finally(() => {
             runs.current.delete(sessionId);
-            runningDatabases.current.delete(session.connectionId);
+            for (const connectionId of connectionIds) runningDatabases.current.delete(connectionId);
         });
     }, []);
     const stop = React.useCallback((id: string) => runs.current.get(id)?.abort(), []);

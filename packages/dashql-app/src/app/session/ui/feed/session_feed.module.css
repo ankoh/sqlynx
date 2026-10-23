@@ -409,10 +409,18 @@
     justify-content: space-between;
     padding: 0 4px 0 28px;
     gap: 8px;
+    color: var(--card_control_color);
 }
 
 .feed_entry_footer {
     border-top: 1px solid var(--log_border_color);
+}
+
+.feed_entry_action_separator {
+    flex-shrink: 0;
+    width: 1px;
+    height: 16px;
+    background-color: var(--log_border_color);
 }
 
 .feed_entry_file_name {
@@ -440,6 +448,11 @@
 
 .feed_entry_action_button:hover {
     opacity: 1;
+}
+
+/* The run button of the focused card keeps the full text color, the one strong action in the muted header */
+.feed_entry_execute_focused {
+    color: var(--base_color);
 }
 
 .feed_entry_execute_unfocused {

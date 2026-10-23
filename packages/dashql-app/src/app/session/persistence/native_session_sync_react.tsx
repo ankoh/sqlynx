@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { connectionRefCount, useConnectionRegistry, type ConnectionRegistry } from '../../connections/connection_registry.js';
+import { connectionEntryFromState, connectionRefCount, registerConnection, useConnectionRegistry, type ConnectionRegistry } from '../../connections/connection_registry.js';
 import { catalogFileMatchesStorage, connectionCatalogMatchesStorage, replaceConnectionCatalogFromStorage } from '../../connections/connection_state.js';
 import { connectionCatalogIsDurable } from '../../connections/connection_params.js';
-import { useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
-import { sessionScriptsMatchStorageSnapshot, replaceSessionScriptsFromStorage } from '../scripts/session_scripts.js';
+import { reindexSessionScriptConnections, useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
+import { sessionScriptsMatchStorageSnapshot, replaceSessionScriptsFromStorage, scriptConnectionOf } from '../scripts/session_scripts.js';
 import { isNativePlatform } from '../../../platform/native_globals.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
@@ -12,13 +12,32 @@ import { useStorage } from '../../storage/storage_provider.js';
 import { getAppFlavor } from '../../flavor/flavor_resolution.js';
 import { NativeSessionSyncService, nativeSessionWatchForLocation } from './native_session_sync.js';
 import type { SessionScriptsStorageSnapshot, SessionScripts } from '../scripts/session_scripts.js';
+import { sessionScriptList } from '../scripts/session_scripts.js';
+import { connectionStateFromCopy, destroyUnregisteredConnection } from './app_state_loader.js';
+import { resolveSessionScripts, sessionScriptsResolutionChanged } from './session_script_connections.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
-import { DEBOUNCE_DURATION_SESSION_WRITE, groupConnectionFileWrites, WRITE_CONNECTION_FILE, type StorageWriter } from '../../storage/storage_writer.js';
+import {
+    DEBOUNCE_DURATION_SESSION_WRITE,
+    groupConnectionEntryWrites,
+    groupConnectionFileWrites,
+    groupSessionAttachmentListWrites,
+    groupSessionScriptListWrites,
+    REFRESH_SESSION_ATTACHMENTS,
+    WRITE_CONNECTION_ENTRY,
+    WRITE_CONNECTION_FILE,
+    WRITE_SESSION_SCRIPTS,
+    type StorageWriter,
+} from '../../storage/storage_writer.js';
 import {
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_CATALOG_FUNCTIONS,
     STORAGE_CATALOG_RELATIONS,
+    STORAGE_SESSION_FILE,
+    type ScriptData,
+    type SessionData,
+    type SessionScript,
 } from '../../storage/storage_backend.js';
+import { sessionScriptsEqual } from '../../storage/session_files.js';
 
 const LOG_CTX = 'native_session_sync';
 
@@ -31,6 +50,46 @@ function reloadableCatalogConnection(registry: ConnectionRegistry, sessionId: st
     if (connectionId == null || connectionRefCount(registry, connectionId) > 1) return null;
     const connection = registry.connections.get(connectionId) ?? null;
     return connection != null && connectionCatalogIsDurable(connection.params) ? connection : null;
+}
+
+/// The scripts of a session as its folder holds them, resolved like the restoration of the app does.
+/// A connection that the app doesn't know is created from the copy of the session file, e.g. after
+/// pulling a script on a new connection. It is registered when the reload is applied and must be
+/// destroyed otherwise.
+export interface StoredSessionScripts {
+    /// The scripts as the session scripts take them
+    snapshot: SessionScriptsStorageSnapshot;
+    /// The session file that describes the resolved scripts
+    session: SessionData;
+    /// The connections that were created from copies of the session file
+    created: ConnectionState[];
+}
+
+export function readStoredSessionScripts(
+    registry: ConnectionRegistry,
+    sessionId: string,
+    session: SessionData,
+    scripts: ScriptData[],
+): StoredSessionScripts | null {
+    const mapping = registry.attachedDatabasesBySession.get(sessionId);
+    const main = mapping == null ? undefined : registry.connections.get(mapping.mainDatabaseId);
+    if (main == null) return null;
+    const created: ConnectionState[] = [];
+    const resolved = resolveSessionScripts(session, scripts.map(script => script.name), main, (connectionId, copy) => {
+        const known = registry.connections.get(connectionId);
+        if (known != null || copy == null) return known ?? null;
+        const connection = connectionStateFromCopy(main.instance, connectionId, copy, registry.connectionsBySignature);
+        created.push(connection);
+        return connection;
+    });
+    const sqlByName = new Map(scripts.map(script => [script.name, script.sql]));
+    return {
+        snapshot: {
+            scripts: resolved.scripts.map(entry => ({ name: entry.name, sql: sqlByName.get(entry.name) ?? '', connection: scriptConnectionOf(entry.connection) })),
+        },
+        session: resolved.session,
+        created,
+    };
 }
 
 interface SessionReloadDecision {
@@ -48,7 +107,8 @@ async function confirmExternalReload(hasPendingWrites: boolean): Promise<Session
 }
 
 function isReloadedStorageKey(sessionId: string, key: string): boolean {
-    return key === `${sessionId}/${STORAGE_CATALOG_RELATIONS}`
+    return key === groupSessionScriptListWrites(sessionId)
+        || key === `${sessionId}/${STORAGE_CATALOG_RELATIONS}`
         || key === `${sessionId}/${STORAGE_CATALOG_FUNCTIONS}`
         || key === `${sessionId}/${STORAGE_SCRIPTS_FOLDER}`
         || key.startsWith(`${sessionId}/${STORAGE_SCRIPTS_FOLDER}/`);
@@ -87,6 +147,21 @@ function snapshotMatchesCompletedWrite(
         diskFiles.set(`${sessionId}/${STORAGE_SCRIPTS_FOLDER}/${script.name}`, script.sql);
     }
     let divergenceFound = false;
+    // The order and the connections of the scripts are part of the session file
+    const diskList = snapshot.scripts.map(script => ({ name: script.name, connectionId: script.connection.connectionId }));
+    if (sessionScripts && !sessionScriptsEqual(sessionScriptList(sessionScripts), diskList)) {
+        divergenceFound = true;
+        const completed = writer.getCompletedFileContent(`${sessionId}/${STORAGE_SESSION_FILE}`);
+        let completedList: SessionScript[] | null = null;
+        try {
+            completedList = completed == null ? null : (JSON.parse(completed) as SessionData).scripts ?? null;
+        } catch {
+            completedList = null;
+        }
+        if (completedList == null || !sessionScriptsEqual(completedList, diskList)) {
+            return false;
+        }
+    }
     for (const path of new Set([...diskFiles.keys(), ...memoryFiles.keys()])) {
         const disk = diskFiles.get(path) ?? null;
         const memory = memoryFiles.get(path) ?? null;
@@ -118,19 +193,27 @@ export const NativeSessionSync: React.FC = () => {
 
     const reloadSession = React.useEffectEvent(async (sessionId: string) => {
         writer.pauseSession(sessionId);
+        let stored: StoredSessionScripts | null = null;
+        let registered = false;
         try {
             // A write that started before the watcher event must finish before the stable disk read.
             await writer.settle();
             // Composite storage mirrors native attachments into the session's OPFS namespace while
             // loading. Do this before the SQL/catalog unchanged fast path so attachment-only edits
             // refresh the files exposed to embedded HyperDB-WASM.
-            await reader.backend.loadSession(sessionId);
+            const sessionFile = await reader.backend.loadSession(sessionId);
+            // The session file lists the attachments, the write runs once the session resumes
+            void writer.write(groupSessionAttachmentListWrites(sessionId), { type: REFRESH_SESSION_ATTACHMENTS, value: sessionId });
             const [schema, functions, scripts] = await Promise.all([
                 reader.backend.loadSessionSchema(sessionId),
                 reader.backend.loadSessionFunctions(sessionId),
                 reader.backend.loadScripts(sessionId),
             ]);
-            const snapshot: SessionScriptsStorageSnapshot = { scripts };
+            stored = readStoredSessionScripts(connectionRegistryRef.current, sessionId, sessionFile, scripts);
+            if (stored == null) {
+                return;
+            }
+            const snapshot = stored.snapshot;
             const connection = reloadableCatalogConnection(connectionRegistryRef.current, sessionId);
             const currentSessionScripts = sessionScriptsRegistryRef.current.sessionScriptsMap.get(sessionId);
             const sessionUnchanged = currentSessionScripts != null && sessionScriptsMatchStorageSnapshot(currentSessionScripts, snapshot);
@@ -171,7 +254,30 @@ export const NativeSessionSync: React.FC = () => {
             if (decision.discardPendingWrites) {
                 writer.cancelPendingWritesForSession(sessionId, isReloadedKey);
             }
-            await reader.backend.regenerateSessionIndex?.(sessionId);
+            // Connections that the session file brought along join the app before the scripts use them
+            const created = stored.created;
+            if (created.length > 0) {
+                setConnectionRegistry(registry => {
+                    for (const connection of created) registerConnection(registry, connection);
+                    return { ...registry };
+                });
+                for (const connection of created) {
+                    void writer.write(
+                        groupConnectionEntryWrites(connection.connectionId),
+                        { type: WRITE_CONNECTION_ENTRY, value: { ...connectionEntryFromState(connection), createdAt: new Date().toISOString() } },
+                    );
+                }
+            }
+            registered = true;
+            // Files that were added or removed outside the app change the script list
+            if (sessionScriptsResolutionChanged(sessionFile, stored.session)) {
+                const { scripts, connections } = stored.session;
+                void writer.write(
+                    groupSessionScriptListWrites(sessionId),
+                    { type: WRITE_SESSION_SCRIPTS, value: [sessionId, { scripts, connections }] },
+                    DEBOUNCE_DURATION_SESSION_WRITE,
+                );
+            }
             const latestConnection = reloadableCatalogConnection(connectionRegistryRef.current, sessionId);
             const latestSessionScripts = sessionScriptsRegistryRef.current.sessionScriptsMap.get(sessionId);
             const catalogChanged = latestConnection != null
@@ -201,6 +307,7 @@ export const NativeSessionSync: React.FC = () => {
                         return registry;
                     }
                     registry.sessionScriptsMap.set(sessionId, reloadedSessionScripts);
+                    reindexSessionScriptConnections(registry, latestSessionScripts, reloadedSessionScripts);
                     return { ...registry };
                 });
             }
@@ -211,6 +318,9 @@ export const NativeSessionSync: React.FC = () => {
                 error: stringifyError(error),
             }, LOG_CTX);
         } finally {
+            if (!registered) {
+                for (const connection of stored?.created ?? []) destroyUnregisteredConnection(connection);
+            }
             writer.resumeSession(sessionId);
         }
     });

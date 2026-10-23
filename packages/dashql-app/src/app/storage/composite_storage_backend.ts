@@ -20,8 +20,10 @@ import { grantFsScope } from './native_fs_scope.js';
 import { copySession, verifySession } from './storage_migration.js';
 import { validateSessionData, describeSessionValidationError } from './session_validation.js';
 import {
+    assembleSessionBundle,
     readSessionBundle,
     readSessionBundleHead,
+    reconcileStoredSessionFiles,
     writeSessionBundle,
     type SessionBundle,
 } from './session_bundle.js';
@@ -253,14 +255,6 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         }
     }
 
-    async regenerateSessionIndex(sessionId: string): Promise<void> {
-        await (await this.backendFor(sessionId)).regenerateSessionIndex?.(sessionId);
-    }
-
-    async ensureSessionIndex(sessionId: string): Promise<void> {
-        await (await this.backendFor(sessionId)).ensureSessionIndex?.(sessionId);
-    }
-
     async deleteSession(sessionId: string): Promise<void> {
         const loc = this.locationOf(sessionId);
         if (loc.type === StorageBackendType.Native) {
@@ -401,7 +395,7 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
             const scripts = await native.loadScripts(dir);
             const data = await Promise.all((await native.listDataFiles(dir))
                 .map(async file => ({ name: file.name, bytes: await native.loadDataFile(dir, file.name) })));
-            bundle = { ...head, scripts, data };
+            bundle = assembleSessionBundle(head, scripts, data);
         } catch (error) {
             throw new Error(`Failed to read session in ${dir}: ${(error as Error)?.message ?? String(error)}`);
         }
@@ -464,7 +458,7 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         this.nativeCache.delete(sessionId);
     }
 
-    /// Register an already-prepared native folder and refresh its derived publication index.
+    /// Register an already-prepared native folder and reconcile its file lists with its files.
     async registerPreparedNativeSession(prepared: PreparedNativeSession, sessionId: string): Promise<void> {
         const validation = validateSessionData(prepared.bundle.session);
         if (!validation.ok) {
@@ -472,7 +466,7 @@ export class CompositeStorageBackend implements SessionRegistryBackend {
         }
         await migrateSessionFolder(new NativeFolder(prepared.dir));
         const native = new NativeStorageBackend(prepared.dir);
-        await native.regenerateSessionIndex(sessionId);
+        await reconcileStoredSessionFiles(native, sessionId);
         await this.upsertSessionEntry({
             path: sessionId,
             storageType: StorageBackendType.Native,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { readSessionBundleFromBrowserFolder } from './browser_session_folder.js';
-import { testSession } from '../../storage/session_test_backend.js';
+import { TEST_CONNECTION_ID, testSession } from '../../storage/session_test_backend.js';
 
 function file(path: string, text: string): File {
     const value = new File([text], path.split('/').pop()!);
@@ -19,13 +19,16 @@ describe('V2 browser folder import', () => {
         ]);
         expect(bundle.data).toEqual([{ name: 'payload.bin', bytes }]);
     });
-    it('strips one root and reads flat scripts in natural order', async () => {
+    it('strips one root and appends unlisted scripts in natural order', async () => {
         await expect(readSessionBundleFromBrowserFolder([
             file('selected/dashql-session.json', JSON.stringify(testSession())),
             file('selected/scripts/10_last.sql', 'SELECT 10'),
             file('selected/scripts/2_first.sql', 'SELECT 2'),
         ])).resolves.toEqual({
-            session: testSession(),
+            session: testSession({ scripts: [
+                { name: '2_first.sql', connectionId: TEST_CONNECTION_ID },
+                { name: '10_last.sql', connectionId: TEST_CONNECTION_ID },
+            ] }),
             schemaSql: null,
             functionsSql: null,
             data: [],

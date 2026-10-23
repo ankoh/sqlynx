@@ -1,13 +1,40 @@
 import { stringifyError } from '../../platform/logger/logger.js';
 import { connectionParamsEqual, connectionParamsKey, connectionParamsWithoutDraftRows } from '../../app/connections/connection_params.js';
 import type { AttachedDatabaseRole } from '../../app/connections/connection_registry.js';
-import type { ConnectionEntry, ConnectionParams, SessionData } from '../../app/storage/storage_backend.js';
-import { dedupeAttachedDatabases } from '../../app/storage/storage_writer.js';
+import type { ConnectionEntry, ConnectionParams } from '../../app/storage/storage_backend.js';
 import { isValidUuid } from '../../app/storage/session_validation.js';
 import type { MigrationFolder } from '../migration_folder.js';
 import { migrateSessionFolder } from '../session_migration.js';
 import type { StorageMigrationStep } from '../storage_migration.js';
 import { listSessionFolders, readManifestJson, writeManifestJson } from '../storage_root.js';
+
+/// A database that session metadata of format version 4 references
+interface SessionDatabase {
+    /// The id of the database
+    databaseId: string;
+    /// The copy of the connection params
+    params: ConnectionParams;
+    /// Unsaved edits of the params
+    paramsDraft?: ConnectionParams;
+}
+
+/// The session metadata of format version 4, as far as the step reads it
+export interface SessionData extends Record<string, unknown> {
+    /// The main database
+    mainDatabase: SessionDatabase;
+    /// The attached databases
+    attachedDatabases: SessionDatabase[];
+}
+
+/// Drop attached databases that reference the main database or an earlier attached database
+function dedupeAttachedDatabases(mainDatabaseId: string, attached: SessionDatabase[]): SessionDatabase[] {
+    const seen = new Set([mainDatabaseId]);
+    return attached.filter(database => {
+        if (seen.has(database.databaseId)) return false;
+        seen.add(database.databaseId);
+        return true;
+    });
+}
 
 const LOG_CTX = 'storage_migration';
 
@@ -137,7 +164,7 @@ export function planConnectionMigration(sessions: readonly MigratingSession[]): 
     const paramsOf = new Map(connections.map(c => [c.id, c.params]));
     const rewrites = new Map<string, SessionData>();
     for (const { sessionId, data } of sessions) {
-        const rewrite = (database: SessionData['mainDatabase']): SessionData['mainDatabase'] => {
+        const rewrite = (database: SessionDatabase): SessionDatabase => {
             const id = resolve.get(`${sessionId}/${database.databaseId}`)!;
             return { databaseId: id, params: paramsOf.get(id)! };
         };

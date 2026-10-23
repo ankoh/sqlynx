@@ -1,11 +1,12 @@
 import * as React from 'react';
 
-import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptData, destroySessionScripts, reduceSessionScripts } from './session_scripts.js';
+import { ANALYZE_OUTDATED_SCRIPT, SessionScripts, SessionScriptsAction, ScriptData, destroySessionScripts, reduceSessionScripts, sessionConnectionCopies, sessionConnectionIds } from './session_scripts.js';
 import { Dispatch } from '../../../utils/variant.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
 import { CONNECTOR_TYPES, ConnectorType } from '../../connections/connector_info.js';
 import { createDefaultConnectionParamsForConnector } from '../../connections/connection_params.js';
 import { useStorageWriter } from '../../storage/storage_provider.js';
+import { syncSessionConnections, useConnectionRegistrySetter } from '../../connections/connection_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import {
     REPLACE_SESSION_SCRIPTS,
@@ -26,7 +27,7 @@ const LOG_CTX = 'session_scripts_registry';
 export interface SessionScriptsRegistry {
     /// The scripts map (sessionId -> SessionScripts)
     sessionScriptsMap: Map<string, SessionScripts>;
-    /// The index to find the scripts of sessions that analyze with a connection (connectionId -> sessionIds)
+    /// The index to find the sessions with scripts that analyze with a connection (connectionId -> sessionIds)
     sessionScriptsByConnection: Map<string, string[]>;
     /// The index to find scripts associated with a connection type (arrays of sessionIds)
     sessionScriptsByConnectionType: string[][];
@@ -67,6 +68,24 @@ export function useSessionScriptsRegistry(): [SessionScriptsRegistry, Dispatch<S
     return [React.useContext(SESSION_SCRIPTS_REGISTRY_CTX)!, React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!];
 }
 
+/// Let the connection registry follow the connections that the scripts of the sessions use.
+///
+/// The scripts own their connections. The connection layer sits outside of the scripts registry and
+/// keeps a projection to find the sessions of a connection, e.g. to refuse deleting a connection in
+/// use. This is the only place that updates the projection at runtime.
+export function SessionConnectionsSync(): null {
+    const [registry] = useSessionScriptsRegistry();
+    const setConnections = useConnectionRegistrySetter();
+    React.useLayoutEffect(() => {
+        const connectionIds = new Map<string, string[]>();
+        for (const [sessionId, scripts] of registry.sessionScriptsMap) {
+            connectionIds.set(sessionId, sessionConnectionIds(scripts));
+        }
+        setConnections(connections => syncSessionConnections(connections, connectionIds));
+    }, [registry, setConnections]);
+    return null;
+}
+
 /// Modify the registry without subscribing to its changes
 export function useSessionScriptsRegistrySetter(): Dispatch<SetSessionScriptsRegistryAction> {
     return React.useContext(SESSION_SCRIPTS_REGISTRY_SETTER_CTX)!;
@@ -85,7 +104,9 @@ export function useSessionScriptsAllocator(): SessionScriptsAllocator {
                 scripts.sessionMetadata.originalFileName = `${scripts.connectorInfo.names.fileShort}`;
             }
 
-            addSessionScriptsForConnection(reg, state.connectionId, sessionId);
+            for (const connectionId of sessionConnectionIds(scripts)) {
+                addSessionScriptsForConnection(reg, connectionId, sessionId);
+            }
             reg.sessionScriptsByConnectionType[state.connectorInfo.connectorType].push(sessionId);
             reg.sessionScriptsMap.set(sessionId, scripts);
             return { ...reg };
@@ -108,12 +129,17 @@ export function sessionReplacement(scripts: SessionScripts): SessionReplacement 
     return {
         sessionId: scripts.sessionId,
         name: scripts.name,
-        scripts: Object.values(scripts.scriptRefs).flatMap(ref => {
-            const script = scripts.scripts[ref.scriptId];
-            return script == null ? [] : [{ fileName: ref.fileName, readText: () => script.scriptSession.getText() }];
+        scripts: scripts.scriptOrder.flatMap(fileName => {
+            const script = scripts.scripts[scripts.scriptRefs[fileName]?.scriptId];
+            return script == null ? [] : [{
+                fileName,
+                connectionId: script.connection.connectionId,
+                readText: () => script.scriptSession.getText(),
+            }];
         }),
-        mainDatabase: {
-            databaseId: scripts.connectionId,
+        connections: sessionConnectionCopies(scripts),
+        defaultConnection: {
+            connectionId: scripts.connectionId,
             params: createDefaultConnectionParamsForConnector(scripts.connectorInfo),
         },
         originalFileName: scripts.sessionMetadata.originalFileName,
@@ -126,6 +152,19 @@ export function addSessionScriptsForConnection(reg: SessionScriptsRegistry, conn
     const sessions = reg.sessionScriptsByConnection.get(connectionId) ?? [];
     if (!sessions.includes(sessionId)) {
         reg.sessionScriptsByConnection.set(connectionId, [...sessions, sessionId]);
+    }
+}
+
+/// Follow the connections of a session's scripts in the connection index (mutates the registry)
+export function reindexSessionScriptConnections(reg: SessionScriptsRegistry, prev: SessionScripts, next: SessionScripts): void {
+    if (prev.scripts === next.scripts && prev.connectionId === next.connectionId) return;
+    const prevIds = new Set(sessionConnectionIds(prev));
+    const nextIds = new Set(sessionConnectionIds(next));
+    for (const connectionId of prevIds) {
+        if (!nextIds.has(connectionId)) removeSessionScriptsForConnection(reg, connectionId, next.sessionId);
+    }
+    for (const connectionId of nextIds) {
+        if (!prevIds.has(connectionId)) addSessionScriptsForConnection(reg, connectionId, next.sessionId);
     }
 }
 
@@ -149,7 +188,9 @@ export function removeSessionScriptsFromRegistry(reg: SessionScriptsRegistry, se
     const entry = reg.sessionScriptsMap.get(sessionId);
     if (!entry) return reg;
     reg.sessionScriptsMap.delete(sessionId);
-    removeSessionScriptsForConnection(reg, entry.connectionId, sessionId);
+    for (const connectionId of sessionConnectionIds(entry)) {
+        removeSessionScriptsForConnection(reg, connectionId, sessionId);
+    }
     const connectorType = entry.connectorInfo.connectorType;
     reg.sessionScriptsByConnectionType[connectorType] =
         reg.sessionScriptsByConnectionType[connectorType].filter(id => id !== sessionId);
@@ -221,6 +262,7 @@ export function useSessionScripts(id: string | null): [SessionScripts | null, Mo
                 }, LOG_CTX);
                 const next = reduceSessionScripts(prev, action, storageWriter, logger, true);
                 reg.sessionScriptsMap.set(sessionId, next);
+                reindexSessionScriptConnections(reg, prev, next);
                 changed ||= next !== prev;
                 resolve(next);
             }
@@ -286,12 +328,13 @@ export function useConnectionScriptsDispatch(): ModifyConnectionSessionScripts {
         setRegistry((reg: SessionScriptsRegistry) => {
             let changed = false;
             for (const { conn, action } of actions) {
-                // Every session that analyzes with the connection receives the action
-                for (const sessionId of reg.sessionScriptsByConnection.get(conn) ?? []) {
+                // Every session with scripts that analyze with the connection receives the action
+                for (const sessionId of [...(reg.sessionScriptsByConnection.get(conn) ?? [])]) {
                     const prev = reg.sessionScriptsMap.get(sessionId);
                     if (prev) {
                         const next = reduceSessionScripts(prev, action, storage, logger, true);
                         reg.sessionScriptsMap.set(sessionId, next);
+                        reindexSessionScriptConnections(reg, prev, next);
                         changed ||= next !== prev;
                     }
                 }

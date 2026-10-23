@@ -6,13 +6,16 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Logger } from '../../../platform/logger/logger.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../../connections/connector_info.js';
 import { SessionTestBackend } from '../../storage/session_test_backend.js';
-import { StorageWriter, WRITE_SESSION_PROPERTIES, type StorageWriteTaskVariant } from '../../storage/storage_writer.js';
+import { StorageWriter, WRITE_SESSION_PROPERTIES, WRITE_SESSION_SCRIPTS, type StorageWriteTaskVariant } from '../../storage/storage_writer.js';
 import {
     ANALYZE_OUTDATED_SCRIPT,
+    CATALOG_DID_UPDATE,
     compileSessionQuery,
     CREATE_SCRIPT,
     DELETE_SCRIPT,
-    getSortedScriptFileNames,
+    defaultScriptConnection,
+    type ScriptConnection,
+    SET_SCRIPT_CONNECTION,
     sessionScriptsMatchStorageSnapshot,
     type SessionScripts,
     reduceSessionScripts,
@@ -49,25 +52,29 @@ const logger = new NullLogger();
 beforeAll(async () => { dql = await core.DashQL.create({ wasmBinary: await DASHQL_PRECOMPILED }); });
 afterEach(() => dql.resetUnsafe());
 
-function state(names = ['1_alpha.sql', '2_beta.sql', '3_gamma.sql']): SessionScripts {
-    const catalog = dql.createCatalog();
+/// A connection with a catalog of its own
+function connection(type = ConnectorType.HYPER): ScriptConnection {
+    return { connectionId: crypto.randomUUID(), connectorInfo: CONNECTOR_INFOS[type], catalog: dql.createCatalog() };
+}
+
+function state(names = ['1_alpha.sql', '2_beta.sql', '3_gamma.sql'], main: ScriptConnection = connection()): SessionScripts {
     const scripts: SessionScripts['scripts'] = {};
     const refs: SessionScripts['scriptRefs'] = {};
     for (const [index, name] of names.entries()) {
-        const scriptSession = dql.createScriptSession(catalog);
+        const scriptSession = dql.createScriptSession(main.catalog);
         replaceScriptSessionText(scriptSession, `SELECT ${index + 1}`);
         const scriptKey = scriptSession.getCatalogEntryId();
         scripts[scriptKey] = {
             scriptKey, scriptSession, editorUpdate: null, analysisOutdated: true,
             annotations: createEmptyAnnotations(), statistics: Immutable.List(), completion: null,
-            pendingDiff: null, latestQueryId: null, fileName: name,
+            pendingDiff: null, latestQueryId: null, fileName: name, connection: main,
         };
         refs[name] = createScriptRef(scriptKey, name);
     }
     return {
-        instance: dql, sessionId: crypto.randomUUID(), name: 'Test', connectionId: crypto.randomUUID(), settings: { cacheQueryResults: false },
-        sessionMetadata: createEmptyMetadata(), connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
-        connectionCatalog: catalog, scripts, scriptRefs: refs,
+        instance: dql, sessionId: crypto.randomUUID(), name: 'Test', connectionId: main.connectionId, settings: { cacheQueryResults: false },
+        sessionMetadata: createEmptyMetadata(), connectorInfo: main.connectorInfo,
+        connectionCatalog: main.catalog, scripts, scriptRefs: refs, scriptOrder: [...names],
         scriptFocus: { fileName: names[1] ?? names[0] ?? '' }, semanticUserFocus: null,
     };
 }
@@ -89,10 +96,12 @@ describe('V2 flat session script mutations', () => {
         }
         expect(current.name).toBe('Offline session');
         current = reduceSessionScripts(current, {
-            type: DELETE_SCRIPT, value: getSortedScriptFileNames(current.scriptRefs)[0],
+            type: DELETE_SCRIPT, value: current.scriptOrder[0],
         }, writer, logger, false);
         expect(writer.records.some(task => task.type.description === 'WRITE_SESSION_PROPERTIES')).toBe(true);
-        expect(writer.records.filter(task => task.type.description === 'WRITE_SCRIPT').length).toBeGreaterThanOrEqual(2);
+        expect(writer.records.some(task => task.type.description === 'WRITE_SCRIPT')).toBe(true);
+        expect(writer.records.some(task => task.type.description === 'RENAME_SCRIPT')).toBe(true);
+        expect(writer.records.some(task => task.type.description === 'WRITE_SESSION_SCRIPTS')).toBe(true);
         expect(writer.records.some(task => task.type.description === 'DELETE_SCRIPT')).toBe(true);
     });
 
@@ -160,10 +169,10 @@ describe('V2 flat session script mutations', () => {
             ? Promise.resolve(reduce(current, action))
             : Promise.resolve(current));
 
-        await runSessionScript('database', current, current.scripts[scriptKey], executeQuery,
+        await runSessionScript(current, current.scripts[scriptKey], executeQuery,
             modifySessionScripts, logger);
 
-        expect(executeQuery).toHaveBeenCalledWith('database', expect.objectContaining({
+        expect(executeQuery).toHaveBeenCalledWith(current.connectionId, expect.objectContaining({
             query: sql,
             cacheable: false,
             cacheSignature: '',
@@ -188,7 +197,7 @@ describe('V2 flat session script mutations', () => {
         const current = state(['1_alpha.sql', '2_beta.sql']);
         const writer = new RecordingWriter(logger, new SessionTestBackend());
         const next = reduce(current, { type: CREATE_SCRIPT, value: { index: 1 } }, writer);
-        const names = getSortedScriptFileNames(next.scriptRefs);
+        const names = next.scriptOrder;
         expect(names).toHaveLength(3);
         expect(next.scriptFocus.fileName).toBe(names[1]);
         expect(writer.records.some(task => task.type.description === 'WRITE_SCRIPT'
@@ -199,7 +208,7 @@ describe('V2 flat session script mutations', () => {
         const current = state(['1_alpha.sql', '2_beta.sql']);
         const writer = new RecordingWriter(logger, new SessionTestBackend());
         const next = reduce(current, { type: CREATE_SCRIPT, value: { index: null, text: 'SELECT 42' } }, writer);
-        const names = getSortedScriptFileNames(next.scriptRefs);
+        const names = next.scriptOrder;
         expect(names).toHaveLength(3);
         expect(next.scriptFocus.fileName).toBe(names[2]);
         const created = next.scripts[next.scriptRefs[names[2]].scriptId];
@@ -213,7 +222,7 @@ describe('V2 flat session script mutations', () => {
 
     it('creates the first script of an empty session', () => {
         const next = reduce(state([]), { type: CREATE_SCRIPT, value: { index: null, text: 'SELECT 1' } });
-        const names = getSortedScriptFileNames(next.scriptRefs);
+        const names = next.scriptOrder;
         expect(names).toHaveLength(1);
         expect(next.scriptFocus.fileName).toBe(names[0]);
     });
@@ -226,22 +235,115 @@ describe('V2 flat session script mutations', () => {
         expect(next.scriptFocus.fileName).toBe('');
     });
 
-    it('reorders by dense prefixes and follows focus', () => {
+    it('reorders through the script list without renaming files', () => {
         const current = state();
-        const next = reduce(current, { type: REORDER_SCRIPTS, value: ['3_gamma.sql', '1_alpha.sql', '2_beta.sql'] });
-        expect(getSortedScriptFileNames(next.scriptRefs)).toEqual(['1_gamma.sql', '2_alpha.sql', '3_beta.sql']);
-        expect(next.scriptFocus.fileName).toBe('3_beta.sql');
+        const writer = new RecordingWriter(logger, new SessionTestBackend());
+        const next = reduce(current, { type: REORDER_SCRIPTS, value: ['3_gamma.sql', '1_alpha.sql', '2_beta.sql'] }, writer);
+        expect(next.scriptOrder).toEqual(['3_gamma.sql', '1_alpha.sql', '2_beta.sql']);
+        expect(next.scriptRefs).toBe(current.scriptRefs);
+        expect(next.scriptFocus.fileName).toBe('2_beta.sql');
+        expect(writer.records).toEqual([{
+            type: WRITE_SESSION_SCRIPTS,
+            value: [current.sessionId, {
+                scripts: ['3_gamma.sql', '1_alpha.sql', '2_beta.sql'].map(name => ({ name, connectionId: current.connectionId })),
+                connections: [],
+            }],
+        }]);
+        // The same order changes nothing
+        expect(reduce(next, { type: REORDER_SCRIPTS, value: next.scriptOrder })).toBe(next);
     });
 
-    it('renames in place and persists a flat rename', () => {
+    it('creates scripts without an ordering prefix', () => {
+        const next = reduce(state(['1_alpha.sql']), { type: CREATE_SCRIPT, value: { index: 0 } });
+        expect(next.scriptOrder).toHaveLength(2);
+        expect(next.scriptOrder[1]).toBe('1_alpha.sql');
+        expect(next.scriptOrder[0]).not.toMatch(/^\d+_/);
+    });
+
+    it('renames in place without keeping the ordering prefix', () => {
         const current = state(['1_alpha.sql', '2_beta.sql']);
         const writer = new RecordingWriter(logger, new SessionTestBackend());
         const next = reduce(current, { type: RENAME_SCRIPT, value: { fileName: '2_beta.sql', newFileName: 'report' } }, writer);
-        expect(next.scriptRefs['2_report.sql']).toBeDefined();
-        expect(next.scriptFocus.fileName).toBe('2_report.sql');
+        expect(next.scriptRefs['report.sql']).toBeDefined();
+        expect(next.scriptOrder).toEqual(['1_alpha.sql', 'report.sql']);
+        expect(next.scriptFocus.fileName).toBe('report.sql');
         expect(writer.records).toContainEqual(expect.objectContaining({
-            value: [current.sessionId, '2_beta.sql', '2_report.sql'],
+            value: [current.sessionId, '2_beta.sql', 'report.sql'],
         }));
+        expect(writer.records.some(task => task.type === WRITE_SESSION_SCRIPTS)).toBe(true);
+        // The prefix is part of the name the user types
+        expect(reduce(next, { type: RENAME_SCRIPT, value: { fileName: 'report.sql', newFileName: '02_report' } }).scriptOrder)
+            .toEqual(['1_alpha.sql', '02_report.sql']);
+        // Names that are not plain file names are ignored
+        expect(reduce(next, { type: RENAME_SCRIPT, value: { fileName: 'report.sql', newFileName: 'a/b' } })).toBe(next);
+    });
+
+    it('moves a script to another connection under its script key', () => {
+        const current = state(['1_alpha.sql', '2_beta.sql']);
+        const other = { ...connection(ConnectorType.TRINO), params: { trino: { endpoint: 'https://trino.example' } } as any };
+        const scriptKey = current.scriptRefs['2_beta.sql'].scriptId;
+        current.scripts[scriptKey] = { ...current.scripts[scriptKey], latestQueryId: 7, latestResultQueryId: 7 };
+        const writer = new RecordingWriter(logger, new SessionTestBackend());
+        const next = reduce(current, { type: SET_SCRIPT_CONNECTION, value: { fileName: '2_beta.sql', connection: other } }, writer);
+        const moved = next.scripts[scriptKey];
+        expect(next.scriptRefs['2_beta.sql'].scriptId).toBe(scriptKey);
+        expect(moved.connection).toBe(other);
+        expect(moved.scriptSession.getText()).toBe('SELECT 2');
+        expect(moved.latestQueryId).toBe(7);
+        expect(moved.latestResultQueryId).toBe(7);
+        expect(writer.records).toEqual([{
+            type: WRITE_SESSION_SCRIPTS,
+            value: [current.sessionId, {
+                scripts: [
+                    { name: '1_alpha.sql', connectionId: current.connectionId },
+                    { name: '2_beta.sql', connectionId: other.connectionId },
+                ],
+                // The session file takes a copy of the new connection
+                connections: [{ connectionId: other.connectionId, params: other.params }],
+            }],
+        }]);
+        // The same connection changes nothing
+        expect(reduce(next, { type: SET_SCRIPT_CONNECTION, value: { fileName: '2_beta.sql', connection: other } })).toBe(next);
+        // A script moves back under its key
+        const back = reduce(next, { type: SET_SCRIPT_CONNECTION, value: { fileName: '2_beta.sql', connection: defaultScriptConnection(next) } });
+        expect(back.scripts[scriptKey].connection.connectionId).toBe(current.connectionId);
+    });
+
+    it('completes a script against the catalog of its own connection', () => {
+        const current = state(['1_alpha.sql', '2_beta.sql']);
+        const alpha = current.scripts[current.scriptRefs['1_alpha.sql'].scriptId];
+        replaceScriptSessionText(alpha.scriptSession, 'create table only_on_main (a int);');
+        alpha.scriptSession.analyze();
+        alpha.scriptSession.loadIntoCatalog(alpha.scriptKey);
+        const completeTables = (next: SessionScripts) => {
+            const beta = next.scripts[next.scriptRefs['2_beta.sql'].scriptId];
+            const text = 'select * from only_on';
+            replaceScriptSessionText(beta.scriptSession, text);
+            beta.scriptSession.analyze();
+            beta.scriptSession.setCursor(beta.scriptSession.getTextVersion(), BigInt(text.length));
+            const completion = beta.scriptSession.completeAtCursor(10);
+            try {
+                const reader = completion.read();
+                return Array.from({ length: reader.candidatesLength() }, (_, i) => reader.candidates(i)!.completionText());
+            } finally {
+                completion.destroy();
+            }
+        };
+        // On the same connection, the table of the other script completes
+        expect(completeTables(current)).toContain('only_on_main');
+        // On another connection, the table is not visible
+        const moved = reduce(current, { type: SET_SCRIPT_CONNECTION, value: { fileName: '2_beta.sql', connection: connection() } });
+        expect(completeTables(moved)).not.toContain('only_on_main');
+    });
+
+    it('only outdates the scripts of the connection whose catalog changed', () => {
+        const current = state(['1_alpha.sql', '2_beta.sql']);
+        const other = connection();
+        let next = reduce(current, { type: SET_SCRIPT_CONNECTION, value: { fileName: '2_beta.sql', connection: other } });
+        for (const script of Object.values(next.scripts)) script.analysisOutdated = false;
+        next = reduce(next, { type: CATALOG_DID_UPDATE, value: other.connectionId });
+        expect(next.scripts[next.scriptRefs['1_alpha.sql'].scriptId].analysisOutdated).toBe(false);
+        expect(next.scripts[next.scriptRefs['2_beta.sql'].scriptId].analysisOutdated).toBe(true);
     });
 
     it('deletes the focused script, moves focus, and persists deletion', () => {
@@ -249,25 +351,36 @@ describe('V2 flat session script mutations', () => {
         const writer = new RecordingWriter(logger, new SessionTestBackend());
         const next = reduce(current, { type: DELETE_SCRIPT, value: '2_beta.sql' }, writer);
         expect(next.scriptRefs['2_beta.sql']).toBeUndefined();
+        expect(next.scriptOrder).toEqual(['1_alpha.sql', '3_gamma.sql']);
         expect(next.scriptFocus.fileName).toBe('1_alpha.sql');
         expect(writer.records).toContainEqual(expect.objectContaining({ value: [current.sessionId, '2_beta.sql'] }));
     });
 
-    it('matches and replaces native flat-script snapshots without draft/page state', () => {
+    it('matches and replaces native flat-script snapshots with their order and connections', () => {
         const current = state(['1_alpha.sql', '2_beta.sql']);
+        const main = defaultScriptConnection(current);
         expect(sessionScriptsMatchStorageSnapshot(current, { scripts: [
-            { name: '1_alpha.sql', sql: 'SELECT 1' },
-            { name: '2_beta.sql', sql: 'SELECT 2' },
+            { name: '1_alpha.sql', sql: 'SELECT 1', connection: main },
+            { name: '2_beta.sql', sql: 'SELECT 2', connection: main },
         ] })).toBe(true);
+        // The order is part of the snapshot
+        expect(sessionScriptsMatchStorageSnapshot(current, { scripts: [
+            { name: '2_beta.sql', sql: 'SELECT 2', connection: main },
+            { name: '1_alpha.sql', sql: 'SELECT 1', connection: main },
+        ] })).toBe(false);
+        const other = connection();
+        const alphaKey = current.scriptRefs['1_alpha.sql'].scriptId;
         const next = replaceSessionScriptsFromStorage(current, { scripts: [
-            { name: '1_alpha.sql', sql: 'SELECT changed' },
-            { name: '3_added.sql', sql: 'SELECT 3' },
+            { name: '3_added.sql', sql: 'SELECT 3', connection: main },
+            { name: '1_alpha.sql', sql: 'SELECT changed', connection: other },
         ] }, logger);
-        expect(getSortedScriptFileNames(next.scriptRefs)).toEqual(['1_alpha.sql', '3_added.sql']);
-        expect(next.scripts[next.scriptRefs['1_alpha.sql'].scriptId].scriptSession.getText()).toBe('SELECT changed');
+        expect(next.scriptOrder).toEqual(['3_added.sql', '1_alpha.sql']);
+        expect(next.scriptRefs['1_alpha.sql'].scriptId).toBe(alphaKey);
+        expect(next.scripts[alphaKey].scriptSession.getText()).toBe('SELECT changed');
+        expect(next.scripts[alphaKey].connection).toBe(other);
         expect(sessionScriptsMatchStorageSnapshot(next, { scripts: [
-            { name: '1_alpha.sql', sql: 'SELECT changed' },
-            { name: '3_added.sql', sql: 'SELECT 3' },
+            { name: '3_added.sql', sql: 'SELECT 3', connection: main },
+            { name: '1_alpha.sql', sql: 'SELECT changed', connection: other },
         ] })).toBe(true);
     });
 });

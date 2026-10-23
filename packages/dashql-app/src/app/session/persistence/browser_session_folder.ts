@@ -5,7 +5,7 @@ import {
     STORAGE_SCRIPTS_FOLDER,
 } from '../../storage/storage_backend.js';
 import type { SessionBundle } from '../../storage/session_bundle.js';
-import { readSessionBundleHead } from '../../storage/session_bundle.js';
+import { assembleSessionBundle, readSessionBundleHead } from '../../storage/session_bundle.js';
 import { MemoryFolder } from '../../../migration/migration_folder.js';
 
 interface BrowserFolderEntry {
@@ -100,14 +100,10 @@ export async function readSessionBundleFromBrowserFolder(
         }))
         .sort((a, b) => NATURAL_SORT.compare(a.name, b.name));
 
-    return {
-        ...head,
-        scripts,
-        data: await Promise.all([...destinations.values()]
-            .filter(entry => classifyBundlePath(entry.path) === 'data')
-            .sort((a, b) => NATURAL_SORT.compare(a.path, b.path))
-            .map(async entry => ({ name: entry.path.split('/')[1], bytes: new Uint8Array(await entry.file.arrayBuffer()) }))),
-    };
+    return assembleSessionBundle(head, scripts, await Promise.all([...destinations.values()]
+        .filter(entry => classifyBundlePath(entry.path) === 'data')
+        .sort((a, b) => NATURAL_SORT.compare(a.path, b.path))
+        .map(async entry => ({ name: entry.path.split('/')[1], bytes: new Uint8Array(await entry.file.arrayBuffer()) }))));
 }
 
 function normalizeSelectedPath(input: string): { path: string; sourcePath: string } {

@@ -34,7 +34,7 @@ export function SessionConnectionImportDialog(props: Props): React.ReactElement 
     const descriptionId = React.useId();
     const dialogRef = React.useRef<HTMLElement>(null);
     const [choices, setChoices] = React.useState(() => new Map<string, ConnectionImportChoice>(props.questions.map(item => [
-        item.ref.databaseId,
+        item.ref.connectionId,
         item.decision.kind === 'ask' ? { kind: 'link', connectionId: item.decision.candidates[0].id } : { kind: 'separate' },
     ])));
     const cancel = React.useCallback(() => {
@@ -63,8 +63,8 @@ export function SessionConnectionImportDialog(props: Props): React.ReactElement 
                     </p>
                     {props.questions.map(item => {
                         if (item.decision.kind !== 'ask') return null;
-                        const current = choices.get(item.ref.databaseId);
-                        const name = `connection-${item.ref.databaseId}`;
+                        const current = choices.get(item.ref.connectionId);
+                        const name = `connection-${item.ref.connectionId}`;
                         const options: Array<{ choice: ConnectionImportChoice; label: string }> = [
                             ...item.decision.candidates.map(candidate => ({
                                 choice: { kind: 'link' as const, connectionId: candidate.id },
@@ -73,7 +73,7 @@ export function SessionConnectionImportDialog(props: Props): React.ReactElement 
                             { choice: { kind: 'separate' }, label: 'Keep as a new connection' },
                         ];
                         return (
-                            <fieldset key={item.ref.databaseId} className={ownStyles.connection} disabled={props.busy}>
+                            <fieldset key={item.ref.connectionId} className={ownStyles.connection} disabled={props.busy}>
                                 <legend className={ownStyles.connection_label}>
                                     {connectionParamsLabel(item.ref.params)}
                                     {item.ref.role === 'main' ? '' : ' (attached)'}
@@ -85,7 +85,7 @@ export function SessionConnectionImportDialog(props: Props): React.ReactElement 
                                             name={name}
                                             value={choiceValue(option.choice)}
                                             checked={current != null && choiceValue(current) === choiceValue(option.choice)}
-                                            onChange={() => setChoices(prev => new Map(prev).set(item.ref.databaseId, option.choice))}
+                                            onChange={() => setChoices(prev => new Map(prev).set(item.ref.connectionId, option.choice))}
                                         />
                                         {option.label}
                                     </label>

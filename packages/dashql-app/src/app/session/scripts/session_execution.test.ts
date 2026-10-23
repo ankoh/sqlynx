@@ -14,7 +14,7 @@ function deferred<T>() {
     return { promise, resolve, reject };
 }
 
-function fixture(entries = [
+function fixture(entries: Array<{ file: string; outputs: boolean[]; connection?: string }> = [
     { file: '10_last.sql', outputs: [true] },
     { file: '2_commands.sql', outputs: [false, true, false] },
     { file: '1_empty.sql', outputs: [] as boolean[] },
@@ -61,9 +61,10 @@ function fixture(entries = [
     const session = {
         sessionId: 'session', connectionId: 'connection', instance: { plan }, connectionCatalog: {},
         scriptRefs: Object.fromEntries(entries.map((entry, index) => [entry.file, { scriptId: index + 100 }])),
+        scriptOrder: ordered.map(entry => entry.file),
         scripts: Object.fromEntries(entries.map((entry, index) => [index + 100, {
             scriptKey: index + 100, fileName: entry.file, scriptSession: scriptSessions[index], latestQueryId: 50 + index,
-            latestResultQueryId: 50 + index,
+            latestResultQueryId: 50 + index, connection: { connectionId: entry.connection ?? 'connection' },
         }])),
     } as unknown as SessionScripts;
     let nextQueryId = 0;
@@ -104,6 +105,7 @@ describe('runSessionExecution', () => {
         expect(f.lastState()).toEqual({
             phase: 'succeeded', totalScripts: 3, completedScripts: 3,
             totalStatements: 4, completedStatements: 4,
+            totalBlocks: 1, completedBlocks: 1, activeConnectionId: null,
             activeScriptKey: null, activeFileName: null,
             activeStatementIndex: null, activeStatementCount: null, error: null,
         });
@@ -130,14 +132,14 @@ describe('runSessionExecution', () => {
     it('yields while executing a batch of immediately resolved commands', async () => {
         const f = fixture([{ file: '1_commands.sql', outputs: Array(8).fill(false) }]);
         await runSessionExecution(f.args);
-        // Initial status, before graph planning, after graph grouping, then after the eighth command.
-        expect(f.yieldToBrowser).toHaveBeenCalledTimes(4);
+        // Initial status, before graph planning, then after the eighth command.
+        expect(f.yieldToBrowser).toHaveBeenCalledTimes(3);
         expect(f.lastState()).toMatchObject({ phase: 'succeeded', completedStatements: 8 });
     });
 
     it('starts an eligible query after its predecessor result is ready', async () => {
         const f = fixture([{ file: '1.sql', outputs: [false, false] }]);
-        f.args.maxConcurrentQueries = 4;
+        f.args.maxConcurrentQueries = () => 4;
         const first = deferred<null>();
         const started = deferred<void>();
         f.executeQuery.mockImplementationOnce((_connection, args) => {
@@ -156,7 +158,7 @@ describe('runSessionExecution', () => {
 
     it('waits for result readiness before launching dependent queries', async () => {
         const f = fixture([{ file: '1.sql', outputs: [false, false] }]);
-        f.args.maxConcurrentQueries = 4;
+        f.args.maxConcurrentQueries = () => 4;
         f.graph.edges.push({ from: 0, to: 1 });
         const resultsReady = deferred<void>();
         const first = deferred<null>();
@@ -176,7 +178,7 @@ describe('runSessionExecution', () => {
         await run;
     });
 
-    it.each(['invalid', 'text', 'analysis', 'catalog', 'membership', 'session', 'connection', 'missing', 'order', 'edge'])
+    it.each(['invalid', 'text', 'analysis', 'catalog', 'membership', 'session', 'instance', 'missing', 'order', 'edge'])
         ('rejects %s plans before backend execution', async kind => {
             const f = fixture();
             if (kind === 'invalid') {
@@ -192,7 +194,7 @@ describe('runSessionExecution', () => {
                     case 'catalog': f.graph.scripts[0].analyzedCatalogRevision = 0n; break;
                     case 'membership': delete f.session.scriptRefs['1_empty.sql']; break;
                     case 'session': f.session.scripts[102].scriptSession = f.session.scripts[101].scriptSession; break;
-                    case 'connection': f.getSession.mockReturnValue({ ...f.session, connectionId: 'other' }); break;
+                    case 'instance': f.getSession.mockReturnValue({ ...f.session, instance: {} as core.DashQL }); break;
                     case 'missing': f.getSession.mockReturnValue(null); break;
                     case 'order': f.graph.nodes.reverse(); break;
                     case 'edge': f.graph.edges.push({ from: 3, to: 0 }); break;
@@ -401,6 +403,55 @@ describe('runSessionExecution', () => {
         completed.controller.abort();
         expect(completed.states).toHaveLength(count);
         expect(completed.cancelQuery).not.toHaveBeenCalled();
+    });
+
+    it('runs consecutive scripts on the same connection as blocks, one block after another', async () => {
+        const f = fixture([
+            { file: '1_a.sql', outputs: [true], connection: 'a' },
+            { file: '2_a.sql', outputs: [true], connection: 'a' },
+            { file: '3_b.sql', outputs: [false, true], connection: 'b' },
+            { file: '4_a.sql', outputs: [true], connection: 'a' },
+        ]);
+        // Every block is planned on its own, the graph covers the scripts of the block
+        f.plan.mockImplementation((input: core.DashQLScriptSession[]) => {
+            const files = input.map(scriptSession => f.session.scripts[scriptSession.getCatalogEntryId()].fileName);
+            const graph = {
+                valid: true,
+                scripts: input.map(scriptSession => ({
+                    scriptId: scriptSession.getCatalogEntryId(), textVersion: scriptSession.getTextVersion(),
+                    analyzedTextVersion: scriptSession.getTextVersion(), analyzedCatalogRevision: scriptSession.getCatalogRevision(),
+                })),
+                nodes: files.flatMap((file, script) => (file === '3_b.sql' ? [false, true] : [true]).map((producesOutput, statementId) => ({
+                    script, statementId, producesOutput, sql: `${file}:${statementId + 1}`,
+                }))),
+                edges: [] as Array<{ from: number; to: number }>,
+                diagnostics: [],
+            };
+            return { unpackAndDestroy: vi.fn(() => graph as unknown as core.buffers.execution.ExecutionGraphT) };
+        });
+        await runSessionExecution(f.args);
+        expect(f.plan.mock.calls.map(([input]) => input.map(session => session.getCatalogEntryId()))).toEqual([
+            [100, 101], [102], [103],
+        ]);
+        expect(f.executeQuery.mock.calls.map(([connection, args]) => [connection, args.query])).toEqual([
+            ['a', '1_a.sql:1'], ['a', '2_a.sql:1'], ['b', '3_b.sql:1'], ['b', '3_b.sql:2'], ['a', '4_a.sql:1'],
+        ]);
+        expect(f.lastState()).toMatchObject({
+            phase: 'succeeded', totalBlocks: 3, completedBlocks: 3, totalStatements: 5, completedStatements: 5, completedScripts: 4,
+        });
+    });
+
+    it('cancels a query on the connection that runs it', async () => {
+        const f = fixture([{ file: '1_b.sql', outputs: [true], connection: 'b' }]);
+        const started = deferred<void>();
+        const execution = deferred<null>();
+        f.executeQuery.mockImplementationOnce(() => { started.resolve(); return [42, execution.promise]; });
+        const run = runSessionExecution(f.args);
+        await started.promise;
+        f.controller.abort();
+        expect(f.cancelQuery).toHaveBeenCalledExactlyOnceWith('b', 42);
+        execution.resolve(null);
+        await run;
     });
 
     it('succeeds on an empty session', async () => {

@@ -1,5 +1,6 @@
 import { StorageBackendType, STORAGE_MANIFEST_FILE, type SessionEntry } from './storage_backend.js';
 import {
+    assembleSessionBundle,
     type SessionBundle,
     sessionBundlesEqual,
 } from './session_bundle.js';
@@ -39,7 +40,6 @@ export async function writePortableSessionFresh(
     if (conflict) {
         throw new Error(`Session ${conflict.sessionId} is already registered`);
     }
-    await requireUniqueDatabaseIds(backend, bundle, targetSessionId);
 
     try {
         await backend.writePortableSessionBundle(bundle, targetSessionId, true);
@@ -64,7 +64,6 @@ export async function replaceSessionWithPortableBundle(
 ): Promise<string> {
     const targetSessionId = conflict.sessionId;
     requireMatchingSource(bundle, targetSessionId);
-    await requireUniqueDatabaseIds(backend, bundle, targetSessionId);
     const oldEntry = await findManifestEntry(backend, targetSessionId);
     // A replacement is also the recovery path for registered sessions that the current format can
     // no longer read (for example V1 sessions containing dashql-draft.sql). Keep rollback data when
@@ -116,7 +115,6 @@ export async function registerNativeSession(
     if (conflict) {
         throw new Error(`Session ${conflict.sessionId} is already registered`);
     }
-    await requireUniqueDatabaseIds(backend, prepared.bundle, sessionId);
     await backend.registerPreparedNativeSession(prepared, sessionId);
     return sessionId;
 }
@@ -134,7 +132,6 @@ export async function replaceSessionWithNativeFolder(
         && conflict.location.nativePath === prepared.dir) {
         return targetSessionId;
     }
-    await requireUniqueDatabaseIds(backend, prepared.bundle, targetSessionId);
 
     const oldEntry = await findManifestEntry(backend, targetSessionId);
     let manifestFlipped = false;
@@ -182,37 +179,6 @@ async function findManifestEntry(
     return { ...entry };
 }
 
-/// Database UUIDs key global runtime maps, so two sessions cannot safely share one. Ignore the
-/// destination session during replacement, but inspect every other readable manifest before any
-/// import write starts. An unreadable session cannot contribute live database state at startup.
-async function requireUniqueDatabaseIds(
-    backend: CompositeStorageBackend,
-    bundle: SessionBundle,
-    targetSessionId: string,
-): Promise<void> {
-    const incomingIds = new Set(
-        [bundle.session.mainDatabase, ...bundle.session.attachedDatabases]
-            .map(database => database.databaseId.toLowerCase()),
-    );
-    const entries = await backend.listSessions(STORAGE_MANIFEST_FILE);
-    for (const entry of entries) {
-        if (entry.path.toLowerCase() === targetSessionId.toLowerCase()) continue;
-        let session;
-        try {
-            session = await backend.loadSession(entry.path);
-        } catch {
-            continue;
-        }
-        for (const database of [session.mainDatabase, ...(session.attachedDatabases ?? [])]) {
-            if (database?.databaseId && incomingIds.has(database.databaseId.toLowerCase())) {
-                throw new Error(
-                    `Database ${database.databaseId} is already used by session ${entry.path}`,
-                );
-            }
-        }
-    }
-}
-
 async function tryReadBundle(
     backend: CompositeStorageBackend,
     sessionId: string,
@@ -241,13 +207,12 @@ function normalizePortableBundle(bundle: SessionBundle, sessionId: string): Sess
     delete session.sessionPath;
     delete session.storageType;
     delete session.nativePath;
-    return {
+    // The written session lists exactly the written scripts and attachments
+    return assembleSessionBundle({
         session,
         schemaSql: bundle.schemaSql,
         functionsSql: bundle.functionsSql ?? '',
-        scripts: bundle.scripts,
-        data: bundle.data,
-    };
+    }, bundle.scripts, bundle.data ?? []);
 }
 
 function requireMatchingSource(bundle: SessionBundle, targetSessionId: string): void {

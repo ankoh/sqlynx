@@ -31,7 +31,7 @@ describe('native session sync', () => {
             attrs: {},
         });
         expect(isSessionContentWatchEvent(modify(`${DIR}/cache/result.arrow`), DIR)).toBe(false);
-        expect(isSessionContentWatchEvent(modify(`${DIR}/dashql-session.json`), DIR)).toBe(false);
+        expect(isSessionContentWatchEvent(modify(`${DIR}/dashql-session.json`), DIR)).toBe(true);
         expect(isSessionContentWatchEvent(modify(`${DIR}/scripts/01_query.sql`), DIR)).toBe(true);
         expect(isSessionContentWatchEvent(modify(`${DIR}/dashql-catalog-relations.sql`), DIR)).toBe(true);
     });

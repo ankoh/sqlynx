@@ -23,7 +23,7 @@ describe('OPFSStorageBackend V2 flat storage', () => {
         vi.unstubAllGlobals();
     });
 
-    it('round-trips flat scripts and regenerates a scripts-only index', async () => {
+    it('round-trips flat scripts without an index', async () => {
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
         await backend.saveScript(TEST_SESSION_ID, '10_last.sql', 'SELECT 10');
         await backend.saveScript(TEST_SESSION_ID, '2_first.sql', 'SELECT 2');
@@ -31,9 +31,7 @@ describe('OPFSStorageBackend V2 flat storage', () => {
             { name: '2_first.sql', sql: 'SELECT 2' },
             { name: '10_last.sql', sql: 'SELECT 10' },
         ]);
-        expect(JSON.parse(files.get(`sessions/${TEST_SESSION_ID}/dashql-session-index.json`)! as string)).toEqual({
-            scripts: [{ name: '2_first.sql' }, { name: '10_last.sql' }],
-        });
+        expect(files.has(`sessions/${TEST_SESSION_ID}/dashql-session-index.json`)).toBe(false);
         expect(await backend.listSessions(STORAGE_MANIFEST_FILE)).toEqual([{ path: TEST_SESSION_ID, storageType: 'opfs' }]);
     });
 

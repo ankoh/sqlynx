@@ -149,7 +149,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
     it('shows session and connection counts', () => {
         const main = {
             ...state.local!,
-            connectorInfo: { icons: { colored: 'database' } },
+            connectorInfo: { icons: { colored: 'database' }, names: { displayLong: 'Hyper' } },
             catalog: {
                 createSnapshot: () => ({
                     read: () => ({ catalogReader: { databasesLength: () => 0 } }),
@@ -194,7 +194,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
         act(() => root.render(<SessionWorkbenchSidebar sessionScripts={{
             sessionId: 'current-session', instance: {},
         } as any} dependencies={dependencies} />));
-        click('More actions for Memory');
+        click('More actions for Hyper Local');
         act(() => {
             Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'Settings')!.click();
         });
@@ -211,7 +211,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
         state.write.mockReturnValue(new Promise(() => {}));
         click('Create session');
         expect(state.setupSessionScripts).not.toHaveBeenCalled();
-        expect(Array.from(document.querySelectorAll('button')).some(button => button.textContent === 'Memory')).toBe(false);
+        expect(Array.from(document.querySelectorAll('button')).some(button => button.textContent === 'Hyper Local')).toBe(false);
         const choice = Array.from(document.querySelectorAll('button')).find(button => button.textContent === connector)!;
         expect(choice.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
         expect(choice.querySelector('use')?.getAttribute('xlink:href')).toContain(
@@ -230,7 +230,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
             value: '00000000-0000-4000-8000-000000000001',
         });
         expect(state.write).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
-            value: ['00000000-0000-4000-8000-000000000001', 'local-database', [{ databaseId: 'local-database', params: state.local!.params }]],
+            value: ['00000000-0000-4000-8000-000000000001', 'local-database', [{ connectionId: 'local-database', params: state.local!.params }]],
         }));
         expect(state.overlayProps?.isOpen).toBe(false);
         if (connector === 'Hyper') {

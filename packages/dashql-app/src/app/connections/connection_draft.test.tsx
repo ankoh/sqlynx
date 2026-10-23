@@ -22,20 +22,20 @@ import { cancelConnectionSetup, registerConnectionSetup } from './connection_set
 import { buildPageStateFromParams } from './ui/trino_connection_settings.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
 import { StorageProvider, useStorageWriter } from '../storage/storage_provider.js';
-import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID } from '../storage/session_test_backend.js';
+import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID } from '../storage/session_test_backend.js';
 import type { StorageWriter } from '../storage/storage_writer.js';
 import type { Logger } from '../../platform/logger/logger.js';
 
 /// The draft of the test connection in the app manifest
 function globalDraft(backend: SessionTestBackend): ConnectionParams | undefined {
-    return backend.connections?.find(entry => entry.id === TEST_DATABASE_ID)?.paramsDraft;
+    return backend.connections?.find(entry => entry.id === TEST_CONNECTION_ID)?.paramsDraft;
 }
 
 function database(type: ConnectorType): ConnectionState {
     const connectorInfo = CONNECTOR_INFOS[type];
     const params = createDefaultConnectionParamsForConnector(connectorInfo);
     return {
-        connectionId: TEST_DATABASE_ID, connectorInfo, params, active: false,
+        connectionId: TEST_CONNECTION_ID, connectorInfo, params, active: false,
         connectionStatus: ConnectionStatus.NOT_STARTED, connectionHealth: ConnectionHealth.NOT_STARTED,
         details: getConnectionStateDetailsFromParams(params),
         connectionSignature: { signatureString: 'initial', signatures: new Map() },
@@ -59,14 +59,14 @@ function start(params: ConnectionParams): ConnectionAction {
 describe('durable connection drafts', () => {
     it('shares startup cancellation and protects newer registrations from stale cleanup', () => {
         const startup = new AbortController();
-        const unregisterStartup = registerConnectionSetup(TEST_DATABASE_ID, startup);
-        cancelConnectionSetup(TEST_DATABASE_ID);
+        const unregisterStartup = registerConnectionSetup(TEST_CONNECTION_ID, startup);
+        cancelConnectionSetup(TEST_CONNECTION_ID);
         expect(startup.signal.aborted).toBe(true);
         expect(startup.signal.reason.name).toBe('AbortError');
         const next = new AbortController();
-        const unregisterNext = registerConnectionSetup(TEST_DATABASE_ID, next);
+        const unregisterNext = registerConnectionSetup(TEST_CONNECTION_ID, next);
         unregisterStartup();
-        cancelConnectionSetup(TEST_DATABASE_ID);
+        cancelConnectionSetup(TEST_CONNECTION_ID);
         expect(next.signal.aborted).toBe(true);
         unregisterNext();
     });
@@ -153,8 +153,8 @@ describe('durable connection drafts', () => {
         let value = '';
         function Harness() {
             [, setRegistry] = useConnectionRegistry();
-            [current, dispatch] = useConnectionById(TEST_DATABASE_ID) as [ConnectionState, typeof dispatch];
-            [value, edit] = useConnectionDraftForm(TEST_DATABASE_ID,
+            [current, dispatch] = useConnectionById(TEST_CONNECTION_ID) as [ConnectionState, typeof dispatch];
+            [value, edit] = useConnectionDraftForm(TEST_CONNECTION_ID,
                 params => params && 'trino' in params ? params.trino.endpoint : '',
                 endpoint => edited(current.params, endpoint));
             writer = useStorageWriter();
@@ -164,8 +164,8 @@ describe('durable connection drafts', () => {
         try {
             await act(async () => root.render(<LoggerProvider><StorageProvider backend={backend}><RegistryProvider><Harness /></RegistryProvider></StorageProvider></LoggerProvider>));
             await act(async () => setRegistry(reg => {
-                reg.connections.set(TEST_DATABASE_ID, { ...database(ConnectorType.TRINO), active });
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
+                reg.connections.set(TEST_CONNECTION_ID, { ...database(ConnectorType.TRINO), active });
+                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
             await act(async () => edit('not a URL'));
@@ -181,7 +181,7 @@ describe('durable connection drafts', () => {
             expect(value).toBe('');
             await writer.flush();
             expect(globalDraft(backend)).toBeUndefined();
-            expect(backend.connections?.map(entry => entry.id)).toEqual([TEST_DATABASE_ID]);
+            expect(backend.connections?.map(entry => entry.id)).toEqual([TEST_CONNECTION_ID]);
             await act(async () => { await Promise.resolve(); });
             expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([]);
             expect(writer.pendingTasks.size).toBe(0);
@@ -200,8 +200,8 @@ describe('durable connection drafts', () => {
         let writer!: StorageWriter;
         function Harness() {
             [, setRegistry] = useConnectionRegistry();
-            [, dispatch] = useConnectionById(TEST_DATABASE_ID);
-            [form, edit] = useConnectionDraftForm(TEST_DATABASE_ID,
+            [, dispatch] = useConnectionById(TEST_CONNECTION_ID);
+            [form, edit] = useConnectionDraftForm(TEST_CONNECTION_ID,
                 params => buildHyperConnectionPageState(params && 'hyper' in params ? params.hyper as any : undefined),
                 value => ({ hyper: { ...buildHyperConnectionSetupParams(value), draftRows: { metadata: value.gRPCMetadata, queryParameters: value.queryParameters } } }));
             writer = useStorageWriter();
@@ -211,8 +211,8 @@ describe('durable connection drafts', () => {
         try {
             await act(async () => root.render(<LoggerProvider><StorageProvider backend={backend}><RegistryProvider><Harness /></RegistryProvider></StorageProvider></LoggerProvider>));
             await act(async () => setRegistry(reg => {
-                reg.connections.set(TEST_DATABASE_ID, database(ConnectorType.HYPER));
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
+                reg.connections.set(TEST_CONNECTION_ID, database(ConnectorType.HYPER));
+                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
             const rows = [{ key: '', value: 'unfinished' }, { key: '', value: '' }];
@@ -225,8 +225,8 @@ describe('durable connection drafts', () => {
             expect(buildHyperConnectionPageState(persisted.hyper).gRPCMetadata).toEqual(rows);
             expect(buildHyperConnectionPageState(persisted.hyper).endpoint).toBe('invalid');
             await act(async () => setRegistry(reg => {
-                const current = reg.connections.get(TEST_DATABASE_ID)!;
-                reg.connections.set(TEST_DATABASE_ID, { ...current, paramsDraft: persisted });
+                const current = reg.connections.get(TEST_CONNECTION_ID)!;
+                reg.connections.set(TEST_CONNECTION_ID, { ...current, paramsDraft: persisted });
                 return { ...reg };
             }));
             expect(form.gRPCMetadata).toEqual(rows);

@@ -15,8 +15,9 @@ const state = {
 
 const dependencies = {
     useSessionViewMode: () => ({ mode: state.mode }),
-    useSessionScripts: () => [{ sessionId: 'session', name: 'Session' }, vi.fn()],
+    useSessionScripts: () => [{ sessionId: 'session', name: 'Session', connectionId: 'database', scripts: {} }, vi.fn()],
     useConnectionState: () => [null],
+    useConnectionRegistry: () => [{ connections: new Map() }] as any,
     useLogger: () => ({ warn: vi.fn() }),
     useRouteContext: () => ({ sessionId: 'session' }),
     SessionFeedPage: ({ active }: { active: boolean }) => {

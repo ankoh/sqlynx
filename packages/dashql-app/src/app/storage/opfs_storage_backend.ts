@@ -1,6 +1,5 @@
-import { type SessionRegistryBackend, type ConnectionEntry, STORAGE_CONNECTIONS_FOLDER, type SessionData, type ScriptData, type SessionEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_SESSIONS_FOLDER, STORAGE_SESSION_FILE, STORAGE_SESSION_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
+import { type SessionRegistryBackend, type ConnectionEntry, STORAGE_CONNECTIONS_FOLDER, type SessionData, type ScriptData, type SessionEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_SESSIONS_FOLDER, STORAGE_SESSION_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
-import { serializeSessionIndex } from './session_index.js';
 import { STORAGE_VERSION } from '../../migration/versions.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
@@ -124,26 +123,9 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
         await writable.close();
 
         await this.upsertSessionEntry({ path: sessionId, storageType: StorageBackendType.OPFS });
-        await this.regenerateSessionIndex(sessionId);
     }
 
-    async regenerateSessionIndex(sessionId: string): Promise<void> {
-        const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), true);
-        const indexFile = await sessionDir.getFileHandle(STORAGE_SESSION_INDEX_FILE, { create: true });
-        const writable = await indexFile.createWritable();
-        await writable.write(serializeSessionIndex(await this.loadScripts(sessionId), await this.listDataFiles(sessionId)));
-        await writable.close();
-    }
 
-    async ensureSessionIndex(sessionId: string): Promise<void> {
-        const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), false);
-        try {
-            await sessionDir.getFileHandle(STORAGE_SESSION_INDEX_FILE, { create: false });
-        } catch (error) {
-            if ((error as any).name !== 'NotFoundError') throw error;
-            await this.regenerateSessionIndex(sessionId);
-        }
-    }
 
     async deleteSession(sessionId: string): Promise<void> {
         await this.deleteSessionFiles(sessionId);
@@ -320,27 +302,16 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
     ): Promise<void> {
         const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), true);
         const scriptsDir = await sessionDir.getDirectoryHandle(STORAGE_SCRIPTS_FOLDER, { create: true });
-        let isNew = false;
-        try {
-            await scriptsDir.getFileHandle(scriptName, { create: false });
-        } catch (error) {
-            if ((error as any).name !== 'NotFoundError') throw error;
-            isNew = true;
-        }
         const fileHandle = await scriptsDir.getFileHandle(scriptName, { create: true });
         const writable = await fileHandle.createWritable();
         await writable.write(sql);
         await writable.close();
-        if (isNew) {
-            await this.regenerateSessionIndex(sessionId);
-        }
     }
 
     async deleteScript(sessionId: string, scriptName: string): Promise<void> {
         const sessionDir = await this.getSessionDir(this.sessionRelPath(sessionId), false);
         const scriptsDir = await sessionDir.getDirectoryHandle(STORAGE_SCRIPTS_FOLDER, { create: false });
         await scriptsDir.removeEntry(scriptName);
-        await this.regenerateSessionIndex(sessionId);
     }
 
     async renameScript(sessionId: string, oldScriptName: string, newScriptName: string): Promise<void> {
@@ -363,7 +334,6 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
             throw error;
         }
         await this.moveFile(scriptsDir, oldScriptName, scriptsDir, newScriptName);
-        await this.regenerateSessionIndex(sessionId);
     }
 
     /// The relative folder that holds a session's cached query results, e.g. "sessions/<uuid>/cache"
@@ -419,7 +389,6 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
             await writable.write(buffer);
         }
         await writable.close();
-        await this.regenerateSessionIndex(sessionId);
     }
 
     async deleteDataFile(sessionId: string, name: string): Promise<void> {
@@ -432,7 +401,6 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
             if ((error as Error).name === 'NotFoundError') return;
             throw error;
         }
-        await this.regenerateSessionIndex(sessionId);
     }
 
     async renameDataFile(sessionId: string, oldName: string, newName: string): Promise<void> {
@@ -442,7 +410,6 @@ export class OPFSStorageBackend implements SessionRegistryBackend {
         const dir = await this.dataDir(sessionId, false);
         if (!dir) return;
         await this.moveFile(dir, oldName, dir, newName);
-        await this.regenerateSessionIndex(sessionId);
     }
 
     async loadQueryResultCache(sessionId: string, hash: string): Promise<CachedQueryResult | null> {

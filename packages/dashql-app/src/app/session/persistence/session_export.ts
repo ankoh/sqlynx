@@ -13,7 +13,7 @@ import {
 } from '../../storage/storage_backend.js';
 import { BASE64URL_CODEC } from '../../../utils/base64.js';
 import { sanitizeConnectionParamsForSharing } from '../../connections/connection_params.js';
-import { readSessionBundle, regenerateSessionDatabaseIds, rebaseSessionAttachmentPaths } from '../../storage/session_bundle.js';
+import { readSessionBundle, regenerateSessionConnectionIds, rebaseSessionAttachmentPaths } from '../../storage/session_bundle.js';
 
 /// The target platform a shared session link points at.
 export enum SessionLinkTarget {
@@ -39,7 +39,7 @@ export interface SharedSessionExportOptions {
     withLoginHint?: boolean;
     /// Include persisted relation and function catalog SQL files when present.
     withCatalog?: boolean;
-    /// Keep the session and attached database UUIDs instead of generating export-only identities.
+    /// Keep the session and connection UUIDs instead of generating export-only identities.
     preserveUUIDs?: boolean;
 }
 
@@ -56,14 +56,12 @@ export async function createSessionZip(
     const zip = new JSZip();
 
     // Add session metadata
-    const exportDatabase = (database: SessionData['mainDatabase']) => ({
-        databaseId: database.databaseId,
-        params: sanitizeConnectionParamsForSharing(database.params),
-    });
     zip.file(STORAGE_SESSION_FILE, JSON.stringify({
         ...sessionData,
-        mainDatabase: exportDatabase(sessionData.mainDatabase),
-        attachedDatabases: sessionData.attachedDatabases.map(exportDatabase),
+        connections: sessionData.connections.map(connection => ({
+            connectionId: connection.connectionId,
+            params: sanitizeConnectionParamsForSharing(connection.params),
+        })),
     }, null, 2));
     if (schemaSql != null) {
         zip.file(STORAGE_CATALOG_RELATIONS, schemaSql);
@@ -128,11 +126,11 @@ export async function exportSessionAsZip(
 ///
 /// Scripts and the session name are read straight from disk (via `exportSessionAsZip`). Connection
 /// params are replaced with their live values and sanitized. By default the exported session and
-/// databases receive fresh UUIDs so importing a copy cannot collide with existing runtime state.
+/// connections receive fresh UUIDs so importing a copy cannot collide with existing runtime state.
 export async function exportSessionAsSharedZip(
     backend: StorageBackend,
     sessionId: string,
-    databaseParams: ReadonlyMap<string, ConnectionParams>,
+    connectionParams: ReadonlyMap<string, ConnectionParams>,
     optionsInput: SharedSessionExportOptionsInput = {},
 ): Promise<Blob> {
     const options = typeof optionsInput === 'boolean' ? { withLoginHint: optionsInput } : optionsInput;
@@ -142,24 +140,17 @@ export async function exportSessionAsSharedZip(
         transformSession: (session: SessionData): SessionData => {
             const sanitized: SessionData = {
                 ...session,
-                mainDatabase: {
-                    ...session.mainDatabase,
+                connections: session.connections.map(connection => ({
+                    ...connection,
                     params: sanitizeConnectionParamsForSharing(
-                        databaseParams.get(session.mainDatabase.databaseId) ?? session.mainDatabase.params,
+                        connectionParams.get(connection.connectionId) ?? connection.params,
                         withLoginHint,
                     ),
-                },
-                attachedDatabases: session.attachedDatabases.map(database => ({
-                    ...database,
-                    params: sanitizeConnectionParamsForSharing(
-                        databaseParams.get(database.databaseId) ?? database.params,
-                        withLoginHint,
-                    ),
-                })) as SessionData['attachedDatabases'],
+                })),
             };
             return options.preserveUUIDs
                 ? sanitized
-                : regenerateSessionDatabaseIds({ ...sanitized, sessionId: crypto.randomUUID() });
+                : regenerateSessionConnectionIds({ ...sanitized, sessionId: crypto.randomUUID() });
         },
     });
 }
@@ -168,7 +159,7 @@ export async function exportSessionAsSharedZip(
 export async function exportSessionAsUrl(
     backend: StorageBackend,
     sessionId: string,
-    databaseParams: any,
+    connectionParams: any,
     target: SessionLinkTarget,
     optionsInput: SharedSessionExportOptionsInput = {},
 ): Promise<URL> {
@@ -176,7 +167,7 @@ export async function exportSessionAsUrl(
     const zipBlob = await exportSessionAsSharedZip(
         backend,
         sessionId,
-        databaseParams,
+        connectionParams,
         { ...options, withCatalog: options.withCatalog ?? false },
     );
     const zipBytes = new Uint8Array(await zipBlob.arrayBuffer());

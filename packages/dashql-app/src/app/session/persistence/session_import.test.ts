@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { importSessionFromZip, readSessionBundleFromZip } from './session_import.js';
 import { STORAGE_SESSION_FILE } from '../../storage/storage_backend.js';
-import { SessionTestBackend, TEST_SESSION_ID, testSession } from '../../storage/session_test_backend.js';
+import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testSession } from '../../storage/session_test_backend.js';
 
 async function zip(files: Record<string, string>): Promise<Blob> {
     const archive = new JSZip();
@@ -12,7 +12,7 @@ async function zip(files: Record<string, string>): Promise<Blob> {
 }
 
 describe('V2 session ZIP import', () => {
-    it('reads naturally ordered flat scripts and ignores derived files', async () => {
+    it('appends unlisted scripts in natural order and ignores derived files', async () => {
         const bundle = await readSessionBundleFromZip(await zip({
             [STORAGE_SESSION_FILE]: JSON.stringify(testSession()),
             'dashql-catalog-relations.sql': 'schema',
@@ -24,7 +24,10 @@ describe('V2 session ZIP import', () => {
         }));
 
         expect(bundle).toEqual({
-            session: testSession(),
+            session: testSession({ scripts: [
+                { name: '2_first.sql', connectionId: TEST_CONNECTION_ID },
+                { name: '10_last.sql', connectionId: TEST_CONNECTION_ID },
+            ] }),
             schemaSql: 'schema',
             functionsSql: 'functions',
             data: [],
@@ -35,6 +38,19 @@ describe('V2 session ZIP import', () => {
         });
     });
 
+    it('keeps the order of the listed scripts', async () => {
+        const scripts = [
+            { name: '10_last.sql', connectionId: TEST_CONNECTION_ID },
+            { name: '2_first.sql', connectionId: TEST_CONNECTION_ID },
+        ];
+        const bundle = await readSessionBundleFromZip(await zip({
+            [STORAGE_SESSION_FILE]: JSON.stringify(testSession({ scripts })),
+            'scripts/10_last.sql': 'SELECT 10',
+            'scripts/2_first.sql': 'SELECT 2',
+        }));
+        expect(bundle.session.scripts).toEqual(scripts);
+    });
+
     it('migrates bundles exported by older versions', async () => {
         const bundle = await readSessionBundleFromZip(await zip({
             'dashql-notebook.json': JSON.stringify({ ...testSession(), formatVersion: 2, sessionId: undefined, notebookId: TEST_SESSION_ID }),
@@ -42,7 +58,7 @@ describe('V2 session ZIP import', () => {
             'dashql-functions.sql': 'functions',
             'scripts/01_query.sql': 'SELECT 1',
         }));
-        expect(bundle.session).toEqual(testSession());
+        expect(bundle.session).toEqual(testSession({ scripts: [{ name: '01_query.sql', connectionId: TEST_CONNECTION_ID }] }));
         expect(bundle.schemaSql).toBe('schema');
         expect(bundle.functionsSql).toBe('functions');
         expect(bundle.scripts).toEqual([{ name: '01_query.sql', sql: 'SELECT 1' }]);

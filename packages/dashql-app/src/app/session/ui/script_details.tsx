@@ -44,6 +44,8 @@ export interface ScriptDetailsProps {
     sessionScripts: SessionScripts;
     modifySessionScripts: ModifySessionScripts;
     connection: ConnectionState | null;
+    /// The connections that the scripts of the session run on
+    scriptConnections?: ReadonlyMap<string, ConnectionState>;
     hideDetails: () => void;
     scriptId?: number;
     initialTab?: ScriptDetailsTab;
@@ -95,13 +97,17 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
         ? Object.values(props.sessionScripts.scriptRefs).find(entry => entry.scriptId === props.scriptId)
         : getSelectedScriptRef(props.sessionScripts);
     const scriptData = sessionEntry != null ? props.sessionScripts.scripts[sessionEntry.scriptId] : null;
+    // The script runs on its own connection
+    const scriptConnectionId = scriptData?.connection.connectionId ?? props.connection?.connectionId ?? null;
+    const connection = scriptConnectionId == null ? null
+        : props.scriptConnections?.get(scriptConnectionId)
+            ?? (props.connection?.connectionId === scriptConnectionId ? props.connection : null);
     const hasExecution = scriptData?.latestQueryId != null;
     const [resultExpanded, setResultExpanded] = React.useState(hasExecution);
 
-    // Get folder name and script file name (display-only: strip the on-disk ordering prefix). The
-    // raw scriptFileName stays the rename identity; the label and draft use the clean display name
-    // (no prefix, no ".sql").
-    const scriptFileName = sessionEntry?.fileName ?? '01-script.sql';
+    // The raw scriptFileName stays the rename identity; the label and draft use the display name
+    // (no ".sql").
+    const scriptFileName = sessionEntry?.fileName ?? 'script.sql';
     const scriptDisplay = scriptDisplayName(scriptFileName);
 
     const PencilIcon: Icon = SymbolIcon('pencil_16');
@@ -222,15 +228,15 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
     const executeQuery = dependencies.useQueryExecutor();
     const storageReader = dependencies.useStorageReader();
     const handleExecute = React.useCallback(() => {
-        if (props.connection?.connectionHealth !== ConnectionHealth.ONLINE) {
+        if (connection?.connectionHealth !== ConnectionHealth.ONLINE) {
             connectionAttention?.request(props.sessionScripts.sessionId);
             return;
         }
         if (scriptData == null || sessionExecution.busy) return;
-        dependencies.runSessionScript(props.connection.connectionId, props.sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
-    }, [props.connection, props.sessionScripts, props.modifySessionScripts, scriptData, executeQuery, logger, sessionExecution.busy, connectionAttention]);
+        dependencies.runSessionScript(props.sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
+    }, [connection, props.sessionScripts, props.modifySessionScripts, scriptData, executeQuery, logger, sessionExecution.busy, connectionAttention]);
     const handleRerun = React.useCallback(async (cacheKey: string | null) => {
-        if (scriptData == null || props.connection?.connectionHealth !== ConnectionHealth.ONLINE || sessionExecution.busy) {
+        if (scriptData == null || connection?.connectionHealth !== ConnectionHealth.ONLINE || sessionExecution.busy) {
             return;
         }
         // Best-effort delete of the stale cache entry first; the re-execution then misses and
@@ -238,10 +244,10 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
         if (cacheKey != null) {
             await storageReader.backend.deleteQueryResultCache(props.sessionScripts.sessionId, cacheKey).catch(() => { });
         }
-        if (props.connection != null) {
-            dependencies.runSessionScript(props.connection.connectionId, props.sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
+        if (connection != null) {
+            dependencies.runSessionScript(props.sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
         }
-    }, [props.connection, props.sessionScripts, props.modifySessionScripts, scriptData, executeQuery, storageReader, logger, sessionExecution.busy]);
+    }, [connection, props.sessionScripts, props.modifySessionScripts, scriptData, executeQuery, storageReader, logger, sessionExecution.busy]);
 
     const visualizeQuery = scriptData?.annotations.visualizeQuery ?? null;
 
@@ -323,13 +329,13 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
                             scriptData={scriptData}
                             scriptDisplay={scriptDisplay}
                             scriptDebugMode={scriptDebugMode}
-                            executeDisabled={sessionExecution.busy || props.connection?.connectionHealth !== ConnectionHealth.ONLINE}
-                            connectionBlocked={props.connection?.connectionHealth !== ConnectionHealth.ONLINE}
+                            executeDisabled={sessionExecution.busy || connection?.connectionHealth !== ConnectionHealth.ONLINE}
+                            connectionBlocked={connection?.connectionHealth !== ConnectionHealth.ONLINE}
                             isEditingName={isEditingName}
                             draftFileName={draftFileName}
                             editInputRef={editInputRef}
                             isFormattable={isFormattable}
-                            connectorType={props.sessionScripts.connectorInfo?.connectorType}
+                            connectorType={scriptData?.connection.connectorInfo.connectorType ?? props.sessionScripts.connectorInfo?.connectorType}
                             hasPendingDiff={hasPendingDiff}
                             PencilIcon={PencilIcon}
                             CheckIcon={CheckIcon}
@@ -365,12 +371,12 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
                             onToggleExpanded={handleToggleResultExpanded}
                             contentId={`script-result-${scriptData.scriptKey}`}
                             onCancelQuery={activeQueryId != null
-                                ? () => sessionExecution.busy ? sessionExecution.stop() : props.connection && cancelQuery(props.connection.connectionId, activeQueryId)
+                                ? () => sessionExecution.busy ? sessionExecution.stop() : connection && cancelQuery(connection.connectionId, activeQueryId)
                                 : undefined}
                             statusActions={(
                                 <>
                                     <QueryResultCacheLabel query={activeQueryState} />
-                                    <QueryResultRerunButton query={activeQueryState} onRerun={props.connection?.connectionHealth === ConnectionHealth.ONLINE && !sessionExecution.busy ? handleRerun : undefined} />
+                                    <QueryResultRerunButton query={activeQueryState} onRerun={connection?.connectionHealth === ConnectionHealth.ONLINE && !sessionExecution.busy ? handleRerun : undefined} />
                                 </>
                             )}
                         />

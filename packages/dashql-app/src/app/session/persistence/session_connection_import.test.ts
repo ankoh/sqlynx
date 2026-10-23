@@ -23,8 +23,12 @@ const ENTRIES: ConnectionEntry[] = [
     { id: OTHER, params: trino('https://other', 'secret') },
 ];
 
-function imported(databaseId: string, params: ConnectionParams) {
-    return testSession({ mainDatabase: { databaseId, params } });
+function imported(connectionId: string, params: ConnectionParams) {
+    return testSession({
+        defaultConnectionId: connectionId,
+        connections: [{ connectionId, params }],
+        scripts: [{ name: 'query.sql', connectionId }],
+    });
 }
 
 describe('session connection import', () => {
@@ -34,7 +38,7 @@ describe('session connection import', () => {
         expect(plan.map(item => item.decision)).toEqual([{ kind: 'link', connectionId: KNOWN }]);
         expect(connectionImportQuestions(plan)).toEqual([]);
         // The copy takes the full params of the app's connection
-        expect(applyConnectionImportPlan(session, plan, new Map(), ENTRIES).mainDatabase).toEqual({ databaseId: KNOWN, params: ENTRIES[0].params });
+        expect(applyConnectionImportPlan(session, plan, new Map(), ENTRIES).connections).toEqual([{ connectionId: KNOWN, params: ENTRIES[0].params }]);
     });
 
     it('resolves aliases of known connections', () => {
@@ -47,10 +51,12 @@ describe('session connection import', () => {
         const plan = planConnectionImport(session, ENTRIES);
         expect(plan[0].decision).toEqual({ kind: 'ask', candidates: [ENTRIES[0]] });
         const linked = applyConnectionImportPlan(session, plan, new Map([[IMPORTED, { kind: 'link', connectionId: KNOWN }]]), ENTRIES);
-        expect(linked.mainDatabase.databaseId).toBe(KNOWN);
+        expect(linked.defaultConnectionId).toBe(KNOWN);
+        // The scripts follow their connection
+        expect(linked.scripts).toEqual([{ name: 'query.sql', connectionId: KNOWN }]);
         expect(connectionRefsChanged(session, linked)).toBe(true);
         const separate = applyConnectionImportPlan(session, plan, new Map([[IMPORTED, { kind: 'separate' }]]), ENTRIES);
-        expect(separate.mainDatabase).toEqual({ databaseId: IMPORTED, params: trino('https://trino') });
+        expect(separate.connections).toEqual([{ connectionId: IMPORTED, params: trino('https://trino') }]);
         expect(connectionRefsChanged(session, separate)).toBe(false);
     });
 
@@ -59,7 +65,9 @@ describe('session connection import', () => {
         const plan = planConnectionImport(session, ENTRIES);
         expect(plan[0].decision).toEqual({ kind: 'ask', candidates: [ENTRIES[0]] });
         const separate = applyConnectionImportPlan(session, plan, new Map([[KNOWN, { kind: 'separate' }]]), ENTRIES, () => FRESH);
-        expect(separate.mainDatabase).toEqual({ databaseId: FRESH, params: trino('https://elsewhere') });
+        expect(separate.connections).toEqual([{ connectionId: FRESH, params: trino('https://elsewhere') }]);
+        expect(separate.defaultConnectionId).toBe(FRESH);
+        expect(separate.scripts).toEqual([{ name: 'query.sql', connectionId: FRESH }]);
     });
 
     it('registers unknown connections with their ids', () => {

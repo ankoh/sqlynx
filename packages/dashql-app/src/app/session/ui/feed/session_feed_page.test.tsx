@@ -7,12 +7,9 @@ import { SessionViewMode } from '../../scripts/session_commands.js';
 import { SegmentedControl } from '../../../../ui/foundations/segmented_control.js';
 import { Button } from '../../../../ui/foundations/button.js';
 import { ConnectionHealth } from '../../../connections/connection_state.js';
-import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
-import { AnchorSide } from '../../../../ui/foundations/anchored_position.js';
 import { SessionConnectionAttentionContext } from '../session_connection_attention.js';
 import { FlavorProvider } from '../../../flavor/flavor_provider.js';
 import { SIDB_FLAVOR } from '../../../flavor/flavors.js';
-import * as styles from './session_feed_page.module.css';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
@@ -25,7 +22,6 @@ const state = {
     shareProps: null as any,
     exportProps: null as any,
     storageProps: null as any,
-    connectionProps: null as any,
     attention: null as any,
     execution: { state: null, busy: false, start: vi.fn(), stop: vi.fn() } as any,
 };
@@ -53,7 +49,6 @@ const dependencies = {
         state.storageProps = props;
         return props.renderAnchor({ onClick: props.onOpen });
     },
-    ConnectionSettingsOverlay: (props: any) => { state.connectionProps = props; return null; },
     Dashboard: (props: any) => {
         state.dashboardProps = props;
         return <div data-testid="dashboard" />;
@@ -72,6 +67,7 @@ function scripts() {
         scriptRefs: {
             '01_alpha.sql': { scriptId: 1, fileName: '01_alpha.sql' },
         },
+        scriptOrder: ['01_alpha.sql'],
         scripts: {
             1: { scriptKey: 1, fileName: '01_alpha.sql' },
         },
@@ -91,7 +87,6 @@ describe('SessionFeedPage', () => {
         state.shareProps = null;
         state.exportProps = null;
         state.storageProps = null;
-        state.connectionProps = null;
         state.execution = { state: null, busy: false, start: vi.fn(), stop: vi.fn() };
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -129,45 +124,7 @@ describe('SessionFeedPage', () => {
         expect(container.querySelector<HTMLButtonElement>('[aria-label="Execute All"]')?.disabled).toBe(true);
     });
 
-    it('shows the main connection before secondary actions and opens settings only on click', () => {
-        const render = (connection: any) => act(() => root.render(<SessionFeedPage sessionScripts={scripts()}
-            modifySessionScripts={vi.fn()} connection={connection} active dependencies={dependencies} />));
-        render({ connectionId: 'main', connectionHealth: ConnectionHealth.NOT_STARTED });
-        const connect = container.querySelector<HTMLButtonElement>('[aria-label="Disconnected: main execution database"]')!;
-        expect(connect.textContent).toBe('Disconnected');
-        expect(connect.querySelector('svg')).not.toBeNull();
-        expect(connect.querySelector('circle')?.getAttribute('fill')).toBe('#6e7781');
-        expect(connect.compareDocumentPosition(container.querySelector('[aria-label="Share as URL"]')!) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
-        expect(state.connectionProps.isOpen).toBe(false);
-        expect(state.connectionProps.connectionId).toBe('main');
-        expect(state.connectionProps.side).toBe(AnchorSide.OutsideBottom);
-        act(() => connect.click());
-        expect(state.connectionProps.isOpen).toBe(true);
-        expect(state.connectionProps.onConnected).toBeUndefined();
-        render({ connectionId: 'main', connectionHealth: ConnectionHealth.ONLINE,
-            details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } } });
-        expect(state.connectionProps.isOpen).toBe(true);
-        expect(container.querySelector('[aria-label="Embedded: main execution database (embedded)"]')?.textContent).toBe('Embedded');
-        expect(container.querySelector('[aria-label="Embedded: main execution database (embedded)"] circle')?.getAttribute('fill')).toBe('#1f883d');
-        act(() => state.connectionProps.onClose());
-        expect(state.connectionProps.isOpen).toBe(false);
-        render({ connectionId: 'main', connectionHealth: ConnectionHealth.FAILED });
-        expect(container.querySelector('[aria-label="Failed: main execution database"]')?.textContent).toBe('Failed');
-        expect(container.querySelector('[aria-label="Failed: main execution database"] circle')?.getAttribute('fill')).toBe('#cf222e');
-        render({ connectionId: 'main', connectionHealth: ConnectionHealth.CONNECTING });
-        expect(container.querySelector('[aria-label="Connecting: main execution database"] svg')).not.toBeNull();
-    });
-
-    it('keeps the connecting status indicator mounted across rerenders', () => {
-        const render = () => act(() => root.render(<SessionFeedPage sessionScripts={scripts()} modifySessionScripts={vi.fn()}
-            connection={{ connectionId: 'main', connectionHealth: ConnectionHealth.CONNECTING } as any} active dependencies={dependencies} />));
-        render();
-        const indicator = container.querySelector('[aria-label="Connecting: main execution database"] svg');
-        render();
-        expect(container.querySelector('[aria-label="Connecting: main execution database"] svg')).toBe(indicator);
-    });
-
-    it('pulses Connect on blocked execution hover and clears on main health or session changes', async () => {
+    it('requests connection attention on blocked execution hover and clears on main health or session changes', async () => {
         const render = (sessionId: string, health: ConnectionHealth) => act(() => root.render(<SessionFeedPage
             sessionScripts={{ ...scripts(), sessionId }} modifySessionScripts={vi.fn()}
             connection={{ connectionId: 'main', connectionHealth: health } as any} active dependencies={dependencies} />));
@@ -179,16 +136,14 @@ describe('SessionFeedPage', () => {
         expect(request).toHaveBeenCalledWith('session');
         await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
         expect(state.attention.active).toBe(true);
-        expect(container.querySelector('[data-connection-attention="true"]')).not.toBeNull();
-        expect(state.connectionProps.isOpen).toBe(false);
         render('session', ConnectionHealth.CONNECTING);
-        expect(container.querySelector('[data-connection-attention="true"]')).toBeNull();
+        expect(state.attention.active).toBe(false);
         act(() => state.attention.request('session'));
         render('other', ConnectionHealth.CONNECTING);
-        expect(container.querySelector('[data-connection-attention="true"]')).toBeNull();
+        expect(state.attention.active).toBe(false);
     });
 
-    it('keeps the view switch, connection, and execution controls inside mobile and desktop headers', async () => {
+    it('keeps the view switch and execution controls inside mobile and desktop headers', async () => {
         const frame = document.createElement('iframe');
         frame.style.height = '600px';
         document.body.appendChild(frame);
@@ -220,7 +175,6 @@ describe('SessionFeedPage', () => {
                     const bounds = header.getBoundingClientRect();
                     expect(header.scrollWidth).toBeLessThanOrEqual(header.clientWidth);
                     const controls = [host.querySelector('[aria-label="Session view"]')!,
-                        host.querySelector('[aria-label="Disconnected: main execution database"]')!,
                         host.querySelector(busy ? '[aria-label="Stop session execution"]' : '[aria-label="Execute All"]')!];
                     for (const control of controls) {
                         const rect = control.getBoundingClientRect();
@@ -235,20 +189,6 @@ describe('SessionFeedPage', () => {
             act(() => frameRoot.unmount());
             frame.remove();
         }
-    });
-
-    it('uses two finite attention pulses and a scoped static spinner for reduced motion', () => {
-        const rules = Array.from(document.styleSheets).flatMap(sheet => Array.from(sheet.cssRules));
-        const pulse = rules.find(rule => rule instanceof CSSStyleRule && rule.selectorText === `.${styles.connection_attention}`) as CSSStyleRule;
-        expect(pulse.style.animationIterationCount).toBe('2');
-        expect(pulse.style.animationDuration).toBe('0.45s');
-        const reduced = rules.find(rule => rule instanceof CSSMediaRule && rule.conditionText === '(prefers-reduced-motion: reduce)'
-            && Array.from(rule.cssRules).some(child => child instanceof CSSStyleRule && child.selectorText === `.${styles.connection_spinner} *`)) as CSSMediaRule;
-        const spinner = Array.from(reduced.cssRules).find(rule => rule instanceof CSSStyleRule && rule.selectorText === `.${styles.connection_spinner} *`) as CSSStyleRule;
-        expect(spinner.style.animationName).toBe('none');
-        const attention = Array.from(reduced.cssRules).find(rule => rule instanceof CSSStyleRule && rule.selectorText === `.${styles.connection_attention}`) as CSSStyleRule;
-        expect(attention.style.animationName).toBe('none');
-        expect(attention.style.backgroundColor).not.toBe('');
     });
 
     it('shows compact progress and Stop without a Details control', () => {

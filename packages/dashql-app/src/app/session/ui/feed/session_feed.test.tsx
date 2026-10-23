@@ -55,13 +55,13 @@ vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect()
 
 function baseProps() {
     return {
-        sessionId: 'session', databaseId: null, connectionHealth: null, connectionDetails: null, connectorType: ConnectorType.TRINO, cacheQueryResults: false,
-        storageReader: { backend: { hasCachedQueryResult: vi.fn() } },
+        sessionId: 'session', connections: new Map(), cacheQueryResults: false,
+        storageReader: { backend: { hasCachedQueryResult: vi.fn() }, getSessionLocation: () => ({ type: 'opfs' }) },
         entries: [{ scriptId: 1, fileName: '01_alpha.sql' }, { scriptId: 2, fileName: '02_beta.sql' }],
         scripts: { 1: script(1, '01_alpha.sql'), 2: script(2, '02_beta.sql') }, scriptDebugMode: false, formattingDebugMode: false,
         keywordCase: dashql.buffers.formatting.KeywordCase.UPPER,
         focusedFileName: '01_alpha.sql', active: true, onFocus: vi.fn(), onDelete: vi.fn(),
-        onRename: vi.fn(), onMoveUp: vi.fn(), onMoveDown: vi.fn(), onExecute: vi.fn(), onShowStatus: vi.fn(),
+        onRename: vi.fn(), onPickConnection: vi.fn(), onMoveUp: vi.fn(), onMoveDown: vi.fn(), onExecute: vi.fn(), onShowStatus: vi.fn(),
          onShowTable: vi.fn(), onShowVisualization: vi.fn(), onShowDetails: vi.fn(), onRerun: vi.fn(),
         onFormat: vi.fn(), onAcceptDiff: vi.fn(), onRejectDiff: vi.fn(), collapsedResults: new Map(), onToggleResultExpanded: vi.fn(),
         generations: new Map(), onStopGeneration: vi.fn(), onDismissGeneration: vi.fn(),
@@ -72,7 +72,8 @@ function baseProps() {
 
 function script(scriptKey: number, fileName: string) {
     return { scriptKey, fileName, scriptSession: { getText: () => 'SELECT 1' }, analysisOutdated: true,
-        annotations: {}, statistics: [], completion: null, pendingDiff: null, latestQueryId: null };
+        annotations: {}, statistics: [], completion: null, pendingDiff: null, latestQueryId: null,
+        connection: { connectionId: 'database', connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO], catalog: {} } };
 }
 
 describe('V2 session feed rows', () => {
@@ -155,8 +156,8 @@ describe('V2 session feed rows', () => {
         expect(props.onFocus).toHaveBeenCalledWith('01_alpha.sql');
         expect(container.querySelector('[data-testid="status"]')).not.toBeNull();
         expect(container.querySelector('[data-testid="integrated-footer"]')).not.toBeNull();
-        expect(container.querySelector('[aria-label="Drag alpha script to reorder"]')).not.toBeNull();
-        const moreButton = container.querySelector('[aria-label="More actions for alpha script"]') as HTMLButtonElement;
+        expect(container.querySelector('[aria-label="Drag 01_alpha script to reorder"]')).not.toBeNull();
+        const moreButton = container.querySelector('[aria-label="More actions for 01_alpha script"]') as HTMLButtonElement;
         expect(moreButton).not.toBeNull();
         act(() => moreButton.click());
         const compactButton = Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'Format Compact') as HTMLButtonElement;
@@ -176,7 +177,7 @@ describe('V2 session feed rows', () => {
         act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
         expect(container.querySelector('[aria-label="Accept rewrite"]')).not.toBeNull();
         expect(container.querySelector('[aria-label="Reject rewrite"]')).not.toBeNull();
-        const expandButton = container.querySelector('[aria-label="Expand alpha script details"]') as HTMLButtonElement;
+        const expandButton = container.querySelector('[aria-label="Expand 01_alpha script details"]') as HTMLButtonElement;
         const moveUpButton = container.querySelector('[aria-label="Move script up"]') as HTMLButtonElement;
         const moveDownButton = container.querySelector('[aria-label="Move script down"]') as HTMLButtonElement;
         expect(moreButton.compareDocumentPosition(moveUpButton) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
@@ -186,20 +187,51 @@ describe('V2 session feed rows', () => {
         expect(props.onShowDetails).toHaveBeenCalledWith('01_alpha.sql');
         expect(container.querySelector('[aria-label="Move script up"]')?.hasAttribute('disabled')).toBe(true);
         expect(container.querySelector('[aria-label="Move script down"]')?.hasAttribute('disabled')).toBe(false);
-        const deleteButton = container.querySelector('[aria-label="Delete alpha script"]') as HTMLButtonElement;
+        const deleteButton = container.querySelector('[aria-label="Delete 01_alpha script"]') as HTMLButtonElement;
         expect(deleteButton.compareDocumentPosition(moreButton) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
         act(() => deleteButton.click());
         expect(props.onDelete).toHaveBeenCalledWith('01_alpha.sql');
     });
 
+    it('shows the connection instead of the file name and edits the file in the storage view', () => {
+        const props = baseProps();
+        Object.assign(props, { connections: new Map([['database', {
+            connectionId: 'database', connectionHealth: ConnectionHealth.ONLINE, details: null, connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
+            label: 'Trino Http', labelParts: { name: 'Trino', detail: 'Http' },
+        }]]) });
+        act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
+        // The connection takes the place of the file name
+        const picker = container.querySelector('[aria-label="Connection of 01_alpha script: Trino Http"]')!;
+        // The name is the label, the protocol is the trailing tag
+        expect(picker.textContent).toBe('TrinoHttp');
+        expect(picker.parentElement!.textContent).toBe('TrinoHttp');
+        expect(Array.from(picker.querySelectorAll('span')).some(span => span.textContent === 'Http' && span.children.length === 0)).toBe(true);
+        // A plain database icon leads the label, the same for every connector
+        expect(picker.querySelector('use')?.getAttribute('xlink:href')).toContain('#database_16');
+
+        act(() => (container.querySelector('[aria-label="More actions for 01_alpha script"]') as HTMLButtonElement).click());
+        act(() => Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'Storage')!.click());
+        const storage = document.querySelector('[role="dialog"][aria-label="Storage of 01_alpha script"]')!;
+        expect(storage.textContent).toContain('opfs://sessions/session/scripts/01_alpha.sql');
+        const input = storage.querySelector<HTMLInputElement>('[aria-label="Script file name"]')!;
+        expect(input.value).toBe('01_alpha.sql');
+        input.value = 'report';
+        act(() => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+        act(() => input.dispatchEvent(new FocusEvent('focusout', { bubbles: true })));
+        expect(props.onRename).toHaveBeenCalledWith('01_alpha.sql', 'report');
+    });
+
     it('keeps Play available for SQL with parser diagnostics', () => {
         const props = baseProps();
-        Object.assign(props, { databaseId: 'database', connectionHealth: ConnectionHealth.ONLINE });
+        Object.assign(props, { connections: new Map([['database', {
+            connectionId: 'database', connectionHealth: ConnectionHealth.ONLINE, details: null, connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO], label: 'Trino Http',
+            labelParts: { name: 'Trino', detail: 'Http' },
+        }]]) });
         props.scripts[1] = { ...props.scripts[1], analysisOutdated: false,
             editorUpdate: { analysisAvailable: true }, scriptSession: { getText: () => 'SELECT * FROM t QUALIFY x = 1' } } as any;
         act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
 
-        const play = container.querySelector('[aria-label="Execute alpha query"]') as HTMLButtonElement;
+        const play = container.querySelector('[aria-label="Execute 01_alpha query"]') as HTMLButtonElement;
         expect(play.disabled).toBe(false);
         act(() => play.click());
         expect(props.onExecute).toHaveBeenCalledWith('01_alpha.sql');
@@ -220,7 +252,7 @@ describe('V2 session feed rows', () => {
         act(() => root.render(<SessionConnectionAttentionContext.Provider value={{ sessionId: 'session', active: false, request }}>
             <ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />
         </SessionConnectionAttentionContext.Provider>));
-        const play = container.querySelector<HTMLButtonElement>('[aria-label="Execute alpha query"]')!;
+        const play = container.querySelector<HTMLButtonElement>('[aria-label="Execute 01_alpha query"]')!;
         expect(play.disabled).toBe(true);
         act(() => play.click());
         expect(props.onExecute).not.toHaveBeenCalled();
@@ -240,8 +272,8 @@ describe('V2 session feed rows', () => {
         const controller = new AbortController();
         props.generations = new Map([[1, { controller, error: null }]]) as any;
         act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
-        expect(container.querySelector('[aria-label="Execute alpha query"]')).toBeNull();
-        act(() => container.querySelector<HTMLButtonElement>('[aria-label="Stop generating alpha query"]')!.click());
+        expect(container.querySelector('[aria-label="Execute 01_alpha query"]')).toBeNull();
+        act(() => container.querySelector<HTMLButtonElement>('[aria-label="Stop generating 01_alpha query"]')!.click());
         expect(props.onStopGeneration).toHaveBeenCalledExactlyOnceWith(1);
     });
 
@@ -249,9 +281,9 @@ describe('V2 session feed rows', () => {
         const props = baseProps();
         props.generations = new Map([[1, { controller: new AbortController(), error: 'HTTP 500' }]]) as any;
         act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
-        expect(container.querySelector('[aria-label="Stop generating alpha query"]')).toBeNull();
+        expect(container.querySelector('[aria-label="Stop generating 01_alpha query"]')).toBeNull();
         expect(container.querySelector('[role="alert"]')?.textContent).toContain('HTTP 500');
-        expect(container.querySelector('[aria-label="Execute alpha query"]')).not.toBeNull();
+        expect(container.querySelector('[aria-label="Execute 01_alpha query"]')).not.toBeNull();
         act(() => container.querySelector<HTMLButtonElement>('[aria-label="Dismiss the error"]')!.click());
         expect(props.onDismissGeneration).toHaveBeenCalledExactlyOnceWith(1);
     });
@@ -261,7 +293,7 @@ describe('V2 session feed rows', () => {
         state.sortableTransform = { x: 0, y: 120, scaleX: 0.8, scaleY: 0.4 };
         act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
 
-        const item = container.querySelector('[aria-label="Drag alpha script to reorder"]')!.parentElement as HTMLElement;
+        const item = container.querySelector('[aria-label="Drag 01_alpha script to reorder"]')!.parentElement as HTMLElement;
         expect(item.style.transform).toBe('translate3d(0px, 120px, 0px)');
         expect(item.style.transform).not.toContain('scale');
     });
@@ -281,6 +313,8 @@ describe('Session feed composer', () => {
     const feedDependencies: SessionFeedDependencies = {
         useQueryExecutor: () => feedState.executeQuery,
         useStorageReader: () => ({ backend: { listDataFiles: () => Promise.resolve([]) } }) as any,
+        useStorageWriter: () => ({ write: () => Promise.resolve({ status: 'written' }) }) as any,
+        usePickScriptConnection: () => vi.fn(),
         useKeyEvents: (handlers: any[]) => { feedState.keyHandlers = handlers; },
         runSessionScript: feedState.runSessionScript as any,
         useAIClient: () => feedState.aiClient,
@@ -295,6 +329,7 @@ describe('Session feed composer', () => {
     };
     const onlineConn = {
         connectionId: 'database', connectionHealth: ConnectionHealth.ONLINE,
+        connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
         details: { type: HYPER_CONNECTOR, value: { proto: {} } },
     } as any;
 
@@ -308,7 +343,7 @@ describe('Session feed composer', () => {
         return {
             sessionId: 'session', name: null, connectionId: 'database', settings: { cacheQueryResults: false }, instance: {} as any, sessionMetadata: {} as any,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], connectionCatalog: {} as any,
-            scripts, scriptRefs, scriptFocus: { fileName: fileNames[fileNames.length - 1] ?? '' }, semanticUserFocus: null,
+            scripts, scriptRefs, scriptOrder: [...fileNames], scriptFocus: { fileName: fileNames[fileNames.length - 1] ?? '' }, semanticUserFocus: null,
         };
     }
 
@@ -368,7 +403,7 @@ describe('Session feed composer', () => {
         expect(modify).toHaveBeenCalledExactlyOnceWith({ type: CREATE_SCRIPT, value: { index: null, text: 'select 1' } });
         await vi.waitFor(() => expect(feedState.runSessionScript).toHaveBeenCalledOnce());
         expect(feedState.runSessionScript).toHaveBeenCalledExactlyOnceWith(
-            'database', next, next.scripts[1], feedState.executeQuery, modify, expect.anything());
+            next, next.scripts[1], feedState.executeQuery, modify, expect.anything());
         expect(attention.request).not.toHaveBeenCalled();
     });
 
@@ -444,7 +479,7 @@ describe('Session feed composer', () => {
         expect(modify).toHaveBeenLastCalledWith({
             type: SET_SCRIPT_TEXT, value: { scriptKey: 1, text: '-- how many rows\nselect count(*) from t' },
         });
-        expect(feedState.runSessionScript).toHaveBeenCalledWith('database', filled, filled.scripts[1], feedState.executeQuery, modify, expect.anything());
+        expect(feedState.runSessionScript).toHaveBeenCalledWith(filled, filled.scripts[1], feedState.executeQuery, modify, expect.anything());
     });
 
     it('keeps the commented script when the generation fails', async () => {

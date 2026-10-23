@@ -1,0 +1,23 @@
+.trigger {
+    max-width: 200px;
+    min-width: 0;
+    --button_visual_gap: 8px;
+}
+
+.trigger_label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.health {
+    flex-shrink: 0;
+}
+
+.menu {
+    min-width: 220px;
+}
+
+.connector_icon {
+    flex-shrink: 0;
+}

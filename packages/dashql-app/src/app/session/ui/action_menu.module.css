@@ -5,3 +5,52 @@
 .delete_action {
     color: var(--base_color_red_6);
 }
+
+.storage {
+    width: 360px;
+    max-width: 90vw;
+}
+
+.storage_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 4px 4px 12px;
+    border-bottom: 1px solid var(--border_color_primary);
+}
+
+.storage_title {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.storage_body {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 12px;
+    row-gap: 10px;
+    align-items: baseline;
+    padding: 12px;
+}
+
+.storage_label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--base_color_neutral_5);
+}
+
+.storage_input {
+    min-width: 0;
+    font-family: var(--font_family_mono);
+    font-size: 0.8rem;
+    padding: 4px 6px;
+    border: 1px solid var(--border_color_primary);
+    border-radius: 4px;
+}
+
+.storage_path {
+    min-width: 0;
+    font-family: var(--font_family_mono);
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+}

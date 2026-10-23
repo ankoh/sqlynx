@@ -429,6 +429,38 @@ describe('DashQL editor sessions', () => {
         4,
     );
 
+    it('allocates entry ids that are unique across catalogs', () => {
+        const first = dql!.createCatalog();
+        const second = dql!.createCatalog();
+        const a = dql!.createScriptSession(first);
+        const b = dql!.createScriptSession(second);
+        expect(a.getCatalogEntryId()).not.toBe(b.getCatalogEntryId());
+        b.destroy();
+        a.destroy();
+        second.destroy();
+        first.destroy();
+    });
+
+    it('moves a script session into another catalog under its entry id', () => {
+        const first = dql!.createCatalog();
+        const second = dql!.createCatalog();
+        const original = dql!.createScriptSession(first);
+        const entryId = original.getCatalogEntryId();
+        original.replaceText(0n, 'create table foo(a int)');
+        original.analyze();
+        original.loadIntoCatalog(entryId);
+        // The entry id is in use in the first catalog
+        expect(() => dql!.createScriptSessionWithEntryId(first, entryId)).toThrow();
+        // An id that no catalog allocated is refused
+        expect(() => dql!.createScriptSessionWithEntryId(second, 0xFFFFFF)).toThrow();
+        const moved = dql!.createScriptSessionWithEntryId(second, entryId);
+        expect(moved.getCatalogEntryId()).toBe(entryId);
+        moved.destroy();
+        original.destroy();
+        second.destroy();
+        first.destroy();
+    });
+
     it('owns and destroys the native session', () => {
         const catalog = dql!.createCatalog();
         const session = dql!.createScriptSession(catalog);

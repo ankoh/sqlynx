@@ -87,7 +87,7 @@ describe('SQL generation', () => {
                 'CREATE TABLE "db"."sales"."customers" ("id" INTEGER);',
             ].join('\n');
             const conn = { catalogRelationScript: { toString: () => relations } };
-            const sessionScripts = { instance: dql, connectionCatalog: catalog, scripts: { 1: { scriptSession } } } as any;
+            const sessionScripts = { instance: dql, connectionCatalog: catalog, scripts: { 1: { scriptSession, connection: { catalog } } } } as any;
             const logger = new TestLogger();
             expect(buildSchemaContext(conn as any, sessionScripts, logger)).toBe([
                 'CREATE TABLE "db"."public"."orders" ("id" INTEGER, "amount" FLOAT);',

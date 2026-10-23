@@ -3,10 +3,10 @@ import { SessionScriptsRegistry, addSessionScriptsForConnection, removeSessionSc
 import { SessionScripts } from './session_scripts.js';
 import { ConnectorType } from '../../connections/connector_info.js';
 
-// removeSessionScriptsFromRegistry only reads sessionScriptsMap and entry.connectorInfo.connectorType, so a
-// tiny stand-in SessionScripts is enough — no Wasm needed.
+// removeSessionScriptsFromRegistry only reads sessionScriptsMap, the connections of the scripts and
+// entry.connectorInfo.connectorType, so a tiny stand-in SessionScripts is enough — no Wasm needed.
 function scripts(sessionId: string, connectorType: ConnectorType, connectionId: string = `connection-${sessionId}`): SessionScripts {
-    return { sessionId, connectionId, connectorInfo: { connectorType } } as unknown as SessionScripts;
+    return { sessionId, connectionId, connectorInfo: { connectorType }, scripts: {} } as unknown as SessionScripts;
 }
 
 function registry(entries: Array<[string, ConnectorType]>): SessionScriptsRegistry {

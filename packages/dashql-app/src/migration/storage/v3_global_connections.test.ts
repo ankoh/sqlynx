@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { planConnectionMigration, type MigratingSession } from './v3_global_connections.js';
-import { testSession } from '../../app/storage/session_test_backend.js';
 import type { ConnectionParams } from '../../app/storage/storage_backend.js';
 
 const SESSION_A = '11111111-0000-4000-8000-00000000000a';
@@ -10,6 +9,11 @@ const SESSION_C = '11111111-0000-4000-8000-00000000000c';
 const DB_A = 'aaaaaaaa-0000-4000-8000-00000000000a';
 const DB_B = 'aaaaaaaa-0000-4000-8000-00000000000b';
 const DB_C = 'aaaaaaaa-0000-4000-8000-00000000000c';
+/// Session metadata of format version 4, the format the step reads
+function v4Session(fields: Record<string, unknown>): MigratingSession['data'] {
+    return { formatVersion: 4, name: 'V2 Session', attachedDatabases: [], metadata: {}, ...fields } as unknown as MigratingSession['data'];
+}
+
 const WASM: ConnectionParams = { hyper: { protocol: 'WASM' } } as ConnectionParams;
 const trino = (endpoint: string, secret = ''): ConnectionParams => ({
     trino: { endpoint, auth: { authType: 'AUTH_BASIC', basic: { username: 'user', secret } } },
@@ -18,7 +22,7 @@ const trino = (endpoint: string, secret = ''): ConnectionParams => ({
 function session(sessionId: string, databaseId: string, params: ConnectionParams, paramsDraft?: ConnectionParams): MigratingSession {
     return {
         sessionId,
-        data: testSession({
+        data: v4Session({
             sessionId,
             mainDatabase: { databaseId, params, ...(paramsDraft ? { paramsDraft } : {}) },
         }),
@@ -74,7 +78,7 @@ describe('global connections migration', () => {
     it('dedupes references that consolidate within a session', () => {
         const plan = planConnectionMigration([{
             sessionId: SESSION_A,
-            data: testSession({
+            data: v4Session({
                 sessionId: SESSION_A,
                 mainDatabase: { databaseId: DB_A, params: WASM },
                 attachedDatabases: [{ databaseId: DB_B, params: WASM }, { databaseId: DB_C, params: trino('https://trino') }],

@@ -7,6 +7,7 @@ import type { CellComponentProps } from 'react-window';
 import { ArrowTableFormatter, isArrowListType } from '../../../../../compute/arrow_formatter.js';
 import { ColumnGroup } from '../../../../../compute/computation_types.js';
 import { DataTableLayout } from './data_table_layout.js';
+import { Tag } from '../../../../../ui/foundations/tag.js';
 import { peekFormat } from './format_peek.js';
 import { CellFocus, DataTableFocusStore, useCellFocus } from './data_table_focus.js';
 
@@ -162,7 +163,7 @@ export function DataCell(props: CellComponentProps<DataCellData>): React.ReactEl
                 {hint != null ? (
                     <>
                         <span className={styles.data_cell_text}>{displayText}</span>
-                        <span className={styles.format_bean}>{hint}</span>
+                        <Tag className={styles.format_bean}>{hint}</Tag>
                     </>
                 ) : (
                     isNull ? "NULL" : displayText

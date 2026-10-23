@@ -7,19 +7,34 @@ export function isHyperWasmConnection(database: ConnectionState): boolean {
         (database.details.value.proto.setupParams?.protocol ?? 'WASM') === 'WASM';
 }
 
-export function connectionLabel(database: ConnectionState): string {
-    if (isHyperWasmConnection(database)) return 'Memory';
-    let protocol = 'HTTP';
+/// The label of a connection, the connector and the protocol it speaks
+export interface ConnectionLabelParts {
+    /// The name of the connector, e.g. "Hyper"
+    name: string;
+    /// The protocol, e.g. "Local" or "Http"
+    detail: string;
+}
+
+/// The protocol of a connection as the label shows it
+function protocolLabel(protocol: string | undefined): string {
+    return protocol === 'V3_GRPC' ? 'gRPC' : protocol === 'V3_HTTP' ? 'Http' : 'Local';
+}
+
+/// The parts of the label of a connection
+export function connectionLabelParts(database: ConnectionState): ConnectionLabelParts {
+    let detail = 'Http';
     if (database.details.type === HYPER_CONNECTOR) {
-        const value = database.details.value.proto.setupParams?.protocol;
-        protocol = value === 'V3_GRPC' ? 'gRPC'
-                : value === 'V3_HTTP' ? 'HTTP'
-                    : 'WASM';
+        detail = protocolLabel(database.details.value.proto.setupParams?.protocol ?? 'WASM');
     } else if (database.details.type === SALESFORCE_DATA_CLOUD_CONNECTOR) {
-        const value = database.details.value.proto.setupParams?.hyperProtocol;
-        protocol = value === 'V3_GRPC' ? 'gRPC' : value === 'WASM' ? 'WASM' : 'HTTP';
+        detail = protocolLabel(database.details.value.proto.setupParams?.hyperProtocol ?? 'V3_HTTP');
     }
-    return `${database.connectorInfo.names.displayLong} / ${protocol}`;
+    return { name: database.connectorInfo.names.displayLong, detail };
+}
+
+/// The label of a connection as plain text, e.g. "Hyper Local"
+export function connectionLabel(database: ConnectionState): string {
+    const { name, detail } = connectionLabelParts(database);
+    return `${name} ${detail}`;
 }
 
 /// A label for connection params, e.g. when the connection state is not restored
@@ -27,7 +42,7 @@ export function connectionParamsLabel(params: ConnectionParams): string {
     const name = getConnectionInfoFromParams(params)?.names.displayLong ?? 'Connection';
     if ('hyper' in params) {
         const protocol = params.hyper.protocol ?? 'WASM';
-        return protocol === 'WASM' ? `${name} / Memory` : `${name} / ${params.hyper.endpoint ?? ''}`;
+        return protocol === 'WASM' ? `${name} Local` : `${name} / ${params.hyper.endpoint ?? ''}`;
     }
     if ('trino' in params) return `${name} / ${params.trino.endpoint ?? ''}`;
     if ('salesforce' in params) return `${name} / ${params.salesforce.instanceUrl ?? ''}`;

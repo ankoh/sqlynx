@@ -16,7 +16,7 @@ import { IndicatorStatus } from '../../../../ui/foundations/status_indicator.js'
 import { SymbolIcon } from '../../../../ui/foundations/symbol_icon.js';
 import { ConnectionHealth, type ConnectionState } from '../../../connections/connection_state.js';
 import { ExecuteConnectionGuard } from '../session_connection_attention.js';
-import type { ConnectorType } from '../../../connections/connector_info.js';
+import { ConnectorType } from '../../../connections/connector_info.js';
 import { QueryExecutionStatus, queryIsDone } from '../../../connections/query_execution_state.js';
 import { computeQueryCacheKeyForConnection, useCancelQuery, useQueryState } from '../../../connections/query_executor.js';
 import type { StorageReader } from '../../../storage/storage_provider.js';
@@ -26,25 +26,29 @@ import { deriveEntryStatus, EntryStatusKind } from '../entry_status_model.js';
 import { EntryStatusBar } from '../entry_status_bar.js';
 import { CachedResultBean, QueryResultCacheLabel, QueryResultRerunButton } from '../query_result_cache_controls.js';
 import { ScriptDiagnosticsButton } from '../script_diagnostics.js';
-import { ScriptName } from '../script_name.js';
 import { ScriptEditor } from '../script_editor.js';
 import { ScriptStatisticsBar } from '../script_statistics_bar.js';
 import { formatScriptEditor, formattingDialectForConnector, isScriptFormattable } from '../script_format.js';
 import { FeedEntryFooter } from './feed_entry_footer.js';
 import { GenerationError, GenerationStopButton, isGenerating, useGenerationPlaceholder } from '../../ai/ui/script_generation.js';
 import type { ScriptGeneration } from '../../ai/use_sql_generations.js';
-import { ScriptActionMenu } from '../script_action_menu.js';
+import { ScriptActionMenu, type ScriptStorage } from '../script_action_menu.js';
+import { displayPath } from '../../../storage/session_locator.js';
+import { STORAGE_SCRIPTS_FOLDER } from '../../../storage/storage_backend.js';
+import { ScriptConnectionPicker, type ScriptConnectionView } from '../script_connection_picker.js';
 
 const DragHandleIcon: Icon = SymbolIcon('drag_handle_16');
 
 export interface ScriptCardProps {
     sessionId: string;
-    /// The connection fields of the card.
+    /// The connection fields of the card, the connection the script runs on.
     /// The connection state itself changes with every query event of the session.
     connectionId: string | null;
     connectionHealth: ConnectionHealth | null;
     connectionDetails: ConnectionState['details'] | null;
     connectorType: ConnectorType;
+    /// The connection the script runs on, null while it is not registered
+    connection: ScriptConnectionView | null;
     /// Whether the session caches query results.
     cacheQueryResults: boolean;
     storageReader: StorageReader;
@@ -61,6 +65,8 @@ export interface ScriptCardProps {
     onFocus: (fileName: string) => void;
     onDelete: (fileName: string) => void;
     onRename: (oldFileName: string, newFileName: string) => void;
+    /// Run the script on another connection
+    onPickConnection: (fileName: string, connectionId: string) => void;
     onMoveUp: (fileName: string) => void;
     onMoveDown: (fileName: string) => void;
     onExecute: (fileName: string) => void;
@@ -124,7 +130,6 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
     const dependencies = props.dependencies ?? DEFAULT_SCRIPT_CARD_DEPENDENCIES;
     const MoveUpIcon: Icon = SymbolIcon('chevron_up_16');
     const MoveDownIcon: Icon = SymbolIcon('chevron_down_16');
-    const PencilIcon: Icon = SymbolIcon('pencil_16');
     const CheckIcon: Icon = SymbolIcon('check_16');
     const CrossIcon: Icon = SymbolIcon('x_16');
     const ExpandIcon: Icon = SymbolIcon('screen_full_16');
@@ -224,7 +229,6 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
         if (scriptKey != null) props.onRejectDiff(scriptKey);
     }, [scriptKey, props.onRejectDiff]);
 
-    const [isEditing, setIsEditing] = React.useState(false);
     const [editorView, setEditorView] = React.useState<EditorView | null>(null);
     // A question is being translated into the SQL of the script
     const generating = isGenerating(props.generation);
@@ -253,36 +257,14 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
         );
     }, [editorView, props.formattingDebugMode, props.keywordCase, formattingDialect, props.onFormat, props.scriptData]);
 
-    // The label and the rename input show the clean display name (no ordering prefix, no ".sql");
-    // the raw scriptFileName remains the identity passed to handlers and to RENAME_SCRIPT.
+    // Labels use the display name (the file name without ".sql"); the raw scriptFileName remains the
+    // identity passed to handlers and to RENAME_SCRIPT.
     const displayName = scriptDisplayName(props.scriptFileName);
-    const [draftFileName, setDraftFileName] = React.useState(displayName);
-    const editInputRef = React.useRef<HTMLInputElement>(null);
-
-    const startEditing = React.useCallback((event: React.MouseEvent) => {
-        event.stopPropagation();
-        setDraftFileName(displayName);
-        setIsEditing(true);
-    }, [displayName]);
-
-    const saveEdit = React.useCallback(() => {
-        const trimmed = draftFileName.trim();
-        if (trimmed && trimmed !== displayName) {
-            props.onRename(props.scriptFileName, trimmed);
-        }
-        setIsEditing(false);
-    }, [draftFileName, displayName, props.scriptFileName, props.onRename]);
-
-    const cancelEdit = React.useCallback(() => {
-        setIsEditing(false);
-    }, []);
-
-    React.useEffect(() => {
-        if (isEditing && editInputRef.current) {
-            editInputRef.current.focus();
-            editInputRef.current.select();
-        }
-    }, [isEditing]);
+    const storage = React.useMemo<ScriptStorage>(() => ({
+        fileName: props.scriptFileName,
+        resolvePath: () => `${displayPath(props.sessionId, props.storageReader.getSessionLocation(props.sessionId))}/${STORAGE_SCRIPTS_FOLDER}/${props.scriptFileName}`,
+        onRename: name => props.onRename(props.scriptFileName, name),
+    }), [props.scriptFileName, props.sessionId, props.storageReader, props.onRename]);
 
     const showStatus = React.useCallback(() => props.onShowStatus(props.scriptFileName), [props.onShowStatus, props.scriptFileName]);
     const showTable = React.useCallback(() => props.onShowTable(props.scriptFileName), [props.onShowTable, props.scriptFileName]);
@@ -304,7 +286,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
                     ) : (
                     <ExecuteConnectionGuard sessionId={props.sessionId} blocked={!queryActive && props.connectionHealth !== ConnectionHealth.ONLINE}>
                     <IconButton
-                        className={props.isFocused ? undefined : styles.feed_entry_execute_unfocused}
+                        className={props.isFocused ? styles.feed_entry_execute_focused : styles.feed_entry_execute_unfocused}
                         variant={ButtonVariant.Invisible}
                         size={ButtonSize.Small}
                         aria-label={queryActive ? `Stop ${displayName} query` : `Execute ${displayName} query`}
@@ -323,22 +305,14 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
                     </IconButton>
                     </ExecuteConnectionGuard>
                     )}
+                    <span className={styles.feed_entry_action_separator} aria-hidden="true" />
                     <div className={styles.feed_entry_file_name}>
-                        <ScriptName
-                            file={displayName}
-                            onFileClick={startEditing}
-                            editing={isEditing ? {
-                                value: draftFileName,
-                                onChange: setDraftFileName,
-                                onCommit: saveEdit,
-                                onCancel: cancelEdit,
-                                inputRef: editInputRef,
-                            } : undefined}
-                            fileNameTrailing={
-                                <span className={styles.feed_entry_actions}>
-                                    <PencilIcon size={12} />
-                                </span>
-                            }
+                        <ScriptConnectionPicker
+                            sessionId={props.sessionId}
+                            scriptName={displayName}
+                            connection={props.connection}
+                            disabled={props.scriptData == null || queryActive || generating || sessionExecution.busy}
+                            onPick={connectionId => props.onPickConnection(props.scriptFileName, connectionId)}
                         />
                     </div>
                     {props.scriptDebugMode && props.scriptData != null && (
@@ -366,7 +340,9 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
                         formatDisabled={!isFormattable || hasPendingDiff || editorView == null}
                         onFormat={handleFormat}
                         onDelete={() => props.onDelete(props.scriptFileName)}
+                        storage={storage}
                     />
+                    <span className={styles.feed_entry_action_separator} aria-hidden="true" />
                     <IconButton
                         variant={ButtonVariant.Invisible}
                         onClick={(event) => { event.stopPropagation(); props.onMoveUp(props.scriptFileName); }}
@@ -476,10 +452,8 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
 
 export interface ScriptFeedRowProps {
     sessionId: string;
-    connectionId: string | null;
-    connectionHealth: ConnectionHealth | null;
-    connectionDetails: ConnectionState['details'] | null;
-    connectorType: ConnectorType;
+    /// The connections that the scripts run on
+    connections: ReadonlyMap<string, ScriptConnectionView>;
     cacheQueryResults: boolean;
     storageReader: StorageReader;
     entries: ReturnType<typeof getSelectedScriptRefs>;
@@ -492,6 +466,7 @@ export interface ScriptFeedRowProps {
     onFocus: (fileName: string) => void;
     onDelete: (fileName: string) => void;
     onRename: (oldFileName: string, newFileName: string) => void;
+    onPickConnection: (fileName: string, connectionId: string) => void;
     onMoveUp: (fileName: string) => void;
     onMoveDown: (fileName: string) => void;
     onExecute: (fileName: string) => void;
@@ -538,7 +513,9 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
     const entryIndex = Math.floor(props.index / 2);
     const entry = !isSeparator ? props.entries[entryIndex] : undefined;
     const scriptData = entry != null ? props.scripts[entry.scriptId] : undefined;
-    const scriptFileName = entry?.fileName ?? '01-script.sql';
+    const scriptFileName = entry?.fileName ?? 'script.sql';
+    // Every script runs on its own connection
+    const connection = scriptData != null ? props.connections.get(scriptData.connection.connectionId) ?? null : null;
 
     // Entries are in feed order, so the index drives the movement buttons
     const canMoveUp = !isSeparator && entryIndex > 0;
@@ -624,10 +601,11 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                 <ScriptCard
                     key={entry?.scriptId}
                     sessionId={props.sessionId}
-                    connectionId={props.connectionId}
-                    connectionHealth={props.connectionHealth}
-                    connectionDetails={props.connectionDetails}
-                    connectorType={props.connectorType}
+                    connectionId={scriptData?.connection.connectionId ?? null}
+                    connectionHealth={connection?.connectionHealth ?? null}
+                    connectionDetails={connection?.details ?? null}
+                    connectorType={scriptData?.connection.connectorInfo.connectorType ?? ConnectorType.HYPER}
+                    connection={connection}
                     cacheQueryResults={props.cacheQueryResults}
                     storageReader={props.storageReader}
                     isFocused={scriptFileName === props.focusedFileName}
@@ -636,13 +614,14 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                     scriptDebugMode={props.scriptDebugMode}
                     formattingDebugMode={props.formattingDebugMode}
                     keywordCase={props.keywordCase}
-                    canExecute={scriptData != null && props.connectionHealth === ConnectionHealth.ONLINE}
+                    canExecute={scriptData != null && connection?.connectionHealth === ConnectionHealth.ONLINE}
                     active={props.active}
                     canMoveUp={canMoveUp}
                     canMoveDown={canMoveDown}
                     onFocus={props.onFocus}
                     onDelete={props.onDelete}
                     onRename={props.onRename}
+                    onPickConnection={props.onPickConnection}
                     onMoveUp={props.onMoveUp}
                     onMoveDown={props.onMoveDown}
                     onExecute={props.onExecute}

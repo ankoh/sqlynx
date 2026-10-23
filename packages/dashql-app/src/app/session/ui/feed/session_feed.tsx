@@ -23,13 +23,14 @@ import {
 } from '@dnd-kit/sortable';
 
 import { ConnectionHealth, ConnectionState } from '../../../connections/connection_state.js';
-import { getSelectedScriptRef, getSelectedScriptRefs, getSortedScriptFileNames, SessionScripts, type ScriptData, SELECT_SCRIPT, CREATE_SCRIPT, DELETE_SCRIPT, RENAME_SCRIPT, REORDER_SCRIPTS, SET_SCRIPT_TEXT, ACCEPT_PENDING_DIFF, REJECT_PENDING_DIFF } from '../../scripts/session_scripts.js';
+import { getSelectedScriptRef, getSelectedScriptRefs, SessionScripts, type ScriptData, SELECT_SCRIPT, CREATE_SCRIPT, DELETE_SCRIPT, RENAME_SCRIPT, REORDER_SCRIPTS, SET_SCRIPT_TEXT, ACCEPT_PENDING_DIFF, REJECT_PENDING_DIFF } from '../../scripts/session_scripts.js';
 import { useQueryExecutor } from '../../../connections/query_executor.js';
 import { type ModifySessionScripts } from '../../scripts/session_scripts_registry.js';
 import { type KeyEventHandler, useKeyEvents } from '../../../../utils/key_events.js';
 import { TabKey as DetailsTabKey } from '../script_details.js';
 import { runSessionScript } from '../rerun_query.js';
-import { useStorageReader } from '../../../storage/storage_provider.js';
+import { useStorageReader, useStorageWriter } from '../../../storage/storage_provider.js';
+import { groupSessionAttachmentListWrites, REFRESH_SESSION_ATTACHMENTS } from '../../../storage/storage_writer.js';
 import { VerticalScrollShadows } from '../../../../ui/foundations/vertical_scroll_shadows.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { observeSize } from '../../../../ui/foundations/size_observer.js';
@@ -40,6 +41,7 @@ import { reorderFeedEntries } from './session_feed_drag.js';
 import type { DataFile } from '../../../storage/storage_backend.js';
 import { stringifyError } from '../../../../platform/logger/logger.js';
 import { SessionDataCard } from './session_data_card.js';
+import { scriptConnectionView, usePickScriptConnection, type ScriptConnectionView } from '../script_connection_picker.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundations/button.js';
 import { ChevronDownIcon, ChevronUpIcon, PlusIcon } from '../../../../ui/foundations/symbol_icon.js';
 import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
@@ -55,6 +57,8 @@ export interface SessionFeedProps {
     modifySessionScripts: ModifySessionScripts;
     showDetails: (fileName?: string, initialTab?: DetailsTabKey) => void;
     conn: ConnectionState | null;
+    /// The connections that the scripts run on, by default the connection of the session
+    scriptConnections?: ReadonlyMap<string, ConnectionState>;
     /// Whether the feed is the visible, interactive layer. The feed stays mounted (just hidden) while
     /// the catalog/details overlay is open so it keeps its scroll position and measured row heights;
     /// while inactive its global key handlers must stand down so Escape/Enter belong to the overlay.
@@ -66,6 +70,8 @@ export interface SessionFeedProps {
 export interface SessionFeedDependencies {
     useQueryExecutor: typeof useQueryExecutor;
     useStorageReader: typeof useStorageReader;
+    useStorageWriter: typeof useStorageWriter;
+    usePickScriptConnection: typeof usePickScriptConnection;
     useKeyEvents: typeof useKeyEvents;
     runSessionScript: typeof runSessionScript;
     useAIClient: typeof useAIClient;
@@ -77,6 +83,8 @@ export interface SessionFeedDependencies {
 const DEFAULT_DEPENDENCIES: SessionFeedDependencies = {
     useQueryExecutor,
     useStorageReader,
+    useStorageWriter,
+    usePickScriptConnection,
     useKeyEvents,
     runSessionScript,
     useAIClient,
@@ -94,6 +102,21 @@ const COMPACT_FIRST_SEPARATOR_HEIGHT = 40;
 const FEED_ENTRY_CHROME_HEIGHT = 50;
 const FEED_EDITOR_LINE_HEIGHT = 18;
 const restrictToVerticalAxis: Modifier = ({ transform }) => ({ ...transform, x: 0 });
+
+/// The views of the connections that the scripts run on.
+/// The map keeps its identity while the shown fields are unchanged, the memoized feed rows depend on it.
+function useScriptConnectionViews(connections: ReadonlyMap<string, ConnectionState>): ReadonlyMap<string, ScriptConnectionView> {
+    const views = React.useRef<Map<string, ScriptConnectionView>>(new Map());
+    const next = new Map<string, ScriptConnectionView>();
+    for (const connection of connections.values()) next.set(connection.connectionId, scriptConnectionView(connection));
+    const prev = views.current;
+    const unchanged = prev.size === next.size && [...next].every(([id, view]) => {
+        const old = prev.get(id);
+        return old != null && old.connectionHealth === view.connectionHealth && old.details === view.details && old.label === view.label;
+    });
+    if (!unchanged) views.current = next;
+    return views.current;
+}
 
 function estimateFeedEntryHeight(scriptText: string) {
     return FEED_ENTRY_CHROME_HEIGHT + Math.max(1, scriptText.split('\n').length) * FEED_EDITOR_LINE_HEIGHT;
@@ -123,6 +146,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
     const keywordCase = getKeywordCase(config?.settings);
     const compactLayout = useCompactFeedLayout();
     const scriptRefs = props.sessionScripts.scriptRefs;
+    const scriptOrder = props.sessionScripts.scriptOrder;
     // The estimated heights only matter until a row is measured.
     // Don't re-estimate (and copy the text of every script) whenever any script changes.
     const canonicalEntries = React.useMemo(
@@ -132,26 +156,36 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
                 props.sessionScripts.scripts[entry.scriptId]?.scriptSession.getText() ?? '',
             ),
         })),
-        [scriptRefs],
+        [scriptRefs, scriptOrder],
     );
     const [displayEntries, setDisplayEntries] = React.useState(() => ({
-        source: scriptRefs,
+        source: canonicalEntries,
         entries: canonicalEntries,
     }));
-    const entries = displayEntries.source === scriptRefs
+    const entries = displayEntries.source === canonicalEntries
         ? displayEntries.entries
         : canonicalEntries;
     React.useLayoutEffect(() => {
-        setDisplayEntries({ source: scriptRefs, entries: canonicalEntries });
-    }, [scriptRefs, canonicalEntries]);
+        setDisplayEntries({ source: canonicalEntries, entries: canonicalEntries });
+    }, [canonicalEntries]);
+    const defaultConnections = React.useMemo(
+        () => new Map(props.conn == null ? [] : [[props.conn.connectionId, props.conn]]),
+        [props.conn],
+    );
+    const scriptConnections = useScriptConnectionViews(props.scriptConnections ?? defaultConnections);
     const storageReader = dependencies.useStorageReader();
+    const storageWriter = dependencies.useStorageWriter();
     const sessionId = props.sessionScripts.sessionId;
     const [dataFiles, setDataFiles] = React.useState<{ sessionId: string; files: DataFile[] } | null>(null);
     const [dataFilesVersion, setDataFilesVersion] = React.useState(0);
     const [attachmentsExpanded, setAttachmentsExpanded] = React.useState(false);
     const [attachmentError, setAttachmentError] = React.useState<string | null>(null);
     const attachmentInputRef = React.useRef<HTMLInputElement>(null);
-    const refreshDataFiles = React.useCallback(() => setDataFilesVersion(version => version + 1), []);
+    // The session file lists the attachments, a changed attachment updates the list
+    const refreshDataFiles = React.useCallback(() => {
+        setDataFilesVersion(version => version + 1);
+        void storageWriter.write(groupSessionAttachmentListWrites(sessionId), { type: REFRESH_SESSION_ATTACHMENTS, value: sessionId });
+    }, [sessionId, storageWriter]);
     React.useEffect(() => {
         const cancel = new AbortController();
         storageReader.backend.listDataFiles(sessionId).then(files => {
@@ -195,8 +229,9 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
 
     // The session scripts change with every keystroke and the connection with every query event.
     // Callbacks read the latest values through a ref to stay stable for the memoized feed rows.
-    const latest = React.useRef({ sessionScripts: props.sessionScripts, conn: props.conn });
-    latest.current = { sessionScripts: props.sessionScripts, conn: props.conn };
+    const latest = React.useRef({ sessionScripts: props.sessionScripts, conn: props.conn, scriptConnections });
+    latest.current = { sessionScripts: props.sessionScripts, conn: props.conn, scriptConnections };
+    const pickScriptConnection = dependencies.usePickScriptConnection(props.sessionScripts.sessionId, props.modifySessionScripts);
 
     const pendingCreatedScriptKeyRef = React.useRef<number | null>(null);
     const editorViewsRef = React.useRef(new Map<number, EditorView>());
@@ -228,19 +263,18 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
         props.showDetails(fileName, DetailsTabKey.Editor);
     }, [props.modifySessionScripts, props.showDetails]);
 
-    const isDisconnected = props.conn?.connectionHealth !== ConnectionHealth.ONLINE;
     const executeQuery = dependencies.useQueryExecutor();
+    // A script runs while its own connection is online
+    const isScriptOnline = (scriptData: ScriptData) =>
+        latest.current.scriptConnections.get(scriptData.connection.connectionId)?.connectionHealth === ConnectionHealth.ONLINE;
 
     // Refresh: drop the stale cache entry for a script's result, then re-execute — a plain cacheable
     // run then misses the cache and re-populates it. Resolves the script by feed file name.
     const handleRerunEntry = React.useCallback(async (fileName: string, cacheKey: string | null) => {
-        if (isDisconnected) {
-            return;
-        }
-        const { sessionScripts, conn } = latest.current;
+        const { sessionScripts } = latest.current;
         const entry = sessionScripts.scriptRefs[fileName];
         const scriptData = entry != null ? sessionScripts.scripts[entry.scriptId] : undefined;
-        if (scriptData == null) {
+        if (scriptData == null || !isScriptOnline(scriptData)) {
             return;
         }
         // Best-effort delete of the stale cache entry: a failed delete just means the run may hit the
@@ -248,17 +282,16 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
         if (cacheKey != null) {
             await storageReader.backend.deleteQueryResultCache(sessionScripts.sessionId, cacheKey).catch(() => { });
         }
-        dependencies.runSessionScript(conn!.connectionId, sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
-    }, [props.modifySessionScripts, isDisconnected, executeQuery, storageReader, logger]);
+        dependencies.runSessionScript(sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
+    }, [props.modifySessionScripts, executeQuery, storageReader, logger]);
 
     const handleExecuteEntry = React.useCallback((fileName: string) => {
-        if (isDisconnected) return;
-        const { sessionScripts, conn } = latest.current;
+        const { sessionScripts } = latest.current;
         const entry = sessionScripts.scriptRefs[fileName];
         const scriptData = entry != null ? sessionScripts.scripts[entry.scriptId] : undefined;
-        if (scriptData == null) return;
-        dependencies.runSessionScript(conn!.connectionId, sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
-    }, [executeQuery, isDisconnected, props.modifySessionScripts, logger]);
+        if (scriptData == null || !isScriptOnline(scriptData)) return;
+        dependencies.runSessionScript(sessionScripts, scriptData, executeQuery, props.modifySessionScripts, logger);
+    }, [executeQuery, props.modifySessionScripts, logger]);
 
     const handleDelete = React.useCallback((fileName: string) => {
         props.modifySessionScripts({ type: DELETE_SCRIPT, value: fileName });
@@ -271,7 +304,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
     // Move a script one position up/down within the session by swapping it with its neighbour in the
     // feed order and dispatching the new full order to REORDER_SCRIPTS.
     const moveScript = React.useCallback((fileName: string, delta: number) => {
-        const order = getSortedScriptFileNames(latest.current.sessionScripts.scriptRefs);
+        const order = [...latest.current.sessionScripts.scriptOrder];
         const from = order.indexOf(fileName);
         const to = from + delta;
         if (from < 0 || to < 0 || to >= order.length) return;
@@ -292,15 +325,15 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
         if (over == null || active.id === over.id) return;
         const reordered = reorderFeedEntries(entries, active.id, over.id);
         if (reordered == null) return;
-        // Keep the dropped order visible while REORDER_SCRIPTS assigns durable filename prefixes.
+        // Keep the dropped order visible while REORDER_SCRIPTS updates the order of the session.
         // Stable script ids let React and dnd-kit retain card identity without forcing a render while
         // dnd-kit still has the active drag transform applied.
-        setDisplayEntries({ source: scriptRefs, entries: reordered });
+        setDisplayEntries({ source: canonicalEntries, entries: reordered });
         props.modifySessionScripts({
             type: REORDER_SCRIPTS,
             value: reordered.map(entry => entry.fileName),
         });
-    }, [entries, props.modifySessionScripts, scriptRefs]);
+    }, [entries, props.modifySessionScripts, canonicalEntries]);
 
     const handleFormat = React.useCallback((scriptKey: number, text: string) => {
         props.modifySessionScripts({
@@ -470,7 +503,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
             connectionAttention?.request(next.sessionId);
             return;
         }
-        dependencies.runSessionScript(conn.connectionId, next, scriptData, executeQuery, props.modifySessionScripts, logger);
+        dependencies.runSessionScript(next, scriptData, executeQuery, props.modifySessionScripts, logger);
     }, [connectionAttention, executeQuery, logger, props.modifySessionScripts]);
 
     // A question becomes a script that receives its SQL from the AI provider
@@ -503,10 +536,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
 
     const rowProps = React.useMemo<ScriptFeedRowProps>(() => ({
         sessionId: props.sessionScripts.sessionId,
-        connectionId: props.conn?.connectionId ?? null,
-        connectionHealth: props.conn?.connectionHealth ?? null,
-        connectionDetails: props.conn?.details ?? null,
-        connectorType: props.sessionScripts.connectorInfo.connectorType,
+        connections: scriptConnections,
         cacheQueryResults: props.sessionScripts.settings.cacheQueryResults,
         entries,
         storageReader: storageReader,
@@ -519,6 +549,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
         onFocus: handleFocus,
         onDelete: handleDelete,
         onRename: handleRename,
+        onPickConnection: pickScriptConnection,
         onMoveUp: handleMoveUp,
         onMoveDown: handleMoveDown,
         onExecute: handleExecuteEntry,
@@ -542,7 +573,7 @@ export const SessionFeed: React.FC<SessionFeedProps> = (props) => {
         onCreate: handleCreate,
         onEditorView: handleEditorView,
         onRowHeightChange: feedLayout.rowHeights.setRowHeight,
-    }), [entries, props.active, props.conn?.connectionId, props.conn?.connectionHealth, props.conn?.details, props.sessionScripts.scripts, props.sessionScripts.scriptFocus.fileName, props.sessionScripts.connectorInfo.connectorType, props.sessionScripts.settings.cacheQueryResults, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, sqlGenerations.generations, sqlGenerations.stop, sqlGenerations.dismiss, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
+    }), [entries, props.active, scriptConnections, props.sessionScripts.scripts, props.sessionScripts.scriptFocus.fileName, props.sessionScripts.settings.cacheQueryResults, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, pickScriptConnection, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, sqlGenerations.generations, sqlGenerations.stop, sqlGenerations.dismiss, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight, bottomInset]);
     const getScrollElement = React.useCallback(() => feedLayout.listRef.current?.element ?? null, [feedLayout.listRef]);
 
     // An empty session greets the user with the composer in place of the feed.

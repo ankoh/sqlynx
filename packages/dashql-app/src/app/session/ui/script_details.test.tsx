@@ -56,15 +56,17 @@ function scripts(): SessionScripts {
             destroy: () => {},
         }), startExecution: () => ({}),
     };
+    const connection = { connectionId: 'database', connectorInfo: { connectorType: ConnectorType.TRINO } };
     return {
         sessionId: 'session', name: 'Test', connectionId: 'database', settings: { cacheQueryResults: true }, instance: {} as any, sessionMetadata: {} as any,
         connectorInfo: { connectorType: ConnectorType.TRINO } as any, connectionCatalog: {} as any,
-        scripts: { 1: { scriptKey: 1, fileName: '01_first.sql', scriptSession, analysisOutdated: false, annotations: {}, latestQueryId: null } as any,
-            2: { scriptKey: 2, fileName: '02_second.sql', scriptSession, analysisOutdated: false, annotations: {}, latestQueryId: null } as any },
+        scripts: { 1: { scriptKey: 1, fileName: '01_first.sql', scriptSession, analysisOutdated: false, annotations: {}, latestQueryId: null, connection } as any,
+            2: { scriptKey: 2, fileName: '02_second.sql', scriptSession, analysisOutdated: false, annotations: {}, latestQueryId: null, connection } as any },
         scriptRefs: {
             '01_first.sql': { scriptId: 1, fileName: '01_first.sql' },
             '02_second.sql': { scriptId: 2, fileName: '02_second.sql' },
         },
+        scriptOrder: ['01_first.sql', '02_second.sql'],
         scriptFocus: { fileName: '01_first.sql' }, semanticUserFocus: null,
     };
 }
@@ -160,7 +162,7 @@ describe('ScriptDetails V2 flat scripts', () => {
         act(() => root.render(<ScriptDetails sessionScripts={scripts()} modifySessionScripts={modify}
             connection={null} hideDetails={() => {}} scriptId={2} dependencies={dependencies} />));
 
-        act(() => (container.querySelector('[aria-label="More actions for second script"]') as HTMLButtonElement).click());
+        act(() => (container.querySelector('[aria-label="More actions for 02_second script"]') as HTMLButtonElement).click());
         const labels = Array.from(document.querySelectorAll('button')).map(button => button.textContent);
         expect(labels).toContain('Format Pretty');
         expect(labels).toContain('Format Compact');
@@ -183,7 +185,7 @@ describe('ScriptDetails V2 flat scripts', () => {
         act(() => root.render(<ScriptDetails sessionScripts={scripts()} modifySessionScripts={modify}
             connection={null} hideDetails={hideDetails} scriptId={2} dependencies={dependencies} />));
 
-        act(() => (container.querySelector('[aria-label="More actions for second script"]') as HTMLButtonElement).click());
+        act(() => (container.querySelector('[aria-label="More actions for 02_second script"]') as HTMLButtonElement).click());
         const deleteButton = Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'Delete') as HTMLButtonElement;
         act(() => deleteButton.click());
 

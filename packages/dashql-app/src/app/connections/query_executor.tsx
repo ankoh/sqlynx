@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as React from 'react';
 
-import { resolveSessionExecutionDatabase, useConnectionDispatch, useConnectionRegistryStore, useDynamicConnectionDispatch } from './connection_registry.js';
+import { useConnectionDispatch, useConnectionRegistryStore, useDynamicConnectionDispatch } from './connection_registry.js';
 import { APPLY_CATALOG_CHANGES } from './connection_state.js';
 import {
     createQueryResponseStreamMetrics,
@@ -97,9 +97,14 @@ export function useQueryState(sessionId: string | null, queryId: number | null) 
     // The registry changes with every lifecycle event of every query, including the internal queries of computations.
     const store = useConnectionRegistryStore();
     const getQueryState = React.useCallback(() => {
-        if (queryId == null) return null;
-        const database = resolveSessionExecutionDatabase(store.current, sessionId);
-        return database?.queriesActive.get(queryId) ?? database?.queriesFinished.get(queryId) ?? null;
+        if (queryId == null || sessionId == null) return null;
+        // Query ids are unique across connections. A script that moved to another connection keeps
+        // the result of its last query on the connection it left.
+        for (const database of store.current.connections.values()) {
+            const query = database.queriesActive.get(queryId) ?? database.queriesFinished.get(queryId);
+            if (query != null) return query;
+        }
+        return null;
     }, [store, sessionId, queryId]);
     return React.useSyncExternalStore(store.subscribe, getQueryState);
 }

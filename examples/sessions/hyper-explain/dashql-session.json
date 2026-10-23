@@ -1,25 +1,110 @@
 {
-  "formatVersion": 4,
+  "formatVersion": 6,
   "sessionId": "8203c46f-e9bd-4940-acc3-decc5d9d13a3",
   "name": "Hyper Explain",
-  "mainDatabase": {
-    "databaseId": "a7c9be55-7b4c-4d34-b557-469ff7693138",
-    "params": {
-      "hyper": {
-        "protocol": "WASM",
-        "endpoint": "",
-        "tls": {
-          "clientKeyPath": "",
-          "clientCertPath": "",
-          "caCertsPath": ""
-        },
-        "attachedDatabases": [],
-        "metadata": {},
-        "queryParameters": {}
+  "defaultConnectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138",
+  "connections": [
+    {
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138",
+      "params": {
+        "hyper": {
+          "protocol": "WASM",
+          "endpoint": "",
+          "tls": {
+            "clientKeyPath": "",
+            "clientCertPath": "",
+            "caCertsPath": ""
+          },
+          "attachedDatabases": [],
+          "metadata": {},
+          "queryParameters": {}
+        }
       }
     }
-  },
-  "attachedDatabases": [],
+  ],
+  "scripts": [
+    {
+      "name": "01_version.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "02_test_tables.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "03_referenced_tables_expand_views_false.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "04_referenced_tables_expand_views_true.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "05_schema.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "06_schema_with_lineage.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "07_tpch_q1.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "08_preagg_schema.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "09_preagg_sql.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "10_postagg_schema.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "11_text_tree.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "12_sql_dialect.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "13_sql_with_obfuscated.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "14_sql_regexp_like.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "15_sql_with_dialect_check_lenient.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "16_sql_expand_views_false.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "17_sql_expand_views_true.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "18_sql_expressions.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "20_streaming_explain_options.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    },
+    {
+      "name": "21_streaming_with_predicate.sql",
+      "connectionId": "a7c9be55-7b4c-4d34-b557-469ff7693138"
+    }
+  ],
+  "attachments": [],
   "metadata": {
     "createdAt": "2026-08-29T08:58:04.623Z"
   }

@@ -10,19 +10,23 @@ import {
     DEBOUNCE_DURATION_SESSION_WRITE,
     DELETE_SCRIPT as STORAGE_DELETE_SCRIPT,
     groupSessionManifestWrites,
-    groupSessionWrites,
+    groupSessionScriptListWrites,
     groupScriptDeletes,
     groupScriptRenames,
     groupScriptWrites,
     RENAME_SCRIPT as STORAGE_RENAME_SCRIPT,
     StorageWriter,
     WRITE_SESSION_PROPERTIES,
+    WRITE_SESSION_SCRIPTS,
     WRITE_SCRIPT,
+    type SessionScriptList,
 } from '../../storage/storage_writer.js';
 import type { SessionScriptsInput } from './session_scripts_registry.js';
 import type { SessionSettings } from './session_settings.js';
+import type { ConnectionParams, SessionConnection, SessionScript } from '../../storage/storage_backend.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
 import { Logger, LoggerLike, LoggableException, stringifyError } from '../../../platform/logger/logger.js';
-import { ScriptAnnotations, ScriptRef, SessionMetadata as SessionMetadataType, ResolvedVisualizeQuery, createEmptyAnnotations, createScriptRef, planScriptInsertion, normalizeScriptName, scriptOrderPrefixString, formatScriptOrderPrefix, scriptDisplayName, uniqueScriptBase } from './script_types.js';
+import { ScriptAnnotations, ScriptRef, SessionMetadata as SessionMetadataType, ResolvedVisualizeQuery, createEmptyAnnotations, createScriptRef, generateScriptFileName, scriptDisplayName, uniqueScriptBase } from './script_types.js';
 
 const LOG_CTX = 'session_scripts';
 
@@ -47,42 +51,89 @@ export interface SessionScripts {
     name: string | null;
     /// The session settings.
     settings: SessionSettings;
-    /// Attached database whose catalog backs script analysis.
+    /// The default connection of the session, the main database. New scripts use it.
     connectionId: string;
     /// The session metadata
     sessionMetadata: SessionMetadataType;
-    /// The connector info
+    /// The connector info of the default connection
     connectorInfo: ConnectorInfo;
-    /// The connection catalog
+    /// The catalog of the default connection
     connectionCatalog: core.DashQLCatalog;
     /// The scripts
     scripts: ScriptDataMap;
-    /// Committed cells keyed by their ordered file name.
+    /// Committed cells keyed by their file name.
     scriptRefs: { [fileName: string]: ScriptRef };
+    /// The file names of the committed cells in feed order, the keys of `scriptRefs`
+    scriptOrder: string[];
     /// The session focus (selected cell by file name)
     scriptFocus: ScriptFocus;
     /// The semantic user focus info (if any)
     semanticUserFocus: SemanticUserFocus | null;
 }
 
+/// The connection that a script is analyzed and executed with
+export interface ScriptConnection {
+    /// The connection id
+    connectionId: string;
+    /// The connector info of the connection
+    connectorInfo: ConnectorInfo;
+    /// The catalog of the connection, the script session lives in it
+    catalog: core.DashQLCatalog;
+    /// The params of the connection when the script took it. The session file needs them to hold a
+    /// copy of a connection that it doesn't hold yet, a copy that it holds wins.
+    params?: ConnectionParams;
+}
+
+/// The connection of a script that runs on a connection of the app
+export function scriptConnectionOf(connection: ConnectionState): ScriptConnection {
+    return { connectionId: connection.connectionId, connectorInfo: connection.connectorInfo, catalog: connection.catalog, params: connection.params };
+}
+
+/// The default connection of a session
+export function defaultScriptConnection(state: SessionScripts): ScriptConnection {
+    return { connectionId: state.connectionId, connectorInfo: state.connectorInfo, catalog: state.connectionCatalog };
+}
+
+/// The ids of the connections that a session uses: the default connection and the connections of
+/// its scripts, in this order. Everything else that knows the connections of a session derives
+/// them from here.
+export function sessionConnectionIds(state: SessionScripts): string[] {
+    const ids = new Set([state.connectionId]);
+    for (const script of Object.values(state.scripts)) {
+        ids.add(script.connection.connectionId);
+    }
+    return [...ids];
+}
+
+/// A script as storage holds it
+export interface StoredSessionScript {
+    /// The file name
+    name: string;
+    /// The text
+    sql: string;
+    /// The connection
+    connection: ScriptConnection;
+}
+
 /// Storage-shaped session content used when an external filesystem change replaces the persisted
 /// session. Keeping this type here prevents the native watcher from knowing about WASM lifetime
 /// and catalog invariants.
 export interface SessionScriptsStorageSnapshot {
-    scripts: Array<{ name: string; sql: string }>;
+    /// The scripts in feed order
+    scripts: StoredSessionScript[];
 }
 
 export function sessionScriptsMatchStorageSnapshot(state: SessionScripts, snapshot: SessionScriptsStorageSnapshot): boolean {
-    const diskScripts = new Map(snapshot.scripts.map(script => [script.name, script.sql]));
-    if (Object.keys(state.scriptRefs).length !== diskScripts.size) {
+    if (state.scriptOrder.length !== snapshot.scripts.length) {
         return false;
     }
-    for (const [fileName, ref] of Object.entries(state.scriptRefs)) {
-        if (diskScripts.get(fileName) !== state.scripts[ref.scriptId]?.scriptSession.getText()) {
-            return false;
-        }
-    }
-    return true;
+    return snapshot.scripts.every((stored, i) => {
+        const ref = state.scriptRefs[stored.name];
+        const script = ref == null ? undefined : state.scripts[ref.scriptId];
+        return state.scriptOrder[i] === stored.name
+            && script?.connection.connectionId === stored.connection.connectionId
+            && script.scriptSession.getText() === stored.sql;
+    });
 }
 
 /// A script data
@@ -111,6 +162,8 @@ export interface ScriptData {
     latestResultQueryId?: number | null;
     /// The file name of this committed script
     fileName: string;
+    /// The connection the script is analyzed and executed with
+    connection: ScriptConnection;
 }
 
 export const SELECT_NEXT_SCRIPT = Symbol('SELECT_NEXT_SCRIPT');
@@ -132,6 +185,7 @@ export const ACCEPT_PENDING_DIFF = Symbol('ACCEPT_PENDING_DIFF');
 export const REJECT_PENDING_DIFF = Symbol('REJECT_PENDING_DIFF');
 export const RENAME_SESSION = Symbol('RENAME_SESSION');
 export const UPDATE_SESSION_SETTINGS = Symbol('UPDATE_SESSION_SETTINGS');
+export const SET_SCRIPT_CONNECTION = Symbol('SET_SCRIPT_CONNECTION');
 
 export type SessionScriptsAction =
     | VariantKind<typeof SELECT_NEXT_SCRIPT, null>
@@ -140,7 +194,7 @@ export type SessionScriptsAction =
     | VariantKind<typeof ANALYZE_OUTDATED_SCRIPT, ScriptKey>
     | VariantKind<typeof APPLY_PLANNER_ANALYSIS, Array<{ scriptKey: number; editorUpdate: core.buffers.editor.EditorUpdateT }>>
     | VariantKind<typeof UPDATE_FROM_PROCESSOR, DashQLProcessorUpdateOut>
-    | VariantKind<typeof CATALOG_DID_UPDATE, null>
+    | VariantKind<typeof CATALOG_DID_UPDATE, string>
     | VariantKind<typeof REGISTER_QUERY, [ScriptKey, number]>
     | VariantKind<typeof REGISTER_SCRIPT_RESULT, [ScriptKey, number]>
     | VariantKind<typeof SET_SCRIPT_EXECUTION_VISUALIZATION, [ScriptKey, ResolvedVisualizeQuery | null]>
@@ -153,12 +207,17 @@ export type SessionScriptsAction =
     | VariantKind<typeof REJECT_PENDING_DIFF, ScriptKey>
     | VariantKind<typeof RENAME_SESSION, string | null>
     | VariantKind<typeof UPDATE_SESSION_SETTINGS, Partial<SessionSettings>>
+    | VariantKind<typeof SET_SCRIPT_CONNECTION, { fileName: string, connection: ScriptConnection }>
     ;
 
 const STATS_HISTORY_LIMIT = 20;
 
-export function createEmptyScriptData(instance: core.DashQL, catalog: core.DashQLCatalog, fileName: string = ''): [number, ScriptData] {
-    const scriptSession = instance.createScriptSession(catalog);
+/// Create the data of an empty script on a connection.
+/// A script that moves to another connection keeps its script key, the key is unused in the catalog of the connection.
+export function createEmptyScriptData(instance: core.DashQL, connection: ScriptConnection, fileName: string = '', movedScriptKey?: ScriptKey): [number, ScriptData] {
+    const scriptSession = movedScriptKey == null
+        ? instance.createScriptSession(connection.catalog)
+        : instance.createScriptSessionWithEntryId(connection.catalog, movedScriptKey);
     const scriptKey = scriptSession.getCatalogEntryId();
     const scriptData: ScriptData = {
         scriptKey,
@@ -172,6 +231,7 @@ export function createEmptyScriptData(instance: core.DashQL, catalog: core.DashQ
         latestQueryId: null,
         latestResultQueryId: null,
         fileName,
+        connection,
     };
     return [scriptKey, scriptData];
 }
@@ -182,93 +242,57 @@ enum FocusUpdate {
     UpdateFromCompletion,
 };
 
-/// Returns the naturally ordered cell file names.
-///
-/// File names may carry a numeric ordering prefix ("2_extract.sql"); sorting numerically (matching
-/// the storage backends' natural sort on load) yields the intended feed order and keeps a script in
-/// place when its prefix width grows (e.g. "9_x.sql" before "10_y.sql").
-export function getSortedScriptFileNames(scriptRefs: { [fileName: string]: ScriptRef }): string[] {
-    return Object.keys(scriptRefs).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+/// Returns the cell file names in feed order.
+export function getScriptFileNames(state: SessionScripts): readonly string[] {
+    return state.scriptOrder;
 }
 
-/// Returns the committed cells, sorted by file name.
+/// Returns the committed cells in feed order.
 export function getSelectedScriptRefs(state: SessionScripts): ScriptRef[] {
-    return getSortedScriptFileNames(state.scriptRefs).map(name => state.scriptRefs[name]);
+    return state.scriptOrder.map(name => state.scriptRefs[name]);
 }
 
 /// Returns the currently selected cell, or the first cell when focus is unset.
 export function getSelectedScriptRef(state: SessionScripts): ScriptRef | undefined {
     const file = state.scriptFocus.fileName;
     if (file && state.scriptRefs[file]) return state.scriptRefs[file];
-    const files = getSortedScriptFileNames(state.scriptRefs);
+    const files = state.scriptOrder;
     return files.length > 0 ? state.scriptRefs[files[0]] : undefined;
 }
 
-/// Returns the index of the selected entry in the sorted entry list, or -1.
+/// Returns the index of the selected entry in the feed, or -1.
 export function getSelectedScriptIndex(state: SessionScripts): number {
     const file = state.scriptFocus.fileName;
     if (!file) return -1;
-    const files = getSortedScriptFileNames(state.scriptRefs);
-    return files.indexOf(file);
+    return state.scriptOrder.indexOf(file);
 }
 
-/// Apply a script re-pad plan (from planScriptInsertion) to a page in place: rename the listed
-/// scripts in the page-scripts map and the scripts map, follow the focused file, and persist each as
-/// delete-old + write-new. Re-padding only changes a script's prefix width (and normalises a legacy
-/// "-" separator), never its clean name.
-/// Returns the updated maps and focus; the caller weaves them into the new state it is building.
-function applyScriptRepad(
-    repad: { oldFileName: string; newFileName: string }[],
-    scriptRefs: { [fileName: string]: ScriptRef },
-    scripts: ScriptDataMap,
-    focusFileName: string,
-    sessionId: string,
-    storage: StorageWriter | null,
-    reservedFileNames: ReadonlySet<string> = new Set(),
-): { scriptRefs: { [fileName: string]: ScriptRef }; scripts: ScriptDataMap; focusFileName: string } {
-    if (repad.length === 0) {
-        return { scriptRefs, scripts, focusFileName };
+/// The script list of the session file, the cells in feed order with their connections
+export function sessionScriptList(state: SessionScripts): SessionScript[] {
+    return state.scriptOrder.flatMap(name => {
+        const script = state.scripts[state.scriptRefs[name]?.scriptId];
+        return script == null ? [] : [{ name, connectionId: script.connection.connectionId }];
+    });
+}
+
+/// The copies of the connections that the scripts of a session use, as far as the scripts know them
+export function sessionConnectionCopies(state: SessionScripts): SessionConnection[] {
+    const copies = new Map<string, SessionConnection>();
+    for (const script of Object.values(state.scripts)) {
+        const { connectionId, params } = script.connection;
+        if (params != null && !copies.has(connectionId)) copies.set(connectionId, { connectionId, params });
     }
-    const nextScriptRefs = { ...scriptRefs };
-    const nextScripts = { ...scripts };
-    let nextFocus = focusFileName;
-    const movedEntries = repad.map(({ oldFileName, newFileName }) => ({
-        oldFileName,
-        newFileName,
-        entry: scriptRefs[oldFileName],
-    })).filter(move => move.entry != null);
-    // Remove all source paths before installing targets. Indexed insertion shifts adjacent numeric
-    // prefixes, so a target can otherwise overwrite an entry that a later move still needs to read.
-    for (const { oldFileName } of movedEntries) {
-        delete nextScriptRefs[oldFileName];
-    }
-    // A re-pad target path that is also some entry's source path must not be deleted: the write for
-    // that path already carries the correct content, and the delete (a separate keyspace from the
-    // write) would otherwise race it and could clobber the file on disk. This guards the mixed
-    // width/separator legacy case where clean names are not unique within the page.
-    const targetFiles = new Set([...movedEntries.map(r => r.newFileName), ...reservedFileNames]);
-    for (const { oldFileName, newFileName, entry } of movedEntries) {
-        nextScriptRefs[newFileName] = { ...entry, fileName: newFileName };
-        const sd = nextScripts[entry.scriptId];
-        if (sd) nextScripts[entry.scriptId] = { ...sd, fileName: newFileName };
-        if (nextFocus === oldFileName) nextFocus = newFileName;
-        // Suppress the delete (but never the write) when this entry's old path is reused as another
-        // entry's new path — the write for it already carries the correct content.
-        if (!targetFiles.has(oldFileName)) {
-            storage?.write(
-                groupScriptDeletes(sessionId, oldFileName),
-                { type: STORAGE_DELETE_SCRIPT, value: [sessionId, oldFileName] },
-                DEBOUNCE_DURATION_SCRIPT_WRITE
-            );
-        }
-        const sql = nextScripts[entry.scriptId]?.scriptSession.getText() ?? '';
-        storage?.write(
-            groupScriptWrites(sessionId, newFileName),
-            { type: WRITE_SCRIPT, value: [sessionId, newFileName, sql] },
-            DEBOUNCE_DURATION_SCRIPT_WRITE
-        );
-    }
-    return { scriptRefs: nextScriptRefs, scripts: nextScripts, focusFileName: nextFocus };
+    return [...copies.values()];
+}
+
+/// Persist the order and the connections of the cells, the session file follows with its connections
+function writeSessionScriptList(state: SessionScripts, storage: StorageWriter | null) {
+    const list: SessionScriptList = { scripts: sessionScriptList(state), connections: sessionConnectionCopies(state) };
+    void storage?.write(
+        groupSessionScriptListWrites(state.sessionId),
+        { type: WRITE_SESSION_SCRIPTS, value: [state.sessionId, list] },
+        DEBOUNCE_DURATION_SESSION_WRITE,
+    );
 }
 
 function writeSessionProperties(state: SessionScripts, storage: StorageWriter) {
@@ -299,7 +323,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             return next;
         }
         case SELECT_NEXT_SCRIPT: {
-            const files = getSortedScriptFileNames(state.scriptRefs);
+            const files = state.scriptOrder;
             const cur = files.indexOf(state.scriptFocus.fileName);
             const nextIdx = Math.min(Math.max(cur, 0) + 1, files.length - 1);
             const fileName = files[nextIdx] ?? state.scriptFocus.fileName;
@@ -309,7 +333,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             };
         }
         case SELECT_PREV_SCRIPT: {
-            const files = getSortedScriptFileNames(state.scriptRefs);
+            const files = state.scriptOrder;
             const cur = files.indexOf(state.scriptFocus.fileName);
             const prevIdx = Math.max((cur < 0 ? 0 : cur) - 1, 0);
             const fileName = files[prevIdx] ?? state.scriptFocus.fileName;
@@ -332,6 +356,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             const scripts = { ...state.scripts };
             for (const scriptKey in scripts) {
                 const prev = scripts[scriptKey];
+                if (prev.connection.connectionId !== action.value) continue;
                 scripts[scriptKey] = {
                     ...prev,
                     analysisOutdated: true,
@@ -373,7 +398,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                     editorUpdate: nextUpdate,
                     analysisOutdated: false,
                     annotations: deriveScriptAnnotations(nextUpdate, prevScript.scriptSession,
-                        state.connectorInfo.connectorType, logger),
+                        prevScript.connection.connectorInfo.connectorType, logger),
                     statistics: editorUpdate.analysisUpdated
                         ? rotateScriptStatistics(prevScript.statistics, editorUpdate.processingStatistics)
                         : prevScript.statistics,
@@ -483,7 +508,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             };
             if (documentChanged || analysisRefreshed) {
                 nextScript.annotations = deriveScriptAnnotations(update.editorUpdate, updateSession,
-                    state.connectorInfo.connectorType, logger);
+                    prevScript.connection.connectorInfo.connectorType, logger);
                 updateSession.loadIntoCatalog(nextScript.scriptKey);
             }
             // Update semantic user focus
@@ -510,9 +535,9 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
 
             // Re-load the catalog and mark scripts outdated when the analysis actually changed.
             if (documentChanged || analysisRefreshed) {
-                // Mark all other scripts as outdated.
+                // Mark the other scripts of the catalog as outdated.
                 // Eventually, we could restrict to those that are depending?
-                markOtherScriptsOutdatedInPlace(nextState.scripts, update.scriptKey);
+                markOtherScriptsOutdatedInPlace(nextState.scripts, nextScript);
             }
             // Persist only when the document text changed. Cursor/completion updates
             // still flow through this action but must not rewrite identical SQL.
@@ -588,20 +613,21 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             const deletedFileName = action.value;
             const deletedEntry = state.scriptRefs[deletedFileName];
             if (!deletedEntry) return state;
-            const remainingFiles = getSortedScriptFileNames(state.scriptRefs).filter(name => name !== deletedFileName);
+            const remainingFiles = state.scriptOrder.filter(name => name !== deletedFileName);
             const scriptRefs = { ...state.scriptRefs };
             delete scriptRefs[deletedFileName];
 
             // Adjust focus if needed
             let newFile = state.scriptFocus.fileName;
             if (newFile === deletedFileName) {
-                const oldIdx = getSortedScriptFileNames(state.scriptRefs).indexOf(deletedFileName);
+                const oldIdx = state.scriptOrder.indexOf(deletedFileName);
                 newFile = remainingFiles[Math.max(0, oldIdx - 1)] ?? remainingFiles[0] ?? '';
             }
 
             const next = destroyDeadScripts({
                 ...clearSemanticUserFocus(state),
                 scriptRefs,
+                scriptOrder: remainingFiles,
                 scriptFocus: { ...state.scriptFocus, fileName: newFile },
             });
             storage?.write(
@@ -609,59 +635,36 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                 { type: STORAGE_DELETE_SCRIPT, value: [next.sessionId, deletedEntry.fileName] },
                 DEBOUNCE_DURATION_SCRIPT_WRITE
             );
+            writeSessionScriptList(next, storage);
             return next;
         }
 
         case CREATE_SCRIPT: {
             // Null appends; an index inserts at that feed boundary. Text seeds the new script, e.g. from the composer.
             const { index, text } = action.value;
-            const plan = planScriptInsertion(state.scriptRefs, undefined, index ?? undefined);
-            const fileName = plan.newFileName;
-            const repadded = applyScriptRepad(
-                plan.repad,
-                state.scriptRefs,
-                state.scripts,
-                state.scriptFocus.fileName,
-                state.sessionId,
-                storage,
-                new Set([fileName]),
-            );
+            const fileName = generateScriptFileName(state.scriptRefs);
 
-            // Create a new script
-            const scriptSession = state.instance.createScriptSession(state.connectionCatalog);
-            const scriptKey = scriptSession.getCatalogEntryId();
-            // Create script data
-            let scriptData: ScriptData = {
-                scriptKey,
-                scriptSession,
-                analysisOutdated: true,
-                statistics: Immutable.List(),
-                annotations: createEmptyAnnotations(),
-                completion: null,
-                pendingDiff: null,
-                latestQueryId: null,
-                latestResultQueryId: null,
-                fileName,
-            };
-            const scripts: ScriptDataMap = { ...repadded.scripts };
+            // Create a new script on the default connection
+            let [scriptKey, scriptData] = createEmptyScriptData(state.instance, defaultScriptConnection(state), fileName);
+            const scripts: ScriptDataMap = { ...state.scripts };
             if (text) {
                 // Analyze right away so the script can be executed without waiting for an editor,
                 // and mark the others outdated since the new script was loaded into the catalog.
-                replaceScriptSessionText(scriptSession, text);
-                scriptData = analyzeScriptData(scriptData, state.connectionCatalog, logger,
-                    state.connectorInfo.connectorType);
-                for (const key in scripts) {
-                    scripts[key] = { ...scripts[key], analysisOutdated: true };
-                }
+                replaceScriptSessionText(scriptData.scriptSession, text);
+                scriptData = analyzeScriptData(scriptData, logger);
+                markOtherScriptsOutdatedInPlace(scripts, scriptData);
             }
             scripts[scriptKey] = scriptData;
 
-            const entry: ScriptRef = createScriptRef(scriptKey, fileName);
+            const scriptOrder = [...state.scriptOrder];
+            const insertAt = index == null ? scriptOrder.length : Math.max(0, Math.min(Math.trunc(index), scriptOrder.length));
+            scriptOrder.splice(insertAt, 0, fileName);
 
             const next: SessionScripts = {
                 ...clearSemanticUserFocus(state),
                 scripts,
-                scriptRefs: { ...repadded.scriptRefs, [fileName]: entry },
+                scriptRefs: { ...state.scriptRefs, [fileName]: createScriptRef(scriptKey, fileName) },
+                scriptOrder,
                 scriptFocus: { ...state.scriptFocus, fileName },
             };
             storage?.write(
@@ -669,6 +672,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                 { type: WRITE_SCRIPT, value: [next.sessionId, fileName, text ?? ''] },
                 DEBOUNCE_DURATION_SCRIPT_WRITE
             );
+            writeSessionScriptList(next, storage);
             return next;
         }
 
@@ -681,20 +685,21 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                 }, LOG_CTX);
                 return state;
             }
-            // The rename input edits the display name. Drop any prefix / ".sql" the user included,
-            // disambiguate it against the other scripts, then re-attach this script's existing
-            // ordering prefix and the ".sql" extension. An empty base is ignored.
+            // The rename input edits the display name. Drop a ".sql" the user included, disambiguate
+            // the name against the other scripts and attach the ".sql" extension. An empty name and a
+            // name that is not a plain file name are ignored.
             const requestedBase = scriptDisplayName(requestedName.trim());
-            if (!requestedBase) {
+            if (!requestedBase || /[/\\\0]/.test(requestedBase)) {
                 return state;
             }
             const cleanBase = uniqueScriptBase(requestedBase, state.scriptRefs, oldFileName);
-            const newFileName = `${scriptOrderPrefixString(oldFileName)}${cleanBase}.sql`;
+            const newFileName = `${cleanBase}.sql`;
             const renamed = oldFileName !== newFileName;
             const renamedEntry: ScriptRef = { ...entry, fileName: newFileName };
             const scriptRefs = { ...state.scriptRefs };
             if (renamed) delete scriptRefs[oldFileName];
             scriptRefs[newFileName] = renamedEntry;
+            const scriptOrder = state.scriptOrder.map(name => name === oldFileName ? newFileName : name);
 
             // Update the script data fileName and re-analyze immediately with the new path.
             const scriptId = entry.scriptId;
@@ -703,16 +708,8 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             if (updatedScriptData) {
                 const renamedScriptData: ScriptData = { ...updatedScriptData, fileName: newFileName };
                 if (renamed) {
-                    newScripts[scriptId] = analyzeScriptData(renamedScriptData, state.connectionCatalog, logger,
-                        state.connectorInfo.connectorType);
-                    for (const key in newScripts) {
-                        if (+key === scriptId) continue;
-                        const other = newScripts[key];
-                        newScripts[key] = {
-                            ...other,
-                            analysisOutdated: true,
-                        };
-                    }
+                    newScripts[scriptId] = analyzeScriptData(renamedScriptData, logger);
+                    markOtherScriptsOutdatedInPlace(newScripts, renamedScriptData);
                 } else {
                     newScripts[scriptId] = renamedScriptData;
                 }
@@ -726,6 +723,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             const next = {
                 ...(renamed ? clearSemanticUserFocus(state) : state),
                 scriptRefs,
+                scriptOrder,
                 scripts: newScripts,
                 scriptFocus: { ...state.scriptFocus, fileName: focusFile },
             };
@@ -738,6 +736,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                     { type: STORAGE_RENAME_SCRIPT, value: [next.sessionId, oldFileName, newFileName] },
                     DEBOUNCE_DURATION_SCRIPT_WRITE
                 );
+                writeSessionScriptList(next, storage);
             } else {
                 // No rename: just persist the current contents under the unchanged name.
                 const sql = updatedScriptData ? updatedScriptData.scriptSession.getText() : '';
@@ -763,7 +762,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                     order.push(file);
                 }
             }
-            const currentOrder = getSortedScriptFileNames(state.scriptRefs);
+            const currentOrder = state.scriptOrder;
             for (const file of currentOrder) {
                 if (!seen.has(file)) {
                     seen.add(file);
@@ -775,69 +774,53 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             if (order.length === currentOrder.length && order.every((f, i) => f === currentOrder[i])) {
                 return state;
             }
+            // The order lives in the session file, the script files stay untouched
+            const next: SessionScripts = { ...state, scriptOrder: order };
+            writeSessionScriptList(next, storage);
+            return next;
+        }
 
-            // Assign a dense ordering prefix to each script in the new order, keeping its clean name.
-            // A script already at its target name is left untouched (no rename, no disk churn).
-            const total = order.length;
-            const renames: { oldFile: string; newFile: string }[] = [];
-            const newScriptRefs: { [fileName: string]: ScriptRef } = {};
-            const newScripts: ScriptDataMap = { ...state.scripts };
-            for (let i = 0; i < order.length; ++i) {
-                const oldFile = order[i];
-                const entry = state.scriptRefs[oldFile];
-                const newFile = `${formatScriptOrderPrefix(i + 1, total)}${normalizeScriptName(oldFile)}`;
-                if (newFile === oldFile) {
-                    newScriptRefs[oldFile] = entry;
-                    continue;
-                }
-                renames.push({ oldFile, newFile });
-                const sd = newScripts[entry.scriptId];
-                if (sd) newScripts[entry.scriptId] = { ...sd, fileName: newFile };
-                newScriptRefs[newFile] = { ...entry, fileName: newFile };
-            }
-
-            if (renames.length === 0) {
+        case SET_SCRIPT_CONNECTION: {
+            const { fileName, connection } = action.value;
+            const entry = state.scriptRefs[fileName];
+            const prev = entry == null ? undefined : state.scripts[entry.scriptId];
+            if (!prev) {
+                logger.warn("SET_SCRIPT_CONNECTION references invalid script", { fileName }, LOG_CTX);
                 return state;
             }
-
-            const renamedFocus = renames.find(r => r.oldFile === state.scriptFocus.fileName)?.newFile;
-            const newFocusFile = renamedFocus ?? state.scriptFocus.fileName;
-
-            const next: SessionScripts = {
-                ...state,
-                scriptRefs: newScriptRefs,
-                scripts: newScripts,
-                scriptFocus: { ...state.scriptFocus, fileName: newFocusFile },
+            if (prev.connection.connectionId === connection.connectionId) {
+                return state;
+            }
+            // A script session belongs to one catalog, the script moves into a new script session under its key
+            const text = prev.scriptSession.getText();
+            try {
+                prev.scriptSession.dropFromCatalog();
+            } catch {
+                // The script may not have completed analysis and therefore may not be in the catalog.
+            }
+            destroyScriptData(prev);
+            let [scriptKey, scriptData] = createEmptyScriptData(state.instance, connection, fileName, prev.scriptKey);
+            scriptData = {
+                ...scriptData,
+                latestQueryId: prev.latestQueryId,
+                latestResultQueryId: prev.latestResultQueryId,
             };
-
-            // Persist each moved script as delete-old + write-new (no atomic file rename exists; this
-            // mirrors RENAME_SCRIPT). Deletes and writes use distinct group keys. Clean file
-            // names are NOT guaranteed unique within a page (legacy "01-script.sql"/"02-script.sql"
-            // both clean to "script", and the re-pad normaliser can produce "1_script.sql"/
-            // "2_script.sql"), so a permutation can map one script's new name onto another's old name
-            // (e.g. swapping "1_script.sql" and "2_script.sql"). For any such reused path the write
-            // already rewrites it with the moved script's content, so its delete must be suppressed —
-            // otherwise the delete (on a separate keyspace from the write) races the write and can
-            // clobber the file on disk.
-            const targetFiles = new Set(renames.map(r => r.newFile));
-            for (const { oldFile } of renames) {
-                if (targetFiles.has(oldFile)) continue;
-                storage?.write(
-                    groupScriptDeletes(next.sessionId, oldFile),
-                    { type: STORAGE_DELETE_SCRIPT, value: [next.sessionId, oldFile] },
-                    DEBOUNCE_DURATION_SCRIPT_WRITE
-                );
+            replaceScriptSessionText(scriptData.scriptSession, text);
+            try {
+                scriptData = analyzeScriptData(scriptData, logger);
+            } catch (e: any) {
+                logger.warn("Failed to analyze script on its new connection", { fileName, error: stringifyError(e) }, LOG_CTX);
             }
-            for (const { newFile } of renames) {
-                const entry = newScriptRefs[newFile];
-                const sd = newScripts[entry.scriptId];
-                const sql = sd ? sd.scriptSession.getText() : '';
-                storage?.write(
-                    groupScriptWrites(next.sessionId, newFile),
-                    { type: WRITE_SCRIPT, value: [next.sessionId, newFile, sql] },
-                    DEBOUNCE_DURATION_SCRIPT_WRITE
-                );
-            }
+            const scripts: ScriptDataMap = { ...state.scripts };
+            // The scripts of both catalogs may have referenced the moved script
+            markOtherScriptsOutdatedInPlace(scripts, prev);
+            markOtherScriptsOutdatedInPlace(scripts, scriptData);
+            scripts[scriptKey] = scriptData;
+            const next: SessionScripts = {
+                ...clearSemanticUserFocus(state),
+                scripts,
+            };
+            writeSessionScriptList(next, storage);
             return next;
         }
 
@@ -864,8 +847,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             replaceScriptSessionText(scriptData.scriptSession, text);
             // Re-analyze through the path-aware helper (destroys the stale buffers, refreshes
             // buffers + annotations incl. visualizeQuery, reloads the script into the catalog)
-            const nextScriptData = analyzeScriptData(scriptData, state.connectionCatalog, logger,
-                state.connectorInfo.connectorType);
+            const nextScriptData = analyzeScriptData(scriptData, logger);
             nextScriptData.pendingDiff = pendingDiff;
 
             const nextState: SessionScripts = {
@@ -875,16 +857,9 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                     [scriptKey]: nextScriptData,
                 },
             };
-            // The text changed and was reloaded into the catalog; mark all other scripts
-            // outdated so cross-script references re-resolve (mirrors UPDATE_FROM_PROCESSOR).
-            for (const key in nextState.scripts) {
-                if (+key === scriptKey) continue;
-                const other = nextState.scripts[key];
-                nextState.scripts[key] = {
-                    ...other,
-                    analysisOutdated: true,
-                };
-            }
+            // The text changed and was reloaded into the catalog; mark the other scripts of the
+            // catalog outdated so cross-script references re-resolve (mirrors UPDATE_FROM_PROCESSOR).
+            markOtherScriptsOutdatedInPlace(nextState.scripts, nextScriptData);
 
             // Persist only the updated script (same tail as UPDATE_FROM_PROCESSOR)
             const sql = nextScriptData.scriptSession.getText();
@@ -931,8 +906,7 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
             scriptData.pendingDiff.diffBuffer.destroy();
             // Rewrite the script text in-place and re-analyze through the path-aware helper.
             replaceScriptSessionText(scriptData.scriptSession, priorText);
-            const nextScriptData = analyzeScriptData(scriptData, state.connectionCatalog, logger,
-                state.connectorInfo.connectorType);
+            const nextScriptData = analyzeScriptData(scriptData, logger);
             nextScriptData.pendingDiff = null;
 
             const nextState: SessionScripts = {
@@ -942,16 +916,9 @@ export function reduceSessionScripts(state: SessionScripts, action: SessionScrip
                     [scriptKey]: nextScriptData,
                 },
             };
-            // The text changed and was reloaded into the catalog; mark all other scripts
-            // outdated so cross-script references re-resolve (mirrors SET_SCRIPT_TEXT).
-            for (const key in nextState.scripts) {
-                if (+key === scriptKey) continue;
-                const other = nextState.scripts[key];
-                nextState.scripts[key] = {
-                    ...other,
-                    analysisOutdated: true,
-                };
-            }
+            // The text changed and was reloaded into the catalog; mark the other scripts of the
+            // catalog outdated so cross-script references re-resolve (mirrors SET_SCRIPT_TEXT).
+            markOtherScriptsOutdatedInPlace(nextState.scripts, nextScriptData);
 
             // Persist only the updated script (same tail as SET_SCRIPT_TEXT)
             const sql = nextScriptData.scriptSession.getText();
@@ -972,15 +939,16 @@ export function clearSemanticUserFocus<V extends SessionScriptsInput>(state: V):
     return { ...state, semanticUserFocus: null };
 }
 
-/// Mark all scripts except one as outdated in a scripts map that the caller already owns.
+/// Mark the other scripts in the catalog of a script as outdated in a scripts map that the caller
+/// already owns. Scripts in other catalogs can't reference the script.
 ///
 /// Scripts that are already outdated keep their identity.
 /// This runs for every keystroke and every new ScriptData object re-renders its editor and card.
-function markOtherScriptsOutdatedInPlace(scripts: ScriptDataMap, except: ScriptKey) {
+function markOtherScriptsOutdatedInPlace(scripts: ScriptDataMap, changed: ScriptData) {
     for (const key in scripts) {
-        if (+key === except) continue;
+        if (+key === changed.scriptKey) continue;
         const script = scripts[key];
-        if (script.analysisOutdated) continue;
+        if (script.analysisOutdated || script.connection.catalog !== changed.connection.catalog) continue;
         scripts[key] = {
             ...script,
             analysisOutdated: true,
@@ -1008,9 +976,10 @@ export function destroySessionScripts(state: SessionScripts): SessionScripts {
 
 /// Replace persisted session content without scheduling writes back to storage.
 ///
-/// Scripts that remain at the same page/file path retain their WASM identity, query history and UI
-/// references. Added and removed paths allocate/free their WASM state here, where the catalog and
-/// script-registry lifetime rules are already centralized.
+/// Scripts that remain at the same file path on the same connection retain their WASM identity,
+/// query history and UI references. A script that moved to another connection gets a new script
+/// session in the catalog of that connection. Added and removed paths allocate/free their WASM state
+/// here, where the catalog and script-registry lifetime rules are already centralized.
 export function replaceSessionScriptsFromStorage(
     state: SessionScripts,
     snapshot: SessionScriptsStorageSnapshot,
@@ -1026,32 +995,50 @@ export function replaceSessionScriptsFromStorage(
 
     const scripts: ScriptDataMap = {};
     const scriptRefs: { [fileName: string]: ScriptRef } = {};
+    const scriptOrder: string[] = [];
     let contentChanged = false;
 
     for (const stored of snapshot.scripts) {
-            let scriptData = existingByPath.get(stored.name);
-            if (scriptData) {
-                existingByPath.delete(stored.name);
-                if (scriptData.scriptSession.getText() !== stored.sql) {
-                    scriptData.pendingDiff?.diffBuffer.destroy();
-                    scriptData.completion?.buffer.destroy();
-                    replaceScriptSessionText(scriptData.scriptSession, stored.sql);
-                    scriptData = {
-                        ...scriptData,
-                        pendingDiff: null,
-                        completion: null,
-                        analysisOutdated: true,
-                    };
-                    contentChanged = true;
-                }
-            } else {
-                const [scriptKey, created] = createEmptyScriptData(state.instance, state.connectionCatalog, stored.name);
-                replaceScriptSessionText(created.scriptSession, stored.sql);
-                scriptData = created;
+        if (scriptRefs[stored.name]) continue;
+        let scriptData = existingByPath.get(stored.name);
+        if (scriptData && scriptData.connection.connectionId === stored.connection.connectionId) {
+            existingByPath.delete(stored.name);
+            if (scriptData.scriptSession.getText() !== stored.sql) {
+                scriptData.pendingDiff?.diffBuffer.destroy();
+                scriptData.completion?.buffer.destroy();
+                replaceScriptSessionText(scriptData.scriptSession, stored.sql);
+                scriptData = {
+                    ...scriptData,
+                    pendingDiff: null,
+                    completion: null,
+                    analysisOutdated: true,
+                };
                 contentChanged = true;
             }
-            scripts[scriptData.scriptKey] = scriptData;
-            scriptRefs[stored.name] = createScriptRef(scriptData.scriptKey, stored.name);
+        } else {
+            // A script that moved to another connection keeps its key and its results
+            const moved = scriptData;
+            if (moved != null) {
+                existingByPath.delete(stored.name);
+                try {
+                    moved.scriptSession.dropFromCatalog();
+                } catch {
+                    // The script may not have completed analysis and therefore may not be in the catalog.
+                }
+                destroyScriptData(moved);
+            }
+            const [, created] = createEmptyScriptData(state.instance, stored.connection, stored.name, moved?.scriptKey);
+            replaceScriptSessionText(created.scriptSession, stored.sql);
+            scriptData = moved == null ? created : {
+                ...created,
+                latestQueryId: moved.latestQueryId,
+                latestResultQueryId: moved.latestResultQueryId,
+            };
+            contentChanged = true;
+        }
+        scripts[scriptData.scriptKey] = scriptData;
+        scriptRefs[stored.name] = createScriptRef(scriptData.scriptKey, stored.name);
+        scriptOrder.push(stored.name);
     }
 
     // Files no longer present on disk own WASM objects that must be detached before destruction.
@@ -1065,14 +1052,14 @@ export function replaceSessionScriptsFromStorage(
         contentChanged = true;
     }
 
-    const files = getSortedScriptFileNames(scriptRefs);
     const previousFile = state.scriptFocus.fileName;
-    const fileName = scriptRefs[previousFile] ? previousFile : (files[0] ?? '');
+    const fileName = scriptRefs[previousFile] ? previousFile : (scriptOrder[0] ?? '');
 
     let next: SessionScripts = {
         ...clearSemanticUserFocus(state),
         scripts,
         scriptRefs,
+        scriptOrder,
         scriptFocus: {
             ...state.scriptFocus,
             fileName,
@@ -1330,8 +1317,7 @@ function computePendingDiff(
     }
 }
 
-export function analyzeScriptData(scriptData: ScriptData, _catalog: core.DashQLCatalog, logger: Logger,
-    connectorType: ConnectorType): ScriptData {
+export function analyzeScriptData(scriptData: ScriptData, logger: Logger): ScriptData {
     const next: ScriptData = { ...scriptData };
 
     // Analyze the script
@@ -1353,7 +1339,7 @@ export function analyzeScriptData(scriptData: ScriptData, _catalog: core.DashQLC
     next.annotations = deriveScriptAnnotations(
         update,
         next.scriptSession,
-        connectorType,
+        next.connection.connectorInfo.connectorType,
         logger,
     );
 
@@ -1375,8 +1361,7 @@ export function analyzeOutdatedScript<V extends SessionScriptsInput>(state: V, s
         return state;
     }
     // Create the next session scripts state
-    const nextScriptData = analyzeScriptData(scriptData, state.connectionCatalog, logger,
-        state.connectorInfo.connectorType);
+    const nextScriptData = analyzeScriptData(scriptData, logger);
     const next = {
         ...state,
         scripts: {

@@ -11,7 +11,7 @@ import {
 } from './session_export.js';
 import { importSessionFromZip } from './session_import.js';
 import { sessionBundlesEqual } from '../../storage/session_bundle.js';
-import { SessionTestBackend, TEST_SESSION_ID, testSession } from '../../storage/session_test_backend.js';
+import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testConnections, testSession } from '../../storage/session_test_backend.js';
 
 describe('V2 session export', () => {
     it('compares data bytes independently of typed-array JSON serialization', () => {
@@ -50,11 +50,10 @@ describe('V2 session export', () => {
             metadata, queryParameters: { credential: 'query-secret' },
         } } : { trino: { endpoint: 'https://identity.example', catalogName: 'catalog', metadata } };
         const manifest = testSession({
-            mainDatabase: { databaseId: testSession().mainDatabase.databaseId, params: params as any },
-            attachedDatabases: [{ databaseId: 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff', params: params as any }],
+            ...testConnections({ connectionId: TEST_CONNECTION_ID, params: params as any }, { connectionId: 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff', params: params as any }),
         });
         await backend.saveSessionManifest(TEST_SESSION_ID, manifest);
-        const liveParams = new Map([manifest.mainDatabase, ...manifest.attachedDatabases].map(database => [database.databaseId, database.params]));
+        const liveParams = new Map(manifest.connections.map(connection => [connection.connectionId, connection.params]));
         const url = await exportSessionAsUrl(backend, TEST_SESSION_ID, liveParams, SessionLinkTarget.WEB);
         const event = JSON.parse(new TextDecoder().decode(BASE64URL_CODEC.decode(url.searchParams.get('data')!)));
         const archives = [
@@ -66,24 +65,23 @@ describe('V2 session export', () => {
             const text = await archive.file('dashql-session.json')!.async('text');
             for (const secret of [...Object.values(metadata), 'query-secret']) expect(text).not.toContain(secret);
             const exported = JSON.parse(text);
-            for (const database of [exported.mainDatabase, ...exported.attachedDatabases]) {
+            for (const database of exported.connections) {
                 expect(database.params[connector].metadata).toBeUndefined();
                 expect(database.params[connector].queryParameters).toBeUndefined();
                 expect(database.params[connector].endpoint).toBe('https://identity.example');
             }
         }
-        expect((await backend.loadSession(TEST_SESSION_ID)).mainDatabase.params).toEqual(params);
+        expect((await backend.loadSession(TEST_SESSION_ID)).connections[0].params).toEqual(params);
     });
     it('omits main and attached drafts and secrets from plain and shared ZIP exports', async () => {
         const backend = new SessionTestBackend();
-        const database = (databaseId: string) => ({
-            databaseId,
+        const connection = (connectionId: string) => ({
+            connectionId,
             params: { trino: { endpoint: 'https://committed.example', auth: { authType: 'AUTH_BASIC', basic: { username: 'user', secret: 'committed-secret' } } } } as any,
             paramsDraft: { trino: { endpoint: 'unfinished', auth: { authType: 'AUTH_BASIC', basic: { username: 'user', secret: 'draft-secret' } } } } as any,
         });
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession({
-            mainDatabase: database(testSession().mainDatabase.databaseId),
-            attachedDatabases: [database('bbbbbbbb-cccc-4ddd-8eee-ffffffffffff')],
+            ...testConnections(connection(TEST_CONNECTION_ID), connection('bbbbbbbb-cccc-4ddd-8eee-ffffffffffff')),
         }));
         for (const blob of [await exportSessionAsZip(TEST_SESSION_ID, backend), await exportSessionAsSharedZip(backend, TEST_SESSION_ID, new Map())]) {
             const archive = await JSZip.loadAsync(blob);
@@ -91,9 +89,9 @@ describe('V2 session export', () => {
             expect(text).not.toContain('paramsDraft');
             expect(text).not.toContain('committed-secret');
             expect(text).not.toContain('draft-secret');
-            expect(JSON.parse(text).mainDatabase.params.trino.endpoint).toBe('https://committed.example');
+            expect(JSON.parse(text).connections[0].params.trino.endpoint).toBe('https://committed.example');
         }
-        expect((await backend.loadSession(TEST_SESSION_ID)).mainDatabase.paramsDraft).toBeDefined();
+        expect((await backend.loadSession(TEST_SESSION_ID)).connections[0].paramsDraft).toBeDefined();
     });
     it('does not encode the reserved draft script', async () => {
         const archive = await JSZip.loadAsync(await createSessionZip(testSession(), [
@@ -164,14 +162,19 @@ describe('V2 session export', () => {
         expect(await archive.file('dashql-catalog-functions.sql')!.async('text')).toBe('functions');
     });
 
-    it('generates new session and database UUIDs for shared exports by default', async () => {
+    it('generates new session and connection UUIDs for shared exports by default', async () => {
         const backend = new SessionTestBackend();
-        const attachedDatabaseId = 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff';
+        const otherConnectionId = 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff';
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession({
-            attachedDatabases: [{ databaseId: attachedDatabaseId, params: { hyper: {} } as any }],
+            ...testConnections(testSession().connections[0], { connectionId: otherConnectionId, params: { hyper: {} } as any }),
+            scripts: [
+                { name: '02_attached.sql', connectionId: otherConnectionId },
+                { name: '01_attachment.sql', connectionId: TEST_CONNECTION_ID },
+            ],
         }));
         await backend.saveScript(TEST_SESSION_ID, '01_attachment.sql',
             `SELECT * FROM external('/mnt/fs/sessions/${TEST_SESSION_ID}/attachments/payload.bin')`);
+        await backend.saveScript(TEST_SESSION_ID, '02_attached.sql', 'SELECT 2');
 
         const archive = await JSZip.loadAsync(await exportSessionAsSharedZip(
             backend,
@@ -183,11 +186,17 @@ describe('V2 session export', () => {
             `/mnt/fs/sessions/${exported.sessionId}/attachments/payload.bin`);
 
         expect(exported.sessionId).not.toBe(TEST_SESSION_ID);
-        expect(exported.mainDatabase.databaseId).not.toBe(testSession().mainDatabase.databaseId);
-        expect(exported.attachedDatabases[0].databaseId).not.toBe(attachedDatabaseId);
+        expect(exported.defaultConnectionId).not.toBe(TEST_CONNECTION_ID);
+        expect(exported.connections[0].connectionId).toBe(exported.defaultConnectionId);
+        expect(exported.connections[1].connectionId).not.toBe(otherConnectionId);
+        // The scripts keep their order and follow their connections to the new ids
+        expect(exported.scripts).toEqual([
+            { name: '02_attached.sql', connectionId: exported.connections[1].connectionId },
+            { name: '01_attachment.sql', connectionId: exported.defaultConnectionId },
+        ]);
     });
 
-    it('preserves session and database UUIDs when requested', async () => {
+    it('preserves session and connection UUIDs when requested', async () => {
         const backend = new SessionTestBackend();
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
 
@@ -200,7 +209,8 @@ describe('V2 session export', () => {
         const exported = JSON.parse(await archive.file('dashql-session.json')!.async('text'));
 
         expect(exported.sessionId).toBe(TEST_SESSION_ID);
-        expect(exported.mainDatabase.databaseId).toBe(testSession().mainDatabase.databaseId);
+        expect(exported.defaultConnectionId).toBe(TEST_CONNECTION_ID);
+        expect(exported.connections[0].connectionId).toBe(TEST_CONNECTION_ID);
     });
 
     it('generates new UUIDs for URL exports by default', async () => {
@@ -214,6 +224,6 @@ describe('V2 session export', () => {
         const exported = JSON.parse(await archive.file('dashql-session.json')!.async('text'));
 
         expect(exported.sessionId).not.toBe(TEST_SESSION_ID);
-        expect(exported.mainDatabase.databaseId).not.toBe(testSession().mainDatabase.databaseId);
+        expect(exported.defaultConnectionId).not.toBe(TEST_CONNECTION_ID);
     });
 });

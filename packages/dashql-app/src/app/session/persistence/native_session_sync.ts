@@ -3,6 +3,7 @@ import type { SessionLocation } from '../../storage/session_locator.js';
 import {
     StorageBackendType,
     STORAGE_ATTACHMENTS_FOLDER,
+    STORAGE_SESSION_FILE,
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_CATALOG_FUNCTIONS,
     STORAGE_CATALOG_RELATIONS,
@@ -37,7 +38,8 @@ export function isSessionContentWatchEvent(event: WatchEvent, dir: string): bool
     return event.paths.some(rawPath => {
         const path = rawPath.replace(/\\/g, '/');
         const relative = path === normalizedDir ? '' : path.slice(normalizedDir.length + 1);
-        return relative === STORAGE_CATALOG_RELATIONS
+        return relative === STORAGE_SESSION_FILE
+            || relative === STORAGE_CATALOG_RELATIONS
             || relative === STORAGE_CATALOG_FUNCTIONS
             || relative === STORAGE_SCRIPTS_FOLDER
             || relative.startsWith(`${STORAGE_SCRIPTS_FOLDER}/`)

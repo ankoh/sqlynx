@@ -5,7 +5,7 @@ import { ConnectorInfo } from '../../connections/connector_info.js';
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
 import { getSelectedScriptRef, SELECT_NEXT_SCRIPT, SELECT_PREV_SCRIPT } from './session_scripts.js';
 import { useCatalogLoaderQueue } from '../../connections/catalog_loader.js';
-import { useConnectionState } from '../../connections/connection_registry.js';
+import { useConnectionRegistryStore, useConnectionState } from '../../connections/connection_registry.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useQueryExecutor } from '../../connections/query_executor.js';
 import { useRouteContext } from '../../router/router.js';
@@ -41,6 +41,7 @@ interface Props {
 export interface SessionCommandsDependencies {
     useSessionScripts: typeof useSessionScripts;
     useConnectionState: typeof useConnectionState;
+    useConnectionRegistryStore: typeof useConnectionRegistryStore;
     useQueryExecutor: typeof useQueryExecutor;
     useCatalogLoaderQueue: typeof useCatalogLoaderQueue;
     useLogger: typeof useLogger;
@@ -49,7 +50,7 @@ export interface SessionCommandsDependencies {
 }
 
 const DEFAULT_DEPENDENCIES: SessionCommandsDependencies = {
-    useSessionScripts, useConnectionState,
+    useSessionScripts, useConnectionState, useConnectionRegistryStore,
     useQueryExecutor, useCatalogLoaderQueue, useLogger, useAppConfig, useAppSettingsReady,
 };
 
@@ -108,6 +109,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
 
     const [sessionScripts, modifySessionScripts] = dependencies.useSessionScripts(route.sessionId ?? null);
     const [connection, _dispatchConnection] = dependencies.useConnectionState(sessionScripts?.sessionId ?? null);
+    const connectionRegistryStore = dependencies.useConnectionRegistryStore();
     const connectionAttention = useSessionConnectionAttention(sessionScripts?.sessionId ?? null, connection?.connectionId ?? null, connection?.connectionHealth);
     const executeQuery = dependencies.useQueryExecutor();
     const refreshCatalog = dependencies.useCatalogLoaderQueue();
@@ -186,37 +188,38 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                         logger.warn("Ignoring Ctrl+E outside session view", { sessionId }, LOG_CTX);
                         break;
                     }
-                    if (connection == null || connection.connectionHealth !== ConnectionHealth.ONLINE) {
-                        connectionAttention.request(sessionScripts.sessionId);
-                        logger.warn("Cannot execute query command with an unhealthy connection", {
-                            sessionId,
-                            status: printConnectionHealth(connection?.connectionHealth ?? ConnectionHealth.NOT_STARTED)
-                        }, LOG_CTX);
-                    } else {
+                    {
                         const entry = getSelectedScriptRef(sessionScripts);
-                        if (!entry) {
+                        const scriptData = entry != null ? sessionScripts.scripts[entry.scriptId] : undefined;
+                        // The selected script runs on its own connection
+                        const scriptConnection = scriptData != null
+                            ? connectionRegistryStore.current.connections.get(scriptData.connection.connectionId) ?? null
+                            : connection;
+                        if (scriptConnection == null || scriptConnection.connectionHealth !== ConnectionHealth.ONLINE) {
+                            connectionAttention.request(sessionScripts.sessionId);
+                            logger.warn("Cannot execute query command with an unhealthy connection", {
+                                sessionId,
+                                status: printConnectionHealth(scriptConnection?.connectionHealth ?? ConnectionHealth.NOT_STARTED)
+                            }, LOG_CTX);
+                        } else if (!entry) {
                             logger.warn("Ignoring Ctrl+E because no committed script is selected", {
                                 sessionId,
                                 focusedFile: sessionScripts.scriptFocus.fileName,
                             }, LOG_CTX);
-                            break;
-                        }
-                        const scriptData = sessionScripts.scripts[entry.scriptId];
-                        if (!scriptData) {
+                        } else if (!scriptData) {
                             logger.warn("Ignoring Ctrl+E because selected script data is missing", {
                                 sessionId,
                                 scriptKey: entry.scriptId.toString(),
                             }, LOG_CTX);
-                            break;
+                        } else {
+                            await runSessionScript(
+                                sessionScripts,
+                                scriptData,
+                                executeQuery,
+                                modifySessionScripts,
+                                logger,
+                            );
                         }
-                        await runSessionScript(
-                            connection.connectionId,
-                            sessionScripts,
-                            scriptData,
-                            executeQuery,
-                            modifySessionScripts,
-                            logger,
-                        );
                     }
                     break;
                 case SessionCommandType.RefreshCatalog:

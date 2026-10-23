@@ -1,4 +1,4 @@
-import { exists, join, readTextFile, rename, writeTextFile } from '../platform/electron_fs.js';
+import { exists, join, readTextFile, remove, rename, writeTextFile } from '../platform/electron_fs.js';
 
 /// The top-level files of a session folder, as the session migrations see them.
 ///
@@ -15,6 +15,8 @@ export interface MigrationFolder {
     writeText(name: string, text: string): Promise<void>;
     /// Rename a file, an existing target is replaced
     rename(from: string, to: string): Promise<void>;
+    /// Remove a file, a missing file is ignored
+    remove(name: string): Promise<void>;
 }
 
 /// Rename a file while it exists and the target does not. A folder that has both files keeps both,
@@ -56,6 +58,10 @@ export class MemoryFolder implements MigrationFolder {
         this.files.delete(from);
         this.files.set(to, text);
     }
+
+    async remove(name: string): Promise<void> {
+        this.files.delete(name);
+    }
 }
 
 /// A folder whose changes stay in memory, the base folder is only read
@@ -91,6 +97,10 @@ export class OverlayFolder implements MigrationFolder {
         }
         this.changes.set(to, text);
         this.changes.set(from, null);
+    }
+
+    async remove(name: string): Promise<void> {
+        this.changes.set(name, null);
     }
 }
 
@@ -136,6 +146,12 @@ export class OPFSFolder implements MigrationFolder {
         await writable.close();
         await this.dir.removeEntry(from);
     }
+
+    async remove(name: string): Promise<void> {
+        if (await this.exists(name)) {
+            await this.dir.removeEntry(name);
+        }
+    }
 }
 
 /// A session folder on the native file system
@@ -162,5 +178,12 @@ export class NativeFolder implements MigrationFolder {
 
     async rename(from: string, to: string): Promise<void> {
         await rename(await join(this.dir, from), await join(this.dir, to));
+    }
+
+    async remove(name: string): Promise<void> {
+        const path = await join(this.dir, name);
+        if (await exists(path)) {
+            await remove(path);
+        }
     }
 }

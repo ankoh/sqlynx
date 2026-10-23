@@ -159,15 +159,22 @@ export class SessionTestBackend implements StorageBackend {
 }
 
 export const TEST_SESSION_ID = '11111111-2222-4333-8444-555555555555';
-export const TEST_DATABASE_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+export const TEST_CONNECTION_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+
+/// The connection fields of a test session, the first connection is the default connection
+export function testConnections(...connections: SessionData['connections']): Pick<SessionData, 'defaultConnectionId' | 'connections'> {
+    return { defaultConnectionId: connections[0].connectionId, connections };
+}
 
 export function testSession(overrides: Partial<SessionData> = {}): SessionData {
     return {
         formatVersion: SESSION_FORMAT_VERSION,
         sessionId: TEST_SESSION_ID,
         name: 'V2 Session',
-        mainDatabase: { databaseId: TEST_DATABASE_ID, params: { hyper: {} } as any },
-        attachedDatabases: [],
+        defaultConnectionId: TEST_CONNECTION_ID,
+        connections: [{ connectionId: TEST_CONNECTION_ID, params: { hyper: {} } as any }],
+        scripts: [],
+        attachments: [],
         metadata: {},
         ...overrides,
     };

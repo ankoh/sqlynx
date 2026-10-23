@@ -18,6 +18,7 @@ const dependencies = {
             7: {
                 scriptKey: 7,
                 scriptSession: { getText: () => 'SELECT\n    1;' },
+                connection: { catalog: {} },
             },
         },
     }, vi.fn()],

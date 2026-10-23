@@ -1,12 +1,12 @@
 import { connectionParamsShareEqual, type ConnectionParams } from '../../connections/connection_params.js';
 import type { AttachedDatabaseRole } from '../../connections/connection_registry.js';
-import type { ConnectionEntry, SessionData } from '../../storage/storage_backend.js';
-import { dedupeAttachedDatabases } from '../../storage/storage_writer.js';
+import type { ConnectionEntry, SessionConnection, SessionData } from '../../storage/storage_backend.js';
+import { dedupeConnections } from '../../storage/storage_writer.js';
 
 /// A connection that a session brings along
 export interface ImportedConnectionRef {
     /// The id of the connection in the session
-    databaseId: string;
+    connectionId: string;
     /// The params of the connection in the session, shared sessions carry them without secrets
     params: ConnectionParams;
     /// How the session uses the connection
@@ -50,12 +50,13 @@ function findEntry(entries: readonly ConnectionEntry[], connectionId: string): C
 /// consolidation that the user decides on. Exports usually regenerate the ids, so the candidates are
 /// found by params.
 export function planConnectionImport(session: SessionData, entries: readonly ConnectionEntry[]): ConnectionImportPlanItem[] {
-    const refs: ImportedConnectionRef[] = [
-        { ...session.mainDatabase, role: 'main' },
-        ...session.attachedDatabases.map(database => ({ ...database, role: 'attached' as const })),
-    ];
+    const refs: ImportedConnectionRef[] = session.connections.map(connection => ({
+        connectionId: connection.connectionId,
+        params: connection.params,
+        role: connection.connectionId === session.defaultConnectionId ? 'main' : 'attached',
+    }));
     return refs.map(ref => {
-        const sameId = findEntry(entries, ref.databaseId);
+        const sameId = findEntry(entries, ref.connectionId);
         if (sameId != null && connectionParamsShareEqual(sameId.params, ref.params)) {
             return { ref, decision: { kind: 'link', connectionId: sameId.id } };
         }
@@ -87,46 +88,51 @@ export function applyConnectionImportPlan(
     entries: readonly ConnectionEntry[],
     randomUUID: () => string = () => crypto.randomUUID(),
 ): SessionData {
-    const byRef = new Map(plan.map(item => [item.ref.databaseId, item]));
+    const byRef = new Map(plan.map(item => [item.ref.connectionId, item]));
     const freshIds = new Map<string, string>();
-    const rewrite = (database: SessionData['mainDatabase']): SessionData['mainDatabase'] => {
-        const item = byRef.get(database.databaseId);
+    const resolve = (connectionId: string): { connectionId: string; entry: ConnectionEntry | null } => {
+        const item = byRef.get(connectionId);
         let link: string | null = null;
         if (item?.decision.kind === 'link') {
             link = item.decision.connectionId;
         } else if (item?.decision.kind === 'ask') {
-            const choice = choices.get(database.databaseId);
+            const choice = choices.get(connectionId);
             if (choice?.kind === 'link') link = choice.connectionId;
         }
         if (link != null) {
             const entry = entries.find(e => e.id === link);
-            if (entry != null) return { databaseId: entry.id, params: entry.params };
+            if (entry != null) return { connectionId: entry.id, entry };
         }
         // A separate connection must not take over the id of an existing one
-        if (findEntry(entries, database.databaseId) == null) {
-            return { databaseId: database.databaseId, params: database.params };
+        if (findEntry(entries, connectionId) == null) {
+            return { connectionId, entry: null };
         }
-        let freshId = freshIds.get(database.databaseId);
+        let freshId = freshIds.get(connectionId);
         if (freshId == null) {
             freshId = randomUUID();
-            freshIds.set(database.databaseId, freshId);
+            freshIds.set(connectionId, freshId);
         }
-        return { databaseId: freshId, params: database.params };
+        return { connectionId: freshId, entry: null };
     };
-    const mainDatabase = rewrite(session.mainDatabase);
+    const rewrite = (connection: SessionConnection): SessionConnection => {
+        const resolved = resolve(connection.connectionId);
+        return { connectionId: resolved.connectionId, params: resolved.entry?.params ?? connection.params };
+    };
+    // The default connection and the scripts follow their connections
     return {
         ...session,
-        mainDatabase,
-        attachedDatabases: dedupeAttachedDatabases(mainDatabase.databaseId, session.attachedDatabases.map(rewrite)),
+        defaultConnectionId: resolve(session.defaultConnectionId).connectionId,
+        connections: dedupeConnections(session.connections.map(rewrite)),
+        scripts: session.scripts.map(script => ({ ...script, connectionId: resolve(script.connectionId).connectionId })),
     };
 }
 
 /// Did resolving the connections change the references of the session?
 export function connectionRefsChanged(before: SessionData, after: SessionData): boolean {
     const refs = (session: SessionData) => JSON.stringify([
-        session.mainDatabase.databaseId,
-        session.mainDatabase.params,
-        ...session.attachedDatabases.flatMap(database => [database.databaseId, database.params]),
+        session.defaultConnectionId,
+        ...session.connections.flatMap(connection => [connection.connectionId, connection.params]),
+        ...session.scripts.map(script => script.connectionId),
     ]);
     return refs(before) !== refs(after);
 }

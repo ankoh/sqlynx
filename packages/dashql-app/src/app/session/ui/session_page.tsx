@@ -2,7 +2,9 @@ import * as React from 'react';
 import * as styles from './session_page.module.css';
 
 import { useSessionScripts } from '../scripts/session_scripts_registry.js';
-import { useConnectionState } from '../../connections/connection_registry.js';
+import { useConnectionRegistry, useConnectionState } from '../../connections/connection_registry.js';
+import type { ConnectionState } from '../../connections/connection_state.js';
+import { sessionConnectionIds } from '../scripts/session_scripts.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useRouteContext } from '../../router/router.js';
 
@@ -16,6 +18,7 @@ const LOG_CTX = 'session_page';
 export interface SessionPageDependencies {
     useSessionScripts: typeof useSessionScripts;
     useConnectionState: typeof useConnectionState;
+    useConnectionRegistry: typeof useConnectionRegistry;
     useLogger: typeof useLogger;
     useRouteContext: typeof useRouteContext;
     useSessionViewMode: typeof useSessionViewMode;
@@ -26,6 +29,7 @@ export interface SessionPageDependencies {
 const DEFAULT_DEPENDENCIES: SessionPageDependencies = {
     useSessionScripts,
     useConnectionState,
+    useConnectionRegistry,
     useLogger,
     useRouteContext,
     useSessionViewMode,
@@ -43,6 +47,13 @@ export const SessionPage: React.FC<Props> = (props: Props) => {
     const logger = dependencies.useLogger();
     const [sessionScripts, modifySessionScripts] = dependencies.useSessionScripts(route.sessionId ?? null);
     const [conn] = dependencies.useConnectionState(sessionScripts?.sessionId ?? null);
+    // The connections that the scripts of the session run on
+    const [connectionRegistry] = dependencies.useConnectionRegistry();
+    const scriptConnections = new Map<string, ConnectionState>();
+    for (const connectionId of sessionScripts == null ? [] : sessionConnectionIds(sessionScripts)) {
+        const connection = connectionRegistry.connections.get(connectionId);
+        if (connection != null) scriptConnections.set(connectionId, connection);
+    }
     const { mode: sessionMode } = dependencies.useSessionViewMode();
     const sessionPageVisible = sessionMode !== SessionViewMode.Shell;
 
@@ -62,6 +73,7 @@ export const SessionPage: React.FC<Props> = (props: Props) => {
                     sessionScripts={sessionScripts}
                     modifySessionScripts={modifySessionScripts}
                     connection={conn ?? null}
+                    scriptConnections={scriptConnections}
                     active={sessionMode === SessionViewMode.Session}
                 />
             </div>

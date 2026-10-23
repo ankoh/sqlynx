@@ -212,10 +212,27 @@ impl Drop for ScriptSession {
 impl ScriptSession {
     /// Create an empty session whose script gets a new entry id of the catalog
     pub fn new(catalog: CatalogHandle, offset_unit: EditorOffsetUnit) -> Result<Self> {
+        let script = Script::new(&catalog.borrow());
+        Self::with_script(catalog, script, offset_unit)
+    }
+
+    /// Create an empty session whose script takes an entry id that the id source of the catalog
+    /// allocated before, e.g. the id of a script that moves to another catalog of the same source.
+    /// The catalog must not hold an entry with the id.
+    pub fn with_entry_id(catalog: CatalogHandle, offset_unit: EditorOffsetUnit, id: CatalogEntryId) -> Result<Self> {
+        {
+            let catalog = catalog.borrow();
+            if !catalog.entry_id_allocated(id) || catalog.contains(id) {
+                return Err(Error::invalid_argument("invalid or colliding script catalog entry ID"));
+            }
+        }
+        Self::with_script(catalog, Script::with_entry_id(id), offset_unit)
+    }
+
+    fn with_script(catalog: CatalogHandle, script: Script, offset_unit: EditorOffsetUnit) -> Result<Self> {
         if offset_unit != EditorOffsetUnit::UTF8_BYTES && offset_unit != EditorOffsetUnit::UTF16_CODE_UNITS {
             return Err(Error::invalid_argument("invalid editor offset unit"));
         }
-        let script = Script::new(&catalog.borrow());
         Ok(Self {
             catalog,
             script,

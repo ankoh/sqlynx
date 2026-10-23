@@ -103,7 +103,7 @@ export const ScriptEditor: React.FC<ScriptEditorProps> = (props) => {
         scriptData?.editorUpdate,
         scriptData?.pendingDiff,
         scripts?.semanticUserFocus,
-        scripts?.connectionCatalog,
+        scriptData?.connection.catalog,
         props.onNavigateToScript,
     ]);
     // Forward the view ref, if requested

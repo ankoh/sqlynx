@@ -6,13 +6,14 @@ import { SyncIcon } from '../../../ui/foundations/symbol_icon.js';
 import { QueryExecutionState, QueryExecutionStatus } from '../../connections/query_execution_state.js';
 import { useRelativeTime } from '../../../utils/time_format.js';
 import { ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
+import { Tag } from '../../../ui/foundations/tag.js';
 
 interface QueryResultCacheControlsProps {
     query: QueryExecutionState | null;
 }
 
 export const CachedResultBean: React.FC = () => (
-    <span className={styles.cached_result_bean}>Cached</span>
+    <Tag className={styles.cached_result_bean}>Cached</Tag>
 );
 
 /// Whether the query has a result to describe (succeeded, not since cache-deleted).

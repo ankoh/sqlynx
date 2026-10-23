@@ -18,8 +18,8 @@
     --base_color: var(--sidb_ink);
 
     --background_color_primary: hsl(190, 46%, 24%);
-    --background_color_80: hsl(190, 46%, 16%);
-    --background_color_100: hsl(191, 40%, 10%);
+    --background_color_80: hsl(190, 34%, 16%);
+    --background_color_100: hsl(191, 28%, 10%);
 
     --stage_color: var(--sidb_paper);
 

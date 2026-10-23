@@ -6,17 +6,14 @@ import { NativeStorageBackend } from './native_storage_backend.js';
 import { OPFSStorageBackend } from './opfs_storage_backend.js';
 import type { SessionEntry, SessionRegistryBackend } from './storage_backend.js';
 import { StorageBackendType } from './storage_backend.js';
-import { SessionTestBackend, TEST_SESSION_ID, testSession } from './session_test_backend.js';
+import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testSession } from './session_test_backend.js';
 import { fsStore, makeFsMock, resetFsStore } from './test_fs_mock.js';
 import {
-    registerNativeSession,
-    replaceSessionWithNativeFolder,
     replaceSessionWithPortableBundle,
     writePortableSessionFresh,
 } from './session_import_transaction.js';
 
 const OTHER_SESSION_ID = '22222222-3333-4444-8555-666666666666';
-const THIRD_SESSION_ID = '33333333-4444-4555-8666-777777777777';
 
 class Registry extends SessionTestBackend implements SessionRegistryBackend {
     manifest: SessionEntry[] = [];
@@ -178,11 +175,12 @@ describe('CompositeStorageBackend V2 flat routing', () => {
             location: { type: StorageBackendType.OPFS },
         }, { randomUUID: () => '99999999-8888-4777-8666-555555555555' });
 
-        expect(await backend.loadSession(TEST_SESSION_ID)).toEqual(testSession());
+        expect(await backend.loadSession(TEST_SESSION_ID)).toEqual(testSession({ scripts: [{ name: '01_query.sql', connectionId: TEST_CONNECTION_ID }] }));
         expect(await backend.loadScripts(TEST_SESSION_ID)).toEqual([{ name: '01_query.sql', sql: 'SELECT 1' }]);
     });
 
-    it('rejects a fresh import whose database UUID is already used by another session', async () => {
+    it('imports sessions that share their connections with other sessions', async () => {
+        // Connections are global, an import may use a connection that other sessions use too
         await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
         const source = {
             session: testSession({ sessionId: OTHER_SESSION_ID }),
@@ -190,86 +188,13 @@ describe('CompositeStorageBackend V2 flat routing', () => {
             functionsSql: null,
             scripts: [],
         };
+        await expect(writePortableSessionFresh(backend, source)).resolves.toBe(OTHER_SESSION_ID);
+        expect((await backend.loadSession(OTHER_SESSION_ID)).defaultConnectionId).toBe(TEST_CONNECTION_ID);
 
-        await expect(writePortableSessionFresh(backend, source)).rejects.toThrow(
-            `Database ${testSession().mainDatabase.databaseId} is already used by session ${TEST_SESSION_ID}`,
-        );
-        expect(registry.sessions.has(OTHER_SESSION_ID)).toBe(false);
-    });
-
-    it('allows a replacement to retain its own database UUID but rejects one owned by a third session', async () => {
-        await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
-        await backend.saveSessionManifest(THIRD_SESSION_ID, testSession({
-            sessionId: THIRD_SESSION_ID,
-            mainDatabase: {
-                ...testSession().mainDatabase,
-                databaseId: testSession().mainDatabase.databaseId.toUpperCase(),
-            },
-        }));
-        const ownDatabaseId = 'dddddddd-eeee-4fff-8aaa-bbbbbbbbbbbb';
-        await backend.saveSessionManifest(OTHER_SESSION_ID, testSession({
-            sessionId: OTHER_SESSION_ID,
-            mainDatabase: { ...testSession().mainDatabase, databaseId: ownDatabaseId },
-        }));
-        await backend.refreshLocations();
-
-        const ownSource = {
-            session: testSession({
-                sessionId: OTHER_SESSION_ID,
-                mainDatabase: { ...testSession().mainDatabase, databaseId: ownDatabaseId },
-            }),
-            schemaSql: null,
-            functionsSql: null,
-            scripts: [],
-        };
-        await expect(replaceSessionWithPortableBundle(backend, ownSource, {
+        await expect(replaceSessionWithPortableBundle(backend, { ...source, session: testSession({ sessionId: OTHER_SESSION_ID, name: 'Replaced' }) }, {
             sessionId: OTHER_SESSION_ID,
             location: { type: StorageBackendType.OPFS },
         }, { randomUUID: () => '99999999-8888-4777-8666-555555555555' })).resolves.toBe(OTHER_SESSION_ID);
-
-        const collidingSource = {
-            ...ownSource,
-            session: testSession({ sessionId: OTHER_SESSION_ID }),
-        };
-        await expect(replaceSessionWithPortableBundle(backend, collidingSource, {
-            sessionId: OTHER_SESSION_ID,
-            location: { type: StorageBackendType.OPFS },
-        })).rejects.toThrow(`already used by session ${TEST_SESSION_ID}`);
-    });
-
-    it('rejects native registration and replacement when another session owns a database UUID', async () => {
-        await backend.saveSessionManifest(TEST_SESSION_ID, testSession());
-        await backend.saveSessionManifest(THIRD_SESSION_ID, testSession({
-            sessionId: THIRD_SESSION_ID,
-            mainDatabase: {
-                ...testSession().mainDatabase,
-                databaseId: 'dddddddd-eeee-4fff-8aaa-bbbbbbbbbbbb',
-            },
-        }));
-        await backend.refreshLocations();
-        const prepared = {
-            dir: '/tmp/imported-native',
-            bundle: {
-                session: testSession({ sessionId: OTHER_SESSION_ID }),
-                schemaSql: null,
-                functionsSql: null,
-                scripts: [],
-            },
-        };
-
-        await expect(registerNativeSession(backend, prepared)).rejects.toThrow(
-            `already used by session ${TEST_SESSION_ID}`,
-        );
-        const replacement = {
-            ...prepared,
-            bundle: {
-                ...prepared.bundle,
-                session: testSession({ sessionId: THIRD_SESSION_ID }),
-            },
-        };
-        await expect(replaceSessionWithNativeFolder(backend, replacement, {
-            sessionId: THIRD_SESSION_ID,
-            location: { type: StorageBackendType.OPFS },
-        })).rejects.toThrow(`already used by session ${TEST_SESSION_ID}`);
+        expect((await backend.loadSession(OTHER_SESSION_ID)).name).toBe('Replaced');
     });
 });

@@ -11,7 +11,7 @@
 
 use dashql_buffers::formatting::{FormattingConfigT, FormattingDialect, FormattingMode, KeywordCase};
 use dashql_core::catalog::changes::{append_catalog_changes_sql, parse_catalog_changes_sql, qualify_catalog_changes, CatalogNameDefaults};
-use dashql_core::catalog::Catalog as CoreCatalog;
+use dashql_core::catalog::{Catalog as CoreCatalog, EntryIdSource};
 use dashql_core::completion::Completion;
 use dashql_core::error::Error;
 use dashql_core::script::Script as CoreScript;
@@ -51,6 +51,11 @@ fn formatting_config(dialect: u8, mode: u8, max_width: u32, indentation_width: u
 /// The shared handle of a catalog
 type SharedCatalog = dashql_core::script_session::CatalogHandle;
 
+thread_local! {
+    /// The entry ids of all catalogs of the module, so a script key identifies a script across catalogs
+    static ENTRY_IDS: EntryIdSource = EntryIdSource::new();
+}
+
 /// A catalog (`dashql_catalog_*`)
 #[wasm_bindgen]
 pub struct Catalog {
@@ -63,7 +68,7 @@ impl Catalog {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Catalog {
         Catalog {
-            inner: Rc::new(RefCell::new(CoreCatalog::new())),
+            inner: Rc::new(RefCell::new(CoreCatalog::with_entry_ids(ENTRY_IDS.with(EntryIdSource::clone)))),
         }
     }
 
@@ -468,6 +473,16 @@ impl ScriptSession {
     #[wasm_bindgen(constructor)]
     pub fn new(catalog: &Catalog, offset_unit: u8) -> Result<ScriptSession, JsError> {
         let session = CoreScriptSession::new(catalog.inner.clone(), dashql_buffers::editor::EditorOffsetUnit(offset_unit)).map_err(js_error)?;
+        Ok(ScriptSession {
+            inner: Rc::new(RefCell::new(session)),
+        })
+    }
+
+    /// A session whose script takes an entry id that the catalogs of the module allocated before
+    #[wasm_bindgen(js_name = withEntryId)]
+    pub fn with_entry_id(catalog: &Catalog, offset_unit: u8, entry_id: u32) -> Result<ScriptSession, JsError> {
+        let session = CoreScriptSession::with_entry_id(catalog.inner.clone(), dashql_buffers::editor::EditorOffsetUnit(offset_unit), entry_id)
+            .map_err(js_error)?;
         Ok(ScriptSession {
             inner: Rc::new(RefCell::new(session)),
         })

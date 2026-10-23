@@ -88,13 +88,14 @@ describe('runSessionScript', () => {
             annotations: { visualizeQuery: null },
             latestQueryId: 9,
             latestResultQueryId,
+            connection: { connectionId: 'connection', connectorInfo: { connectorType: ConnectorType.TRINO } },
         } as unknown as ScriptData;
         const analyzed = {
             ...outdated,
             analysisOutdated: false,
         };
         const sessionScripts = {
-            scripts: { 7: outdated }, connectorInfo: { connectorType: ConnectorType.TRINO }, settings: { cacheQueryResults },
+            scripts: { 7: outdated }, connectorInfo: { connectorType: ConnectorType.HYPER }, settings: { cacheQueryResults },
         } as unknown as SessionScripts;
         const modifySessionScripts = vi.fn((action) => {
             if (action.type === ANALYZE_OUTDATED_SCRIPT) {
@@ -104,7 +105,6 @@ describe('runSessionScript', () => {
         const executeQuery = vi.fn(() => [11, Promise.resolve(null)] as [number, Promise<null>]);
 
         const execution = runSessionScript(
-            'connection',
             sessionScripts,
             outdated,
             executeQuery,

@@ -3,9 +3,10 @@ import * as dashql from '@ankoh/dashql-core';
 
 import { Logger, stringifyError } from '../../platform/logger/logger.js';
 import { VariantKind } from '../../utils/index.js';
-import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, SessionSettings, AttachedDatabase, ConnectionEntry, ConnectionParams, SessionRegistryBackend } from './storage_backend.js';
+import type { StorageBackend, SessionData, SessionMetadata as StorageSessionMetadata, SessionSettings, SessionConnection, ConnectionEntry, ConnectionParams, SessionRegistryBackend, SessionScript } from './storage_backend.js';
 import { STORAGE_SCRIPTS_FOLDER, STORAGE_SESSION_FILE, STORAGE_CATALOG_RELATIONS, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_CHANGES, STORAGE_CONNECTIONS_FOLDER, isSessionRegistryBackend } from './storage_backend.js';
 import { SESSION_FORMAT_VERSION } from '../../migration/versions.js';
+import { sessionAttachments, withSessionScripts } from './session_files.js';
 
 const LOG_CTX = 'storage_writer';
 
@@ -32,7 +33,7 @@ function jsonDeepEqual(a: any, b: any): boolean {
     return aKeys.every(k => Object.prototype.hasOwnProperty.call(b, k) && jsonDeepEqual(a[k], b[k]));
 }
 
-/// Compare the manifest fields the writer owns (formatVersion, sessionId, name, mainDatabase, attachedDatabases, metadata).
+/// Compare the manifest fields the writer owns (formatVersion, sessionId, name, defaultConnectionId, connections, scripts, attachments, metadata).
 /// Other fields (storageType/nativePath/sessionPath) are display- or registry-only and are not
 /// written into the session file, so they're deliberately ignored.
 ///
@@ -45,8 +46,10 @@ function sessionManifestEquals(a: SessionData, b: SessionData): boolean {
         sessionId: s.sessionId,
         name: s.name,
         settings: s.settings,
-        mainDatabase: s.mainDatabase,
-        attachedDatabases: s.attachedDatabases,
+        defaultConnectionId: s.defaultConnectionId,
+        connections: s.connections,
+        scripts: s.scripts,
+        attachments: s.attachments,
         metadata: s.metadata,
     }));
     return jsonDeepEqual(project(a), project(b));
@@ -72,10 +75,12 @@ export interface SessionReplacement {
     sessionId: string;
     /// The session name, null keeps the name on disk
     name: string | null;
-    /// The scripts, their text is read when the write runs
-    scripts: Array<{ fileName: string; readText: () => string }>;
-    /// The main database of a session that is not stored yet
-    mainDatabase: AttachedDatabase;
+    /// The scripts in feed order, their text is read when the write runs
+    scripts: Array<{ fileName: string; connectionId: string; readText: () => string }>;
+    /// Copies of the connections of the scripts that the session file may not hold yet
+    connections: SessionConnection[];
+    /// The default connection of a session that is not stored yet
+    defaultConnection: SessionConnection;
     /// The file name the session was created from, if any
     originalFileName: string | undefined;
     /// The session settings
@@ -93,9 +98,19 @@ export const WRITE_SCRIPT = Symbol('WRITE_SCRIPT');
 export const DELETE_SESSION = Symbol('DELETE_SESSION');
 export const DELETE_SCRIPT = Symbol('DELETE_SCRIPT');
 export const RENAME_SCRIPT = Symbol('RENAME_SCRIPT');
+export const WRITE_SESSION_SCRIPTS = Symbol('WRITE_SESSION_SCRIPTS');
+export const REFRESH_SESSION_ATTACHMENTS = Symbol('REFRESH_SESSION_ATTACHMENTS');
+
+/// The script list of a session
+export interface SessionScriptList {
+    /// The scripts in feed order with their connections
+    scripts: SessionScript[];
+    /// Copies of the connections of the scripts that the session file may not hold yet
+    connections: SessionConnection[];
+}
 
 export type StorageWriteTaskVariant =
-    | VariantKind<typeof WRITE_SESSION_MANIFEST, [string, string, AttachedDatabase[]]>
+    | VariantKind<typeof WRITE_SESSION_MANIFEST, [string, string, SessionConnection[]]>
     | VariantKind<typeof WRITE_SESSION_PROPERTIES, [string, SessionProperties]>
     | VariantKind<typeof WRITE_SESSION_CATALOG_SCRIPT, [string, dashql.DashQLScript]>
     | VariantKind<typeof WRITE_SESSION_FUNCTION_SCRIPT, [string, dashql.DashQLScript]>
@@ -109,6 +124,8 @@ export type StorageWriteTaskVariant =
     | VariantKind<typeof DELETE_SESSION, string>
     | VariantKind<typeof DELETE_SCRIPT, [string, string]>
     | VariantKind<typeof RENAME_SCRIPT, [string, string, string]>
+    | VariantKind<typeof WRITE_SESSION_SCRIPTS, [string, SessionScriptList]>
+    | VariantKind<typeof REFRESH_SESSION_ATTACHMENTS, string>
     ;
 
 export type StorageWriteKey = string;
@@ -129,6 +146,11 @@ export const groupConnectionFileWrites = (connectionId: string, fileName: string
 /// The copy of a connection's params in a session. Copies of different connections must not
 /// coalesce, but they serialize with every other write of the session.
 export const groupSessionConnectionCopyWrites = (sessionId: string, connectionId: string) => `${sessionId}/${STORAGE_SESSION_FILE}:connection/${connectionId}`;
+/// The script list of a session and the connections it uses. It is patched into the session file and
+/// must not coalesce with the other writes of the session file.
+export const groupSessionScriptListWrites = (sessionId: string) => `${sessionId}/${STORAGE_SESSION_FILE}:scripts`;
+/// The attachment list of a session
+export const groupSessionAttachmentListWrites = (sessionId: string) => `${sessionId}/${STORAGE_SESSION_FILE}:attachments`;
 export const groupScriptWrites = (sessionId: string, fileName: string) =>
     `${sessionId}/${STORAGE_SCRIPTS_FOLDER}/${fileName}`;
 export const groupScriptDeletes = (sessionId: string, scriptName: string) =>
@@ -232,24 +254,24 @@ export class SessionUnavailableError extends Error {
 /// connection id. Returns null when the session doesn't reference the connection or the copies are
 /// up to date.
 export function patchSessionConnection(session: SessionData, connectionId: string, params: ConnectionParams, aliases: readonly string[] = []): SessionData | null {
-    const patch = (database: SessionData['mainDatabase']): SessionData['mainDatabase'] =>
-        database.databaseId === connectionId || aliases.includes(database.databaseId) ? { databaseId: connectionId, params } : database;
-    const mainDatabase = patch(session.mainDatabase);
+    const references = (id: string) => id === connectionId || aliases.includes(id);
     const next: SessionData = {
         ...session,
-        mainDatabase,
-        attachedDatabases: dedupeAttachedDatabases(mainDatabase.databaseId, session.attachedDatabases.map(patch)),
+        defaultConnectionId: references(session.defaultConnectionId) ? connectionId : session.defaultConnectionId,
+        connections: dedupeConnections(session.connections.map(connection =>
+            references(connection.connectionId) ? { connectionId, params } : connection)),
+        scripts: session.scripts.map(script => aliases.includes(script.connectionId) ? { ...script, connectionId } : script),
     };
     return sessionManifestEquals(session, next) ? null : next;
 }
 
-/// Drop attached databases that reference the main database or an earlier attached database.
+/// Drop connections that an earlier connection of the list references already.
 /// Consolidated connections can turn distinct references into the same one.
-export function dedupeAttachedDatabases<T extends { databaseId: string }>(mainDatabaseId: string, attached: T[]): T[] {
-    const seen = new Set([mainDatabaseId]);
-    return attached.filter(database => {
-        if (seen.has(database.databaseId)) return false;
-        seen.add(database.databaseId);
+export function dedupeConnections<T extends { connectionId: string }>(connections: T[]): T[] {
+    const seen = new Set<string>();
+    return connections.filter(connection => {
+        if (seen.has(connection.connectionId)) return false;
+        seen.add(connection.connectionId);
         return true;
     });
 }
@@ -575,20 +597,37 @@ export class StorageWriter {
         return this.backend;
     }
 
+    /// Patch an existing session file, the write is skipped when nothing changed.
+    /// A missing file is not recreated, a moved native folder would otherwise come back as a new one.
+    private async patchSessionFile(key: string, sessionId: string, patch: (session: SessionData) => SessionData): Promise<void> {
+        let existing: SessionData;
+        try {
+            existing = await this.backend.loadSession(sessionId);
+        } catch (e: any) {
+            throw new SessionUnavailableError(sessionId, e);
+        }
+        const next = patch(existing);
+        if (sessionManifestEquals(existing, next)) return;
+        this.logger.info("Patching session", { key, sessionId }, LOG_CTX);
+        const timeBefore = new Date();
+        await this.backend.saveSessionManifest(sessionId, next);
+        const actualPath = `${sessionId}/${STORAGE_SESSION_FILE}`;
+        this.registerWrite(actualPath, JSON.stringify(next).length, new Date().getTime() - timeBefore.getTime());
+        this.completedFileContents.set(actualPath, JSON.stringify(next, null, 2));
+    }
+
     protected async executeTask(key: string, task: StorageWriteTaskVariant) {
         switch (task.type) {
             case WRITE_SESSION_MANIFEST: {
-                const [sessionId, mainDatabaseId, databases] = task.value;
+                const [sessionId, defaultConnectionId, connections] = task.value;
                 this.logger.info("Writing session", {
                     key,
                     sessionId,
                 }, LOG_CTX);
 
-                const mainDatabase = databases.find(database => database.databaseId === mainDatabaseId);
-                if (mainDatabase == null) {
-                    throw new Error(`main database ${mainDatabaseId} is not attached to session ${sessionId}`);
+                if (!connections.some(connection => connection.connectionId === defaultConnectionId)) {
+                    throw new Error(`default connection ${defaultConnectionId} is not a connection of session ${sessionId}`);
                 }
-                const attachedDatabases = databases.filter(database => database.databaseId !== mainDatabaseId);
 
                 // Load whatever is already on disk so we can (a) preserve the original createdAt
                 // instead of churning a fresh timestamp on every write, and (b) skip the write
@@ -610,21 +649,24 @@ export class StorageWriter {
                 // sessionPath is a display-only field, recomputed from the UUID + location for
                 // the UI; we don't persist it here. storageType/nativePath are stamped by the
                 // composite backend, which knows the session's physical location.
-                const connData: SessionData = {
+                // The given connections replace the copies on disk, the scripts keep theirs
+                const connData: SessionData = withSessionScripts({
                     formatVersion: SESSION_FORMAT_VERSION,
                     sessionId,
                     ...(existingSession?.name ? { name: existingSession.name } : {}),
-                    mainDatabase,
-                    attachedDatabases: attachedDatabases as SessionData['attachedDatabases'],
+                    defaultConnectionId,
+                    connections,
+                    scripts: [],
+                    attachments: existingSession?.attachments ?? [],
                     metadata: sessionMetadata,
                     ...(existingSession?.settings ? { settings: existingSession.settings } : {}),
-                };
+                }, existingSession?.scripts ?? [], existingSession?.connections ?? []);
 
                 // Skip the write if the persisted manifest already matches what we'd write.
                 if (existingSession != null && sessionManifestEquals(existingSession, connData)) {
                     this.logger.debug("Skipping session write: manifest unchanged", {
                         sessionId,
-                        databaseIds: databases.map(database => database.databaseId).join(','),
+                        connectionIds: connections.map(connection => connection.connectionId).join(','),
                     }, LOG_CTX);
                     break;
                 }
@@ -724,24 +766,26 @@ export class StorageWriter {
 
                 // Save session last so it never references content that doesn't exist yet.
                 // Preserve the original createdAt across rewrites; only stamp it on the first write.
-                let attachedDatabases: SessionData['attachedDatabases'];
-                let mainDatabase: SessionData['mainDatabase'];
+                let defaultConnectionId: SessionData['defaultConnectionId'];
+                let connections: SessionData['connections'];
                 let createdAt: string;
                 // Preserve the user-supplied name across a session rewrite: this path rebuilds the
                 // whole manifest from session scripts, which carry no name, so we must carry over
                 // whatever the user already set on disk.
                 let existingName: string | undefined;
                 let existingMetadata: StorageSessionMetadata | undefined;
+                let existingAttachments: SessionData['attachments'] = [];
                 try {
                     const existingSession = await this.backend.loadSession(sessionId);
-                    mainDatabase = existingSession.mainDatabase;
-                    attachedDatabases = existingSession.attachedDatabases;
+                    defaultConnectionId = existingSession.defaultConnectionId;
+                    connections = existingSession.connections;
                     createdAt = existingSession.metadata?.createdAt ?? new Date().toISOString();
                     existingName = existingSession.name;
                     existingMetadata = existingSession.metadata;
+                    existingAttachments = existingSession.attachments ?? [];
                 } catch {
-                    mainDatabase = session.mainDatabase;
-                    attachedDatabases = [];
+                    defaultConnectionId = session.defaultConnection.connectionId;
+                    connections = [session.defaultConnection];
                     createdAt = new Date().toISOString();
                 }
 
@@ -751,15 +795,17 @@ export class StorageWriter {
                     createdAt,
                 };
 
-                const connData: SessionData = {
+                const connData: SessionData = withSessionScripts({
                     formatVersion: SESSION_FORMAT_VERSION,
                     sessionId,
                     ...(session.name ? { name: session.name } : existingName ? { name: existingName } : {}),
-                    mainDatabase,
-                    attachedDatabases,
+                    defaultConnectionId,
+                    connections,
+                    scripts: [],
+                    attachments: existingAttachments,
                     metadata: sessionMetadata,
                     settings: session.settings,
-                };
+                }, session.scripts.map(script => ({ name: script.fileName, connectionId: script.connectionId })), session.connections);
 
                 const sessionTimeBefore = new Date();
                 await this.backend.saveSessionManifest(sessionId, connData);
@@ -767,6 +813,17 @@ export class StorageWriter {
                 this.registerWrite(`${sessionId}/dashql-session.json`, JSON.stringify(connData).length, sessionTimeAfter.getTime() - sessionTimeBefore.getTime());
                 this.completedFileContents.set(`${sessionId}/dashql-session.json`, JSON.stringify(connData, null, 2));
 
+                break;
+            }
+            case WRITE_SESSION_SCRIPTS: {
+                const [sessionId, list] = task.value;
+                await this.patchSessionFile(key, sessionId, session => withSessionScripts(session, list.scripts, list.connections));
+                break;
+            }
+            case REFRESH_SESSION_ATTACHMENTS: {
+                const sessionId = task.value;
+                const attachments = sessionAttachments((await this.backend.listDataFiles(sessionId)).map(file => file.name));
+                await this.patchSessionFile(key, sessionId, session => ({ ...session, attachments }));
                 break;
             }
             case WRITE_CONNECTION_ENTRY: {

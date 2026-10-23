@@ -6,7 +6,7 @@
     height: 40px;
     font-size: var(--font_size_small);
     border-bottom: 1px solid var(--log_border_color);
-    color: hsl(var(--neutral_hue), calc(12% * var(--neutral_tint)), 36%);
+    color: var(--card_control_color);
 }
 
 .status_bar_collapsed {

@@ -402,8 +402,9 @@ async function writeNativeConnectionRefs(backend: CompositeStorageBackend, sessi
     const existing = await backend.loadSession(sessionId);
     await backend.saveSessionManifest(sessionId, {
         ...existing,
-        mainDatabase: bundle.session.mainDatabase,
-        attachedDatabases: bundle.session.attachedDatabases,
+        defaultConnectionId: bundle.session.defaultConnectionId,
+        connections: bundle.session.connections,
+        scripts: bundle.session.scripts,
     });
 }
 

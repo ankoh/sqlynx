@@ -18,7 +18,8 @@ describe('global session execution feedback', () => {
         sessionId: 'session', connectorInfo: { features: { executeQueryAction: true } }, settings: { cacheQueryResults: false },
         scriptFocus: { fileName: '01_query.sql' },
         scriptRefs: { '01_query.sql': { scriptId: 1, fileName: '01_query.sql' } },
-        scripts: { 1: { scriptKey: 1, annotations: {}, analysisOutdated: false, scriptSession: {
+        scriptOrder: ['01_query.sql'],
+        scripts: { 1: { scriptKey: 1, connection: { connectionId: 'main', connectorInfo: {} }, annotations: {}, analysisOutdated: false, scriptSession: {
             getText: () => 'SELECT 1', startExecution: () => ({}),
             compileQuery: () => ({ read: () => ({ errorsLength: () => 0, sql: () => 'SELECT 1', cacheable: () => false, cacheSignature: () => '' }), destroy: () => {} }),
         } } },
@@ -26,6 +27,7 @@ describe('global session execution feedback', () => {
     const dependencies = {
         useSessionScripts: () => [sessionScripts, vi.fn()],
         useConnectionState: (sessionId: string) => { resolveMain(sessionId); return [connection, vi.fn()]; },
+        useConnectionRegistryStore: () => ({ get current() { return { connections: new Map(connection == null ? [] : [['main', connection]]) }; } }),
         useQueryExecutor: () => execute,
         useCatalogLoaderQueue: () => vi.fn(),
         useLogger: () => ({ info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),

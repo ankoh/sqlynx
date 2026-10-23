@@ -27,7 +27,7 @@ import { ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from 
 import { CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
 import { StorageProvider, useStorageWriter } from '../storage/storage_provider.js';
-import { SessionTestBackend, TEST_DATABASE_ID, TEST_SESSION_ID, testSession } from '../storage/session_test_backend.js';
+import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testSession } from '../storage/session_test_backend.js';
 import type { StorageWriter } from '../storage/storage_writer.js';
 
 function database(connectionId: string, health: ConnectionHealth): ConnectionState {
@@ -121,13 +121,13 @@ describe('catalog refresh persistence', () => {
     ] as const)('saves a %s Salesforce catalog without rewriting the manifest, catalog changes %j', async (outcome, catalogChangesSql) => {
         const backend = new SessionTestBackend();
         backend.sessions.set(TEST_SESSION_ID, testSession({
-            mainDatabase: { databaseId: TEST_DATABASE_ID, params: { salesforce: { instanceUrl: 'https://example.my.salesforce.com' } } as any },
+            connections: [{ connectionId: TEST_CONNECTION_ID, params: { salesforce: { instanceUrl: 'https://example.my.salesforce.com' } } as any }],
         }));
         const schemaSQL = 'CREATE TABLE "lakehouse"."public"."Account__dlm" ("Id__c" VARCHAR);';
         const functionsSQL = 'CREATE FUNCTION test() AS 1;';
         const script = (sql: string) => ({ toString: () => sql });
         const connection = {
-            connectionId: TEST_DATABASE_ID,
+            connectionId: TEST_CONNECTION_ID,
             active: true,
             params: { salesforce: { instanceUrl: 'https://example.my.salesforce.com' } },
             connectionSignature: { signatureString: 'salesforce' },
@@ -159,25 +159,25 @@ describe('catalog refresh persistence', () => {
                 ),
             )));
             await act(async () => setRegistry(reg => {
-                reg.connections.set(TEST_DATABASE_ID, connection);
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
+                reg.connections.set(TEST_CONNECTION_ID, connection);
+                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
-            expect(currentRegistry.connections.get(TEST_DATABASE_ID)).toBe(connection);
-            expect(currentRegistry.attachedDatabasesBySession.get(TEST_SESSION_ID)?.mainDatabaseId).toBe(TEST_DATABASE_ID);
+            expect(currentRegistry.connections.get(TEST_CONNECTION_ID)).toBe(connection);
+            expect(currentRegistry.attachedDatabasesBySession.get(TEST_SESSION_ID)?.mainDatabaseId).toBe(TEST_CONNECTION_ID);
             const task = {
                 taskId: 1, taskVariant: CatalogUpdateVariant.FULL_CATALOG_REFRESH,
                 status: CatalogUpdateTaskStatus.STARTED, cancellation: new AbortController(),
                 queries: [], error: null, startedAt: new Date(), finishedAt: null, lastUpdateAt: new Date(),
             };
             act(() => {
-                dispatch(TEST_DATABASE_ID, { type: UPDATE_CATALOG, value: [1, task] });
-                dispatch(TEST_DATABASE_ID, outcome === 'succeeded'
+                dispatch(TEST_CONNECTION_ID, { type: UPDATE_CATALOG, value: [1, task] });
+                dispatch(TEST_CONNECTION_ID, outcome === 'succeeded'
                     ? { type: CATALOG_UPDATE_SUCCEEDED, value: [1] }
                     : { type: CATALOG_UPDATE_PARTIALLY_SUCCEEDED, value: [1, new Error('partial metadata')] });
             });
             await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
-            expect(currentRegistry.connections.get(TEST_DATABASE_ID)?.catalogUpdates.tasksFinished.has(1)).toBe(true);
+            expect(currentRegistry.connections.get(TEST_CONNECTION_ID)?.catalogUpdates.tasksFinished.has(1)).toBe(true);
             // The refresh describes the changes of earlier statements, recorded catalog changes are cleared
             expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([
                 `${TEST_SESSION_ID}/dashql-catalog-relations.sql`,
@@ -190,8 +190,8 @@ describe('catalog refresh persistence', () => {
             expect(backend.catalogChanges.get(TEST_SESSION_ID)).toBe(catalogChangesSql === '' ? undefined : '');
             expect(backend.calls).not.toContain(`manifest:${TEST_SESSION_ID}`);
             // The connection owns the catalog, the session keeps a copy
-            expect(backend.connectionFiles.get(`${TEST_DATABASE_ID}/dashql-catalog-relations.sql`)).toBe(schemaSQL);
-            expect(backend.connectionFiles.get(`${TEST_DATABASE_ID}/dashql-catalog-functions.sql`)).toBe(functionsSQL);
+            expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-relations.sql`)).toBe(schemaSQL);
+            expect(backend.connectionFiles.get(`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`)).toBe(functionsSQL);
         } finally {
             act(() => root.unmount());
             container.remove();
@@ -208,7 +208,7 @@ describe('catalog refresh persistence', () => {
             queries: [], error: null, startedAt: new Date(), finishedAt: null, lastUpdateAt: new Date(),
         };
         const embedded = {
-            connectionId: TEST_DATABASE_ID, active: true,
+            connectionId: TEST_CONNECTION_ID, active: true,
             params: { hyper: { protocol: 'WASM' } },
             connectionSignature: { signatureString: 'embedded' },
             connectorInfo: { connectorType: ConnectorType.HYPER },
@@ -239,19 +239,19 @@ describe('catalog refresh persistence', () => {
                 ),
             )));
             act(() => setRegistry(reg => {
-                reg.connections.set(TEST_DATABASE_ID, embedded);
-                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
+                reg.connections.set(TEST_CONNECTION_ID, embedded);
+                reg.attachedDatabasesBySession.set(TEST_SESSION_ID, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
                 return { ...reg };
             }));
             // The refresh clears the recorded catalog changes as well
-            act(() => dispatch(TEST_DATABASE_ID, { type: CATALOG_UPDATE_SUCCEEDED, value: [3] }));
+            act(() => dispatch(TEST_CONNECTION_ID, { type: CATALOG_UPDATE_SUCCEEDED, value: [3] }));
             await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
             expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toEqual([`${TEST_SESSION_ID}/dashql-catalog-functions.sql`]);
             await writer.flush();
             expect(backend.functions.get(TEST_SESSION_ID)).toBe(functionsSQL);
             expect(backend.schemas.has(TEST_SESSION_ID)).toBe(false);
             expect(backend.catalogChanges.has(TEST_SESSION_ID)).toBe(false);
-            expect([...backend.connectionFiles.keys()]).toEqual([`${TEST_DATABASE_ID}/dashql-catalog-functions.sql`]);
+            expect([...backend.connectionFiles.keys()]).toEqual([`${TEST_CONNECTION_ID}/dashql-catalog-functions.sql`]);
         } finally {
             act(() => root.unmount());
             container.remove();
@@ -301,7 +301,7 @@ describe('catalog refresh persistence', () => {
             act(() => setRegistry(reg => {
                 reg.connections.set(attachedId, attached);
                 reg.attachedDatabasesBySession.set(TEST_SESSION_ID, {
-                    mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [attachedId],
+                    mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [attachedId],
                 });
                 return { ...reg };
             }));
@@ -323,7 +323,7 @@ describe('shared connection persistence', () => {
     /// Dispatch to the connection and let the batched registry update apply
     async function dispatchAndSettle(harness: { dispatch: DynamicConnectionDispatch }, action: Parameters<DynamicConnectionDispatch>[1]) {
         await act(async () => {
-            harness.dispatch(TEST_DATABASE_ID, action);
+            harness.dispatch(TEST_CONNECTION_ID, action);
             await new Promise<void>(resolve => setTimeout(resolve, 0));
         });
     }
@@ -331,10 +331,10 @@ describe('shared connection persistence', () => {
     async function render(sessionIds: string[]) {
         const backend = new SessionTestBackend();
         for (const sessionId of [TEST_SESSION_ID, OTHER_SESSION_ID]) {
-            backend.sessions.set(sessionId, testSession({ sessionId, mainDatabase: { databaseId: TEST_DATABASE_ID, params: trino('https://old') } }));
+            backend.sessions.set(sessionId, testSession({ sessionId, connections: [{ connectionId: TEST_CONNECTION_ID, params: trino('https://old') }] }));
         }
         const connection = {
-            connectionId: TEST_DATABASE_ID,
+            connectionId: TEST_CONNECTION_ID,
             active: true,
             params: trino('https://old'),
             connectionHealth: ConnectionHealth.NOT_STARTED,
@@ -353,7 +353,7 @@ describe('shared connection persistence', () => {
             [harness.registry, setRegistry] = useConnectionRegistry();
             [, harness.dispatch] = useDynamicConnectionDispatch();
             harness.writer = useStorageWriter();
-            harness.save = useConnectionSave(TEST_DATABASE_ID).save;
+            harness.save = useConnectionSave(TEST_CONNECTION_ID).save;
             return null;
         }
         const container = document.createElement('div');
@@ -366,9 +366,9 @@ describe('shared connection persistence', () => {
             ),
         )));
         await act(async () => setRegistry(reg => {
-            reg.connections.set(TEST_DATABASE_ID, connection);
+            reg.connections.set(TEST_CONNECTION_ID, connection);
             for (const sessionId of sessionIds) {
-                reg.attachedDatabasesBySession.set(sessionId, { mainDatabaseId: TEST_DATABASE_ID, attachedDatabaseIds: [] });
+                reg.attachedDatabasesBySession.set(sessionId, { mainDatabaseId: TEST_CONNECTION_ID, attachedDatabaseIds: [] });
             }
             return { ...reg };
         }));
@@ -380,7 +380,7 @@ describe('shared connection persistence', () => {
         try {
             await dispatchAndSettle(harness, { type: SET_CONNECTION_DRAFT, value: trino('https://new') });
             await harness.writer.flush();
-            expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params: trino('https://old'), paramsDraft: trino('https://new') }]);
+            expect(backend.connections).toEqual([{ id: TEST_CONNECTION_ID, params: trino('https://old'), paramsDraft: trino('https://new') }]);
             expect(backend.calls.filter(call => call.startsWith('manifest:'))).toEqual([]);
 
             let result!: ConnectionSaveResult | null;
@@ -393,11 +393,11 @@ describe('shared connection persistence', () => {
                 [TEST_SESSION_ID, 'written'],
                 [OTHER_SESSION_ID, 'written'],
             ]);
-            expect(backend.connections).toEqual([{ id: TEST_DATABASE_ID, params: trino('https://new') }]);
+            expect(backend.connections).toEqual([{ id: TEST_CONNECTION_ID, params: trino('https://new') }]);
             for (const sessionId of [TEST_SESSION_ID, OTHER_SESSION_ID]) {
-                expect(backend.sessions.get(sessionId)!.mainDatabase).toEqual({ databaseId: TEST_DATABASE_ID, params: trino('https://new') });
+                expect(backend.sessions.get(sessionId)!.connections).toEqual([{ connectionId: TEST_CONNECTION_ID, params: trino('https://new') }]);
             }
-            const saved = harness.registry.connections.get(TEST_DATABASE_ID)!;
+            const saved = harness.registry.connections.get(TEST_CONNECTION_ID)!;
             expect(saved.params).toEqual(trino('https://new'));
             expect(saved.paramsDraft).toBeUndefined();
         } finally {
@@ -429,7 +429,7 @@ describe('shared connection persistence', () => {
         const { harness, unmount } = await render([TEST_SESSION_ID]);
         try {
             await dispatchAndSettle(harness, { type: DELETE_CONNECTION, value: null });
-            expect(harness.registry.connections.has(TEST_DATABASE_ID)).toBe(true);
+            expect(harness.registry.connections.has(TEST_CONNECTION_ID)).toBe(true);
         } finally {
             unmount();
         }

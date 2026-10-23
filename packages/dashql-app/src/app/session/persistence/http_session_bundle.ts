@@ -1,38 +1,34 @@
 import type { HttpClient, HttpFetchResult } from '../../../platform/http/http_client.js';
-import type {
-    DataFileData,
-    SessionIndexData,
-    SessionIndexScript,
-    ScriptData,
-} from '../../storage/storage_backend.js';
+import type { DataFileData, ScriptData } from '../../storage/storage_backend.js';
 import {
     STORAGE_SESSION_FILE,
     STORAGE_ATTACHMENTS_FOLDER,
-    STORAGE_SESSION_INDEX_FILE,
     STORAGE_SCRIPTS_FOLDER,
 } from '../../storage/storage_backend.js';
 import type { SessionBundle } from '../../storage/session_bundle.js';
-import { readSessionBundleHead } from '../../storage/session_bundle.js';
+import { assembleSessionBundle, readSessionBundleHead } from '../../storage/session_bundle.js';
 import { type MigrationFolder, OverlayFolder } from '../../../migration/migration_folder.js';
 import { LEGACY_SESSION_FILE } from '../../../migration/legacy_links.js';
 
 const MAX_MANIFEST_BYTES = 1024 * 1024;
-const MAX_INDEX_BYTES = 1024 * 1024;
 const MAX_SCRIPT_BYTES = 8 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 32 * 1024 * 1024;
-const MAX_SCRIPTS = 2048;
 
 export interface HttpSessionLoadResult {
+    /// The loaded session
     bundle: SessionBundle;
-    indexedScriptCount: number;
+    /// The number of scripts that the session file lists
+    listedScriptCount: number;
+    /// The number of scripts that were loaded
     loadedScriptCount: number;
+    /// Were files missing, unusable or over the size budget?
     incomplete: boolean;
 }
 
 export type HttpSessionLoadProgress =
     | { phase: 'preparing' }
     | { phase: 'manifest' }
-    | { phase: 'index'; sessionName: string; sessionId: string }
+    | { phase: 'listing'; sessionName: string; sessionId: string }
     | {
         phase: 'files';
         sessionName: string;
@@ -63,16 +59,13 @@ export async function readSessionBundleFromHttp(
     const sessionName = session.name?.trim() || session.metadata.originalFileName || 'Unnamed session';
     totalBytes += [head.schemaSql, head.functionsSql].reduce((bytes, text) => bytes + (text == null ? 0 : textBytes(text)), 0);
 
-    onProgress?.({ phase: 'index', sessionName, sessionId: session.sessionId });
-    const fetchedIndexText = await folder.readText(STORAGE_SESSION_INDEX_FILE);
-    const indexText = fetchedIndexText != null && textBytes(fetchedIndexText) <= MAX_INDEX_BYTES ? fetchedIndexText : null;
-    totalBytes += indexText == null ? 0 : textBytes(indexText);
-    const parsedIndex = parseSessionIndex(indexText);
-    const index = parsedIndex.index;
-    const indexedScriptCount = index.scripts.length;
-    const totalFileCount = 4 + indexedScriptCount + (index.data?.length ?? 0);
-    // The manifest, the catalog files and the index
-    let completedFileCount = 4;
+    onProgress?.({ phase: 'listing', sessionName, sessionId: session.sessionId });
+    const listedScripts = session.scripts;
+    const listedAttachments = session.attachments;
+    const listedScriptCount = listedScripts.length;
+    const totalFileCount = 3 + listedScriptCount + listedAttachments.length;
+    // The manifest and the catalog files
+    let completedFileCount = 3;
     let completedScriptCount = 0;
     const reportFileProgress = () => onProgress?.({
         phase: 'files',
@@ -81,7 +74,7 @@ export async function readSessionBundleFromHttp(
         completedFileCount,
         totalFileCount,
         completedScriptCount,
-        totalScriptCount: indexedScriptCount,
+        totalScriptCount: listedScriptCount,
     });
     const trackFile = async <T>(load: Promise<T>, script: boolean = false): Promise<T> => {
         try {
@@ -94,7 +87,7 @@ export async function readSessionBundleFromHttp(
     };
     reportFileProgress();
 
-    const scripts: ScriptData[] = (await Promise.all(index.scripts.map(async script => {
+    const scripts: ScriptData[] = (await Promise.all(listedScripts.map(async script => {
             const sql = await trackFile(fetchBestEffortText(
                 httpClient,
                 sessionFileUrl(baseUrl, script.name),
@@ -105,7 +98,7 @@ export async function readSessionBundleFromHttp(
         }))).filter((script): script is ScriptData => script != null);
 
     totalBytes += scripts.reduce((bytes, script) => bytes + textBytes(script.sql), 0);
-    const data = (await Promise.all((index.data ?? []).map(async file => {
+    const data = (await Promise.all(listedAttachments.map(async file => {
         const bytes = await trackFile(fetchBestEffortBytes(httpClient,
             new URL(`${STORAGE_ATTACHMENTS_FOLDER}/${encodeURIComponent(file.name)}`, baseUrl), MAX_TOTAL_BYTES, signal));
         return bytes == null ? null : { name: file.name, bytes };
@@ -115,7 +108,8 @@ export async function readSessionBundleFromHttp(
     // manifest is the sole required file, so an oversized optional tree degrades to metadata only.
     const includeOptionalFiles = totalBytes <= MAX_TOTAL_BYTES;
 
-    const bundle: SessionBundle = {
+    // Scripts that failed to load are dropped from the list
+    const bundle = assembleSessionBundle({
         session: {
             ...session,
             metadata: {
@@ -126,16 +120,14 @@ export async function readSessionBundleFromHttp(
         },
         schemaSql: includeOptionalFiles ? head.schemaSql : null,
         functionsSql: includeOptionalFiles ? head.functionsSql : null,
-        scripts: includeOptionalFiles ? scripts : [],
-        data: includeOptionalFiles ? data : [],
-    };
+    }, includeOptionalFiles ? scripts : [], includeOptionalFiles ? data : []);
     const loadedScriptCount = bundle.scripts.length;
     return {
         bundle,
-        indexedScriptCount,
+        listedScriptCount,
         loadedScriptCount,
-        incomplete: !parsedIndex.valid || !includeOptionalFiles || loadedScriptCount !== indexedScriptCount
-            || data.length !== (index.data?.length ?? 0),
+        incomplete: !head.filesValid || !includeOptionalFiles || loadedScriptCount !== listedScriptCount
+            || data.length !== listedAttachments.length,
     };
 }
 
@@ -183,6 +175,10 @@ class HttpFolder implements MigrationFolder {
     async rename(from: string): Promise<void> {
         throw new Error(`Cannot rename ${from} of a remote session`);
     }
+
+    async remove(name: string): Promise<void> {
+        throw new Error(`Cannot remove ${name} of a remote session`);
+    }
 }
 
 /// Validate the URL of a hosted session, returns the name of the session metadata
@@ -203,60 +199,6 @@ function validateManifestUrl(url: URL): string {
     return name;
 }
 
-function parseSessionIndex(text: string | null): { index: SessionIndexData; valid: boolean } {
-    if (text == null) return { index: { scripts: [] }, valid: false };
-    let parsed: unknown;
-    try {
-        parsed = JSON.parse(text);
-    } catch {
-        return { index: { scripts: [] }, valid: false };
-    }
-    if (!isPlainObject(parsed) || !Array.isArray(parsed.scripts)) {
-        return { index: { scripts: [] }, valid: false };
-    }
-
-    const scripts: SessionIndexScript[] = [];
-    const scriptNames = new Set<string>();
-    let scriptCount = 0;
-    let valid = true;
-    for (const script of parsed.scripts) {
-        if (scriptCount >= MAX_SCRIPTS) {
-            valid = false;
-            break;
-        }
-        if (!isPlainObject(script)
-            || !isSafeName(script.name)
-            || !script.name.toLowerCase().endsWith('.sql')
-            || destinationKey(script.name) === destinationKey('dashql-draft.sql')) {
-            valid = false;
-            continue;
-        }
-        const scriptKey = destinationKey(script.name);
-        if (scriptNames.has(scriptKey)) {
-            valid = false;
-            continue;
-        }
-        scriptNames.add(scriptKey);
-        scripts.push({ name: script.name.normalize('NFC') });
-        scriptCount += 1;
-    }
-    const data: SessionIndexScript[] = [];
-    const dataNames = new Set<string>();
-    if (parsed.data != null && !Array.isArray(parsed.data)) valid = false;
-    if (Array.isArray(parsed.data)) {
-        for (const file of parsed.data) {
-            if (data.length >= MAX_SCRIPTS) { valid = false; break; }
-            if (!isPlainObject(file) || !isSafeName(file.name) || dataNames.has(destinationKey(file.name))) {
-                valid = false;
-                continue;
-            }
-            dataNames.add(destinationKey(file.name));
-            data.push({ name: file.name.normalize('NFC') });
-        }
-    }
-    data.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-    return { index: { scripts, data }, valid };
-}
 
 async function fetchBestEffortBytes(
     httpClient: HttpClient, url: URL, maxBytes: number, signal?: AbortSignal,
@@ -323,24 +265,8 @@ async function readLimitedText(response: HttpFetchResult, label: string, maxByte
     return text;
 }
 
-function isPlainObject(value: unknown): value is Record<string, any> {
-    return value != null && typeof value === 'object' && !Array.isArray(value);
-}
 
-function isSafeName(value: unknown): value is string {
-    return typeof value === 'string'
-        && value.length > 0
-        && value.length <= 255
-        && value !== '.'
-        && value !== '..'
-        && !value.includes('/')
-        && !value.includes('\\')
-        && !value.includes('\0');
-}
 
-function destinationKey(value: string): string {
-    return value.normalize('NFC').toLowerCase();
-}
 
 function textBytes(value: string): number {
     return new TextEncoder().encode(value).byteLength;

@@ -2,7 +2,6 @@ import * as React from 'react';
 import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent, type KeyboardCoordinateGetter } from '@dnd-kit/core';
 
 import type { SessionScripts } from '../scripts/session_scripts.js';
-import { getSortedScriptFileNames } from '../scripts/session_scripts.js';
 import type { ModifySessionScripts } from '../scripts/session_scripts_registry.js';
 import { DashboardCard } from './dashboard_card.js';
 import {
@@ -45,7 +44,7 @@ interface Props {
 }
 
 function readLayout(sessionScripts: SessionScripts): DashboardPlacement[] {
-    return placeDashboardItems(getSortedScriptFileNames(sessionScripts.scriptRefs)
+    return placeDashboardItems(sessionScripts.scriptOrder
         .map(fileName => sessionScripts.scripts[sessionScripts.scriptRefs[fileName].scriptId])
         .filter(script => script?.annotations.visualizeQuery != null)
         .map(script => ({
@@ -60,7 +59,7 @@ export function Dashboard(props: Props): React.ReactElement {
     const [layout, setLayout] = React.useState(() => readLayout(props.sessionScripts));
     const [gridWidth, setGridWidth] = React.useState(0);
     const [announcement, setAnnouncement] = React.useState('');
-    const scripts = getSortedScriptFileNames(props.sessionScripts.scriptRefs)
+    const scripts = props.sessionScripts.scriptOrder
         .map(fileName => props.sessionScripts.scripts[props.sessionScripts.scriptRefs[fileName].scriptId])
         .filter(script => script?.annotations.visualizeQuery != null);
     const layoutSourceKey = scripts.map(script => {
