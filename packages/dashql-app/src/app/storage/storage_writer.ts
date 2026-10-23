@@ -636,11 +636,21 @@ export class StorageWriter {
         const next = patch(existing);
         if (sessionManifestEquals(existing, next)) return;
         this.logger.info("Patching session", { key, sessionId }, LOG_CTX);
+        await this.saveSessionFile(sessionId, next);
+    }
+
+    /// Save the session file of a session and record the write
+    private async saveSessionFile(sessionId: string, session: SessionData): Promise<void> {
+        const text = JSON.stringify(session, null, 2);
+        await this.timedWrite(`${sessionId}/${STORAGE_SESSION_FILE}`, text, () => this.backend.saveSessionManifest(sessionId, session));
+    }
+
+    /// Write a file and record the write with its duration and content
+    private async timedWrite(path: string, text: string, write: () => Promise<void>): Promise<void> {
         const timeBefore = new Date();
-        await this.backend.saveSessionManifest(sessionId, next);
-        const actualPath = `${sessionId}/${STORAGE_SESSION_FILE}`;
-        this.registerWrite(actualPath, JSON.stringify(next).length, new Date().getTime() - timeBefore.getTime());
-        this.completedFileContents.set(actualPath, JSON.stringify(next, null, 2));
+        await write();
+        this.registerWrite(path, text.length, new Date().getTime() - timeBefore.getTime());
+        this.completedFileContents.set(path, text);
     }
 
     protected async executeTask(key: string, task: StorageWriteTaskVariant) {
@@ -698,80 +708,37 @@ export class StorageWriter {
                     break;
                 }
 
-                const timeBefore = new Date();
-                await this.backend.saveSessionManifest(sessionId, connData);
-                const timeAfter = new Date();
-                const writeDuration = timeAfter.getTime() - timeBefore.getTime();
-                const actualPath = `${sessionId}/dashql-session.json`;
-                this.registerWrite(actualPath, JSON.stringify(connData).length, writeDuration);
-                this.completedFileContents.set(actualPath, JSON.stringify(connData, null, 2));
+                await this.saveSessionFile(sessionId, connData);
                 break;
             }
             case WRITE_SESSION_PROPERTIES: {
                 const [sessionId, { name, settings }] = task.value;
-                const existing = await this.backend.loadSession(sessionId);
-                const next: SessionData = { ...existing, settings };
-                if (name) next.name = name;
-                else delete next.name;
-                if (sessionManifestEquals(existing, next)) break;
-                const timeBefore = new Date();
-                await this.backend.saveSessionManifest(sessionId, next);
-                const timeAfter = new Date();
-                const actualPath = `${sessionId}/dashql-session.json`;
-                this.registerWrite(actualPath, JSON.stringify(next).length, timeAfter.getTime() - timeBefore.getTime());
-                this.completedFileContents.set(actualPath, JSON.stringify(next, null, 2));
+                await this.patchSessionFile(key, sessionId, existing => {
+                    const next: SessionData = { ...existing, settings };
+                    if (name) next.name = name;
+                    else delete next.name;
+                    return next;
+                });
                 break;
             }
             case WRITE_SESSION_CATALOG_SCRIPT: {
                 const [sessionId, catalogRelationScript] = task.value;
-                this.logger.info("Writing session schema", {
-                    key,
-                    sessionId,
-                }, LOG_CTX);
-
-                // Get the SQL from the catalog script
+                this.logger.info("Writing session schema", { key, sessionId }, LOG_CTX);
                 const schemaSQL = catalogRelationScript.toString();
-
-                const timeBefore = new Date();
-                await this.backend.saveSessionSchema(sessionId, schemaSQL);
-                const timeAfter = new Date();
-                const writeDuration = timeAfter.getTime() - timeBefore.getTime();
-                const actualPath = `${sessionId}/${STORAGE_CATALOG_RELATIONS}`;
-                this.registerWrite(actualPath, schemaSQL.length, writeDuration);
-                this.completedFileContents.set(actualPath, schemaSQL);
+                await this.timedWrite(`${sessionId}/${STORAGE_CATALOG_RELATIONS}`, schemaSQL, () => this.backend.saveSessionSchema(sessionId, schemaSQL));
                 break;
             }
             case WRITE_SESSION_FUNCTION_SCRIPT: {
                 const [sessionId, functionScript] = task.value;
-                this.logger.info("Writing session functions", {
-                    key,
-                    sessionId,
-                }, LOG_CTX);
-
+                this.logger.info("Writing session functions", { key, sessionId }, LOG_CTX);
                 const functionsSQL = functionScript.toString();
-
-                const timeBefore = new Date();
-                await this.backend.saveSessionFunctions(sessionId, functionsSQL);
-                const timeAfter = new Date();
-                const writeDuration = timeAfter.getTime() - timeBefore.getTime();
-                const actualPath = `${sessionId}/${STORAGE_CATALOG_FUNCTIONS}`;
-                this.registerWrite(actualPath, functionsSQL.length, writeDuration);
-                this.completedFileContents.set(actualPath, functionsSQL);
+                await this.timedWrite(`${sessionId}/${STORAGE_CATALOG_FUNCTIONS}`, functionsSQL, () => this.backend.saveSessionFunctions(sessionId, functionsSQL));
                 break;
             }
             case WRITE_SESSION_CATALOG_CHANGES: {
                 const [sessionId, changesSql] = task.value;
-                this.logger.info("Writing session catalog changes", {
-                    key,
-                    sessionId,
-                }, LOG_CTX);
-
-                const timeBefore = new Date();
-                await this.backend.saveSessionCatalogChanges(sessionId, changesSql);
-                const timeAfter = new Date();
-                const actualPath = `${sessionId}/${STORAGE_CATALOG_CHANGES}`;
-                this.registerWrite(actualPath, changesSql.length, timeAfter.getTime() - timeBefore.getTime());
-                this.completedFileContents.set(actualPath, changesSql);
+                this.logger.info("Writing session catalog changes", { key, sessionId }, LOG_CTX);
+                await this.timedWrite(`${sessionId}/${STORAGE_CATALOG_CHANGES}`, changesSql, () => this.backend.saveSessionCatalogChanges(sessionId, changesSql));
                 break;
             }
             case REPLACE_SESSION_SCRIPTS: {
@@ -784,11 +751,7 @@ export class StorageWriter {
 
                 for (const script of session.scripts) {
                     const sql = script.readText();
-                    const t0 = new Date();
-                    await this.backend.saveScript(sessionId, script.fileName, sql);
-                    const t1 = new Date();
-                    this.registerWrite(`${sessionId}/scripts/${script.fileName}`, sql.length, t1.getTime() - t0.getTime());
-                    this.completedFileContents.set(`${sessionId}/scripts/${script.fileName}`, sql);
+                    await this.timedWrite(`${sessionId}/scripts/${script.fileName}`, sql, () => this.backend.saveScript(sessionId, script.fileName, sql));
                 }
 
                 // Save session last so it never references content that doesn't exist yet.
@@ -836,12 +799,7 @@ export class StorageWriter {
                     settings: session.settings,
                 }, existingScripts);
 
-                const sessionTimeBefore = new Date();
-                await this.backend.saveSessionManifest(sessionId, connData);
-                const sessionTimeAfter = new Date();
-                this.registerWrite(`${sessionId}/dashql-session.json`, JSON.stringify(connData).length, sessionTimeAfter.getTime() - sessionTimeBefore.getTime());
-                this.completedFileContents.set(`${sessionId}/dashql-session.json`, JSON.stringify(connData, null, 2));
-
+                await this.saveSessionFile(sessionId, connData);
                 break;
             }
             case WRITE_SESSION_SCRIPTS: {
@@ -877,32 +835,14 @@ export class StorageWriter {
             case WRITE_CONNECTION_FILE: {
                 const [connectionId, fileName, text] = task.value;
                 const registry = this.requireRegistry();
-                const timeBefore = new Date();
-                await registry.saveConnectionFile(connectionId, fileName, text);
-                const actualPath = `@${STORAGE_CONNECTIONS_FOLDER}/${connectionId}/${fileName}`;
-                this.registerWrite(actualPath, text.length, new Date().getTime() - timeBefore.getTime());
-                this.completedFileContents.set(actualPath, text);
+                await this.timedWrite(`@${STORAGE_CONNECTIONS_FOLDER}/${connectionId}/${fileName}`, text, () => registry.saveConnectionFile(connectionId, fileName, text));
                 break;
             }
             case PATCH_SESSION_CONNECTION: {
                 const [sessionId, copy, aliases] = task.value;
-                const connectionId = copy.connectionId;
                 // The copy is only patched into an existing session file. A missing file must not be
                 // recreated, a moved native folder would otherwise silently come back as a new one.
-                let existing: SessionData;
-                try {
-                    existing = await this.backend.loadSession(sessionId);
-                } catch (e: any) {
-                    throw new SessionUnavailableError(sessionId, e);
-                }
-                const next = patchSessionConnection(existing, copy, aliases);
-                if (next == null) break;
-                this.logger.info("Writing connection copy", { key, sessionId, connectionId }, LOG_CTX);
-                const timeBefore = new Date();
-                await this.backend.saveSessionManifest(sessionId, next);
-                const actualPath = `${sessionId}/${STORAGE_SESSION_FILE}`;
-                this.registerWrite(actualPath, JSON.stringify(next).length, new Date().getTime() - timeBefore.getTime());
-                this.completedFileContents.set(actualPath, JSON.stringify(next, null, 2));
+                await this.patchSessionFile(key, sessionId, existing => patchSessionConnection(existing, copy, aliases) ?? existing);
                 break;
             }
             case WRITE_SCRIPT: {
@@ -914,12 +854,7 @@ export class StorageWriter {
                     file: fileName,
                 }, LOG_CTX);
 
-                const timeBefore = new Date();
-                await this.backend.saveScript(sessionId, fileName, sql);
-                const actualPath = `${sessionId}/scripts/${fileName}`;
-                const timeAfter = new Date();
-                this.registerWrite(actualPath, sql.length, timeAfter.getTime() - timeBefore.getTime());
-                this.completedFileContents.set(actualPath, sql);
+                await this.timedWrite(`${sessionId}/scripts/${fileName}`, sql, () => this.backend.saveScript(sessionId, fileName, sql));
                 break;
             }
             case DELETE_SCRIPT: {
