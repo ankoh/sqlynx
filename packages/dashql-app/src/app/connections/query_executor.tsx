@@ -205,52 +205,97 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     ? null
                     : createSessionQueryResultCache(storageReader.backend, querySessionId);
 
+                // Cache read path: on a hit, load the Arrow IPC bytes and drive the state machine as if
+                // the result had just streamed in, skipping the backend entirely.
+                const serveFromCache = async (): Promise<arrow.Table | null> => {
+                    if (cacheHash == null) return null;
+                    let cached: CachedQueryResult | null = null;
+                    try {
+                        cached = await resultCache!.load(cacheHash);
+                    } catch (e: any) {
+                        traced.warn("Failed to read query cache", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
+                    }
+                    // A user cancel during the async cache read behaves like any other cancel
+                    initialState.cancellation.signal.throwIfAborted();
+                    if (cached == null) return null;
+                    const table = arrow.tableFromIPC(cached.bytes);
+                    // Record the access so eviction sees this as a recently-used (LRU) entry. This
+                    // bumps only the empty `.last_access` marker, never the payload, so it is cheap and
+                    // leaves the payload's "cached at" write time intact. Best-effort: a failure here
+                    // must never surface into the query path (it only means the entry looks colder to
+                    // eviction than it is).
+                    void resultCache!.touch(cacheHash).catch((e: any) => {
+                        traced.warn("Failed to record query cache access", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
+                    });
+                    traced.info("Served query from cache", {
+                        sessionId,
+                        "query": queryId.toString(),
+                        "numRows": table.numRows.toString(),
+                        "numCols": table.numCols.toString(),
+                        "cachedAt": new Date(cached.cachedAtMs).toISOString(),
+                    }, LOG_CTX);
+                    // No live stream, so synthesize empty metadata and zeroed stream metrics.
+                    queryTracker.dispatch({
+                        type: QUERY_RECEIVED_ALL_BATCHES,
+                        value: [queryId, table, new Map<string, string>(), createQueryResponseStreamMetrics()],
+                    });
+                    // Record the cache key and the entry's write time so the UI can show how old the
+                    // cached result is and offer to delete it.
+                    queryTracker.dispatch({
+                        type: QUERY_CACHE_RECORDED,
+                        value: [queryId, cacheHash, true, cached.cachedAtMs],
+                    });
+                    return table;
+                };
+                // Compute all table summaries of the result
+                const analyzeResults = async (table: arrow.Table) => {
+                    if (!args.analyzeResults) return;
+                    if (args.replaceComputationId != null && args.replaceComputationId !== queryId) {
+                        computeDispatch({ type: DELETE_COMPUTATION, value: [args.replaceComputationId] });
+                    }
+                    queryTracker.dispatch({ type: QUERY_PROCESSING_RESULTS, value: [queryId] });
+                    await measurePostprocessing(async () => {
+                        await yieldToBrowser();
+                        await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection, connectionId);
+                        initialState.cancellation.signal.throwIfAborted();
+                    });
+                    queryTracker.dispatch({ type: QUERY_PROCESSED_RESULTS, value: [queryId] });
+                };
+                // Cache write path: after a successful miss, store the result for next time. Fire-and-forget
+                // (not awaited) so a large eviction scan never stalls the caller's promise, and never fatal —
+                // a quota/permission failure just logs.
+                const storeInCache = (table: arrow.Table | null) => {
+                    if (cacheHash == null || table == null) return;
+                    const bytes = arrow.tableToIPC(table, 'stream');
+                    void resultCache!.store(cacheHash, bytes).then(() => {
+                        // The write landed: record the key (but not servedFromCache — this run hit the
+                        // backend) so the UI can offer to delete the freshly-cached entry. The "cached at"
+                        // time is the write we just made; a later hit reads the precise mtime from disk.
+                        queryTracker.dispatch({
+                            type: QUERY_CACHE_RECORDED,
+                            value: [queryId, cacheHash!, false, null],
+                        });
+                    }).catch((e: any) => {
+                        traced.warn("Failed to write query cache", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
+                    });
+                };
+
                 if (args.scriptExecution != null) {
                     try {
-                        if (cacheHash != null) {
-                            let cached: CachedQueryResult | null = null;
-                            try {
-                                cached = await resultCache!.load(cacheHash);
-                            } catch (e: any) {
-                                traced.warn("Failed to read query cache", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
-                            }
-                            initialState.cancellation.signal.throwIfAborted();
-                            if (cached != null) {
-                                let table: arrow.Table;
-                                try {
-                                    table = arrow.tableFromIPC(cached.bytes);
-                                } catch (error) {
-                                    args.scriptExecution.destroy();
-                                    throw error;
-                                }
-                                // executeScriptQuery normally owns this cleanup, but a hit skips it entirely.
-                                args.scriptExecution.destroy();
-                                void resultCache!.touch(cacheHash).catch((e: any) => {
-                                    traced.warn("Failed to record query cache access", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
-                                });
-                                queryTracker.dispatch({
-                                    type: QUERY_RECEIVED_ALL_BATCHES,
-                                    value: [queryId, table, new Map<string, string>(), createQueryResponseStreamMetrics()],
-                                });
-                                queryTracker.dispatch({
-                                    type: QUERY_CACHE_RECORDED,
-                                    value: [queryId, cacheHash, true, cached.cachedAtMs],
-                                });
-                                reportResultsReady();
-                                if (args.analyzeResults) {
-                                    if (args.replaceComputationId != null && args.replaceComputationId !== queryId) {
-                                        computeDispatch({ type: DELETE_COMPUTATION, value: [args.replaceComputationId] });
-                                    }
-                                    queryTracker.dispatch({ type: QUERY_PROCESSING_RESULTS, value: [queryId] });
-                                    await measurePostprocessing(async () => {
-                                        await yieldToBrowser();
-                                        await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection, connectionId);
-                                        initialState.cancellation.signal.throwIfAborted();
-                                    });
-                                    queryTracker.dispatch({ type: QUERY_PROCESSED_RESULTS, value: [queryId] });
-                                }
-                                return table;
-                            }
+                        // executeScriptQuery normally owns the cleanup of the execution, a hit or a failed
+                        // cache read skips it.
+                        let cached: arrow.Table | null;
+                        try {
+                            cached = await serveFromCache();
+                        } catch (error) {
+                            args.scriptExecution.destroy();
+                            throw error;
+                        }
+                        if (cached != null) {
+                            args.scriptExecution.destroy();
+                            reportResultsReady();
+                            await analyzeResults(cached);
+                            return cached;
                         }
                         startQueryExecution();
                         const table = await executeScriptQuery({
@@ -316,29 +361,8 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                         });
                         reportQueryExecution();
                         reportResultsReady();
-                        if (table && args.analyzeResults) {
-                            if (args.replaceComputationId != null && args.replaceComputationId !== queryId) {
-                                computeDispatch({ type: DELETE_COMPUTATION, value: [args.replaceComputationId] });
-                            }
-                            queryTracker.dispatch({ type: QUERY_PROCESSING_RESULTS, value: [queryId] });
-                            await measurePostprocessing(async () => {
-                                await yieldToBrowser();
-                                await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection, connectionId);
-                                initialState.cancellation.signal.throwIfAborted();
-                            });
-                            queryTracker.dispatch({ type: QUERY_PROCESSED_RESULTS, value: [queryId] });
-                        }
-                        if (cacheHash != null && table != null) {
-                            const bytes = arrow.tableToIPC(table, 'stream');
-                            void resultCache!.store(cacheHash, bytes).then(() => {
-                                queryTracker.dispatch({
-                                    type: QUERY_CACHE_RECORDED,
-                                    value: [queryId, cacheHash!, false, null],
-                                });
-                            }).catch((e: any) => {
-                                traced.warn("Failed to write query cache", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
-                            });
-                        }
+                        if (table != null) await analyzeResults(table);
+                        storeInCache(table);
                         return table;
                     } catch (error: any) {
                         const cancelled = initialState.cancellation.signal.aborted || error?.name === 'AbortError' || error?.message === 'AbortError';
@@ -365,51 +389,8 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 let table: arrow.Table | null = null;
                 let servedFromCache = false;
                 try {
-                    // Cache read path: on a hit, load the Arrow IPC bytes and drive the state machine as if
-                    // the result had just streamed in, skipping the backend entirely.
-                    if (cacheHash != null) {
-                        let cached: CachedQueryResult | null = null;
-                        try {
-                            cached = await resultCache!.load(cacheHash);
-                        } catch (e: any) {
-                            traced.warn("Failed to read query cache", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
-                        }
-                        // A user cancel during the async cache read should behave like any other cancel:
-                        // let the catch below route it to QUERY_CANCELLED.
-                        if (initialState.cancellation.signal.aborted) {
-                            throw new Error('AbortError');
-                        }
-                        if (cached != null) {
-                            table = arrow.tableFromIPC(cached.bytes);
-                            servedFromCache = true;
-                            // Record the access so eviction sees this as a recently-used (LRU) entry. This
-                            // bumps only the empty `.last_access` marker, never the payload, so it is cheap and
-                            // leaves the payload's "cached at" write time intact. Best-effort: a failure here
-                            // must never surface into the query path (it only means the entry looks colder to
-                            // eviction than it is).
-                            void resultCache!.touch(cacheHash).catch((e: any) => {
-                                traced.warn("Failed to record query cache access", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
-                            });
-                            traced.info("Served query from cache", {
-                                sessionId,
-                                "query": queryId.toString(),
-                                "numRows": table.numRows.toString(),
-                                "numCols": table.numCols.toString(),
-                                "cachedAt": new Date(cached.cachedAtMs).toISOString(),
-                            }, LOG_CTX);
-                            // No live stream, so synthesize empty metadata and zeroed stream metrics.
-                            queryTracker.dispatch({
-                                type: QUERY_RECEIVED_ALL_BATCHES,
-                                value: [queryId, table, new Map<string, string>(), createQueryResponseStreamMetrics()],
-                            });
-                            // Record the cache key and the entry's write time so the UI can show how old the
-                            // cached result is and offer to delete it.
-                            queryTracker.dispatch({
-                                type: QUERY_CACHE_RECORDED,
-                                value: [queryId, cacheHash, true, cached.cachedAtMs],
-                            });
-                        }
-                    }
+                    table = await serveFromCache();
+                    servedFromCache = table != null;
 
                     if (!servedFromCache) {
                         tracked.sending();
@@ -490,30 +471,9 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
                 reportResultsReady();
 
-                // Compute all table summaries of the result
-                if (table && args.analyzeResults) {
+                if (table != null) {
                     try {
-                        if (args.replaceComputationId != null && args.replaceComputationId !== queryId) {
-                            computeDispatch({
-                                type: DELETE_COMPUTATION,
-                                value: [args.replaceComputationId],
-                            });
-                        }
-                        queryTracker.dispatch({
-                            type: QUERY_PROCESSING_RESULTS,
-                            value: [queryId],
-                        });
-
-                        await measurePostprocessing(async () => {
-                            await yieldToBrowser();
-                            await analyzeTable(queryId, table!, computeDispatch, computeDb, traced, args.projection, connectionId);
-                            initialState.cancellation.signal.throwIfAborted();
-                        });
-
-                        queryTracker.dispatch({
-                            type: QUERY_PROCESSED_RESULTS,
-                            value: [queryId],
-                        });
+                        await analyzeResults(table);
                     } catch (e: any) {
                         if (initialState.cancellation.signal.aborted || e?.name === 'AbortError') {
                             const cancellationError = e instanceof LoggableException
@@ -543,24 +503,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     }
                 }
 
-                // Cache write path: after a successful miss, store the result for next time. Fire-and-forget
-                // (not awaited) so a large eviction scan never stalls the caller's promise, and never fatal —
-                // a quota/permission failure just logs.
-                if (!servedFromCache && cacheHash != null && table != null) {
-                    const bytes = arrow.tableToIPC(table, 'stream');
-                    void resultCache!.store(cacheHash, bytes).then(() => {
-                        // The write landed: record the key (but not servedFromCache — this run hit the
-                        // backend) so the UI can offer to delete the freshly-cached entry. The "cached at"
-                        // time is the write we just made; a later hit reads the precise mtime from disk.
-                        queryTracker.dispatch({
-                            type: QUERY_CACHE_RECORDED,
-                            value: [queryId, cacheHash, false, null],
-                        });
-                    }).catch((e: any) => {
-                        traced.warn("Failed to write query cache", { query: queryId.toString(), error: stringifyError(e) }, LOG_CTX);
-                    });
-                }
-
+                if (!servedFromCache) storeInCache(table);
                 return table;
             },
         });
