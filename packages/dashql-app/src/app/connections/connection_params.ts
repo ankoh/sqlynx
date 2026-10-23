@@ -2,7 +2,7 @@ import * as dashql from '@ankoh/dashql-core';
 import type * as app_session from '@ankoh/dashql-jsonschema/app_session.js';
 
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR, ConnectorInfo, getConnectorInfoForParams } from './connector_info.js';
-import { ConnectionHealth, ConnectionStateWithoutId, ConnectionStatus, createConnectionMetrics } from './connection_state.js';
+import { ConnectionStateWithoutId, createConnectionState } from './connection_state.js';
 import { ConnectionStateDetailsVariant } from './connection_state_details.js';
 import { createHyperConnectionParamsSignature } from './hyper/hyper_connection_params.js';
 import { createHyperConnectionStateDetails } from './hyper/hyper_connection_state.js';
@@ -10,8 +10,6 @@ import { createSalesforceConnectionParamsSignature } from './salesforce/salesfor
 import { createSalesforceConnectionStateDetails } from './salesforce/salesforce_connection_state.js';
 import { createTrinoConnectionParamsSignature } from './trino/trino_connection_params.js';
 import { createTrinoConnectionStateDetails } from './trino/trino_connection_state.js';
-import { generateCatalogScriptHeader, CatalogSource } from './catalog_sql_generator.js';
-import { generateFunctionScriptHeader } from './catalog_function_sql_generator.js';
 
 // Re-export connection param types from JSON Schema
 export type ConnectionParams = app_session.ConnectionParams;
@@ -144,40 +142,7 @@ export function createConnectionParamsSignature(params: ConnectionParams): any {
 }
 
 export function createConnectionStateFromParams(dql: dashql.DashQL, params: ConnectionParams): ConnectionStateWithoutId {
-    const info = getConnectorInfoForParams(params)!;
-    const details = getConnectionStateDetailsFromParams(params)!;
-
-    const catalog = dql.createCatalog();
-    const catalogRelationScript = dql.createScript(catalog);
-    catalogRelationScript.replaceText(generateCatalogScriptHeader(CatalogSource.Unknown));
-    const catalogFunctionScript = dql.createScript(catalog);
-    catalogFunctionScript.replaceText(generateFunctionScriptHeader(CatalogSource.Unknown));
-    return {
-        instance: dql,
-        active: false,
-        connectionStatus: ConnectionStatus.NOT_STARTED,
-        connectionHealth: ConnectionHealth.NOT_STARTED,
-        connectorInfo: info,
-        metrics: createConnectionMetrics(),
-        details,
-        params: structuredClone(params),
-        catalog,
-        catalogUpdates: {
-            tasksRunning: new Map(),
-            tasksFinished: new Map(),
-            currentFullRefresh: null,
-            lastFullRefresh: null,
-            restoredAt: null,
-        },
-        catalogRelationScript,
-        catalogFunctionScript,
-        catalogChangesSql: '',
-        snapshotQueriesActiveFinished: 1,
-        queriesActive: new Map(),
-        queriesActiveOrdered: [],
-        queriesFinished: new Map(),
-        queriesFinishedOrdered: [],
-    };
+    return createConnectionState(dql, getConnectorInfoForParams(params)!, getConnectionStateDetailsFromParams(params)!, { params });
 }
 
 export function createDefaultHyperWasmConnectionState(dql: dashql.DashQL): ConnectionStateWithoutId {

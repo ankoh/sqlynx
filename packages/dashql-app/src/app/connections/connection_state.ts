@@ -547,21 +547,46 @@ export function createConnectionMetrics(): connection.ConnectionMetrics {
     return createQueryExecutionMetrics();
 }
 
-export function createConnectionState(dql: core.DashQL, info: ConnectorInfo, details: ConnectionStateDetailsVariant): ConnectionStateWithoutId {
-    const catalog = dql.createCatalog();
-    const catalogRelationScript = dql.createScript(catalog);
-    catalogRelationScript.replaceText(generateCatalogScriptHeader(CatalogSource.Unknown));
-    const catalogFunctionScript = dql.createScript(catalog);
-    catalogFunctionScript.replaceText(generateFunctionScriptHeader(CatalogSource.Unknown));
+/// The optional properties of a new connection state
+export interface ConnectionStateOptions {
+    /// Does the connection belong to a committed session or was it connected once?
+    active?: boolean;
+    /// The params, derived from the details by default
+    params?: ConnectionParams;
+    /// The draft of the params
+    paramsDraft?: ConnectionParams;
+    /// The name
+    name?: string;
+}
+
+/// Create the state of a connection with an empty catalog
+export function createConnectionState(dql: core.DashQL, info: ConnectorInfo, details: ConnectionStateDetailsVariant, options: ConnectionStateOptions = {}): ConnectionStateWithoutId {
+    let catalog: core.DashQLCatalog | null = null;
+    let catalogRelationScript: core.DashQLScript | null = null;
+    let catalogFunctionScript: core.DashQLScript | null = null;
+    try {
+        catalog = dql.createCatalog();
+        catalogRelationScript = dql.createScript(catalog);
+        catalogRelationScript.replaceText(generateCatalogScriptHeader(CatalogSource.Unknown));
+        catalogFunctionScript = dql.createScript(catalog);
+        catalogFunctionScript.replaceText(generateFunctionScriptHeader(CatalogSource.Unknown));
+    } catch (error) {
+        catalogFunctionScript?.destroy();
+        catalogRelationScript?.destroy();
+        catalog?.destroy();
+        throw error;
+    }
     return {
         instance: dql,
-        active: false,
+        active: options.active ?? false,
         connectionStatus: ConnectionStatus.NOT_STARTED,
         connectionHealth: ConnectionHealth.NOT_STARTED,
         connectorInfo: info,
         metrics: createConnectionMetrics(),
         details,
-        params: getConnectionParamsFromStateDetails(details)!,
+        params: options.params == null ? getConnectionParamsFromStateDetails(details)! : structuredClone(options.params),
+        paramsDraft: options.paramsDraft == null ? undefined : structuredClone(options.paramsDraft),
+        name: normalizeConnectionName(options.name),
         catalog,
         catalogUpdates: {
             tasksRunning: new Map(),
