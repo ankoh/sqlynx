@@ -12,7 +12,6 @@ import { ConnectionRegistry } from './connections/connection_registry.js';
 import { ConnectionPersistenceProvider } from './connections/connection_persistence.js';
 import { ComputeConnectionProvider } from '../compute/compute_connection_provider.js';
 import { DashQLCoreProvider } from './providers/core_provider.js';
-import { FileDownloaderProvider } from '../platform/file/file_downloader_provider.js';
 import { FileDropzone } from './ui/file_dropzone.js';
 import { FlavorProvider, FlavorUrlKeeper } from './flavor/flavor_provider.js';
 import { applyFlavorToDocument, getAppFlavor } from './flavor/flavor_resolution.js';
@@ -26,8 +25,6 @@ import { JsonViewerExperimentPage } from './ui/demos/json_demo.js';
 import { LoggerToast } from '../ui/logger/logger_toast.js';
 import { NavBarContainer } from './ui/navbar.js';
 import { PlatformEventListenerProvider } from '../platform/events/event_listener_provider.js';
-import { PlatformTypeProvider } from '../platform/platform_type.js';
-import { ProcessProvider } from '../platform/process.js';
 import { PromptDemoPage } from './ui/demos/prompt_demo.js';
 import { QueryExecutorProvider } from './connections/query_executor.js';
 import { RouterReset } from './router/router_reset.js';
@@ -98,40 +95,34 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
 
 const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubTheme>
-        <PlatformTypeProvider>
-            <LoggerProvider>
-                <LoggerToast />
-                <FileDownloaderProvider>
-                    <AppConfigProvider>
-                        <PlatformEventListenerProvider>
-                            <ProcessProvider>
-                                <VersionCheck>
-                                    <StorageProvider>
-                                        <HttpClientProvider>
-                                            <AppSettingsSync>
-                                                <AIClientProvider>
-                                                    <HyperDatabaseClientProvider>
-                                                        <DashQLCoreProvider initialSetup={{ setupBatchWorker: true }}>
-                                                            <EmbeddedDatabaseProvider>
-                                                                <ComputeConnectionProvider>
-                                                                    <SessionProviders>
-                                                                        {props.children}
-                                                                    </SessionProviders>
-                                                                </ComputeConnectionProvider>
-                                                            </EmbeddedDatabaseProvider>
-                                                        </DashQLCoreProvider>
-                                                    </HyperDatabaseClientProvider>
-                                                </AIClientProvider>
-                                            </AppSettingsSync>
-                                        </HttpClientProvider>
-                                    </StorageProvider>
-                                </VersionCheck>
-                            </ProcessProvider>
-                        </PlatformEventListenerProvider>
-                    </AppConfigProvider>
-                </FileDownloaderProvider>
-            </LoggerProvider>
-        </PlatformTypeProvider>
+        <LoggerProvider>
+            <LoggerToast />
+            <AppConfigProvider>
+                <PlatformEventListenerProvider>
+                    <VersionCheck>
+                        <StorageProvider>
+                            <HttpClientProvider>
+                                <AppSettingsSync>
+                                    <AIClientProvider>
+                                        <HyperDatabaseClientProvider>
+                                            <DashQLCoreProvider initialSetup={{ setupBatchWorker: true }}>
+                                                <EmbeddedDatabaseProvider>
+                                                    <ComputeConnectionProvider>
+                                                        <SessionProviders>
+                                                            {props.children}
+                                                        </SessionProviders>
+                                                    </ComputeConnectionProvider>
+                                                </EmbeddedDatabaseProvider>
+                                            </DashQLCoreProvider>
+                                        </HyperDatabaseClientProvider>
+                                    </AIClientProvider>
+                                </AppSettingsSync>
+                            </HttpClientProvider>
+                        </StorageProvider>
+                    </VersionCheck>
+                </PlatformEventListenerProvider>
+            </AppConfigProvider>
+        </LoggerProvider>
     </GitHubTheme>
 );
 

@@ -12,7 +12,7 @@ import { ButtonVariant, IconButton } from '../foundations/button.js';
 import { AnchorAlignment, AnchorSide } from '../foundations/anchored_position.js';
 import { useKeyEvents } from '../../utils/key_events.js';
 import { LogJsonModal } from './log_json_modal.js';
-import { useFileDownloader } from '../../platform/file/file_downloader_provider.js';
+import { useFileDownloader } from '../../platform/file/file_downloader_hook.js';
 import { VerticalScrollShadows } from '../foundations/vertical_scroll_shadows.js';
 
 export const ROW_HEIGHT = 32;

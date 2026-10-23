@@ -156,7 +156,7 @@ const BrandIdentity = () => {
 export const CompactNavBar = (): React.ReactElement => {
     const route = useRouteContext();
     const platform = usePlatformType();
-    const navbarClass = platform === PlatformType.MACOS ? styles.navbar_mac : styles.navbar_default;
+    const navbarClass = platform === PlatformType.DESKTOP ? styles.navbar_mac : styles.navbar_default;
 
     return (
         <header className={`${navbarClass} ${styles.navbar_overlay}`} data-electron-drag-region>
@@ -175,7 +175,7 @@ export const NavBar = (): React.ReactElement => {
     const platform = usePlatformType();
     const location = useLocation();
 
-    const isMac = platform === PlatformType.MACOS;
+    const isMac = platform === PlatformType.DESKTOP;
 
     React.useEffect(() => {
         logger.debug("Navigated to path", { "path": location.pathname }, LOG_CTX);

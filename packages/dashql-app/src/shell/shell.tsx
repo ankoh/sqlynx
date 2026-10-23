@@ -2,10 +2,7 @@ import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
-import { FileDownloaderProvider } from '../platform/file/file_downloader_provider.js';
 import { LoggerProvider } from '../platform/logger/logger_provider.js';
-import { PlatformTypeProvider } from '../platform/platform_type.js';
-import { ProcessProvider } from '../platform/process.js';
 import { EmbeddedDatabaseProvider } from '../platform/database/embedded_database_provider.js';
 import { GitHubTheme } from '../theme/github_theme.js';
 import { LoggerToast } from '../ui/logger/logger_toast.js';
@@ -36,45 +33,39 @@ export const Shell: React.FC = () => {
 
     return (
         <BrowserRouter>
-            <PlatformTypeProvider>
-                <LoggerProvider>
-                    <>
-                        <LoggerToast />
-                        <FileDownloaderProvider>
-                            <AppConfigProvider>
-                                <PlatformEventListenerProvider>
-                                    <HttpClientProvider>
-                                        <ProcessProvider>
-                                            <EmbeddedDatabaseProvider>
-                                                <GitHubTheme>
-                                                    <DashQLCoreProvider>
-                                                        <ComputationRegistry>
-                                                            <ConnectionRegistry>
-                                                                <ShellConnectionProvider key={shellGeneration}>
-                                                                    <ShellComputeQueryExecutionProvider>
-                                                                        <ComputationScheduler />
-                                                                        <div className={styles.root}>
-                                                                            <ShellNavBar
-                                                                                engineVersion={engineVersion}
-                                                                                onReset={resetShell}
-                                                                            />
-                                                                            <ShellPage onEngineVersion={setEngineVersion} />
-                                                                        </div>
-                                                                    </ShellComputeQueryExecutionProvider>
-                                                                </ShellConnectionProvider>
-                                                            </ConnectionRegistry>
-                                                        </ComputationRegistry>
-                                                    </DashQLCoreProvider>
-                                                </GitHubTheme>
-                                            </EmbeddedDatabaseProvider>
-                                        </ProcessProvider>
-                                    </HttpClientProvider>
-                                </PlatformEventListenerProvider>
-                            </AppConfigProvider>
-                        </FileDownloaderProvider>
-                    </>
-                </LoggerProvider>
-            </PlatformTypeProvider>
+            <LoggerProvider>
+                <>
+                    <LoggerToast />
+                    <AppConfigProvider>
+                        <PlatformEventListenerProvider>
+                            <HttpClientProvider>
+                                <EmbeddedDatabaseProvider>
+                                    <GitHubTheme>
+                                        <DashQLCoreProvider>
+                                            <ComputationRegistry>
+                                                <ConnectionRegistry>
+                                                    <ShellConnectionProvider key={shellGeneration}>
+                                                        <ShellComputeQueryExecutionProvider>
+                                                            <ComputationScheduler />
+                                                            <div className={styles.root}>
+                                                                <ShellNavBar
+                                                                    engineVersion={engineVersion}
+                                                                    onReset={resetShell}
+                                                                />
+                                                                <ShellPage onEngineVersion={setEngineVersion} />
+                                                            </div>
+                                                        </ShellComputeQueryExecutionProvider>
+                                                    </ShellConnectionProvider>
+                                                </ConnectionRegistry>
+                                            </ComputationRegistry>
+                                        </DashQLCoreProvider>
+                                    </GitHubTheme>
+                                </EmbeddedDatabaseProvider>
+                            </HttpClientProvider>
+                        </PlatformEventListenerProvider>
+                    </AppConfigProvider>
+                </>
+            </LoggerProvider>
         </BrowserRouter>
     );
 };

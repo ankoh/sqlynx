@@ -10,7 +10,7 @@ import { AnchoredOverlay } from '../../../../../ui/foundations/anchored_overlay.
 import { DownloadIcon } from '../../../../../ui/foundations/symbol_icon.js';
 import { useComputeDatabase } from '../../../../../compute/compute_connection_provider.js';
 import { exportArrowTableAsParquet, supportsParquetExport } from '../../../../../platform/hyperdb/hyperdb_parquet_export.js';
-import { useFileDownloader } from '../../../../../platform/file/file_downloader_provider.js';
+import { useFileDownloader } from '../../../../../platform/file/file_downloader_hook.js';
 import { useLogger } from '../../../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../../../platform/logger/logger.js';
 

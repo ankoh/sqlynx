@@ -97,7 +97,7 @@ export const SessionStorageViewer: React.FC<SessionStorageViewerProps> = (props)
     const location = props.sessionId ? reader.getSessionLocation(props.sessionId) : null;
     const isNative = location?.type === StorageBackendType.Native;
     const canRelocate =
-        platform === PlatformType.MACOS &&
+        platform === PlatformType.DESKTOP &&
         !isNative &&
         props.sessionId != null &&
         reader.sessionFolders != null;

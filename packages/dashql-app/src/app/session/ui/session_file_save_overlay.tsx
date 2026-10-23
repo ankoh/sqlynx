@@ -12,7 +12,7 @@ import { classNames } from '../../../utils/classnames.js';
 import { exportSessionAsSharedZip } from '../persistence/session_export.js';
 import { connectionParamsHaveLoginHint, getConnectionParamsFromStateDetails } from '../../connections/connection_params.js';
 import { formatBytes } from '../../../utils/format.js';
-import { useFileDownloader } from '../../../platform/file/file_downloader_provider.js';
+import { useFileDownloader } from '../../../platform/file/file_downloader_hook.js';
 import { useStorageReader } from '../../storage/storage_provider.js';
 import { StorageBackend } from '../../storage/storage_backend.js';
 import { IconButton } from '../../../ui/foundations/button.js';

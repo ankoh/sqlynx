@@ -27,7 +27,8 @@ import { ReleaseBundles } from './release_bundle.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { AnchorAlignment, AnchorSide } from '../foundations/anchored_position.js';
 import { ProgressBar } from '../foundations/progress_bar.js';
-import { useProcess } from '../../platform/process.js';
+import { relaunch } from '../../platform/process.js';
+import { useLogger } from '../../platform/logger/logger_provider.js';
 
 const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -139,7 +140,7 @@ export const VersionInfo: React.FC<VersionViewerProps> = (props: VersionViewerPr
     const canaryUpdateManifest = useCanaryUpdateManifest();
     const installationStatus = useInstallationStatus();
     const versionCheck = useVersionCheck();
-    const process = useProcess();
+    const logger = useLogger();
     const [relaunching, setRelaunching] = React.useState(false);
 
     // The channel the app currently tracks. It is fully dictated by the installed version scheme.
@@ -165,11 +166,11 @@ export const VersionInfo: React.FC<VersionViewerProps> = (props: VersionViewerPr
             return;
         }
         setRelaunching(true);
-        process.relaunch().catch((e: unknown) => {
+        relaunch(logger).catch((e: unknown) => {
             setRelaunching(false);
             console.error(e);
         });
-    }, [process, relaunching]);
+    }, [logger, relaunching]);
 
     if (versionCheck == VersionCheckStatusCode.RestartPending) {
         return (

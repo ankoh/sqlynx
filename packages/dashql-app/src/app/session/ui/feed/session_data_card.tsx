@@ -4,7 +4,7 @@ import type { ConnectionState } from '../../../connections/connection_state.js';
 import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
 import type { DataFile } from '../../../storage/storage_backend.js';
 import type { StorageReader } from '../../../storage/storage_provider.js';
-import { useFileDownloader } from '../../../../platform/file/file_downloader_provider.js';
+import { useFileDownloader } from '../../../../platform/file/file_downloader_hook.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../../platform/logger/logger.js';
 import { CopyToClipboardButton } from '../../../../utils/clipboard.js';

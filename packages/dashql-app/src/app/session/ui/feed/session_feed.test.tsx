@@ -10,7 +10,6 @@ import { SessionConnectionAttentionContext } from '../session_connection_attenti
 import { SessionDataCard, type SessionDataCardProps } from './session_data_card.js';
 import { HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../../connections/connector_info.js';
 import { LoggerProvider } from '../../../../platform/logger/logger_provider.js';
-import { FileDownloaderProvider } from '../../../../platform/file/file_downloader_provider.js';
 import { WebFileDownloader } from '../../../../platform/file/web_file_downloader.js';
 import { SessionTestBackend } from '../../../storage/session_test_backend.js';
 import { SessionFeed, type SessionFeedDependencies } from './session_feed.js';
@@ -92,9 +91,9 @@ describe('V2 session feed rows', () => {
             { details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'V3_HTTP' } } } } },
             { details: { type: TRINO_CONNECTOR, value: {} } },
         ]) {
-            act(() => root.render(<LoggerProvider><FileDownloaderProvider>
+            act(() => root.render(<LoggerProvider>
                 <SessionDataCard {...props} conn={conn as any} />
-            </FileDownloaderProvider></LoggerProvider>));
+            </LoggerProvider>));
             expect(container.textContent).not.toContain(`/mnt/fs/sessions/${sessionId}/attachments/sales 2.csv`);
             expect(container.textContent).toContain('42 bytes');
             expect(container.querySelector('[aria-hidden="true"]')?.textContent).toContain('CSV');
@@ -114,11 +113,11 @@ describe('V2 session feed rows', () => {
         const onRemoved = vi.fn();
         const download = vi.spyOn(WebFileDownloader.prototype, 'downloadBufferAsFile').mockResolvedValue();
         try {
-            act(() => root.render(<LoggerProvider><FileDownloaderProvider>
+            act(() => root.render(<LoggerProvider>
                 <SessionDataCard sessionId="session" file={{ name: 'sales.csv', sizeBytes: 3 }}
                     conn={{ details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } } } as any}
                     storageReader={{ backend } as any} onRemoved={onRemoved} />
-            </FileDownloaderProvider></LoggerProvider>));
+            </LoggerProvider>));
             const downloadButton = container.querySelector<HTMLButtonElement>('[aria-label="Download sales.csv"]');
             expect(downloadButton).not.toBeNull();
             expect(Array.from(container.querySelectorAll('button')).every(button => !button.disabled)).toBe(true);

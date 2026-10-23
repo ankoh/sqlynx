@@ -206,7 +206,7 @@ describe('authenticateSalesforce', () => {
             logger: new NullLogger(),
             params,
             authConfig,
-            platformType: PlatformType.MACOS,
+            platformType: PlatformType.DESKTOP,
             apiClient,
             appEvents: appEvents as any,
             forceReLogin: false,
