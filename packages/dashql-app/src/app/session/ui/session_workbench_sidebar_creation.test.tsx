@@ -409,4 +409,25 @@ describe('SessionWorkbenchSidebar session creation', () => {
         expect(sessionConnections).toHaveLength(2);
         expect(sessionConnections.find(label => label!.includes('Trino'))).toMatch(/^Connections: Trino \S+ \(default\), Hyper #2 /);
     });
+
+    it('groups the active connections that no session uses apart', () => {
+        const trino = { ...state.local!, connectionId: 'trino-database', connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
+            details: { type: TRINO_CONNECTOR, value: { proto: { setupParams: {} } } } } as unknown as ConnectionState;
+        const unused = { ...state.local!, connectionId: 'unused-hyper', active: true } as ConnectionState;
+        for (const database of [state.local!, unused, trino]) state.connections.set(database.connectionId, database);
+        state.attachedDatabasesBySession.set('current-session', { mainDatabaseId: state.local!.connectionId, attachedDatabaseIds: [] });
+        state.attachedDatabasesBySession.set('trino-session', { mainDatabaseId: trino.connectionId, attachedDatabaseIds: [] });
+        for (const sessionId of ['current-session', 'trino-session']) {
+            state.sessionScriptsMap.set(sessionId, { sessionId, name: sessionId, sessionMetadata: {} });
+        }
+        state.sessionAttachedDatabases = { main: state.local!, attached: [] };
+        act(() => root.render(<SessionWorkbenchSidebar sessionScripts={{
+            sessionId: 'current-session', instance: {},
+        } as any} dependencies={dependencies} />));
+
+        // The unused connection is listed after the connections of other sessions
+        const headings = Array.from(container.querySelectorAll('[role="heading"]')).map(heading => heading.textContent);
+        expect(headings).toEqual(['This session', 'Other connections', 'Unused connections']);
+        expect(container.textContent).not.toContain('unused');
+    });
 });

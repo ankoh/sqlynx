@@ -349,9 +349,6 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                         </svg>
                     )}
                 >
-                    {usage != null && usage.sessionCount === 0 && (
-                        <span className={styles.catalog_node_kind} title="No session uses this connection">unused</span>
-                    )}
                     <ConnectionStatusButton
                         database={row.database}
                         label={label}
@@ -434,7 +431,7 @@ interface ConnectionTreeProps {
     onDelete?: (connectionId: string) => void;
     /// Is a connection expanded initially?
     initiallyExpanded?: (database: ConnectionState, databaseCount: number) => boolean;
-    /// The connections of the current session, they are grouped apart from the other connections
+    /// The connections of the current session, they are grouped apart from the other connections and the unused ones
     sessionConnectionIds?: ReadonlySet<string>;
     /// Label a connection
     labelOf?: (database: ConnectionState) => ConnectionLabelParts;
@@ -451,12 +448,16 @@ const catalogKey = (connectionId: string) => `${connectionKey(connectionId)}/cat
 const overviewKey = (connectionId: string) => `${connectionKey(connectionId)}/overview`;
 
 /// The groups of the connection tree
-type ConnectionGroupKind = 'session' | 'other';
+type ConnectionGroupKind = 'session' | 'other' | 'unused';
+
+/// The order of the groups of the connection tree
+const CONNECTION_GROUP_ORDER: ConnectionGroupKind[] = ['session', 'other', 'unused'];
 
 /// The headings of the groups of the connection tree
 const CONNECTION_GROUP_LABELS: Record<ConnectionGroupKind, string> = {
     session: 'This session',
     other: 'Other connections',
+    unused: 'Unused connections',
 };
 
 const defaultConnectionLabelOf = (database: ConnectionState) => connectionLabelParts(database);
@@ -532,15 +533,7 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
     )), [catalogTrees, expanded]);
     const rows = React.useMemo(() => {
         const next: ConnectionTreeRow[] = [];
-        let group: ConnectionGroupKind | null = null;
-        databases.forEach((database, i) => {
-            if (sessionConnectionIds != null) {
-                const databaseGroup: ConnectionGroupKind = sessionConnectionIds.has(database.connectionId) ? 'session' : 'other';
-                if (databaseGroup !== group) {
-                    group = databaseGroup;
-                    next.push({ type: 'connection-group', key: `connection-group:${group}`, label: CONNECTION_GROUP_LABELS[group] });
-                }
-            }
+        const pushConnection = (database: ConnectionState, i: number) => {
             next.push({ type: 'connection', key: connectionKey(database.connectionId), database });
             if (!expanded.has(connectionKey(database.connectionId))) return;
             if (onOpenOverview != null && supportsConnectionOverview(database)) {
@@ -548,9 +541,25 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
             }
             next.push({ type: 'connection-catalog', key: catalogKey(database.connectionId), database });
             next.push(...catalogRows[i]);
-        });
+        };
+        if (sessionConnectionIds == null) {
+            databases.forEach(pushConnection);
+            return next;
+        }
+        const groupOf = (database: ConnectionState): ConnectionGroupKind => {
+            if (sessionConnectionIds.has(database.connectionId)) return 'session';
+            return describeUsage?.(database.connectionId).sessionCount === 0 ? 'unused' : 'other';
+        };
+        const groups = databases.map(groupOf);
+        for (const group of CONNECTION_GROUP_ORDER) {
+            if (!groups.includes(group)) continue;
+            next.push({ type: 'connection-group', key: `connection-group:${group}`, label: CONNECTION_GROUP_LABELS[group] });
+            databases.forEach((database, i) => {
+                if (groups[i] === group) pushConnection(database, i);
+            });
+        }
         return next;
-    }, [databases, catalogRows, expanded, onOpenOverview, sessionConnectionIds]);
+    }, [databases, catalogRows, describeUsage, expanded, onOpenOverview, sessionConnectionIds]);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const size = observeSize(containerRef);
     const listRef = useListRef(null);
