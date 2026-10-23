@@ -58,7 +58,7 @@ export class DataFrame {
     }
 
     async destroy(): Promise<void> {
-        await this.withConnection(async conn => await conn.query(`DROP TABLE IF EXISTS "${this.tableName}"`));
+        await this.withConnection(async conn => await conn.execute(`DROP TABLE IF EXISTS "${this.tableName}"`));
     }
 }
 

@@ -62,14 +62,14 @@ describe('HyperDB Wasm Iceberg integration', () => {
         await withReadWriteDirectory(async path => {
             const connection = await database!.connect();
             try {
-                await connection.query(`
+                await connection.execute(`
                     COPY (SELECT a, a::text b FROM generate_series(1, 10) s(a) LIMIT 0)
                     TO '${path}/insert' WITH (format => 'iceberg')
                 `);
-                await connection.query(`CREATE EXTERNAL TABLE t FOR '${path}/insert' WITH (format => 'iceberg')`);
+                await connection.execute(`CREATE EXTERNAL TABLE t FOR '${path}/insert' WITH (format => 'iceberg')`);
                 expect(toPlainObjects(await connection.query('SELECT * FROM t'))).toEqual([]);
 
-                await connection.query("INSERT INTO t VALUES (1, 'foo'), (2, 'bar')");
+                await connection.execute("INSERT INTO t VALUES (1, 'foo'), (2, 'bar')");
                 expect(toPlainObjects(await connection.query(`
                     SELECT
                         json_array_length(metadata->'metadata-log')::integer AS history_length,
@@ -117,12 +117,12 @@ describe('HyperDB Wasm Iceberg integration', () => {
         await withReadWriteDirectory(async path => {
             const connection = await database!.connect();
             try {
-                await connection.query(`
+                await connection.execute(`
                     COPY (SELECT NULL::integer a, NULL::text b, NULL::integer c LIMIT 0)
                     TO '${path}/insert_nullable' WITH (format => 'iceberg')
                 `);
-                await connection.query(`CREATE EXTERNAL TABLE tn FOR '${path}/insert_nullable' WITH (format => 'iceberg')`);
-                await connection.query("INSERT INTO tn VALUES (1, 'foo', 10), (2, 'bar', 20)");
+                await connection.execute(`CREATE EXTERNAL TABLE tn FOR '${path}/insert_nullable' WITH (format => 'iceberg')`);
+                await connection.execute("INSERT INTO tn VALUES (1, 'foo', 10), (2, 'bar', 20)");
 
                 expect(toPlainObjects(await connection.query('SELECT * FROM tn ORDER BY a'))).toEqual([
                     { a: 1, b: 'foo', c: 10 },
@@ -138,12 +138,12 @@ describe('HyperDB Wasm Iceberg integration', () => {
         await withReadWriteDirectory(async path => {
             const connection = await database!.connect();
             try {
-                await connection.query(`
+                await connection.execute(`
                     COPY (SELECT a, a::text b FROM generate_series(1, 10) s(a) LIMIT 0)
                     TO '${path}/insert_partitioned' WITH (format => 'iceberg') PARTITION BY a
                 `);
-                await connection.query(`CREATE EXTERNAL TABLE tp FOR '${path}/insert_partitioned' WITH (format => 'iceberg')`);
-                await connection.query("INSERT INTO tp VALUES (10, 'foo'), (11, 'bar'), (11, 'baz')");
+                await connection.execute(`CREATE EXTERNAL TABLE tp FOR '${path}/insert_partitioned' WITH (format => 'iceberg')`);
+                await connection.execute("INSERT INTO tp VALUES (10, 'foo'), (11, 'bar'), (11, 'baz')");
                 expect(toPlainObjects(await connection.query("INSERT INTO tp VALUES (12, 'xoo'), (13, 'xar') RETURNING b, a"))).toEqual([
                     { b: 'xoo', a: 12 },
                     { b: 'xar', a: 13 },
@@ -173,15 +173,15 @@ describe('HyperDB Wasm Iceberg integration', () => {
         await withReadWriteDirectory(async path => {
             const connection = await database!.connect();
             try {
-                await connection.query(`
+                await connection.execute(`
                     COPY (SELECT a, a::text b FROM generate_series(1, 10) s(a) LIMIT 0)
                     TO '${path}/insert_no_statistics' WITH (format => 'iceberg')
                 `);
-                await connection.query(`
+                await connection.execute(`
                     CREATE EXTERNAL TABLE t_no_statistics FOR '${path}/insert_no_statistics'
                     WITH (format => 'iceberg', write_statistics => 'none')
                 `);
-                await connection.query("INSERT INTO t_no_statistics VALUES (1, 'foo'), (2, 'bar')");
+                await connection.execute("INSERT INTO t_no_statistics VALUES (1, 'foo'), (2, 'bar')");
 
                 expect(toPlainObjects(await connection.query(`
                     SELECT DISTINCT c->'meta_data'->'statistics' IS NULL AS statistics_are_omitted

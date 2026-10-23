@@ -153,14 +153,14 @@ describe('SQLFrame execution', () => {
     });
 
     it('bins temporal values using epoch seconds', async () => {
-        await conn.query(`CREATE TABLE input (occurred_at TIMESTAMP)`);
-        await conn.query(
+        await conn.execute(`CREATE TABLE input (occurred_at TIMESTAMP)`);
+        await conn.execute(
             `INSERT INTO input VALUES ` +
             `(TIMESTAMP '2024-01-01 00:00:00'), ` +
             `(TIMESTAMP '2024-01-01 00:00:05'), ` +
             `(TIMESTAMP '2024-01-01 00:00:10')`,
         );
-        await conn.query(
+        await conn.execute(
             `CREATE TABLE stats AS ` +
             `SELECT MIN(occurred_at) AS min_time, MAX(occurred_at) AS max_time FROM input`,
         );
@@ -183,9 +183,9 @@ describe('SQLFrame execution', () => {
     });
 
     it('bins boolean values', async () => {
-        await conn.query(`CREATE TABLE input (email_opt_out BOOLEAN)`);
-        await conn.query(`INSERT INTO input VALUES (FALSE), (TRUE), (NULL)`);
-        await conn.query(
+        await conn.execute(`CREATE TABLE input (email_opt_out BOOLEAN)`);
+        await conn.execute(`INSERT INTO input VALUES (FALSE), (TRUE), (NULL)`);
+        await conn.execute(
             `CREATE TABLE stats AS ` +
             `SELECT MIN(email_opt_out) AS min_value, MAX(email_opt_out) AS max_value FROM input`,
         );
@@ -393,9 +393,9 @@ describe('SQLFrame execution', () => {
     });
 
     it('groups pre-binned boolean values', async () => {
-        await conn.query(`CREATE TABLE input (email_opt_out BOOLEAN, value_bin DOUBLE PRECISION)`);
-        await conn.query(`INSERT INTO input VALUES (FALSE, 0), (TRUE, 16), (NULL, NULL)`);
-        await conn.query(
+        await conn.execute(`CREATE TABLE input (email_opt_out BOOLEAN, value_bin DOUBLE PRECISION)`);
+        await conn.execute(`INSERT INTO input VALUES (FALSE, 0), (TRUE, 16), (NULL, NULL)`);
+        await conn.execute(
             `CREATE TABLE stats AS ` +
             `SELECT MIN(email_opt_out) AS min_value, MAX(email_opt_out) AS max_value FROM input`,
         );
@@ -435,8 +435,8 @@ describe('SQLFrame execution', () => {
         // near-constant columns clamp bin_width to 1e-15, producing bin indices
         // far outside INT32 range. The clamp must happen before the INTEGER cast.
         // Web Hyper does not support REAL, so use its supported floating-point type.
-        await conn.query(`CREATE TABLE input (score DOUBLE PRECISION)`);
-        await conn.query(
+        await conn.execute(`CREATE TABLE input (score DOUBLE PRECISION)`);
+        await conn.execute(
             `INSERT INTO input VALUES ` +
             `(10.0), (10.0), ('NaN'::DOUBLE PRECISION), ` +
             `('Infinity'::DOUBLE PRECISION), ('-Infinity'::DOUBLE PRECISION), (10.0000001)`
@@ -450,7 +450,7 @@ describe('SQLFrame execution', () => {
                 ],
             })
             .toSQL();
-        await conn.query(`CREATE TABLE stats AS ${statsSql}`);
+        await conn.execute(`CREATE TABLE stats AS ${statsSql}`);
 
         const sql = SQLFrame.from("input")
             .groupBy({
@@ -507,13 +507,13 @@ describe('SQLFrame execution', () => {
     });
 
     it('casts currently searchable result types to text for ILIKE', async () => {
-        await conn.query(`CREATE TABLE input (
+        await conn.execute(`CREATE TABLE input (
             name TEXT,
             "score" DOUBLE PRECISION,
             flagged BOOLEAN,
             occurred_at TIMESTAMP
         )`);
-        await conn.query(
+        await conn.execute(
             `INSERT INTO input VALUES ` +
             `('Alice', 10.5, TRUE, TIMESTAMP '2024-01-01 00:00:00'), ` +
             `('Bob', 20, FALSE, TIMESTAMP '2024-02-02 12:00:00')`,
@@ -539,8 +539,8 @@ describe('SQLFrame execution', () => {
     });
 
     it('aggregates matching data-search columns per row', async () => {
-        await conn.query(`CREATE TABLE input (_rownum BIGINT, name TEXT, city TEXT)`);
-        await conn.query(
+        await conn.execute(`CREATE TABLE input (_rownum BIGINT, name TEXT, city TEXT)`);
+        await conn.execute(
             `INSERT INTO input VALUES ` +
             `(1, 'Alice', 'Boston'), ` +
             `(2, 'Bob', 'Austin'), ` +

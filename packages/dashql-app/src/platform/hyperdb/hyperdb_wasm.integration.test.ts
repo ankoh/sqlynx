@@ -139,12 +139,12 @@ describe('HyperDB embedded database integration', () => {
         const first = await database!.connect();
         let created = false;
         try {
-            await first.query(`CREATE DATABASE ${quoteSqlIdentifier(path)}`);
+            await first.execute(`CREATE DATABASE ${quoteSqlIdentifier(path)}`);
             created = true;
-            await first.query(`ATTACH DATABASE ${quoteSqlIdentifier(path)} AS saved`);
-            await first.query('CREATE TABLE saved.public.rows(id INTEGER)');
-            await first.query('INSERT INTO saved.public.rows VALUES (42)');
-            await first.query('DETACH DATABASE saved');
+            await first.execute(`ATTACH DATABASE ${quoteSqlIdentifier(path)} AS saved`);
+            await first.execute('CREATE TABLE saved.public.rows(id INTEGER)');
+            await first.execute('INSERT INTO saved.public.rows VALUES (42)');
+            await first.execute('DETACH DATABASE saved');
             await first.close();
             await database!.terminate();
             database = null;
@@ -156,9 +156,9 @@ describe('HyperDB embedded database integration', () => {
             });
             const second = await database.connect();
             try {
-                await second.query(`ATTACH DATABASE ${quoteSqlIdentifier(path)} AS restored`);
+                await second.execute(`ATTACH DATABASE ${quoteSqlIdentifier(path)} AS restored`);
                 expect(toPlainObjects(await second.query('SELECT id FROM restored.public.rows'))).toEqual([{ id: 42 }]);
-                await second.query('DETACH DATABASE restored');
+                await second.execute('DETACH DATABASE restored');
             } finally {
                 await second.close();
             }
@@ -166,7 +166,7 @@ describe('HyperDB embedded database integration', () => {
             if (created && database != null) {
                 const cleanup = await database.connect();
                 try {
-                    await ignoreCleanupFailure(async () => { await cleanup.query(`DROP DATABASE ${quoteSqlIdentifier(path)}`); });
+                    await ignoreCleanupFailure(async () => { await cleanup.execute(`DROP DATABASE ${quoteSqlIdentifier(path)}`); });
                 } finally {
                     await cleanup.close();
                 }
@@ -357,6 +357,17 @@ describe('HyperDB embedded database integration', () => {
 
         expect(result).toHaveLength(0);
         expect(toPlainObjects(await connection.query('SELECT * FROM foo'))).toEqual([]);
+        await connection.close();
+    });
+
+    it('returns the affected rows of executed statements', async () => {
+        const connection = await database!.connect();
+
+        expect(await connection.execute('CREATE TABLE executed(a INT)')).toBeNull();
+        expect(await connection.execute('INSERT INTO executed VALUES (1), (2), (3)')).toBe(3n);
+        expect(await connection.execute('UPDATE executed SET a = a + 1 WHERE a > 1')).toBe(2n);
+        expect(await connection.execute('DELETE FROM executed WHERE a = 1')).toBe(1n);
+        expect(await connection.execute('DROP TABLE executed')).toBeNull();
         await connection.close();
     });
 

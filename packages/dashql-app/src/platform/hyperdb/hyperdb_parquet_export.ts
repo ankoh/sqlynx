@@ -31,11 +31,11 @@ export async function exportArrowTableAsParquet(
             try {
                 await connection.insertArrowTable(table, { name: tableName });
                 try {
-                    await connection.queryArrowIPC(
+                    await connection.execute(
                         `COPY (SELECT * FROM "${tableName}") TO '${path}/${PARQUET_EXPORT_FILE}' WITH (format => 'parquet')`,
                     );
                 } finally {
-                    await connection.queryArrowIPC(`DROP TABLE IF EXISTS "${tableName}"`);
+                    await connection.execute(`DROP TABLE IF EXISTS "${tableName}"`);
                 }
             } finally {
                 await connection.close();

@@ -101,6 +101,26 @@ function concatChunks(chunks: Uint8Array[], byteLength: number): Uint8Array {
     return result;
 }
 
+/// The rows a statement affected, read from the query information that finishQuery returns.
+/// Hyper reports a row count for every statement, but it only means affected rows for these kinds.
+function readAffectedRowCount(info: Uint8Array): bigint | null {
+    const { statementKind, rowCount } = JSON.parse(new TextDecoder().decode(info)) as {
+        statementKind: string | null;
+        rowCount: string | null;
+    };
+    switch (statementKind) {
+        case 'COPY':
+        case 'DELETE':
+        case 'FETCH':
+        case 'INSERT':
+        case 'MERGE':
+        case 'UPDATE':
+            return rowCount == null ? null : BigInt(rowCount);
+        default:
+            return null;
+    }
+}
+
 function decodeArrowTable(buffer: Uint8Array): arrow.Table {
     return new arrow.Table(arrow.RecordBatchReader.from(buffer));
 }
@@ -210,7 +230,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
         }, databasePath == null ? undefined : alias);
         try {
             if (databasePath != null) {
-                await session.query(`ATTACH DATABASE ${quoteIdentifier(databasePath)} AS ${quoteIdentifier(alias)}`);
+                await session.execute(`ATTACH DATABASE ${quoteIdentifier(databasePath)} AS ${quoteIdentifier(alias)}`);
             }
         } catch (error) {
             await session.close();
@@ -384,7 +404,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
     private async executeDatabaseStatement(statement: string): Promise<void> {
         const session = new HyperDBSession(this.client, readHandle(await this.client.connect(), 'connect'), () => {});
         try {
-            await session.query(statement);
+            await session.execute(statement);
         } finally {
             await session.close();
         }
@@ -446,6 +466,11 @@ export class HyperDBConnection implements EmbeddedTableImportConnection {
         return await this.session.queryArrowIPC(query, abort);
     }
 
+    async execute(statement: string, abort?: AbortSignal): Promise<bigint | null> {
+        this.checkOpen();
+        return await this.session.execute(statement, abort);
+    }
+
     async insertArrowTable(table: arrow.Table, options: EmbeddedTableInsertOptions): Promise<void> {
         this.checkOpen();
         await this.session.insertArrowTable(table, options);
@@ -493,12 +518,26 @@ class HyperDBSession implements EmbeddedTableImportConnection {
     }
 
     async queryArrowIPC(query: string, abort?: AbortSignal): Promise<Uint8Array> {
+        const chunks: Uint8Array[] = [];
+        let byteLength = 0;
+        await this.runQuery(query, abort, chunk => {
+            chunks.push(chunk);
+            byteLength += chunk.byteLength;
+        });
+        return concatChunks(chunks, byteLength);
+    }
+
+    async execute(statement: string, abort?: AbortSignal): Promise<bigint | null> {
+        return readAffectedRowCount(await this.runQuery(statement, abort, () => {}));
+    }
+
+    /// Run a query to completion, pass its result chunks to onChunk and return its query information.
+    private async runQuery(query: string, abort: AbortSignal | undefined, onChunk: (chunk: Uint8Array) => void): Promise<Uint8Array> {
         return await this.run(async () => {
             abort?.throwIfAborted();
             let queryHandle: number | null = null;
-            const chunks: Uint8Array[] = [];
-            let byteLength = 0;
             let terminal = false;
+            let info: Uint8Array | null = null;
             try {
                 queryHandle = readHandle(await this.client.startQuery(this.connectionHandle, query), 'start query');
                 for (;;) {
@@ -510,13 +549,12 @@ class HyperDBSession implements EmbeddedTableImportConnection {
                         result = await this.client.pollQuery(queryHandle);
                     }
                     if (result.state === 'chunk') {
-                        chunks.push(result.payload);
-                        byteLength += result.payload.byteLength;
+                        onChunk(result.payload);
                         continue;
                     }
                     terminal = true;
                     if (result.state === 'done') {
-                        return concatChunks(chunks, byteLength);
+                        break;
                     }
                     throw readError(result, 'poll query');
                 }
@@ -532,7 +570,7 @@ class HyperDBSession implements EmbeddedTableImportConnection {
                 }
                 if (queryHandle !== null) {
                     try {
-                        await this.finishQuery(queryHandle);
+                        info = await this.finishQuery(queryHandle);
                     } catch (error) {
                         cleanupError ??= error;
                     }
@@ -541,6 +579,7 @@ class HyperDBSession implements EmbeddedTableImportConnection {
                     throw cleanupError;
                 }
             }
+            return info!;
         });
     }
 
@@ -592,7 +631,7 @@ class HyperDBSession implements EmbeddedTableImportConnection {
 
     async createTableAs(name: string, query: string, abort?: AbortSignal): Promise<void> {
         this.checkOpen();
-        await this.queryArrowIPC(`CREATE TABLE ${quoteIdentifier(name)} AS ${query}`, abort);
+        await this.execute(`CREATE TABLE ${quoteIdentifier(name)} AS ${query}`, abort);
     }
 
     async closeForTermination(): Promise<void> {
@@ -619,7 +658,7 @@ class HyperDBSession implements EmbeddedTableImportConnection {
         if (!this.closing) {
             this.closing = (async () => {
                 if (this.databaseAlias != null) {
-                    await this.queryArrowIPC(`DETACH DATABASE ${quoteIdentifier(this.databaseAlias)}`);
+                    await this.execute(`DETACH DATABASE ${quoteIdentifier(this.databaseAlias)}`);
                 }
                 expectOK(await this.client.disconnect(this.connectionHandle), 'disconnect');
                 this.closed = true;
@@ -632,12 +671,13 @@ class HyperDBSession implements EmbeddedTableImportConnection {
         await this.closing;
     }
 
-    private async finishQuery(query: number): Promise<void> {
+    /// Release a query and return its query information.
+    private async finishQuery(query: number): Promise<Uint8Array> {
         let delay = 1;
         for (;;) {
             const result = await this.client.finishQuery(query);
             if (result.state === 'ok') {
-                return;
+                return result.payload;
             }
             if (result.state !== 'pending') {
                 this.reusable = false;

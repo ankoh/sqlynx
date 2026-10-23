@@ -10,6 +10,8 @@ export interface EmbeddedConnection {
     close(): Promise<void>;
     query(query: string): Promise<arrow.Table>;
     queryArrowIPC(query: string, abort?: AbortSignal): Promise<Uint8Array>;
+    /// Run a statement without a result, returns the affected rows of COPY, DELETE, FETCH, INSERT, MERGE and UPDATE.
+    execute(statement: string, abort?: AbortSignal): Promise<bigint | null>;
 }
 
 export interface EmbeddedConnectionOptions {

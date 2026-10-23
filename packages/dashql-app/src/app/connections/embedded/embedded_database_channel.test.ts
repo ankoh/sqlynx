@@ -13,6 +13,7 @@ function createExclusiveConnection() {
     const connection: EmbeddedConnection = {
         close: vi.fn().mockResolvedValue(undefined),
         query: vi.fn(),
+        execute: vi.fn(),
         queryArrowIPC: vi.fn((): Promise<Uint8Array> => {
             if (active) return Promise.reject(new Error('connection has an active operation'));
             active = true;
@@ -85,6 +86,7 @@ describe('EmbeddedDatabaseChannel', () => {
         const connection: EmbeddedConnection = {
             close: vi.fn().mockResolvedValue(undefined),
             query: vi.fn(),
+            execute: vi.fn(),
             queryArrowIPC: vi.fn().mockResolvedValue(bytes),
         };
         const channel = new EmbeddedDatabaseChannel(connection);
@@ -104,6 +106,7 @@ describe('EmbeddedDatabaseChannel', () => {
         const connection: EmbeddedConnection = {
             close: vi.fn().mockResolvedValue(undefined),
             query: vi.fn(),
+            execute: vi.fn(),
             queryArrowIPC: vi.fn(),
         };
         const channel = new EmbeddedDatabaseChannel(connection);
@@ -121,6 +124,7 @@ describe('EmbeddedDatabaseChannel', () => {
         const connection: EmbeddedConnection = {
             close: vi.fn().mockResolvedValue(undefined),
             query: vi.fn(),
+            execute: vi.fn(),
             queryArrowIPC: vi.fn((_query, abort): Promise<Uint8Array> => {
                 signal = abort;
                 return new Promise<Uint8Array>((_resolve, reject) => {

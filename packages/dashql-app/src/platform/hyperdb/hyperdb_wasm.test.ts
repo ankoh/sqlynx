@@ -166,7 +166,8 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
         if (this.failFinishQuery) return Promise.resolve({ state: 'error', error: 'finish failed' });
         this.queries.delete(query);
         this.activeOperationCount--;
-        return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
+        const info = { version: 1, statementKind: null, rowCount: null };
+        return Promise.resolve({ state: 'ok', payload: new TextEncoder().encode(JSON.stringify(info)) });
     }
 
     shutdown(): Promise<HyperDBResult> {
