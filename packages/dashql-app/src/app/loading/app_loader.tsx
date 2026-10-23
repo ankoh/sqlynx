@@ -2,13 +2,13 @@ import * as React from 'react';
 
 import { AppLoadingStatus } from './app_loading_status.js';
 import { OPEN_LINK_SESSION, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../router/router.js';
-import { useConnectionAllocator, useConnectionDispatch, useConnectionRegistry, useDefaultConnection, sessionConnectionFromState } from '../connections/connection_registry.js';
+import { useConnectionAllocator, useConnectionDispatch, useConnectionRegistry, useDefaultConnection } from '../connections/connection_registry.js';
 import { isHyperWasmConnection } from '../connections/ui/connection_label.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
 import { usePlatformEventListener } from '../../platform/events/event_listener_provider.js';
-import { useSessionScriptsSetup } from '../session/scripts/session_scripts_setup.js';
+import { useSessionCreation } from '../session/session_creation.js';
 import { AppLoadingPage } from '../ui/app_loading_page.js';
 import { SETUP_SESSION, SETUP_SESSION_URL, SetupEventVariant } from '../../platform/events/event.js';
 import { AppLoadingProgress } from './app_loading_progress.js';
@@ -16,7 +16,6 @@ import { ProgressCounter } from '../../utils/progress.js';
 import { canShowSession, loadApp, selectStartupSession, shouldFinishInitialNavigation } from './app_loading_logic.js';
 import { useAppConfig, useAppReconfigure } from '../config/app_config.js';
 import { useStorage } from '../storage/storage_provider.js';
-import { groupSessionManifestWrites, WRITE_SESSION_MANIFEST } from '../storage/storage_writer.js';
 import { useSessionScriptsRegistrySetter } from '../session/scripts/session_scripts_registry.js';
 import { useEmbeddedDatabaseSetup } from '../../platform/database/embedded_database_provider.js';
 import { InvalidSession } from '../storage/session_validation.js';
@@ -68,7 +67,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const navigate = useRouterNavigate();
     const routeContext = useRouteContext();
     const setupCore = useDashQLCoreSetup();
-    const setupSessionScripts = useSessionScriptsSetup();
+    const createSession = useSessionCreation();
     const [storageReader, storageWriter] = useStorage();
     const allocateConnection = useConnectionAllocator();
     const [, setConnReg] = useConnectionRegistry();
@@ -351,15 +350,10 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
             if (await shouldFinishInitialNavigation(initialInlineSetupRef.current)) {
                 let sessionId = selectStartupSession(loaded.restoredSessionIds);
                 if (sessionId == null) {
-                    sessionId = crypto.randomUUID();
                     // The embedded engine is a single database, a known embedded connection is reused
                     const embedded = [...loaded.restoredConnections.values()].find(isHyperWasmConnection);
                     const database = embedded ?? allocateConnection({ ...createDefaultHyperWasmConnectionState(core), active: true });
-                    setupSessionScripts(sessionId, database, 'Default');
-                    void storageWriter.write(groupSessionManifestWrites(sessionId), {
-                        type: WRITE_SESSION_MANIFEST,
-                        value: [sessionId, database.connectionId, [sessionConnectionFromState(database)]],
-                    });
+                    sessionId = createSession(database, 'Default').sessionId;
                 }
                 navigate({
                     type: OPEN_LINK_SESSION,

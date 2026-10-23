@@ -48,7 +48,6 @@ import {
     useConnectionAllocator,
     useSessionConnections,
     useDynamicConnectionDispatch,
-    sessionConnectionFromState,
 } from '../../connections/connection_registry.js';
 import {
     createDefaultHyperWasmConnectionState,
@@ -74,16 +73,12 @@ import {
 import { useSessionImport } from '../persistence/session_import_provider.js';
 import { describeSessionValidationError } from '../../storage/session_validation.js';
 import { useInvalidSessionRegistry } from '../persistence/invalid_session_registry.js';
-import {
-    groupSessionManifestWrites,
-    WRITE_SESSION_MANIFEST,
-} from '../../storage/storage_writer.js';
 import type { SessionScripts } from '../scripts/session_scripts.js';
 import {
     useSessionScriptsDeletion,
     useSessionScriptsRegistry,
 } from '../scripts/session_scripts_registry.js';
-import { useSessionScriptsSetup } from '../scripts/session_scripts_setup.js';
+import { useSessionCreation } from '../session_creation.js';
 import { BundledSessionsOverlay } from '../../ui/bundled_sessions_overlay.js';
 import { connectionLabelParts, connectionLabelText, connectionOrdinals, type ConnectionLabelParts } from '../../connections/ui/connection_label.js';
 import { ConnectionProtocolTag } from '../../connections/ui/connection_label_view.js';
@@ -130,7 +125,7 @@ export interface SessionWorkbenchSidebarDependencies {
     useConnectionRegistry: typeof useConnectionRegistry;
     useConnectionReferences: typeof useConnectionReferences;
     useConnectionAllocator: typeof useConnectionAllocator;
-    useSessionScriptsSetup: typeof useSessionScriptsSetup;
+    useSessionCreation: typeof useSessionCreation;
     useSessionScriptsDeletion: typeof useSessionScriptsDeletion;
     useComputationDispatch: typeof useComputationDispatch;
     useStorageReader: typeof useStorageReader;
@@ -158,7 +153,7 @@ const DEFAULT_SESSION_WORKBENCH_SIDEBAR_DEPENDENCIES: SessionWorkbenchSidebarDep
     useConnectionRegistry,
     useConnectionReferences,
     useConnectionAllocator,
-    useSessionScriptsSetup,
+    useSessionCreation,
     useSessionScriptsDeletion,
     useComputationDispatch,
     useStorageReader,
@@ -391,7 +386,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const [, setDatabaseRegistry] = dependencies.useConnectionRegistry();
     const references = dependencies.useConnectionReferences();
     const allocateConnection = dependencies.useConnectionAllocator();
-    const setupSessionScripts = dependencies.useSessionScriptsSetup();
+    const createSession = dependencies.useSessionCreation();
     const deleteSessionScripts = dependencies.useSessionScriptsDeletion();
     const computationDispatch = dependencies.useComputationDispatch();
     const storageReader = dependencies.useStorageReader();
@@ -536,15 +531,10 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     /// Create a session that uses an existing connection
     const createSessionWithConnection = React.useCallback((database: ConnectionState) => {
         setCreateOpen(false);
-        const sessionId = crypto.randomUUID();
-        setupSessionScripts(sessionId, database);
-        void storageWriter.write(
-            groupSessionManifestWrites(sessionId),
-            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionConnectionFromState(database)]] },
-        );
+        const { sessionId } = createSession(database);
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
-    }, [navigate, props.closeAfterSelection, setupSessionScripts, storageWriter]);
+    }, [createSession, navigate, props.closeAfterSelection]);
 
     /// Create a connection that no session uses yet and open its settings
     const createConnection = React.useCallback((connector: ConnectorType) => {
@@ -564,23 +554,19 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         databaseDispatch(connectionId, { type: DELETE_CONNECTION, value: null });
     }, [databaseDispatch, databaseRegistry, labelOf, references]);
 
-    const createSession = React.useCallback((connector: ConnectorType) => {
+    /// Create a session with a new connection of a connector
+    const createSessionWithConnector = React.useCallback((connector: ConnectorType) => {
         setCreateOpen(false);
-        const sessionId = crypto.randomUUID();
         const params = createDefaultConnectionParamsForConnector(CONNECTOR_INFOS[connector]);
         const initialDatabase = connector === ConnectorType.HYPER
             ? dependencies.createDefaultHyperWasmConnectionState(props.sessionScripts.instance)
             : dependencies.createConnectionStateFromParams(props.sessionScripts.instance, params);
         // The session is committed now; settings must not switch its initialized script dialect.
         const database = allocateConnection({ ...initialDatabase, active: true });
-        setupSessionScripts(sessionId, database);
-        void storageWriter.write(
-            groupSessionManifestWrites(sessionId),
-            { type: WRITE_SESSION_MANIFEST, value: [sessionId, database.connectionId, [sessionConnectionFromState(database)]] },
-        );
+        const { sessionId } = createSession(database);
         navigate({ type: SELECT_SESSION, value: sessionId });
         props.closeAfterSelection?.();
-    }, [allocateConnection, dependencies, navigate, props.closeAfterSelection, props.sessionScripts.instance, setupSessionScripts, storageWriter]);
+    }, [allocateConnection, createSession, dependencies, navigate, props.closeAfterSelection, props.sessionScripts.instance]);
 
     const closeConnectionOverlay = React.useCallback(() => {
         setConnectionOverlayDatabaseId(null);
@@ -763,7 +749,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                                         </>
                                     )}</>
                                     <>{([ConnectorType.HYPER, ConnectorType.TRINO, ConnectorType.SALESFORCE_DATA_CLOUD] as const).map(connector => (
-                                        <ActionList.ListItem key={connector} onClick={() => createSession(connector)}>
+                                        <ActionList.ListItem key={connector} onClick={() => createSessionWithConnector(connector)}>
                                             <ActionList.Leading>
                                                 <svg width="16px" height="16px" aria-hidden="true">
                                                     <use xlinkHref={`${symbols}#${CONNECTOR_INFOS[connector].icons.colored}`} />

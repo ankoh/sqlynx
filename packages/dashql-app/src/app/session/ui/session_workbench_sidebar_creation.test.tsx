@@ -14,7 +14,7 @@ vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect()
 const state = {
     navigate: vi.fn(),
     dispatchDatabase: vi.fn(),
-    setupSessionScripts: vi.fn(),
+    createSession: vi.fn(),
     write: vi.fn<() => Promise<boolean>>(),
     refreshCatalog: vi.fn(),
     createConnectionStateFromParams: vi.fn(),
@@ -67,7 +67,7 @@ const dependencies = {
     },
     useSessionScriptsDeletion: () => vi.fn(),
     useSessionScriptsRegistry: () => [{ sessionScriptsMap: state.sessionScriptsMap }],
-    useSessionScriptsSetup: () => state.setupSessionScripts,
+    useSessionCreation: () => state.createSession,
     useStorageReader: () => ({
         backend: {},
         getSessionLocation: () => ({ type: 'opfs' }),
@@ -119,7 +119,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
         root = createRoot(container);
         state.navigate.mockReset();
         state.dispatchDatabase.mockReset();
-        state.setupSessionScripts.mockReset();
+        state.createSession.mockReset().mockReturnValue({ sessionId: '00000000-0000-4000-8000-000000000001' });
         state.write.mockReset().mockResolvedValue(true);
         state.refreshCatalog.mockReset();
         state.createConnectionStateFromParams.mockReset().mockReturnValue({ type: 'remote' });
@@ -222,7 +222,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
     it.each(['Hyper', 'Trino', 'Salesforce'])('creates and selects a %s session before connecting', async connector => {
         state.write.mockReturnValue(new Promise(() => {}));
         click('Create session');
-        expect(state.setupSessionScripts).not.toHaveBeenCalled();
+        expect(state.createSession).not.toHaveBeenCalled();
         expect(Array.from(document.querySelectorAll('button')).some(button => button.textContent === 'Hyper Local')).toBe(false);
         const choice = Array.from(document.querySelectorAll('button')).find(button => button.textContent === connector)!;
         expect(choice.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
@@ -232,18 +232,12 @@ describe('SessionWorkbenchSidebar session creation', () => {
         act(() => {
             choice.click();
         });
-        expect(state.setupSessionScripts).toHaveBeenCalledWith(
-            '00000000-0000-4000-8000-000000000001',
-            state.local,
-        );
+        expect(state.createSession).toHaveBeenCalledWith(state.local);
         expect(state.allocateConnection).toHaveBeenCalledWith(expect.objectContaining({ active: true }));
         expect(state.navigate).toHaveBeenCalledWith({
             type: SELECT_SESSION,
             value: '00000000-0000-4000-8000-000000000001',
         });
-        expect(state.write).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
-            value: ['00000000-0000-4000-8000-000000000001', 'local-database', [{ connectionId: 'local-database', params: state.local!.params }]],
-        }));
         expect(state.overlayProps?.isOpen).toBe(false);
         if (connector === 'Hyper') {
             expect(state.allocateConnection).toHaveBeenCalledWith(expect.objectContaining({ type: 'local' }));
@@ -385,7 +379,7 @@ describe('SessionWorkbenchSidebar session creation', () => {
         const existing = Array.from(document.querySelectorAll('button')).find(button => button.textContent?.includes('Trino'))!;
         act(() => existing.click());
         expect(state.allocateConnection).not.toHaveBeenCalled();
-        expect(state.setupSessionScripts).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', other);
+        expect(state.createSession).toHaveBeenCalledWith(other);
         expect(state.navigate).toHaveBeenCalledWith({ type: SELECT_SESSION, value: '00000000-0000-4000-8000-000000000001' });
     });
 

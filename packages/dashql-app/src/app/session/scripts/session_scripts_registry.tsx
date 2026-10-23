@@ -201,7 +201,7 @@ export function removeSessionScriptsFromRegistry(reg: SessionScriptsRegistry, se
 
 /// Delete a session's scripts and free their Wasm.
 ///
-/// Session scripts share the connection's catalog by reference (see session_scripts_setup) and own every
+/// Session scripts share the connection's catalog by reference (see session_creation) and own every
 /// editor session they create. destroySessionScripts() drops those editor sessions from the shared catalog and then frees
 /// them, so it MUST run while that catalog is still alive, i.e.
 /// *before* the connection is deleted (DELETE_CONNECTION destroys the catalog). We therefore tear
