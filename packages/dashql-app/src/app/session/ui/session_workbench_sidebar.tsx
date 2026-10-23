@@ -24,7 +24,6 @@ import { AnchoredOverlay } from '../../../ui/foundations/anchored_overlay.js';
 import * as ActionList from '../../../ui/foundations/action_list.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
 import {
-    BookIcon,
     AlertIcon,
     CopyIcon,
     FileDirectoryIcon,
@@ -33,6 +32,7 @@ import {
     TrashIcon,
     SymbolIcon,
     UnlinkIcon,
+    UploadIcon,
 } from '../../../ui/foundations/symbol_icon.js';
 import { classNames } from '../../../utils/classnames.js';
 import { OPEN_SESSION, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../../router/router.js';
@@ -348,7 +348,7 @@ const SessionRow: React.FC<SessionRowProps> = ({ item, selected, labelOf, onOpen
                 title={item.path}
                 onClick={event => onOpen(event.currentTarget)}
             >
-                <BookIcon size={14} aria-hidden="true" />
+                <FileDirectoryIcon size={14} aria-hidden="true" />
                 <span className={title ? styles.session_name : styles.session_path}>{title ?? item.path}</span>
                 <SessionConnections connections={item.connections} labelOf={labelOf} />
             </button>
@@ -707,7 +707,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                                     aria-label="Open session folder"
                                     onClick={openSessionFolder}
                                 >
-                                    <FileDirectoryIcon size={14} />
+                                    <UploadIcon size={14} />
                                 </IconButton>
                                 {platform === PlatformType.WEB && (
                                     <input

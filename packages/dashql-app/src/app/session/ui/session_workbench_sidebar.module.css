@@ -185,7 +185,8 @@
 .session_connections {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
+    margin-right: 6px;
     color: var(--base_color_neutral_6);
 }
 

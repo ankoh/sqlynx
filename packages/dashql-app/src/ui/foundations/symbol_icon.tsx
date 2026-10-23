@@ -144,6 +144,7 @@ export const ThreeBarsIcon = createIcon({ 16: 'three_bars_16' });
 export const TrashIcon = createIcon({ 16: 'trash_16', 24: 'trash_24' });
 export const TriangleDownIcon = createIcon({ 16: 'triangle_down_16', 24: 'triangle_down_24' });
 export const UnlinkIcon = createIcon({ 16: 'unlink_16' });
+export const UploadIcon = createIcon({ 16: 'upload_16', 24: 'upload_24' });
 export const XCircleFillIcon = createIcon({ 16: 'x_circle_16' });
 export const XIcon = createIcon({ 12: 'x_12', 16: 'x_16', 24: 'x_24' });
 export const ZoomInIcon = createIcon({ 16: 'zoom_in_16' });
