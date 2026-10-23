@@ -18,7 +18,7 @@ crate_core.spec(package = "arrow-schema", default_features = False, version = "=
 crate_core.spec(package = "flatbuffers", version = "=25.12.19")
 
 # Snapshot test harness (//packages/dashql-snapshots)
-crate_core.spec(package = "libtest-mimic", version = "=0.8.1")
+crate_core.spec(package = "libtest-mimic", version = "=0.8.2")
 
 # Lexer generator of the SQL scanner (dashql_parser::scanner)
 crate_core.spec(package = "logos", version = "=0.16.1")
