@@ -1,15 +1,10 @@
 import * as dashql from '@ankoh/dashql-core';
 import type * as app_session from '@ankoh/dashql-jsonschema/app_session.js';
 
-import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR, ConnectorInfo, getConnectorInfoForParams } from './connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType, ConnectorInfo } from './connector_info.js';
 import { ConnectionStateWithoutId, createConnectionState } from './connection_state.js';
 import { ConnectionStateDetailsVariant } from './connection_state_details.js';
-import { createHyperConnectionParamsSignature } from './hyper/hyper_connection_params.js';
-import { createHyperConnectionStateDetails } from './hyper/hyper_connection_state.js';
-import { createSalesforceConnectionParamsSignature } from './salesforce/salesforce_connection_params.js';
-import { createSalesforceConnectionStateDetails } from './salesforce/salesforce_connection_state.js';
-import { createTrinoConnectionParamsSignature } from './trino/trino_connection_params.js';
-import { createTrinoConnectionStateDetails } from './trino/trino_connection_state.js';
+import { CONNECTOR_DESCRIPTORS, connectionParamsOf, connectionStateDetailsOf, connectorOfDetails, connectorOfParams, connectorParams } from './connector_descriptor.js';
 
 // Re-export connection param types from JSON Schema
 export type ConnectionParams = app_session.ConnectionParams;
@@ -19,15 +14,8 @@ export type TrinoConnectionParams = app_session.TrinoConnectionParams;
 
 /// Raw form rows belong only to the local draft, never to committed/runtime parameters.
 export function connectionParamsWithoutDraftRows(params: ConnectionParams): ConnectionParams {
-    if ('hyper' in params) {
-        const { draftRows: _rows, ...hyper } = params.hyper;
-        return { hyper };
-    }
-    if ('trino' in params) {
-        const { draftRows: _rows, ...trino } = params.trino;
-        return { trino };
-    }
-    return params;
+    const connector = connectorOfParams(params);
+    return connectionParamsOf(connector, connector.withoutDraftRows(connectorParams(connector, params)));
 }
 
 /// A canonical encoding of connection params that doesn't depend on the order of object keys
@@ -56,25 +44,14 @@ export function connectionCatalogIsDurable(params: ConnectionParams): boolean {
     return !('hyper' in params && params.hyper.protocol === 'WASM');
 }
 
-export function getConnectionStateDetailsFromParams(params: ConnectionParams): ConnectionStateDetailsVariant | null {
-    if ('trino' in params) return { type: TRINO_CONNECTOR, value: createTrinoConnectionStateDetails(params.trino as any) };
-    if ('hyper' in params) return { type: HYPER_CONNECTOR, value: createHyperConnectionStateDetails(params.hyper as any) };
-    if ('salesforce' in params) return { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: createSalesforceConnectionStateDetails(params.salesforce as any) };
-    return null;
+export function getConnectionStateDetailsFromParams(params: ConnectionParams): ConnectionStateDetailsVariant {
+    const connector = connectorOfParams(params);
+    return connectionStateDetailsOf(connector, connectorParams(connector, params));
 }
 
-export function getConnectionParamsFromStateDetails(params: ConnectionStateDetailsVariant): ConnectionParams | null {
-    switch (params.type) {
-        case TRINO_CONNECTOR:
-            if (!params.value.proto.setupParams) return null;
-            return { trino: params.value.proto.setupParams };
-        case HYPER_CONNECTOR:
-            if (!params.value.proto.setupParams) return null;
-            return { hyper: params.value.proto.setupParams };
-        case SALESFORCE_DATA_CLOUD_CONNECTOR:
-            if (!params.value.proto.setupParams) return null;
-            return { salesforce: params.value.proto.setupParams };
-    }
+export function getConnectionParamsFromStateDetails(details: ConnectionStateDetailsVariant): ConnectionParams | null {
+    const setupParams = details.value.proto.setupParams;
+    return setupParams ? connectionParamsOf(connectorOfDetails(details), setupParams) : null;
 }
 
 /// Strip sensitive credentials from connection params before they are encoded into a shared
@@ -87,62 +64,27 @@ export function getConnectionParamsFromStateDetails(params: ConnectionStateDetai
 /// it is only carried when `withLoginHint` is true. When false it is cleared while the rest of
 /// the (non-secret) connection identity is preserved.
 export function sanitizeConnectionParamsForSharing(params: ConnectionParams, withLoginHint: boolean = true): ConnectionParams {
-    params = connectionParamsWithoutDraftRows(params);
-    if ('salesforce' in params && params.salesforce) {
-        // Keep instanceUrl, appConsumerKey and the login hint; drop the connected-app secret.
-        return { salesforce: { ...params.salesforce, appConsumerSecret: "", ...(withLoginHint ? {} : { login: "" }) } };
-    }
-    if ('trino' in params && params.trino) {
-        // Keep endpoint, catalog and the basic-auth username; drop the basic-auth secret /
-        // access token. OAuth params (client id + urls) carry no secret and are left as-is.
-        // The basic-auth username doubles as the login hint here.
-        // Arbitrary request headers may carry credentials under any name.
-        const { metadata: _metadata, ...trino } = params.trino;
-        return {
-            trino: {
-                ...trino,
-                auth: {
-                    ...trino.auth,
-                    ...(trino.auth?.basic ? { basic: { ...trino.auth.basic, secret: "", ...(withLoginHint ? {} : { username: "" }) } } : {}),
-                },
-            },
-        };
-    }
-    if ('hyper' in params && params.hyper) {
-        // Arbitrary headers and query parameters may carry credentials under any name.
-        const { metadata: _metadata, queryParameters: _queryParameters, ...hyper } = params.hyper;
-        return {
-            hyper: {
-                ...hyper,
-                tls: { clientKeyPath: "", clientCertPath: "", caCertsPath: "" },
-            },
-        };
-    }
-    return params;
+    const connector = connectorOfParams(params);
+    const withoutDraftRows = connector.withoutDraftRows(connectorParams(connector, params));
+    return connectionParamsOf(connector, connector.sanitizeForSharing(withoutDraftRows, withLoginHint));
 }
 
 /// Whether the connection params carry a login hint (the resolved account username / login) that
 /// could be shared. Used to decide if the "share login hint" toggle should be offered at all.
 export function connectionParamsHaveLoginHint(params: ConnectionParams | null): boolean {
     if (!params) return false;
-    if ('salesforce' in params && params.salesforce) {
-        return !!params.salesforce.login;
-    }
-    if ('trino' in params && params.trino) {
-        return !!params.trino.auth?.basic?.username;
-    }
-    return false;
+    const connector = connectorOfParams(params);
+    return connector.loginHint(connectorParams(connector, params)) != null;
 }
 
-export function createConnectionParamsSignature(params: ConnectionParams): any {
-    if ('trino' in params) return createTrinoConnectionParamsSignature(params.trino);
-    if ('hyper' in params) return createHyperConnectionParamsSignature(params.hyper);
-    if ('salesforce' in params) return createSalesforceConnectionParamsSignature(params.salesforce);
-    return null;
+/// The params that identify the results of a query in the query result cache
+export function createConnectionParamsSignature(params: ConnectionParams): unknown {
+    const connector = connectorOfParams(params);
+    return connector.cacheSignature(connectorParams(connector, params));
 }
 
 export function createConnectionStateFromParams(dql: dashql.DashQL, params: ConnectionParams): ConnectionStateWithoutId {
-    return createConnectionState(dql, getConnectorInfoForParams(params)!, getConnectionStateDetailsFromParams(params)!, { params });
+    return createConnectionState(dql, connectorOfParams(params).info, getConnectionStateDetailsFromParams(params), { params });
 }
 
 export function createDefaultHyperWasmConnectionState(dql: dashql.DashQL): ConnectionStateWithoutId {
@@ -150,13 +92,7 @@ export function createDefaultHyperWasmConnectionState(dql: dashql.DashQL): Conne
     return createConnectionStateFromParams(dql, createDefaultConnectionParamsForConnector(connector));
 }
 
-export function createDefaultConnectionParamsForConnector(connector: ConnectorInfo): ConnectionParams {
-    switch (connector.connectorType) {
-        case ConnectorType.HYPER:
-            return { hyper: { protocol: 'WASM', endpoint: '', tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' } } };
-        case ConnectorType.SALESFORCE_DATA_CLOUD:
-            return { salesforce: { hyperProtocol: 'V3_HTTP', instanceUrl: '', appConsumerKey: '', appConsumerSecret: '', login: '' } };
-        case ConnectorType.TRINO:
-            return { trino: { endpoint: '', catalogName: '', auth: { authType: 'AUTH_BASIC' } } };
-    }
+export function createDefaultConnectionParamsForConnector(info: ConnectorInfo): ConnectionParams {
+    const connector = CONNECTOR_DESCRIPTORS[info.connectorType];
+    return connectionParamsOf(connector, connector.defaultParams());
 }

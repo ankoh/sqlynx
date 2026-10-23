@@ -1,23 +1,12 @@
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
 import { ConnectionState } from "./connection_state.js";
-import { HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import { sanitizeConnectionParamsForSharing } from './connection_params.js';
+import { connectorOfDetails, connectorParams } from './connector_descriptor.js';
 
 export function encodeConnectionAsProto(state: ConnectionState): connection.Connection {
+    const connector = connectorOfDetails(state.details);
     const params = sanitizeConnectionParamsForSharing(state.params);
-    switch (state.details.type) {
-        case SALESFORCE_DATA_CLOUD_CONNECTOR:
-            return {
-                salesforce: { setupTimings: {}, setupParams: 'salesforce' in params ? params.salesforce : undefined } as connection.SalesforceConnectionDetails,
-            };
-        case HYPER_CONNECTOR:
-            return {
-                hyper: { setupTimings: {}, setupParams: 'hyper' in params ? params.hyper : undefined } as connection.HyperConnectionDetails,
-            };
-        case TRINO_CONNECTOR:
-            return {
-                trino: { setupTimings: {}, setupParams: 'trino' in params ? params.trino : undefined } as connection.TrinoConnectionDetails,
-            };
-    }
+    const setupParams = connector.paramsKey in params ? connectorParams(connector, params) : undefined;
+    return { [connector.paramsKey]: { setupTimings: {}, setupParams } } as connection.Connection;
 }

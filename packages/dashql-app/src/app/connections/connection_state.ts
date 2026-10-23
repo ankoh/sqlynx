@@ -1,8 +1,8 @@
 import * as core from '@ankoh/dashql-core';
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
-import { HyperConnectorAction, reduceHyperConnectorState } from './hyper/hyper_connection_state.js';
-import { SalesforceConnectionStateAction, reduceSalesforceConnectionState } from './salesforce/salesforce_connection_state.js';
+import type { HyperConnectorAction } from './hyper/hyper_connection_state.js';
+import type { SalesforceConnectionStateAction } from './salesforce/salesforce_connection_state.js';
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK, CatalogUpdateTaskState, reduceCatalogAction } from './catalog_update_state.js';
 import { generateCatalogScriptHeader, CatalogSource } from './catalog_sql_generator.js';
 import { generateFunctionScriptHeader } from './catalog_function_sql_generator.js';
@@ -12,9 +12,7 @@ import {
     ConnectorInfo,
     getConnectorInfoForParams,
     ConnectorType,
-    HYPER_CONNECTOR,
     SALESFORCE_DATA_CLOUD_CONNECTOR,
-    TRINO_CONNECTOR,
 } from './connector_info.js';
 import {
     createQueryExecutionMetrics,
@@ -38,7 +36,7 @@ import {
     QueryExecutionState,
 } from '../../query/query_execution_state.js';
 import { reduceQueryAction } from '../../query/query_execution_state.js';
-import { reduceTrinoConnectorState, TrinoConnectorAction } from './trino/trino_connection_state.js';
+import type { TrinoConnectorAction } from './trino/trino_connection_state.js';
 import { ConnectionStateDetailsVariant, createConnectionStateDetails } from './connection_state_details.js';
 import { Logger, stringifyError } from '../../platform/logger/logger.js';
 import { invalidateCatalogBatch } from './catalog_batch.js';
@@ -49,7 +47,7 @@ import { SETUP_STARTED } from './salesforce/salesforce_connection_state.js';
 import { cancelConnectionSetup } from './connection_setup_cancellation.js';
 import { dateToTimestamp } from './proto_helper.js';
 import type { DetailedError } from '../../utils/error.js';
-import { catalogNameDefaults } from './catalog_name_defaults.js';
+import { catalogNameDefaults, connectorOfDetails } from './connector_descriptor.js';
 
 const LOG_CTX = 'connection_state';
 
@@ -471,14 +469,7 @@ function withConnectorProto(state: ConnectionState, patch: (proto: ConnectorProt
 
 /// Let the reducer of the connector apply an action to the connection details
 function reduceConnectorDetails(state: ConnectionState, action: ConnectionAction): ConnectionState | null {
-    switch (state.details.type) {
-        case SALESFORCE_DATA_CLOUD_CONNECTOR:
-            return reduceSalesforceConnectionState(state, action as SalesforceConnectionStateAction);
-        case HYPER_CONNECTOR:
-            return reduceHyperConnectorState(state, action as HyperConnectorAction);
-        case TRINO_CONNECTOR:
-            return reduceTrinoConnectorState(state, action as TrinoConnectorAction);
-    }
+    return connectorOfDetails(state.details).reduce(state, action);
 }
 
 /// Stop a connection that is reset or deleted.

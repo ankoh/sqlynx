@@ -33,11 +33,11 @@ export interface TrinoConnectionStateDetails {
     channel: TrinoChannelInterface | null;
 }
 
-export function createTrinoConnectionStateDetails(params?: connection.TrinoConnectionParams): TrinoConnectionStateDetails {
+export function createTrinoConnectionStateDetails(params: connection.TrinoConnectionParams): TrinoConnectionStateDetails {
     return {
         proto: {
             setupTimings: {},
-            setupParams: params ?? { endpoint: "", auth: { authType: "AUTH_BASIC" }, catalogName: "" },
+            setupParams: params,
         },
         channel: null
     };

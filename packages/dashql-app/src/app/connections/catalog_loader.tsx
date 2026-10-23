@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useDynamicConnectionDispatch } from './connection_registry.js';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
-import { CatalogResolver, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
+import { HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
     ConnectionHealth,
     CATALOG_UPDATE_CANCELLED,
@@ -152,35 +152,15 @@ export function CatalogLoaderProvider(props: CatalogLoaderProviderProps) {
                 isCurrent: () => connMap.get(connectionId)?.catalog === conn.catalog,
             };
             let partialError: Error | null = null;
-            switch (conn.connectorInfo.catalogResolver) {
-                // Update the catalog by querying the information_schema?
-                case CatalogResolver.SQL_INFORMATION_SCHEMA: {
-                    switch (conn.details.type) {
-                        case TRINO_CONNECTOR: {
-                            const catalog = conn.details.value.proto.setupParams?.catalogName ?? "";
-                            const schemas = conn.details.value.proto.setupParams?.schemaNames ?? [];
-                            await updateInformationSchemaCatalog(connectionId, connDispatch, updateId, catalog, schemas, executor, conn.catalog, conn.instance, conn.catalogRelationScript, conn.catalogFunctionScript, batchOptions);
-                            break;
-                        }
-                        default:
-                            throw new Error(
-                                `cannot load information_schema catalog for ${conn.connectorInfo.names.displayShort} connections`,
-                            );
-                    }
+            switch (conn.details.type) {
+                // Update the catalog by querying the information_schema
+                case TRINO_CONNECTOR: {
+                    const catalog = conn.details.value.proto.setupParams?.catalogName ?? "";
+                    const schemas = conn.details.value.proto.setupParams?.schemaNames ?? [];
+                    await updateInformationSchemaCatalog(connectionId, connDispatch, updateId, catalog, schemas, executor, conn.catalog, conn.instance, conn.catalogRelationScript, conn.catalogFunctionScript, batchOptions);
                     break;
                 }
-                // Update the catalog by querying the pg_attribute?
-                case CatalogResolver.SQL_PG_ATTRIBUTE: {
-                    throw new Error(
-                        `cannot load pg_attribute catalog for ${conn.connectorInfo.names.displayShort} connections`,
-                    );
-                }
-                case CatalogResolver.SQL_HYPER: {
-                    if (conn.details.type !== HYPER_CONNECTOR) {
-                        throw new Error(
-                            `cannot load Hyper catalog for ${conn.connectorInfo.names.displayShort} connections`,
-                        );
-                    }
+                case HYPER_CONNECTOR: {
                     const result = await dependencies.updateHyperCatalog(
                         traced,
                         connectionId,
@@ -211,28 +191,19 @@ export function CatalogLoaderProvider(props: CatalogLoaderProviderProps) {
                     }
                     break;
                 }
-                // Update the catalog by querying the Salesforce Metadata Service?
-                case CatalogResolver.SALESFORCE_METDATA_API: {
-                    if (conn.details.type == SALESFORCE_DATA_CLOUD_CONNECTOR) {
-                        await updateSalesforceCatalog(
-                            traced,
-                            conn.details.value,
-                            conn.catalog,
-                            conn.instance,
-                            conn.catalogRelationScript,
-                            conn.catalogFunctionScript,
-                            sfapi,
-                            abortController,
-                            batchOptions,
-                        );
-                        break;
-                    } else {
-                        throw new Error(
-                            `cannot load salesforce metadata catalog for ${conn.connectorInfo.names.displayShort} connections`,
-                        );
-                    }
-                }
-                case CatalogResolver.SQL_SCRIPT:
+                // Update the catalog by querying the Salesforce Metadata Service
+                case SALESFORCE_DATA_CLOUD_CONNECTOR:
+                    await updateSalesforceCatalog(
+                        traced,
+                        conn.details.value,
+                        conn.catalog,
+                        conn.instance,
+                        conn.catalogRelationScript,
+                        conn.catalogFunctionScript,
+                        sfapi,
+                        abortController,
+                        batchOptions,
+                    );
                     break;
             }
             traced.debug("Updated catalog", { connectionId }, LOG_CTX);

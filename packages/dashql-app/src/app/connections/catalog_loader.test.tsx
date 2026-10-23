@@ -7,7 +7,7 @@ import { CatalogLoaderProvider, useCatalogLoaderQueue, type CatalogLoaderDepende
 import { type ConnectionRegistry, type DynamicConnectionDispatch } from './connection_registry.js';
 import { CATALOG_UPDATE_CANCELLED, CATALOG_UPDATE_FAILED, CATALOG_UPDATE_SUCCEEDED, ConnectionHealth, type ConnectionState, type CatalogAction } from './connection_state.js';
 import { reduceCatalogAction } from './catalog_update_state.js';
-import { CatalogResolver, HYPER_CONNECTOR } from './connector_info.js';
+import { HYPER_CONNECTOR } from './connector_info.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -65,7 +65,7 @@ describe('CatalogLoaderProvider queue', () => {
         updateHyperCatalog.mockReset();
         const connection = {
             connectionId: 'database',
-            connectorInfo: { catalogResolver: CatalogResolver.SQL_HYPER },
+            connectorInfo: {},
             details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: {} } } },
             catalog: {},
             catalogUpdates: {

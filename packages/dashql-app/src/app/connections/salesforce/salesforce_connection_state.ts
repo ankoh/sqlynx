@@ -24,11 +24,11 @@ export interface SalesforceConnectionStateDetails {
 }
 
 /// Create the connection state details
-export function createSalesforceConnectionStateDetails(params?: connection.SalesforceConnectionParams): SalesforceConnectionStateDetails {
+export function createSalesforceConnectionStateDetails(params: connection.SalesforceConnectionParams): SalesforceConnectionStateDetails {
     return {
         proto: {
             setupTimings: {},
-            setupParams: params ?? { hyperProtocol: "V3_HTTP", instanceUrl: "", appConsumerKey: "", appConsumerSecret: "", login: "" }
+            setupParams: params
         },
         channel: null
     };

@@ -21,19 +21,11 @@ export interface HyperConnectionDetails {
     channel: HyperDatabaseChannel | null;
 }
 
-export function createHyperConnectionStateDetails(params?: connection.HyperConnectionParams): HyperConnectionDetails {
+export function createHyperConnectionStateDetails(params: connection.HyperConnectionParams): HyperConnectionDetails {
     return {
         proto: {
             setupTimings: {},
-            setupParams: params ?? {
-                protocol: "WASM",
-                endpoint: "",
-                tls: {
-                    clientKeyPath: "",
-                    clientCertPath: "",
-                    caCertsPath: ""
-                }
-            },
+            setupParams: params,
         },
         channel: null
     };
