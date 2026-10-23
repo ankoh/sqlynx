@@ -11,6 +11,7 @@ import { OverlaySize } from '../../../ui/foundations/overlay.js';
 import { QueryViewer } from '../../connections/ui/query_viewer.js';
 import { QueryCacheView } from '../../session/persistence/ui/query_cache_view.js';
 import { VerticalTabs, VerticalTabVariant } from '../../../ui/foundations/vertical_tabs.js';
+import { StorageBrowserView } from './storage_browser_view.js';
 
 interface InternalsViewerProps {
     /// The active session UUID, used by session-scoped tabs (e.g. the query cache inspector).
@@ -25,11 +26,12 @@ enum TabKey {
     StorageWriter = 3,
     QueryCache = 4,
     AISettings = 5,
+    StorageBrowser = 6,
 }
 
 export const InternalsViewer: React.FC<InternalsViewerProps> = (props: InternalsViewerProps) => {
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.LogViewer);
-    const tabKeys = [TabKey.LogViewer, TabKey.QueryViewer, TabKey.QueryCache, TabKey.StorageWriter, TabKey.AISettings, TabKey.AppSettings];
+    const tabKeys = [TabKey.LogViewer, TabKey.QueryViewer, TabKey.QueryCache, TabKey.StorageWriter, TabKey.StorageBrowser, TabKey.AISettings, TabKey.AppSettings];
 
     return (
         <VerticalTabs
@@ -59,6 +61,14 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                     labelShort: 'Storage Writer',
                     ariaLabel: 'Storage writer',
                     description: 'View storage writer statistics',
+                    disabled: false,
+                },
+                [TabKey.StorageBrowser]: {
+                    tabId: TabKey.StorageBrowser,
+                    icon: `${icons}#folder`,
+                    labelShort: 'Storage',
+                    ariaLabel: 'Storage browser',
+                    description: 'Browse the app storage folders',
                     disabled: false,
                 },
                 [TabKey.QueryCache]: {
@@ -96,6 +106,9 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                 ),
                 [TabKey.StorageWriter]: _props => (
                     <StorageWriterView sessionId={props.sessionId} onClose={props.onClose} />
+                ),
+                [TabKey.StorageBrowser]: _props => (
+                    <StorageBrowserView onClose={props.onClose} />
                 ),
                 [TabKey.QueryCache]: _props => (
                     <QueryCacheView sessionId={props.sessionId} onClose={props.onClose} />

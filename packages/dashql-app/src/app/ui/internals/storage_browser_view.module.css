@@ -1,0 +1,265 @@
+:root {
+    --storage_browser_header_color: hsl(var(--neutral_hue), calc(24.7% * var(--neutral_tint)), 31.8%);
+}
+
+.overlay {
+    height: 100%;
+    display: grid;
+    grid-template-rows: 40px auto 32px 1fr;
+    position: relative;
+}
+
+.header_container {
+    grid-row: 1;
+    width: 100%;
+
+    display: grid;
+    grid-template-rows: 100%;
+    grid-template-columns: max-content auto max-content;
+
+    border-bottom: 1px solid var(--border_color_primary);
+    border-top-right-radius: var(--border_radius);
+    border-top-left-radius: var(--border_radius);
+}
+
+.header_left_container {
+    grid-column: 1;
+    margin-left: 16px;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    column-gap: 8px;
+}
+
+.header_right_container {
+    grid-column: 3;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    column-gap: 8px;
+    padding: 0px 4px;
+    overflow: hidden;
+}
+
+.title {
+    font-size: var(--font_size_subtitle);
+}
+
+.summary {
+    font-family: var(--font_family_mono);
+    font-size: var(--font_size_caption);
+    color: var(--storage_browser_header_color);
+    white-space: nowrap;
+}
+
+.column_header_row {
+    grid-row: 3;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border_color_primary);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--storage_browser_header_color);
+}
+
+/* The header columns line up with the entries: the 8px gutter, the 1px border and the 8px entry padding */
+.header_columns {
+    width: 100%;
+    padding: 0 17px;
+    box-sizing: border-box;
+}
+
+.list_container {
+    grid-row: 4;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 0 0 var(--border_radius) var(--border_radius);
+    position: relative;
+}
+
+/* The bar of the cleanup: progress, the yes/no prompt and the outcome. Empty without a cleanup. */
+.cleanup_bar_row {
+    grid-row: 2;
+    min-width: 0;
+}
+
+.cleanup_bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    column-gap: 8px;
+    min-height: 40px;
+    padding: 4px 8px 4px 16px;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--border_color_primary);
+    font-size: var(--font_size_body);
+}
+
+.cleanup_message {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cleanup_message_warning {
+    color: var(--status_color_error, #cf222e);
+}
+
+/* Entries look like the rows of the catalog tree: a padded, rounded card that highlights on hover */
+.row_container {
+    display: flex;
+    align-items: center;
+    padding-inline: 8px;
+    box-sizing: border-box;
+}
+
+.row_container_first {
+    padding-top: 8px;
+}
+
+.entry {
+    width: 100%;
+    height: 32px;
+    margin: 1px 0;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-radius: var(--border_radius);
+    color: var(--base_color_neutral_8);
+    background: transparent;
+    font: inherit;
+    text-align: left;
+}
+
+/* Only keyboard focus highlights an entry, a clicked toggle must not look selected */
+.entry_interactive {
+    cursor: pointer;
+}
+
+.entry_interactive:hover,
+.entry_interactive:focus-visible {
+    border-color: var(--border_color_primary);
+    background: var(--base_color_neutral_0);
+    outline: none;
+}
+
+/* The name takes the remaining space, fixed widths for size and modification time */
+.columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 80px 96px;
+    align-items: center;
+    column-gap: 8px;
+}
+
+/* The review of the cleanup lists the entry and the reason it can be deleted */
+.cleanup_columns {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: center;
+    column-gap: 8px;
+}
+
+/* Chevron, icon and name, as in the catalog tree. Files and status rows leave the chevron cell empty. */
+.cell_name {
+    display: grid;
+    grid-template-columns: 12px 14px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cleanup_cell_name {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.icon {
+    display: inline-flex;
+    color: var(--base_color_neutral_6);
+}
+
+.name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font_family_mono);
+    font-size: 11px;
+}
+
+/* Roots read like the connections of the catalog tree */
+.root_entry {
+    font-size: 13px;
+}
+
+.root_label {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.root_label .name {
+    flex: 0 1 auto;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.root_path {
+    flex: 0 10 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font_family_mono);
+    font-size: 11px;
+    color: var(--base_color_neutral_6);
+}
+
+.cell_size,
+.cell_modified {
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font_family_mono);
+    font-size: 11px;
+    color: var(--base_color_neutral_6);
+}
+
+.note {
+    color: var(--base_color_neutral_5);
+}
+
+.reason {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--base_color_neutral_6);
+}
+
+/* A status spans the icon and name cells */
+.status {
+    grid-column: 2 / -1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--base_color_neutral_6);
+}
+
+.status_error {
+    color: var(--status_color_error, #cf222e);
+    font-style: normal;
+}

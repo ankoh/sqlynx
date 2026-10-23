@@ -4,11 +4,12 @@ import { HYPER_OPFS_ROOT } from './hyperdb_opfs.js';
 export const HYPER_INSTANCES_DIRECTORY = 'instances';
 /// The folder of the Hyper log files in an instance folder
 export const HYPER_INSTANCE_LOGS_DIRECTORY = 'logs';
-const LOCK_PREFIX = 'dashql-instance-';
+/// The prefix of the Web Lock that marks an instance as alive, followed by the instance id
+export const HYPER_INSTANCE_LOCK_PREFIX = 'dashql-instance-';
 /// The instance folders of app versions before the instances folder sit in the OPFS root, with a lock of the same name
-const LEGACY_PREFIX = 'dashql-session-';
+export const HYPER_LEGACY_INSTANCE_PREFIX = 'dashql-session-';
 /// The default log folder of Hyper in the OPFS root, which app versions before the instance log folders filled
-const LEGACY_LOGS_DIRECTORY = 'logs';
+export const HYPER_LEGACY_LOGS_DIRECTORY = 'logs';
 
 /// The database files of an embedded database instance, which lives as long as its app window.
 /// A Web Lock marks the instance as alive, the folders of instances without a lock are stale.
@@ -27,7 +28,7 @@ export async function createHyperDBOPFSInstance(
     getRoot: () => Promise<FileSystemDirectoryHandle> = () => navigator.storage.getDirectory(),
 ): Promise<HyperDBOPFSInstance> {
     const id = crypto.randomUUID();
-    const release = await holdLock(`${LOCK_PREFIX}${id}`);
+    const release = await holdLock(`${HYPER_INSTANCE_LOCK_PREFIX}${id}`);
     try {
         const instances = await (await getRoot()).getDirectoryHandle(HYPER_INSTANCES_DIRECTORY, { create: true });
         const instance = await instances.getDirectoryHandle(id, { create: true });
@@ -69,18 +70,18 @@ export async function cleanupStaleHyperDBOPFSInstances(
     }
     if (instances != null) {
         for await (const [name, handle] of instances.entries()) {
-            if (handle.kind === 'directory' && isUuid(name)) await removeUnlocked(instances, name, `${LOCK_PREFIX}${name}`);
+            if (handle.kind === 'directory' && isUuid(name)) await removeUnlocked(instances, name, `${HYPER_INSTANCE_LOCK_PREFIX}${name}`);
         }
     }
     for await (const [name, handle] of root.entries()) {
-        if (handle.kind === 'directory' && name.startsWith(LEGACY_PREFIX) && isUuid(name.slice(LEGACY_PREFIX.length))) {
+        if (handle.kind === 'directory' && name.startsWith(HYPER_LEGACY_INSTANCE_PREFIX) && isUuid(name.slice(HYPER_LEGACY_INSTANCE_PREFIX.length))) {
             await removeUnlocked(root, name, name);
         }
     }
     // The log folders of earlier app versions have no lock, the processes of open windows keep their files open.
     let logs: FileSystemDirectoryHandle | null = null;
     try {
-        logs = await root.getDirectoryHandle(LEGACY_LOGS_DIRECTORY, { create: false });
+        logs = await root.getDirectoryHandle(HYPER_LEGACY_LOGS_DIRECTORY, { create: false });
     } catch (error) {
         if ((error as DOMException).name !== 'NotFoundError') throw error;
     }
@@ -130,6 +131,7 @@ async function holdLock(name: string): Promise<() => void> {
     return release;
 }
 
-function isUuid(value: string): boolean {
+/// Is the value a UUID, e.g. the id of an instance?
+export function isUuid(value: string): boolean {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
