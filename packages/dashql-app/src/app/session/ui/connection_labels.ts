@@ -7,7 +7,7 @@ import { useSessionScriptsRegistry } from '../scripts/session_scripts_registry.j
 
 const subscribeNever = () => () => {};
 
-/// The ordinals that tell unnamed connections of the same connector apart, see `connectionOrdinals`.
+/// The ordinals that tell connections of the same connector apart, see `connectionOrdinals`.
 /// The map keeps its identity while the ordinals are unchanged.
 export function useConnectionOrdinals(): ReadonlyMap<string, number> {
     // Re-number when the sessions use other connections
@@ -29,7 +29,7 @@ export function useConnectionOrdinals(): ReadonlyMap<string, number> {
     })), [key]);
 }
 
-/// Label connections with their names, unnamed connections with their ordinals
+/// Label connections after their connectors and their ordinals
 export function useConnectionLabeler(): (database: ConnectionState) => ConnectionLabelParts {
     const ordinals = useConnectionOrdinals();
     return React.useCallback(

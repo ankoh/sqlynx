@@ -39,10 +39,6 @@
           "type": "string",
           "description": "The connection identifier (UUID), sessions reference the connection with it"
         },
-        "name": {
-          "type": "string",
-          "description": "The user-assigned display name of the connection, absent when the connection is unnamed"
-        },
         "params": {
           "$ref": "connection.json#/definitions/ConnectionParams",
           "description": "The saved connection parameters, every session referencing the connection stores a copy"

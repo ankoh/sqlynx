@@ -419,31 +419,6 @@ describe('global connections', () => {
         for (const session of restored.sessionScripts.values()) destroySessionScripts(session);
     });
 
-    it('restores the name from the app manifest and replicates it into stale session copies', async () => {
-        const backend = new SessionTestBackend();
-        backend.connections = [{ id: TEST_CONNECTION_ID, name: 'Production', params: trino('https://saved') }];
-        seed(backend, TEST_SESSION_ID, TEST_CONNECTION_ID, trino('https://saved'));
-        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {});
-
-        expect(restored.connectionStates.get(TEST_CONNECTION_ID)!.name).toBe('Production');
-        expect(backend.sessions.get(TEST_SESSION_ID)!.connections).toEqual([{ connectionId: TEST_CONNECTION_ID, name: 'Production', params: trino('https://saved') }]);
-        for (const session of restored.sessionScripts.values()) destroySessionScripts(session);
-    });
-
-    it('restores the name of a connection that only a session knows', async () => {
-        const backend = new SessionTestBackend();
-        backend.connections = [];
-        backend.sessions.set(TEST_SESSION_ID, testSession({
-            sessionId: TEST_SESSION_ID,
-            ...testConnections({ connectionId: TEST_CONNECTION_ID, name: 'Staging', params: trino('https://unknown') } as any),
-        }));
-        const restored = await restoreAppState(dql, backend, new NullLogger(), () => {});
-
-        expect(restored.connectionStates.get(TEST_CONNECTION_ID)!.name).toBe('Staging');
-        expect(backend.connections).toMatchObject([{ id: TEST_CONNECTION_ID, name: 'Staging', params: trino('https://unknown') }]);
-        for (const session of restored.sessionScripts.values()) destroySessionScripts(session);
-    });
-
     it('registers connections that only a session knows', async () => {
         const backend = new SessionTestBackend();
         backend.connections = [];

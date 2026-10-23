@@ -339,24 +339,6 @@ describe('storage writer outcomes', () => {
         expect(backend.calls).toEqual([`manifest:${TEST_SESSION_ID}`]);
     });
 
-    it('patches the name of a connection into its copies', async () => {
-        const backend = new SessionTestBackend();
-        const writer = new StorageWriter(new NullLogger(), backend);
-        const params = { trino: { endpoint: 'x' } } as any;
-        await backend.saveSessionManifest(TEST_SESSION_ID, testSession({
-            ...testConnections({ connectionId: TEST_CONNECTION_ID, params }),
-        }));
-        await writer.writeDurable(groupSessionConnectionCopyWrites(TEST_SESSION_ID, TEST_CONNECTION_ID), {
-            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, { connectionId: TEST_CONNECTION_ID, name: 'Production', params }],
-        });
-        expect((await backend.loadSession(TEST_SESSION_ID)).connections).toEqual([{ connectionId: TEST_CONNECTION_ID, name: 'Production', params }]);
-        // Removing the name removes it from the copy
-        await writer.writeDurable(groupSessionConnectionCopyWrites(TEST_SESSION_ID, TEST_CONNECTION_ID), {
-            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, { connectionId: TEST_CONNECTION_ID, params }],
-        });
-        expect((await backend.loadSession(TEST_SESSION_ID)).connections).toEqual([{ connectionId: TEST_CONNECTION_ID, params }]);
-    });
-
     it('keeps the creation time and aliases of connection entries', async () => {
         const backend = new SessionTestBackend();
         const writer = new StorageWriter(new NullLogger(), backend);

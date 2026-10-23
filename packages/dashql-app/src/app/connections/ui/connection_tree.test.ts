@@ -24,7 +24,7 @@ describe('connection labels', () => {
         } as ConnectionState;
 
         expect(connectionLabel(database)).toBe('Hyper Local');
-        expect(connectionLabelParts(database)).toEqual({ name: 'Hyper', connector: 'Hyper', named: false, detail: 'Local' });
+        expect(connectionLabelParts(database)).toEqual({ name: 'Hyper', connector: 'Hyper', detail: 'Local' });
     });
 
     it('keeps the connector and protocol label for remote Hyper databases', () => {
@@ -37,7 +37,7 @@ describe('connection labels', () => {
         } as ConnectionState;
 
         expect(connectionLabel(database)).toBe('Hyper Http');
-        expect(connectionLabelParts(database)).toEqual({ name: 'Hyper', connector: 'Hyper', named: false, detail: 'Http' });
+        expect(connectionLabelParts(database)).toEqual({ name: 'Hyper', connector: 'Hyper', detail: 'Http' });
     });
 
     it('renders Memory first and initially collapses it only when another database exists', () => {
@@ -84,22 +84,12 @@ describe('connections of the same connector', () => {
     };
     const noReferences = fixedConnectionReferences({});
 
-    it('numbers unnamed connections only when their connector repeats', () => {
+    it('numbers connections only when their connector repeats', () => {
         const registry = registryOf([hyper('a'), trino('t'), hyper('b')]);
         const ordinals = connectionOrdinals(registry, noReferences);
         expect([...ordinals]).toEqual([['a', 1], ['b', 2]]);
         expect(connectionLabel(registry.connections.get('b')!, ordinals.get('b'))).toBe('Hyper #2 Http');
         expect(connectionLabel(registry.connections.get('t')!, ordinals.get('t') ?? null)).toBe('Trino Http');
-    });
-
-    it('labels named connections by their names and leaves them out of the numbering', () => {
-        const named = hyper('a', { name: 'Production' });
-        const registry = registryOf([named, hyper('b'), hyper('c')]);
-        const ordinals = connectionOrdinals(registry, noReferences);
-        expect([...ordinals]).toEqual([['b', 1], ['c', 2]]);
-        expect(connectionLabelParts(named)).toEqual({ name: 'Production', connector: 'Hyper', named: true, detail: 'Http' });
-        expect(connectionLabel(named)).toBe('Production (Hyper Http)');
-        expect(connectionOrdinals(registryOf([named, hyper('b')]), noReferences).size).toBe(0);
     });
 
     it('does not number connections that are not listed', () => {

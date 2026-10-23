@@ -3,7 +3,7 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
 import { CONNECTOR_INFOS } from './connector_info.js';
-import { DELETE_CONNECTION, SET_CONNECTION_DRAFT, SET_CONNECTION_NAME } from './connection_state.js';
+import { DELETE_CONNECTION, SET_CONNECTION_DRAFT } from './connection_state.js';
 import { ConnectionPersistenceProvider, useConnectionSave, type ConnectionSaveResult } from './connection_persistence.js';
 
 import {
@@ -375,36 +375,6 @@ describe('shared connection persistence', () => {
             const saved = harness.registry.connections.get(TEST_CONNECTION_ID)!;
             expect(saved.params).toEqual(trino('https://new'));
             expect(saved.paramsDraft).toBeUndefined();
-        } finally {
-            unmount();
-        }
-    });
-
-    it('replicates the name into every session and keeps it when saving', async () => {
-        const { backend, harness, unmount } = await render([TEST_SESSION_ID, OTHER_SESSION_ID]);
-        try {
-            await dispatchAndSettle(harness, { type: SET_CONNECTION_NAME, value: '  Production  ' });
-            await harness.writer.flush();
-            expect(harness.registry.connections.get(TEST_CONNECTION_ID)!.name).toBe('Production');
-            expect(backend.connections).toEqual([{ id: TEST_CONNECTION_ID, name: 'Production', params: trino('https://old') }]);
-            for (const sessionId of [TEST_SESSION_ID, OTHER_SESSION_ID]) {
-                expect(backend.sessions.get(sessionId)!.connections).toEqual([{ connectionId: TEST_CONNECTION_ID, name: 'Production', params: trino('https://old') }]);
-            }
-
-            await dispatchAndSettle(harness, { type: SET_CONNECTION_DRAFT, value: trino('https://new') });
-            await act(async () => {
-                await harness.save();
-                await new Promise<void>(resolve => setTimeout(resolve, 0));
-            });
-            expect(backend.connections).toEqual([{ id: TEST_CONNECTION_ID, name: 'Production', params: trino('https://new') }]);
-            expect(backend.sessions.get(TEST_SESSION_ID)!.connections).toEqual([{ connectionId: TEST_CONNECTION_ID, name: 'Production', params: trino('https://new') }]);
-
-            // A blank name removes the name
-            await dispatchAndSettle(harness, { type: SET_CONNECTION_NAME, value: ' ' });
-            await harness.writer.flush();
-            expect(harness.registry.connections.get(TEST_CONNECTION_ID)!.name).toBeUndefined();
-            expect(backend.connections).toEqual([{ id: TEST_CONNECTION_ID, params: trino('https://new') }]);
-            expect(backend.sessions.get(OTHER_SESSION_ID)!.connections).toEqual([{ connectionId: TEST_CONNECTION_ID, params: trino('https://new') }]);
         } finally {
             unmount();
         }

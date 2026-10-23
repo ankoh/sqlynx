@@ -12,13 +12,13 @@ import { STORAGE_CATALOG_CHANGES, STORAGE_CATALOG_FUNCTIONS, STORAGE_CATALOG_REL
 const LOG_CTX = "connection_restore";
 
 /// The stored params of a connection, as the app manifest or a session file holds them
-export type StoredConnection = Pick<SessionConnection, 'params' | 'paramsDraft' | 'name'>;
+export type StoredConnection = Pick<SessionConnection, 'params' | 'paramsDraft'>;
 
 /// Create the state of a connection from its stored params.
 /// The connection is neither registered nor written, see `destroyUnregisteredConnection`.
 export function connectionStateFromStorage(core: DashQL, connectionId: string, stored: StoredConnection): ConnectionState {
     const [connectorInfo, details] = decodeConnectionFromProto(stored.params as any, connectionId);
-    return restoreConnectionState(core, connectionId, connectorInfo, details, stored.paramsDraft, stored.name);
+    return restoreConnectionState(core, connectionId, connectorInfo, details, stored.paramsDraft);
 }
 
 /// Destroy a connection that was created but never registered

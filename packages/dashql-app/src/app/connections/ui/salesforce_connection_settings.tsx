@@ -7,7 +7,7 @@ import { KeyIcon, PersonIcon } from '../../../ui/foundations/symbol_icon.js';
 import { useConnectionById, useConnectionDraftForm } from '../connection_registry.js';
 import { useConnectionSave } from '../connection_persistence.js';
 import { useConnectionSetup } from './connection_setup.js';
-import { ConnectionHealth, ConnectionStatus, SET_CONNECTION_NAME } from '../connection_state.js';
+import { ConnectionHealth, ConnectionStatus } from '../connection_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useQueryExecutor } from '../query_executor.js';
 import { useSalesforceSetup } from '../salesforce/salesforce_connector.js';
@@ -162,8 +162,6 @@ interface SalesforceConnectionSettingsPageProps {
     headerActions?: React.ReactNode;
     alias?: SalesforceConnectionAliasField;
     connectorNameAction?: React.ReactNode;
-    /// Rename the connection, the name is not editable without
-    onRename?: (name: string) => void;
     statusText?: string;
     indicatorStatus?: IndicatorStatus;
     statusError?: string | null;
@@ -192,7 +190,6 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                 statusError={props.statusError}
                 connectionHealth={props.connectionHealth}
                 connectorNameAction={props.connectorNameAction}
-                onRename={props.onRename}
             />
             <div className={style.body_container}>
                 {props.alias && (
@@ -430,7 +427,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     return (
         <SalesforceConnectionSettingsPage
             connectionState={connectionState}
-            onRename={name => dispatchConnectionState({ type: SET_CONNECTION_NAME, value: name })}
             hyperProtocol={hyperProtocol}
             wrongPlatform={wrongPlatform}
             freezeInput={freezeInput}

@@ -242,7 +242,7 @@ function resolveSessionConnection(ctx: RestoreContext, sessionId: string, databa
     const connectionId = ctx.aliases.get(database.connectionId) ?? database.connectionId;
     const known = ctx.connectionStates.get(connectionId);
     if (known != null) {
-        if (connectionId !== database.connectionId || database.paramsDraft != null || database.name !== known.name || !connectionParamsEqual(database.params, known.params)) {
+        if (connectionId !== database.connectionId || database.paramsDraft != null || !connectionParamsEqual(database.params, known.params)) {
             ctx.pendingWrites.sessionCopies.push({ sessionId, connectionId });
         }
         return known;
@@ -253,7 +253,6 @@ function resolveSessionConnection(ctx: RestoreContext, sessionId: string, databa
     ctx.newConnections.set(state.connectionId, state);
     ctx.pendingWrites.connectionEntries.push({
         id: state.connectionId,
-        ...(state.name == null ? {} : { name: state.name }),
         params: state.params,
         ...(database.paramsDraft == null ? {} : { paramsDraft: database.paramsDraft }),
         createdAt: new Date().toISOString(),

@@ -31,7 +31,7 @@ export const ConnectionStatus = React.forwardRef<HTMLButtonElement, ButtonProps>
     const health = props.conn.connectionHealth ?? 0;
     const connectorIcon = props.conn.connectorInfo.icons.outlines;
 
-    const connStatusText = props.conn.name ?? props.conn.connectorInfo.names.displayShort;
+    const connStatusText = props.conn.connectorInfo.names.displayShort;
     const connStatusColor = CONNECTION_HEALTH_COLORS[health];
 
     const handleClick = () => {

@@ -9,8 +9,6 @@ export type SessionConnectionRole = 'main' | 'attached';
 export interface ImportedConnectionRef {
     /// The id of the connection in the session
     connectionId: string;
-    /// The display name of the connection in the session, absent when it is unnamed
-    name?: string;
     /// The params of the connection in the session, shared sessions carry them without secrets
     params: ConnectionParams;
     /// How the session uses the connection
@@ -56,7 +54,6 @@ function findEntry(entries: readonly ConnectionEntry[], connectionId: string): C
 export function planConnectionImport(session: SessionData, entries: readonly ConnectionEntry[]): ConnectionImportPlanItem[] {
     const refs: ImportedConnectionRef[] = session.connections.map(connection => ({
         connectionId: connection.connectionId,
-        ...(connection.name == null ? {} : { name: connection.name }),
         params: connection.params,
         role: connection.connectionId === session.defaultConnectionId ? 'main' : 'attached',
     }));
@@ -129,12 +126,7 @@ export function applyConnectionImportPlan(
     };
     const rewrite = (connection: SessionConnection): SessionConnection => {
         const resolved = resolve(connection.connectionId);
-        const name = resolved.entry != null ? resolved.entry.name : connection.name;
-        return {
-            connectionId: resolved.connectionId,
-            ...(name == null ? {} : { name }),
-            params: resolved.entry?.params ?? connection.params,
-        };
+        return { connectionId: resolved.connectionId, params: resolved.entry?.params ?? connection.params };
     };
     // The default connection and the scripts follow their connections
     return {

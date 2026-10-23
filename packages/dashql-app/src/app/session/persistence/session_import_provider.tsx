@@ -119,10 +119,7 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
         // The live connections may be ahead of the manifest while writes are debounced
         const live = connectionStore.current;
         const entries: ConnectionEntry[] = ((await backend.loadManifest()).connections ?? [])
-            .map(entry => {
-                const connection = live.connections.get(entry.id);
-                return connection == null ? entry : { ...entry, name: connection.name, params: connection.params };
-            });
+            .map(entry => ({ ...entry, params: live.connections.get(entry.id)?.params ?? entry.params }));
         for (const [connectionId, connection] of live.connections) {
             if (!entries.some(entry => entry.id === connectionId) && references.sessionsOf(connectionId).length > 0) {
                 entries.push(connectionEntryFromState({ ...connection, paramsDraft: undefined }));

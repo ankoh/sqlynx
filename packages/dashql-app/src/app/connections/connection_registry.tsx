@@ -152,7 +152,6 @@ export function findSessionQueries(database: ConnectionState, sessionId: string,
 export function connectionEntryFromState(database: ConnectionState): ConnectionEntry {
     return {
         id: database.connectionId,
-        ...(database.name == null ? {} : { name: database.name }),
         params: database.params,
         ...(database.paramsDraft == null ? {} : { paramsDraft: database.paramsDraft }),
     };
@@ -162,7 +161,6 @@ export function connectionEntryFromState(database: ConnectionState): ConnectionE
 export function sessionConnectionFromState(database: ConnectionState): SessionConnection {
     return {
         connectionId: database.connectionId,
-        ...(database.name == null ? {} : { name: database.name }),
         params: database.params,
     };
 }
@@ -172,19 +170,15 @@ export function didConnectionParamsChange(prev: ConnectionState, next: Connectio
     return !connectionParamsEqual(prev.params, next.params);
 }
 
-/// Did the copy of the connection that sessions store change?
-export function didSessionConnectionCopyChange(prev: ConnectionState, next: ConnectionState): boolean {
-    return didConnectionParamsChange(prev, next) || prev.name !== next.name;
-}
 
 /// Did the persisted connection entry change?
 export function didPersistedConnectionChange(prev: ConnectionState, next: ConnectionState): boolean {
     if (!prev.active && next.active) return true;
-    return didSessionConnectionCopyChange(prev, next) || !connectionParamsEqual(prev.paramsDraft, next.paramsDraft);
+    return didConnectionParamsChange(prev, next) || !connectionParamsEqual(prev.paramsDraft, next.paramsDraft);
 }
 
-/// Write the saved params and the name of a connection into the app manifest and into every session
-/// that references it. The writes are debounced and not awaited, Save awaits them explicitly.
+/// Write the saved params of a connection into the app manifest and into every session that
+/// references it. The writes are debounced and not awaited, Save awaits them explicitly.
 export function scheduleConnectionParamsWrites(references: ConnectionReferences, database: ConnectionState, storageWriter: StorageWriter): void {
     void storageWriter.write(
         groupConnectionEntryWrites(database.connectionId),
@@ -344,8 +338,8 @@ function applyConnectionAction(reg: ConnectionRegistry, references: ConnectionRe
         return { ...reg };
     }
     if (action.type !== COMMIT_CONNECTION_PARAMS) {
-        if (didSessionConnectionCopyChange(prev, next) || (!prev.active && next.active)) {
-            // Saved params and the name are replicated into every session that references the connection
+        if (didConnectionParamsChange(prev, next) || (!prev.active && next.active)) {
+            // Saved params are replicated into every session that references the connection
             scheduleConnectionParamsWrites(references, next, storageWriter);
         } else if (didPersistedConnectionChange(prev, next)) {
             // Drafts only live in the app manifest

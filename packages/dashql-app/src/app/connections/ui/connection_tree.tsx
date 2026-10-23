@@ -43,7 +43,6 @@ import * as actionMenuStyles from '../../ui/action_menu.module.css';
 const MoreIcon = SymbolIcon('kebab_horizontal');
 const ColumnsIcon = SymbolIcon('columns_16');
 const SettingsIcon = SymbolIcon('settings_16');
-const PencilIcon = SymbolIcon('pencil_16');
 
 export interface CatalogNode {
     key: string;
@@ -274,7 +273,7 @@ interface ConnectionTreeRowProps {
     rows: ConnectionTreeRow[];
     expanded: ReadonlySet<string>;
     onToggle: (key: string) => void;
-    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement, focusName?: boolean) => void;
+    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement) => void;
     describeUsage?: (connectionId: string) => ConnectionUsage;
     onDelete?: (connectionId: string) => void;
     labelOf: (database: ConnectionState) => ConnectionLabelParts;
@@ -360,7 +359,6 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                         database={row.database}
                         label={label}
                         onOpenSettings={anchor => props.onOpenSettings(row.database.connectionId, anchor)}
-                        onRename={anchor => props.onOpenSettings(row.database.connectionId, anchor, true)}
                         onDelete={props.onDelete == null || usage == null ? undefined : () => props.onDelete!(row.database.connectionId)}
                         sessionCount={usage?.sessionCount}
                     />
@@ -423,8 +421,8 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
 
 interface ConnectionTreeProps {
     databases: ConnectionState[];
-    /// Open the settings of a connection, focusing its name to rename it
-    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement, focusName?: boolean) => void;
+    /// Open the settings of a connection
+    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement) => void;
     /// Describe how sessions use a connection
     describeUsage?: (connectionId: string) => ConnectionUsage;
     /// Delete a connection that no session uses
@@ -629,8 +627,6 @@ interface ConnectionRowMenuProps {
     database: ConnectionState;
     label: string;
     onOpenSettings: (anchor: HTMLButtonElement) => void;
-    /// Open the settings of the connection to rename it
-    onRename?: (anchor: HTMLButtonElement) => void;
     /// Delete the connection, only possible if no session uses it
     onDelete?: () => void;
     /// The number of sessions that use the connection
@@ -646,7 +642,7 @@ const DEFAULT_CONNECTION_REFRESH_DEPENDENCIES: ConnectionRefreshDependencies = {
     useCatalogLoaderQueue,
 };
 
-export const ConnectionRowMenu: React.FC<ConnectionRowMenuProps> = ({ database, label, onOpenSettings, onRename, onDelete, sessionCount = 0, dependencies = DEFAULT_CONNECTION_REFRESH_DEPENDENCIES }) => {
+export const ConnectionRowMenu: React.FC<ConnectionRowMenuProps> = ({ database, label, onOpenSettings, onDelete, sessionCount = 0, dependencies = DEFAULT_CONNECTION_REFRESH_DEPENDENCIES }) => {
     const [open, setOpen] = React.useState(false);
     const triggerRef = React.useRef<HTMLButtonElement>(null);
     const refreshCatalog = dependencies.useCatalogLoaderQueue();
@@ -690,17 +686,6 @@ export const ConnectionRowMenu: React.FC<ConnectionRowMenuProps> = ({ database, 
                         <ActionList.Leading><SettingsIcon size={16} /></ActionList.Leading>
                         <ActionList.ItemText>Settings</ActionList.ItemText>
                     </ActionList.ListItem>
-                    {/* The list takes elements only, the fragment wraps the optional item */}
-                    <>{onRename && (
-                        <ActionList.ListItem onClick={() => {
-                            const anchor = triggerRef.current;
-                            setOpen(false);
-                            if (anchor != null) onRename(anchor);
-                        }}>
-                            <ActionList.Leading><PencilIcon size={16} /></ActionList.Leading>
-                            <ActionList.ItemText>Rename…</ActionList.ItemText>
-                        </ActionList.ListItem>
-                    )}</>
                     <ActionList.ListItem
                         disabled={!canRefresh}
                         aria-busy={isRefreshing}

@@ -86,10 +86,6 @@
           "type": "string",
           "description": "The identifier (UUID) of the referenced connection in the connections of the app manifest"
         },
-        "name": {
-          "type": "string",
-          "description": "A copy of the user-assigned display name of the connection, absent when the connection is unnamed"
-        },
         "params": {
           "$ref": "connection.json#/definitions/ConnectionParams",
           "description": "A copy of the saved connection parameters. The app manifest is the source of truth, the copy keeps the session folder self-contained."

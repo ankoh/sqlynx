@@ -407,7 +407,6 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         [attached?.main, attached?.attached],
     );
     const [connectionOverlayDatabaseId, setConnectionOverlayDatabaseId] = React.useState<string | null>(null);
-    const [connectionOverlayFocusName, setConnectionOverlayFocusName] = React.useState(false);
     const [createOpen, setCreateOpen] = React.useState(false);
     const [createConnectionOpen, setCreateConnectionOpen] = React.useState(false);
     const createConnectionButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -574,7 +573,6 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
 
     const closeConnectionOverlay = React.useCallback(() => {
         setConnectionOverlayDatabaseId(null);
-        setConnectionOverlayFocusName(false);
         if (route.sessionSetupStatus === SessionSetupStatus.CONFIGURING && route.sessionId != null) {
             navigate({ type: SELECT_SESSION, value: route.sessionId });
         }
@@ -861,9 +859,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                         attention={connectionAttention?.active === true}
                         onOpenOverview={openOverview}
                         openOverviewId={props.openOverviewId ?? null}
-                        onOpenSettings={(connectionId, anchor, focusName) => {
+                        onOpenSettings={(connectionId, anchor) => {
                             connectionSettingsAnchorRef.current = anchor;
-                            setConnectionOverlayFocusName(focusName ?? false);
                             setConnectionOverlayDatabaseId(connectionId);
                         }}
                     />}
@@ -875,7 +872,6 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                 onClose={closeConnectionOverlay}
                 anchorRef={connectionSettingsAnchorRef}
                 renderSessionName={renderSessionName}
-                focusName={connectionOverlayFocusName}
             />
         </nav>
     );

@@ -75,21 +75,6 @@ describe('session connection import', () => {
         expect(separate.scripts).toEqual([{ name: 'query.sql', connectionId: FRESH }]);
     });
 
-    it('keeps the name of a separate connection and takes the name of a linked one', () => {
-        const session = testSession({
-            defaultConnectionId: IMPORTED,
-            connections: [{ connectionId: IMPORTED, name: 'Imported', params: trino('https://trino') }],
-            scripts: [{ name: 'query.sql', connectionId: IMPORTED }],
-        });
-        const entries: ConnectionEntry[] = [{ ...ENTRIES[0], name: 'Known' }];
-        const plan = planConnectionImport(session, entries);
-        expect(plan[0].ref.name).toBe('Imported');
-        const separate = applyConnectionImportPlan(session, plan, new Map([[IMPORTED, { kind: 'separate' }]]), entries).session;
-        expect(separate.connections).toEqual([{ connectionId: IMPORTED, name: 'Imported', params: trino('https://trino') }]);
-        const linked = applyConnectionImportPlan(session, plan, new Map([[IMPORTED, { kind: 'link', connectionId: KNOWN }]]), entries).session;
-        expect(linked.connections).toEqual([{ connectionId: KNOWN, name: 'Known', params: entries[0].params }]);
-    });
-
     it('registers unknown connections with their ids', () => {
         const session = imported(IMPORTED, trino('https://unknown'));
         const plan = planConnectionImport(session, ENTRIES);

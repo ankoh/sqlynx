@@ -85,8 +85,6 @@ export interface ConnectionState {
     connectionHealth: ConnectionHealth;
     /// The connection info
     connectorInfo: ConnectorInfo;
-    /// The user-assigned display name, absent when the connection is unnamed
-    name?: string;
 
     /// The connection details
     details: ConnectionStateDetailsVariant;
@@ -206,7 +204,6 @@ export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
 export const SET_CONNECTION_DRAFT = Symbol('SET_CONNECTION_DRAFT');
 export const DISCARD_CONNECTION_DRAFT = Symbol('DISCARD_CONNECTION_DRAFT');
 export const COMMIT_CONNECTION_PARAMS = Symbol('COMMIT_CONNECTION_PARAMS');
-export const SET_CONNECTION_NAME = Symbol('SET_CONNECTION_NAME');
 
 export type CatalogAction =
     | VariantKind<typeof SET_CATALOG_SCRIPT, core.DashQLScript>
@@ -235,7 +232,6 @@ export type ConnectionAction =
     | VariantKind<typeof DELETE_CONNECTION, null>
     | VariantKind<typeof RESET_CONNECTION, null>
     | VariantKind<typeof SWITCH_CONNECTOR_TYPE, ConnectorType>
-    | VariantKind<typeof SET_CONNECTION_NAME, string | null>
     | HealthCheckAction
     | CatalogAction
     | QueryExecutionAction
@@ -345,12 +341,6 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             };
         }
 
-        // SET_CONNECTION_NAME names the connection, a blank name removes the name
-        case SET_CONNECTION_NAME: {
-            const name = normalizeConnectionName(action.value);
-            if (name === state.name) return state;
-            return { ...state, name };
-        }
 
         /// DELETE_CONNECTION stops the connection and destroys its catalog.
         /// The registry refuses to delete connections that sessions reference.
@@ -528,11 +518,6 @@ function applyCatalogChanges(state: ConnectionState, changes: core.buffers.catal
     }
 }
 
-/// The display name of a connection without surrounding whitespace, undefined if it is blank
-export function normalizeConnectionName(name: string | null | undefined): string | undefined {
-    const trimmed = name?.trim() ?? '';
-    return trimmed.length === 0 ? undefined : trimmed;
-}
 
 export function createConnectionMetrics(): connection.ConnectionMetrics {
     return createQueryExecutionMetrics();
@@ -546,8 +531,6 @@ export interface ConnectionStateOptions {
     params?: ConnectionParams;
     /// The draft of the params
     paramsDraft?: ConnectionParams;
-    /// The name
-    name?: string;
 }
 
 /// Create the state of a connection with an empty catalog
@@ -577,7 +560,6 @@ export function createConnectionState(dql: core.DashQL, info: ConnectorInfo, det
         details,
         params: options.params == null ? getConnectionParamsFromStateDetails(details)! : structuredClone(options.params),
         paramsDraft: options.paramsDraft == null ? undefined : structuredClone(options.paramsDraft),
-        name: normalizeConnectionName(options.name),
         catalog,
         catalogUpdates: {
             tasksRunning: new Map(),

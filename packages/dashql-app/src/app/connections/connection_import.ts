@@ -58,6 +58,6 @@ export function decodeConnectionFromProto(conn: connection.Connection, sessionId
     }
 }
 
-export function restoreConnectionState(instance: dashql.DashQL, connectionId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, paramsDraft?: ConnectionParams, name?: string): ConnectionState {
-    return { ...createConnectionState(instance, info, details, { active: true, paramsDraft, name }), connectionId };
+export function restoreConnectionState(instance: dashql.DashQL, connectionId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, paramsDraft?: ConnectionParams): ConnectionState {
+    return { ...createConnectionState(instance, info, details, { active: true, paramsDraft }), connectionId };
 }

@@ -68,14 +68,14 @@ export function SessionConnectionImportDialog(props: Props): React.ReactElement 
                         const options: Array<{ choice: ConnectionImportChoice; label: string }> = [
                             ...item.decision.candidates.map(candidate => ({
                                 choice: { kind: 'link' as const, connectionId: candidate.id },
-                                label: `Use ${connectionParamsLabel(candidate.params, candidate.name)}`,
+                                label: `Use ${connectionParamsLabel(candidate.params)}`,
                             })),
                             { choice: { kind: 'separate' }, label: 'Keep as a new connection' },
                         ];
                         return (
                             <fieldset key={item.ref.connectionId} className={ownStyles.connection} disabled={props.busy}>
                                 <legend className={ownStyles.connection_label}>
-                                    {connectionParamsLabel(item.ref.params, item.ref.name)}
+                                    {connectionParamsLabel(item.ref.params)}
                                     {item.ref.role === 'main' ? '' : ' (attached)'}
                                 </legend>
                                 {options.map(option => (

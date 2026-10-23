@@ -15,12 +15,10 @@ export function supportsConnectionOverview(database: ConnectionState): boolean {
 
 /// The label of a connection, its name and the protocol it speaks
 export interface ConnectionLabelParts {
-    /// The name of the connection, e.g. "Production" or "Hyper #2"
+    /// The name of the connection, e.g. "Hyper" or "Hyper #2"
     name: string;
     /// The name of the connector, e.g. "Hyper"
     connector: string;
-    /// Did the user name the connection?
-    named: boolean;
     /// The protocol, e.g. "Local" or "Http"
     detail: string;
 }
@@ -31,8 +29,8 @@ function protocolLabel(protocol: string | undefined): string {
 }
 
 /// The parts of the label of a connection.
-/// An unnamed connection is called after its connector, the ordinal tells it apart from other
-/// unnamed connections of the same connector, see `connectionOrdinals`.
+/// A connection is called after its connector, the ordinal tells it apart from other connections
+/// of the same connector, see `connectionOrdinals`.
 export function connectionLabelParts(database: ConnectionState, ordinal: number | null = null): ConnectionLabelParts {
     let detail = 'Http';
     if (database.details.type === HYPER_CONNECTOR) {
@@ -41,48 +39,38 @@ export function connectionLabelParts(database: ConnectionState, ordinal: number 
         detail = protocolLabel(database.details.value.proto.setupParams?.hyperProtocol ?? 'V3_HTTP');
     }
     const connector = database.connectorInfo.names.displayLong;
-    if (database.name != null) {
-        return { name: database.name, connector, named: true, detail };
-    }
-    return { name: ordinal == null ? connector : `${connector} #${ordinal}`, connector, named: false, detail };
+    return { name: ordinal == null ? connector : `${connector} #${ordinal}`, connector, detail };
 }
 
-/// The label of a connection as plain text, e.g. "Hyper #2 Local" or "Production (Hyper Local)"
+/// The label of a connection as plain text, e.g. "Hyper #2 Local"
 export function connectionLabel(database: ConnectionState, ordinal: number | null = null): string {
     return connectionLabelText(connectionLabelParts(database, ordinal));
 }
 
 /// The plain text of the parts of a label
 export function connectionLabelText(parts: ConnectionLabelParts): string {
-    return parts.named ? `${parts.name} (${parts.connector} ${parts.detail})` : `${parts.name} ${parts.detail}`;
+    return `${parts.name} ${parts.detail}`;
 }
 
-/// The ordinals of the unnamed connections that share their connector with other unnamed
-/// connections, 1-based in registration order. Only listed connections are numbered, see
-/// `isListedConnection`, so the numbers don't depend on the current session.
+/// The ordinals of the connections that share their connector with other connections, 1-based in
+/// registration order. Only listed connections are numbered, see `isListedConnection`, so the
+/// numbers don't depend on the current session.
 export function connectionOrdinals(
     registry: Pick<ConnectionRegistry, 'connections' | 'connectionsByType'>,
     references: ConnectionReferences,
 ): Map<string, number> {
     const ordinals = new Map<string, number>();
     for (const connectionIds of registry.connectionsByType) {
-        const unnamed = connectionIds.filter(connectionId => (
-            registry.connections.get(connectionId)?.name == null && isListedConnection(registry, references, connectionId)
-        ));
-        if (unnamed.length < 2) continue;
-        unnamed.forEach((connectionId, index) => ordinals.set(connectionId, index + 1));
+        const listed = connectionIds.filter(connectionId => isListedConnection(registry, references, connectionId));
+        if (listed.length < 2) continue;
+        listed.forEach((connectionId, index) => ordinals.set(connectionId, index + 1));
     }
     return ordinals;
 }
 
-/// A label for connection params, e.g. when the connection state is not restored
-export function connectionParamsLabel(params: ConnectionParams, connectionName?: string): string {
-    const label = connectionParamsDescription(params);
-    return connectionName == null ? label : `${connectionName} (${label})`;
-}
-
-/// The connector and the location of the database that connection params describe
-function connectionParamsDescription(params: ConnectionParams): string {
+/// A label for connection params, e.g. when the connection state is not restored.
+/// It names the connector and the location of the database that the params describe.
+export function connectionParamsLabel(params: ConnectionParams): string {
     const name = getConnectorInfoForParams(params)?.names.displayLong ?? 'Connection';
     if ('hyper' in params) {
         const protocol = params.hyper.protocol ?? 'WASM';
