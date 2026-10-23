@@ -2,7 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as proto from "../../../proto.js";
 
 import { Logger } from '../../../platform/logger/logger.js';
-import { createQueryResponseStreamMetrics, QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionMetrics, QueryExecutionStatus } from "../query_execution_state.js";
+import { createQueryResponseStreamMetrics, QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionMetrics, QueryExecutionStatus } from "../../../query/query_execution_state.js";
 import { yieldToBrowser } from '../../../utils/yield_to_browser.js';
 
 const STREAM_YIELD_INTERVAL = 8;
@@ -10,7 +10,7 @@ import { TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryData, TrinoQueryRe
 import { ChannelError, RawProxyError } from '../../../platform/channel_common.js';
 import { AsyncValue } from '../../../utils/async_value.js';
 import { AsyncConsumer } from '../../../utils/async_consumer.js';
-import { translateAnyRowsToArrowBatch } from '../../../compute/arrow_conversion.js';
+import { translateAnyRowsToArrowBatch } from './arrow_conversion.js';
 
 const LOG_CTX = 'trino_channel';
 

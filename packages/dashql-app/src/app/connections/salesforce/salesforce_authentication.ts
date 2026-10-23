@@ -1,7 +1,7 @@
 import * as auth from '@ankoh/dashql-jsonschema/auth.js';
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
-import type { OAuthRedirectData, OAuthState } from '../../../oauth_types.js';
+import type { OAuthRedirectData, OAuthState } from '../../../oauth/oauth_types.js';
 import { isDebugBuild } from '../../../globals.js';
 import { PlatformEventListener } from '../../../platform/events/event_listener.js';
 import { Logger, stringifyError } from '../../../platform/logger/logger.js';

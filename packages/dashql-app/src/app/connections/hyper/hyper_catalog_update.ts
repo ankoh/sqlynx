@@ -8,7 +8,7 @@ import { CatalogSource, DEFAULT_DATABASE_NAME, generateCatalogScriptHeader, gene
 import { CATALOG_QUERY_READ_TIMEOUT_MS, queryPgAttribute, generateCatalogSQLFromPgAttribute } from '../catalog_query_pg_attribute.js';
 import { QueryExecutionArgs } from '../query_execution_args.js';
 import { QueryExecutor } from '../query_executor.js';
-import { QueryType } from '../query_execution_state.js';
+import { QueryType } from '../../../query/query_execution_state.js';
 import type { LoggerLike } from '../../../platform/logger/logger.js';
 import type { AttachedDatabase } from './hyperdb_grpc_client.js';
 import { qualifyPrefetchedHyperFunctions } from '../prefetched_hyper_functions.js';

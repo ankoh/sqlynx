@@ -2,7 +2,7 @@ import * as React from 'react';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 
-import { ResizeObserverMock } from '../test/view_mocks.js';
+import { ResizeObserverMock } from '../tests/mocks/view_mocks.js';
 import { ShellNavBar } from './shell_navbar.js';
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock);

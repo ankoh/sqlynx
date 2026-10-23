@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
-import { QueryExecutionStatus, type QueryExecutionState } from '../../../../connections/query_execution_state.js';
+import { QueryExecutionStatus, type QueryExecutionState } from '../../../../../query/query_execution_state.js';
 import { VegaLiteView, type VegaLiteViewDependencies } from './vegalite_view.js';
 
 const vegaEmbed = vi.fn<typeof import('vega-embed').default>(() => new Promise<never>(() => { }));

@@ -1,7 +1,7 @@
 import * as proto from '../../../proto.js';
 import * as buf from "@bufbuild/protobuf";
 
-import { QueryExecutionResponseStream } from "../query_execution_state.js";
+import { QueryExecutionResponseStream } from "../../../query/query_execution_state.js";
 import { QueryExecutionArgs } from "../query_execution_args.js";
 import { TrinoConnectionStateDetails } from "./trino_connection_state.js";
 

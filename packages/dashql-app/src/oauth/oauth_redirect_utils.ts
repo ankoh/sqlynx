@@ -1,4 +1,4 @@
-import type { OAuthState } from '../oauth_types.js';
+import type { OAuthState } from './oauth_types.js';
 
 const PUBLIC_OAUTH_ORIGINS = new Set(['https://dashql.app', 'https://hyperdb.sh']);
 const DEVELOPMENT_OAUTH_HOSTS = new Set(['localhost', '127.0.0.1']);

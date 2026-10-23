@@ -1,4 +1,4 @@
-import { isNativePlatform } from "../../platform/native_globals.js";
+import { isDesktopHost } from "../../platform/native_globals.js";
 
 export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CONNECTOR');
 export const HYPER_CONNECTOR = Symbol('HYPER_CONNECTOR');
@@ -137,7 +137,7 @@ export function getConnectorInfoForParams(params: { hyper?: any; salesforce?: an
 }
 
 export function isConnectorAvailable(info: ConnectorInfo): boolean {
-    return isNativePlatform() ? info.platforms.native : info.platforms.browser;
+    return isDesktopHost() ? info.platforms.native : info.platforms.browser;
 }
 
 export function requiresSwitchingToNative(info: ConnectorInfo) {

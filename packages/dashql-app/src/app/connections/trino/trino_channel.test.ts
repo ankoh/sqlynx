@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createQueryResponseStreamMetrics } from '../query_execution_state.js';
+import { createQueryResponseStreamMetrics } from '../../../query/query_execution_state.js';
 import type { Logger } from '../../../platform/logger/logger.js';
 import type { TrinoApiClientInterface, TrinoQueryResult } from './trino_api_client.js';
 import { TrinoApiEndpoint } from './trino_api_client.js';

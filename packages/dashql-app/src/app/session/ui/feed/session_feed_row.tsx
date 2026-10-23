@@ -17,7 +17,7 @@ import { SymbolIcon } from '../../../../ui/foundations/symbol_icon.js';
 import { ConnectionHealth, type ConnectionState } from '../../../connections/connection_state.js';
 import { ExecuteConnectionGuard } from '../session_connection_attention.js';
 import { ConnectorType } from '../../../connections/connector_info.js';
-import { QueryExecutionStatus, queryIsDone } from '../../../connections/query_execution_state.js';
+import { QueryExecutionStatus, queryIsDone } from '../../../../query/query_execution_state.js';
 import { computeQueryCacheKeyForConnection, useCancelQuery, useQueryState } from '../../../connections/query_executor.js';
 import type { StorageReader } from '../../../storage/storage_provider.js';
 import { compileSessionQuery, getScriptRefs, type SessionScripts, type ScriptData } from '../../scripts/session_scripts.js';

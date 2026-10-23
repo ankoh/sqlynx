@@ -1,7 +1,7 @@
 import * as core from '@ankoh/dashql-core';
 
 import type { CancelQuery, QueryExecutor } from '../../connections/query_executor.js';
-import { QueryType } from '../../connections/query_execution_state.js';
+import { QueryType } from '../../../query/query_execution_state.js';
 import { APPLY_PLANNER_ANALYSIS, REGISTER_QUERY, REGISTER_SCRIPT_RESULT, resolveCompiledVisualization, SET_SCRIPT_EXECUTION_VISUALIZATION, type ScriptData, type SessionScripts } from './session_scripts.js';
 import type { ModifySessionScripts } from './session_scripts_registry.js';
 import { projectionForVisualizeQuery } from './script_types.js';

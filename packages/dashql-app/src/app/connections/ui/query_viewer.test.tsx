@@ -3,11 +3,11 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, vi } from 'vitest';
 
-import { fakeReactWindowModule, ResizeObserverMock } from '../../../test/view_mocks.js';
+import { fakeReactWindowModule, ResizeObserverMock } from '../../../tests/mocks/view_mocks.js';
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock);
 
-import { createQueryExecutionState, QueryType } from '../query_execution_state.js';
+import { createQueryExecutionState, QueryType } from '../../../query/query_execution_state.js';
 import {
     getQueryTarget,
     QueryHistoryViewer,

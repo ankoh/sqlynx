@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import icons from '@ankoh/dashql-svg-symbols';
 
-import type { QueryExecutionState } from '../../connections/query_execution_state.js';
-import { QueryExecutionStatus } from '../../connections/query_execution_state.js';
+import type { QueryExecutionState } from '../../../query/query_execution_state.js';
+import { QueryExecutionStatus } from '../../../query/query_execution_state.js';
 import type { ResolvedVisualizeQuery } from '../scripts/script_types.js';
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
 import { QueryResultDetails } from '../compute/ui/query_result/query_result_details.js';

@@ -3,7 +3,7 @@ import * as arrow from 'apache-arrow';
 import type { TopLevelSpec } from 'vega-lite';
 
 import * as styles from './visualization.module.css';
-import { QueryExecutionState, QueryExecutionStatus } from '../../../../connections/query_execution_state.js';
+import { QueryExecutionState, QueryExecutionStatus } from '../../../../../query/query_execution_state.js';
 import { useComputationRegistry } from '../../../../../compute/computation_registry.js';
 import {
     filterTableToVegaCrossFilterRows,

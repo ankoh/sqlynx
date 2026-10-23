@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_AI_ENDPOINT_URL, DEFAULT_AI_MODEL } from '../../app/config/app_config.js';
+import { DEFAULT_AI_ENDPOINT_URL, DEFAULT_AI_MODEL } from '../config/app_config.js';
 import { resolveAIClientSettings } from './ai_client_provider.js';
 
 describe('resolveAIClientSettings', () => {

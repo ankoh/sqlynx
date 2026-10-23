@@ -22,7 +22,7 @@ import {
     QueryExecutionProgress,
     QueryExecutionResponseStream, QueryExecutionMetrics,
     QueryExecutionStatus,
-} from '../../query_execution_state.js';
+} from '../../../../query/query_execution_state.js';
 import { ChannelArgs, ChannelError } from '../../../../platform/channel_common.js';
 import { decodeGrpcErrorHeaders, HyperQueryError } from '../hyper_error_info.js';
 import { Logger } from '../../../../platform/logger/logger.js';

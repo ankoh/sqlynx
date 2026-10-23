@@ -12,7 +12,3 @@ export function isDesktopHost(): boolean {
     return getAppHost() !== AppHost.WEB;
 }
 
-/// Compatibility predicate for desktop integrations.
-export function isNativePlatform(): boolean {
-    return isDesktopHost();
-}

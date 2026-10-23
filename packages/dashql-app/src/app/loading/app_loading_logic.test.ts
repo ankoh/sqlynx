@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { canShowSession, loadApp, selectStartupSession, shouldFinishInitialNavigation } from './app_loading_logic.js';
-import { AppLoadingStatus } from '../router/app_loading_status.js';
-import { SessionSetupStatus } from '../router/session_setup_status.js';
+import { AppLoadingStatus } from './app_loading_status.js';
+import { SessionSetupStatus } from './session_setup_status.js';
 
 describe('canShowSession', () => {
     it.each([SessionSetupStatus.OPENING, SessionSetupStatus.CONFIGURING, SessionSetupStatus.NONE])('shows an opened session without waiting for connection setup (%s)', sessionSetupStatus => {

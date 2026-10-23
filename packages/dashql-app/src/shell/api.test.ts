@@ -8,7 +8,7 @@ import {
     HyperDB,
     HyperDBConnection,
 } from '../platform/hyperdb/hyperdb_wasm.js';
-import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../catalog.js';
+import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../app/connections/catalog_update_state.js';
 import { VT100, VT100Command, vt100Sequence } from './vt100.js';
 
 declare const DASHQL_SHELL_PRECOMPILED: Promise<Uint8Array>;

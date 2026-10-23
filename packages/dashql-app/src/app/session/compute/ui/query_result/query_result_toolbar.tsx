@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { QueryExecutionState } from '../../../../connections/query_execution_state.js';
+import type { QueryExecutionState } from '../../../../../query/query_execution_state.js';
 import { useComputationRegistry } from '../../../../../compute/computation_registry.js';
 import type { ComputationAction, TableComputationState } from '../../../../../compute/computation_state.js';
 import type { Dispatch } from '../../../../../utils/variant.js';

@@ -9,7 +9,7 @@ import type { Icon } from '../../../ui/foundations/symbol_icon.js';
 import { KeyEventHandler, useKeyEvents } from '../../../utils/key_events.js';
 import { ConnectionHealth, ConnectionState } from '../../connections/connection_state.js';
 import { useCancelQuery, useQueryState, useQueryExecutor } from '../../connections/query_executor.js';
-import { QueryExecutionStatus } from '../../connections/query_execution_state.js';
+import { QueryExecutionStatus } from '../../../query/query_execution_state.js';
 import { ScriptDetailsTab } from './script_output_details.js';
 import { QueryResultCacheLabel, QueryResultRerunButton } from './query_result_cache_controls.js';
 import {

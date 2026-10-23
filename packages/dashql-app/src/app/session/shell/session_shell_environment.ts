@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 
 import { CancelQuery, QueryExecutor } from '../../connections/query_executor.js';
-import { QueryType } from '../../connections/query_execution_state.js';
+import { QueryType } from '../../../query/query_execution_state.js';
 import type { DashQLShellEnvironment } from '../../../shell/api.js';
 import {
     shouldShowResultUI,

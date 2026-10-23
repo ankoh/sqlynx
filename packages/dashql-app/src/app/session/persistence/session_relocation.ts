@@ -2,7 +2,7 @@ import type { Logger } from '../../../platform/logger/logger.js';
 import type { CompositeStorageBackend } from '../../storage/composite_storage_backend.js';
 import { StorageWriter } from '../../storage/storage_writer.js';
 
-const LOG_CTX = 'storage_migration_flow';
+const LOG_CTX = 'session_relocation';
 
 /// Relocate a single OPFS session into a native directory, from the UI (native app only).
 ///

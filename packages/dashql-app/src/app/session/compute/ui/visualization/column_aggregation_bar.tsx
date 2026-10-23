@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import * as styles from './column_aggregation_bar.module.css';
-import { QueryExecutionState } from '../../../../connections/query_execution_state.js';
+import { QueryExecutionState } from '../../../../../query/query_execution_state.js';
 import { useComputationRegistry } from '../../../../../compute/computation_registry.js';
 import { ArrowTableFormatter } from '../../../../../compute/arrow_formatter.js';
 import { computeTableLayout, DataTableLayout } from '../query_result/data_table_layout.js';

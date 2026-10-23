@@ -3,7 +3,7 @@ import * as buf from "@bufbuild/protobuf";
 
 import { QueryExecutionArgs } from "../query_execution_args.js";
 import { SalesforceConnectionStateDetails } from "./salesforce_connection_state.js";
-import { QueryExecutionResponseStream } from '../query_execution_state.js';
+import { QueryExecutionResponseStream } from '../../../query/query_execution_state.js';
 
 export async function executeSalesforceQuery(conn: SalesforceConnectionStateDetails, args: QueryExecutionArgs, abort?: AbortSignal): Promise<QueryExecutionResponseStream> {
     const channel = args.channelOverride?.type === 'salesforce' ? args.channelOverride.channel : conn.channel;

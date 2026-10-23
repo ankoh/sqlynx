@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AsyncConsumerLambdas } from '../../../utils/async_consumer.js';
 import type { EmbeddedConnection } from '../../../platform/database/embedded_database.js';
-import { QueryExecutionStatus } from '../query_execution_state.js';
+import { QueryExecutionStatus } from '../../../query/query_execution_state.js';
 import { EmbeddedDatabaseChannel } from './embedded_database_channel.js';
 
 /// A connection that rejects a statement while another one is running, like a HyperDB session.

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import icons from '@ankoh/dashql-svg-symbols';
 
-import type { QueryExecutionState } from '../../connections/query_execution_state.js';
+import type { QueryExecutionState } from '../../../query/query_execution_state.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
 import { useFocusTrap } from '../../../ui/foundations/focus.js';
 import { Overlay, OverlaySize } from '../../../ui/foundations/overlay.js';

@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { AIClient, AIClientSettings } from './ai_client.js';
-import { useHttpClient } from '../http/http_client_provider.js';
-import { useLogger } from '../logger/logger_provider.js';
+import { AIClient, AIClientSettings } from '../../platform/ai/ai_client.js';
+import { useHttpClient } from '../../platform/http/http_client_provider.js';
+import { useLogger } from '../../platform/logger/logger_provider.js';
 import {
     AIProviderAuth,
     AIProviderHeader,
@@ -10,7 +10,7 @@ import {
     DEFAULT_AI_ENDPOINT_URL,
     DEFAULT_AI_MODEL,
     useAppConfig,
-} from '../../app/config/app_config.js';
+} from '../config/app_config.js';
 
 type Props = {
     children: React.ReactElement;

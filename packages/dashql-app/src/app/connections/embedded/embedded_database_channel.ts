@@ -9,7 +9,7 @@ import {
     QueryExecutionResponseStream,
     QueryExecutionStatus,
     type QueryExecutionMetrics,
-} from '../query_execution_state.js';
+} from '../../../query/query_execution_state.js';
 import type { HyperDatabaseChannel } from '../hyper/hyperdb_grpc_client.js';
 import { yieldToBrowser } from '../../../utils/yield_to_browser.js';
 

@@ -3,7 +3,7 @@ import * as buf from "@bufbuild/protobuf";
 
 import { QueryExecutionArgs } from "../query_execution_args.js";
 import { HyperConnectionDetails } from "./hyper_connection_state.js";
-import { QueryExecutionResponseStream } from '../query_execution_state.js';
+import { QueryExecutionResponseStream } from '../../../query/query_execution_state.js';
 
 export async function executeHyperQuery(conn: HyperConnectionDetails, args: QueryExecutionArgs, abort?: AbortSignal): Promise<QueryExecutionResponseStream> {
     const channel = args.channelOverride?.type === 'hyper' ? args.channelOverride.channel : conn.channel;

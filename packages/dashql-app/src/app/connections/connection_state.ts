@@ -36,8 +36,8 @@ import {
     QUERY_CACHE_RECORDED,
     QUERY_CACHE_DELETED,
     QueryExecutionState,
-} from './query_execution_state.js';
-import { reduceQueryAction } from './query_execution_state.js';
+} from '../../query/query_execution_state.js';
+import { reduceQueryAction } from '../../query/query_execution_state.js';
 import { reduceTrinoConnectorState, TrinoConnectorAction } from './trino/trino_connection_state.js';
 import { ConnectionStateDetailsVariant, createConnectionStateDetails } from './connection_state_details.js';
 import { Logger, stringifyError } from '../../platform/logger/logger.js';

@@ -5,7 +5,7 @@ import { catalogFileMatchesStorage, connectionCatalogMatchesStorage, replaceConn
 import { connectionCatalogIsDurable } from '../../connections/connection_params.js';
 import { reindexSessionScriptConnections, useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { sessionScriptsMatchStorageSnapshot, replaceSessionScriptsFromStorage, scriptConnectionOf } from '../scripts/session_scripts.js';
-import { isNativePlatform } from '../../../platform/native_globals.js';
+import { isDesktopHost } from '../../../platform/native_globals.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
 import { useStorage } from '../../storage/storage_provider.js';
@@ -347,7 +347,7 @@ export const NativeSessionSync: React.FC = () => {
     });
 
     React.useEffect(() => {
-        if (!isNativePlatform()) {
+        if (!isDesktopHost()) {
             return;
         }
         // enqueueReload is an effect event and must not be a dependency.
@@ -363,7 +363,7 @@ export const NativeSessionSync: React.FC = () => {
     }, [logger]);
 
     React.useEffect(() => {
-        if (!isNativePlatform() || !serviceRef.current) {
+        if (!isDesktopHost() || !serviceRef.current) {
             return;
         }
         const sessions = [...connectionRegistry.attachedDatabasesBySession.keys()]

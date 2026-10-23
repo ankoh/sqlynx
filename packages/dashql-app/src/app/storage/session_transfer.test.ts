@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { TestLogger } from '../../platform/logger/test_logger.js';
-import { cloneSession, copySession, verifySession } from './storage_migration.js';
+import { cloneSession, copySession, verifySession } from './session_transfer.js';
 import { SessionTestBackend, TEST_CONNECTION_ID, TEST_SESSION_ID, testSession } from './session_test_backend.js';
 
 async function seed(backend: SessionTestBackend): Promise<void> {
@@ -12,7 +12,7 @@ async function seed(backend: SessionTestBackend): Promise<void> {
     await backend.saveScript(TEST_SESSION_ID, '02_b.sql', 'SELECT 2');
 }
 
-describe('V2 storage migration', () => {
+describe('session transfer', () => {
     it('copies and clones binary data and detects byte corruption', async () => {
         const source = new SessionTestBackend();
         const target = new SessionTestBackend();

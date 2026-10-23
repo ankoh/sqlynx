@@ -4,7 +4,7 @@ import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
 import { DynamicConnectionDispatch } from './connection_registry.js';
 import { CATALOG_UPDATE_REGISTER_QUERY } from "./connection_state.js";
-import { QueryType } from './query_execution_state.js';
+import { QueryType } from '../../query/query_execution_state.js';
 import { type FunctionMetadata, generateFunctionsSQL } from './catalog_function_sql_generator.js';
 import { quoteIdentifier } from './catalog_sql_generator.js';
 import type { LoggerLike } from '../../platform/logger/logger.js';

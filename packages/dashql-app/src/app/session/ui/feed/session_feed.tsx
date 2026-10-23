@@ -49,7 +49,7 @@ import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
 import { SessionConnectionAttentionContext } from '../session_connection_attention.js';
 import { SessionComposer, SessionComposerVariant } from './session_composer.js';
 import { ComposerInputMode } from '../../ai/input_mode.js';
-import { useAIClient } from '../../../../platform/ai/ai_client_provider.js';
+import { useAIClient } from '../../../providers/ai_client_provider.js';
 import { generateSqlFromPrompt } from '../../ai/sql_generation.js';
 import { useSqlGenerations } from '../../ai/use_sql_generations.js';
 

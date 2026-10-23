@@ -43,7 +43,7 @@ import {
 } from '../../../ui/foundations/symbol_icon.js';
 import { classNames } from '../../../utils/classnames.js';
 import { OPEN_SESSION, SELECT_SESSION, useRouteContext, useRouterNavigate } from '../../router/router.js';
-import { SessionSetupStatus } from '../../router/session_setup_status.js';
+import { SessionSetupStatus } from '../../loading/session_setup_status.js';
 import {
     ConnectionState,
     DELETE_CONNECTION,
@@ -84,7 +84,7 @@ import { SessionStorageOverlay } from '../persistence/ui/session_storage_overlay
 import { useStorageReader, useStorageWriter } from '../../storage/storage_provider.js';
 import { CompositeStorageBackend } from '../../storage/composite_storage_backend.js';
 import { readSessionBundleFromBrowserFolder } from '../persistence/browser_session_folder.js';
-import { cloneSession } from '../../storage/storage_migration.js';
+import { cloneSession } from '../../storage/session_transfer.js';
 import {
     mergeRestoredSessionIntoConnections,
     mergeRestoredSessionIntoScripts,

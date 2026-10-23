@@ -1,5 +1,5 @@
 import type { QueryExecutor } from '../../connections/query_executor.js';
-import { QueryType } from '../../connections/query_execution_state.js';
+import { QueryType } from '../../../query/query_execution_state.js';
 import { SessionScripts, ScriptData, REGISTER_QUERY, REGISTER_SCRIPT_RESULT, compileSessionQuery, createScriptExecution } from '../scripts/session_scripts.js';
 import { ensureSessionScriptAnalyzed, ModifySessionScripts } from '../scripts/session_scripts_registry.js';
 import { projectionForVisualizeQuery } from '../scripts/script_types.js';

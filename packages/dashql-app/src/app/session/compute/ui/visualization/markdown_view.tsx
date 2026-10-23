@@ -4,7 +4,7 @@ import { buffers } from '@ankoh/dashql-core';
 import { ArrowTableFormatter } from '../../../../../compute/arrow_formatter.js';
 import type { LoggerLike } from '../../../../../platform/logger/logger.js';
 import { useLogger } from '../../../../../platform/logger/logger_provider.js';
-import { QueryExecutionStatus, type QueryExecutionState } from '../../../../connections/query_execution_state.js';
+import { QueryExecutionStatus, type QueryExecutionState } from '../../../../../query/query_execution_state.js';
 import * as styles from './markdown_view.module.css';
 
 type MarkdownNode = buffers.visualization.MarkdownNodeT;

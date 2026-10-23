@@ -21,7 +21,7 @@ import {
     QueryExecutionProgress,
     QueryExecutionResponseStream,
     QueryExecutionStatus,
-} from '../../query_execution_state.js';
+} from '../../../../query/query_execution_state.js';
 import { AsyncConsumer } from '../../../../utils/async_consumer.js';
 import { AsyncValue } from '../../../../utils/async_value.js';
 import { HttpClient } from '../../../../platform/http/http_client.js';

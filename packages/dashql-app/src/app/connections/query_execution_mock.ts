@@ -4,7 +4,7 @@ import {
     QueryExecutionResponseStream, QueryExecutionMetrics,
     QueryExecutionStatus,
     createQueryResponseStreamMetrics,
-} from './query_execution_state.js';
+} from '../../query/query_execution_state.js';
 import { sleep } from '../../utils/sleep.js';
 import { AsyncConsumer } from '../../utils/async_consumer.js';
 

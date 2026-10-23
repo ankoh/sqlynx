@@ -25,7 +25,7 @@ import { performHealthCheck } from '../health_check.js';
 import { useHyperSetup } from '../hyper/hyper_connection_setup.js';
 import { useQueryExecutor } from '../query_executor.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../connector_info.js';
-import { isNativePlatform } from '../../../platform/native_globals.js';
+import { isDesktopHost } from '../../../platform/native_globals.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { HYPERDB_WASM_ENGINE_SETTINGS } from '../../../platform/hyperdb/hyperdb_settings.js';
 import { cancelConnectionSetup, registerConnectionSetup } from '../connection_setup_cancellation.js';
@@ -115,8 +115,8 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
 
     const protocol = pageState.protocol;
 
-    const wrongPlatform = protocol === "V3_GRPC" && !isNativePlatform();
-    const protocols: connection.HyperProtocol[] = isNativePlatform()
+    const wrongPlatform = protocol === "V3_GRPC" && !isDesktopHost();
+    const protocols: connection.HyperProtocol[] = isDesktopHost()
         ? ["WASM", "V3_GRPC", "V3_HTTP"]
         : ["WASM", "V3_HTTP"];
     const setProtocol = (v: connection.HyperProtocol) => setPageState(s => ({ ...s, protocol: v }));

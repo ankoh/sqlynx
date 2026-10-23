@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as dashql from '@ankoh/dashql-core';
-import { ResizeObserverMock } from '../../../../../test/view_mocks.js';
+import { ResizeObserverMock } from '../../../../../tests/mocks/view_mocks.js';
 import type { PlanScene, PlanSceneOperator } from './plan_scene.js';
 import { formatEstimateSymbol, PlanView, type PlanViewDependencies } from './plan_view.js';
 

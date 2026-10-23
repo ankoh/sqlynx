@@ -3,7 +3,7 @@ import { HEALTH_CHECK_CANCELLED, HEALTH_CHECK_FAILED, HEALTH_CHECK_STARTED, HEAL
 import type { DetailedError } from '../../utils/error.js';
 import { HyperDatabaseChannel } from './hyper/hyperdb_grpc_client.js';
 import { QueryExecutor } from './query_executor.js';
-import { QueryType } from './query_execution_state.js';
+import { QueryType } from '../../query/query_execution_state.js';
 import { SalesforceDatabaseChannel } from './salesforce/salesforce_api_client.js';
 import { TrinoChannelInterface } from './trino/trino_channel.js';
 

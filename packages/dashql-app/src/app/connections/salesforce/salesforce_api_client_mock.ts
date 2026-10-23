@@ -2,7 +2,7 @@ import * as auth from '@ankoh/dashql-jsonschema/auth.js';
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
 import { sleep } from '../../../utils/sleep.js';
-import { QueryExecutionResponseStream } from '../query_execution_state.js';
+import { QueryExecutionResponseStream } from '../../../query/query_execution_state.js';
 import { SalesforceApiClientInterface, type SalesforceMetadataProgress } from './salesforce_api_client.js';
 import { QueryExecutionResponseStreamMock } from '../query_execution_mock.js';
 

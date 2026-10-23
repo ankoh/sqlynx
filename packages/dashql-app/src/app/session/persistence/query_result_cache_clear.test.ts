@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { cacheFileHash, clearQueryResultCache, markDeletedQueryResults } from './query_result_cache_clear.js';
-import { QUERY_CACHE_DELETED } from '../../connections/query_execution_state.js';
+import { QUERY_CACHE_DELETED } from '../../../query/query_execution_state.js';
 
 describe('Query result cache clearing', () => {
     it('strips the extension of cache files', () => {

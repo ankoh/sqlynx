@@ -1,6 +1,6 @@
 import { UmapRequest } from "../../compute/umap/umap_projection.js";
 import { HyperDatabaseChannel } from "./hyper/hyperdb_grpc_client.js";
-import { QueryMetadata } from "./query_execution_state.js";
+import { QueryMetadata } from "../../query/query_execution_state.js";
 import { SalesforceDatabaseChannel } from "./salesforce/salesforce_api_client.js";
 import { TrinoChannelInterface } from "./trino/trino_channel.js";
 import type { DashQLScriptExecution } from '@ankoh/dashql-core';

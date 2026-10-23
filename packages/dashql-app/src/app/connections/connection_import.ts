@@ -7,7 +7,7 @@ import { CONNECTOR_INFOS, ConnectorInfo, ConnectorType, HYPER_CONNECTOR, SALESFO
 import { ConnectionHealth, ConnectionState, ConnectionStatus, createConnectionMetrics, normalizeConnectionName } from './connection_state.js';
 import { generateCatalogScriptHeader, CatalogSource } from './catalog_sql_generator.js';
 import { generateFunctionScriptHeader } from './catalog_function_sql_generator.js';
-import { QueryExecutionState } from './query_execution_state.js';
+import { QueryExecutionState } from '../../query/query_execution_state.js';
 import { getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';
 const LOG_CTX = "connection";
 

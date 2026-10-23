@@ -18,7 +18,7 @@ import { FlavorProvider, FlavorUrlKeeper } from './flavor/flavor_provider.js';
 import { applyFlavorToDocument, getAppFlavor } from './flavor/flavor_resolution.js';
 import { GitHubTheme } from '../theme/github_theme.js';
 import { HttpClientProvider } from '../platform/http/http_client_provider.js';
-import { AIClientProvider } from '../platform/ai/ai_client_provider.js';
+import { AIClientProvider } from './providers/ai_client_provider.js';
 import { HyperSetupProvider } from './connections/hyper/hyper_connection_setup.js';
 import { HyperDatabaseClientProvider } from './connections/hyper/hyperdb_grpc_client_provider.js';
 import { HyperPlanDemoPage } from './ui/demos/plan_demo.js';

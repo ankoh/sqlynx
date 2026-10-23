@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { OAuthState } from '../oauth_types.js';
+import type { OAuthState } from './oauth_types.js';
 import { isAllowedOAuthCallbackUrl, validateOAuthRedirectState } from './oauth_redirect_utils.js';
 
 function makeState(expiresAt = 2_000): OAuthState {

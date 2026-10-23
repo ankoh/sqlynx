@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as baseStyles from '../../ui/banner/banner_page.module.css';
 import * as pageStyles from './app_loading_page.module.css';
 
-import { AppLoadingStatus } from '../router/app_loading_status.js';
+import { AppLoadingStatus } from '../loading/app_loading_status.js';
 import { Button, ButtonVariant } from '../../ui/foundations/button.js';
 import { CONFIRM_FINISHED_SETUP, useRouteContext, useRouterNavigate } from '../router/router.js';
 import { getStatusFromProgressCounter, IndicatorStatus, StatusIndicator } from '../../ui/foundations/status_indicator.js';

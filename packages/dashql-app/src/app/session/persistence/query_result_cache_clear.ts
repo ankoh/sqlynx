@@ -1,5 +1,5 @@
 import { STORAGE_CACHE_EXTENSION, type StorageBackend } from '../../storage/storage_backend.js';
-import { QUERY_CACHE_DELETED } from '../../connections/query_execution_state.js';
+import { QUERY_CACHE_DELETED } from '../../../query/query_execution_state.js';
 import {
     resolveSessionAttachedDatabases,
     type ConnectionRegistry,

@@ -10,11 +10,9 @@ import {
     SET_CATALOG_SCRIPT,
     UPDATE_CATALOG,
 } from './connection_state.js';
-export { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../catalog.js';
-import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from '../../catalog.js';
 
-/// The default descriptor pool of the catalog
-// export const CATALOG_DEFAULT_DESCRIPTOR_POOL = 42; XXX
+/// Rank used for the default descriptor pool loaded by app and shell catalogs.
+export const CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK = 9999;
 
 export enum CatalogUpdateVariant {
     FULL_CATALOG_REFRESH

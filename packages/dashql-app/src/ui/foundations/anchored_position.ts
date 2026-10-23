@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { observeSize } from './size_observer.js';
-import { isNativePlatform } from '../../platform/native_globals.js';
+import { isDesktopHost } from '../../platform/native_globals.js';
 
 export enum AnchorAlignment {
     Start,
@@ -228,7 +228,7 @@ const VIEWPORT_INSET = 16;
 // extra space at the top so anchored overlays don't underflow the controls.
 const MACOS_TITLE_BAR_INSET = 36;
 function getTopViewportInset(): number {
-    return isNativePlatform() ? MACOS_TITLE_BAR_INSET : VIEWPORT_INSET;
+    return isDesktopHost() ? MACOS_TITLE_BAR_INSET : VIEWPORT_INSET;
 }
 
 // Default settings to position a floating element

@@ -2,10 +2,10 @@ import type { Logger } from '../../platform/logger/logger.js';
 import type { StorageBackend } from './storage_backend.js';
 import { rebaseSessionAttachmentPaths } from './session_bundle.js';
 
-const LOG_CTX = 'storage_migration';
+const LOG_CTX = 'session_transfer';
 
 /// The result of copying one or more sessions between backends.
-export interface MigrationResult {
+export interface SessionTransferResult {
     /// The number of sessions copied
     sessionCount: number;
     /// The number of files written (manifests + schema + functions + scripts + data)
@@ -23,7 +23,7 @@ export async function copySession(
     source: StorageBackend,
     target: StorageBackend,
     logger: Logger,
-): Promise<MigrationResult> {
+): Promise<SessionTransferResult> {
     let fileCount = 0;
 
     // Session manifest (copied verbatim; sessionId is preserved)
@@ -76,7 +76,7 @@ export async function cloneSession(
     target: StorageBackend,
     newSessionId: string,
     logger: Logger,
-): Promise<MigrationResult> {
+): Promise<SessionTransferResult> {
     let fileCount = 0;
     try {
         // The copy shares the connections of its source

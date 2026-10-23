@@ -16,7 +16,7 @@ import {
 import { type CacheFileStat } from './query_result_cache_eviction.js';
 import { NativeStorageBackend } from './native_storage_backend.js';
 import { type SessionLocation, locationFromEntry } from './session_locator.js';
-import { copySession, verifySession } from './storage_migration.js';
+import { copySession, verifySession } from './session_transfer.js';
 import { validateSessionData, describeSessionValidationError } from './session_validation.js';
 import {
     assembleSessionBundle,

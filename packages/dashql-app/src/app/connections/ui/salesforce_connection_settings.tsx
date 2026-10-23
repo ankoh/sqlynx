@@ -21,7 +21,7 @@ import { IndicatorStatus } from '../../../ui/foundations/status_indicator.js';
 import { classNames } from '../../../utils/classnames.js';
 import { Logger } from '../../../platform/logger/logger.js';
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../connector_info.js';
-import { isNativePlatform } from '../../../platform/native_globals.js';
+import { isDesktopHost } from '../../../platform/native_globals.js';
 import { ConnectionStateDetailsVariant } from '../connection_state_details.js';
 import type { DetailedError } from '../../../utils/error.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
@@ -344,7 +344,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     const hyperProtocol = pageState.hyperProtocol;
 
     // gRPC requires the native platform
-    const wrongPlatform = hyperProtocol === "V3_GRPC" && !isNativePlatform();
+    const wrongPlatform = hyperProtocol === "V3_GRPC" && !isDesktopHost();
     const setHyperProtocol = (v: connection.HyperProtocol) => setPageState(s => ({ ...s, hyperProtocol: v }));
     const updateInstanceUrl: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, instanceUrl: ev.target.value }));
     const updateAppConsumerKey: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, appConsumerKey: ev.target.value }));

@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import { Logger } from '../platform/logger/logger.js';
+import { Logger } from '../../../platform/logger/logger.js';
 
 /// Create a validity bitmap from Uint8Array storing null indicators
 /// Returns [bitmap, nullCount]

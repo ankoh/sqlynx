@@ -2,7 +2,7 @@ import * as auth from '@ankoh/dashql-jsonschema/auth.js';
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { OAuthState } from '../../../oauth_types.js';
+import type { OAuthState } from '../../../oauth/oauth_types.js';
 import { Logger } from '../../../platform/logger/logger.js';
 import { PlatformType } from '../../../platform/platform_type.js';
 import { BASE64URL_CODEC } from '../../../utils/base64.js';

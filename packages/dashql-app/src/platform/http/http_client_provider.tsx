@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { useLogger } from '../logger/logger_provider.js';
-import { isNativePlatform } from '../native_globals.js';
+import { isDesktopHost } from '../native_globals.js';
 import { NativeHttpClient } from './native_http_client.js';
 import { WebHttpClient } from './web_http_client.js';
 import { HttpClient } from './http_client.js';
@@ -15,7 +15,7 @@ export const useHttpClient = () => React.useContext(CLIENT_CTX)!;
 
 export const HttpClientProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
-    const client = React.useMemo<HttpClient>(() => isNativePlatform()
+    const client = React.useMemo<HttpClient>(() => isDesktopHost()
         ? new NativeHttpClient({ proxyEndpoint: new URL("dashql-native://localhost") }, logger)
         : new WebHttpClient(logger), [logger]);
     return (

@@ -13,7 +13,7 @@ import { CompositeStorageBackend } from '../../../storage/composite_storage_back
 import { displayPath } from '../../../storage/session_locator.js';
 import { useStorageReader, useStorageWriter } from '../../../storage/storage_provider.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
-import { relocateSessionToNative } from '../storage_migration_flow.js';
+import { relocateSessionToNative } from '../session_relocation.js';
 import { useSessionScripts } from '../../scripts/session_scripts_registry.js';
 import { RENAME_SESSION } from '../../scripts/session_scripts.js';
 import { NameInput } from '../../../../ui/foundations/name_input.js';

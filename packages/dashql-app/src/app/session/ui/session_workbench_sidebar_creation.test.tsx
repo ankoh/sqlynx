@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionHealth, type ConnectionState } from '../../connections/connection_state.js';
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
-import { SessionSetupStatus } from '../../router/session_setup_status.js';
+import { SessionSetupStatus } from '../../loading/session_setup_status.js';
 import { SELECT_SESSION } from '../../router/router.js';
 import { SessionWorkbenchSidebar, type SessionWorkbenchSidebarDependencies } from './session_workbench_sidebar.js';
 
