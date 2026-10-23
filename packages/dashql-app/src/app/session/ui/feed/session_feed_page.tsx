@@ -27,6 +27,7 @@ import { AnchoredOverlay } from '../../../../ui/foundations/anchored_overlay.js'
 import { AnchorAlignment, AnchorSide } from '../../../../ui/foundations/anchored_position.js';
 import { ExecuteConnectionGuard, SessionConnectionAttentionContext, useSessionConnectionAttention } from '../session_connection_attention.js';
 import { useAppFlavor } from '../../../flavor/flavor_provider.js';
+import { ConnectionOverviewPage } from '../../../connections/ui/connection_overview_page.js';
 
 const FileZipIcon = SymbolIcon('file_zip_16');
 const CloseIcon = SymbolIcon('x_16');
@@ -35,6 +36,7 @@ export interface SessionFeedPageDependencies {
     SessionFeed: typeof SessionFeed;
     ScriptDetails: typeof ScriptDetails;
     SessionWorkbenchSidebar: typeof SessionWorkbenchSidebar;
+    ConnectionOverviewPage: typeof ConnectionOverviewPage;
     SessionNavigationDrawer: typeof SessionNavigationDrawer;
     ThreeBarsIcon: typeof ThreeBarsIcon;
     IconButton: typeof IconButton;
@@ -53,6 +55,7 @@ const DEFAULT_DEPENDENCIES: SessionFeedPageDependencies = {
     SessionFeed,
     ScriptDetails,
     SessionWorkbenchSidebar,
+    ConnectionOverviewPage,
     SessionNavigationDrawer,
     ThreeBarsIcon,
     IconButton,
@@ -84,6 +87,8 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
     const [detailsInitialTab, setDetailsInitialTab] = React.useState<DetailsTabKey | undefined>(undefined);
     const [feedShadowContainer, setFeedShadowContainer] = React.useState<HTMLDivElement | null>(null);
     const [navigationDrawerOpen, setNavigationDrawerOpen] = React.useState(false);
+    const [overviewConnectionId, setOverviewConnectionId] = React.useState<string | null>(null);
+    const closeOverview = React.useCallback(() => setOverviewConnectionId(null), []);
     const navigationDrawerTriggerRef = React.useRef<HTMLButtonElement>(null);
     const shareTriggerRef = React.useRef<HTMLButtonElement>(null);
     const exportTriggerRef = React.useRef<HTMLButtonElement>(null);
@@ -102,6 +107,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
     const run = execution.state;
     const [executionDetailsOpen, setExecutionDetailsOpen] = React.useState(false);
     React.useEffect(() => setExecutionDetailsOpen(false), [props.sessionScripts.sessionId]);
+    React.useEffect(() => setOverviewConnectionId(null), [props.sessionScripts.sessionId]);
     const executeRef = React.useRef<HTMLButtonElement>(null);
     const progress = run ? `${run.completedScripts}/${run.totalScripts}` : '';
     const statusText = !run ? '' : run.phase === 'planning' ? 'Planning...'
@@ -112,7 +118,8 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
     const { mode, setMode } = dependencies.useSessionViewMode();
     const dashboardsEnabled = dependencies.useAppConfig()?.settings?.experimental_dashboards === true;
     const dashboardActive = dashboardsEnabled && mode === SessionViewMode.Dashboard;
-    const feedActive = props.active && !dashboardActive && !showDetails;
+    const overviewActive = overviewConnectionId != null;
+    const feedActive = props.active && !dashboardActive && !showDetails && !overviewActive;
     // Stable since it is passed into the callbacks of every feed row
     const latestSessionScripts = React.useRef(props.sessionScripts);
     latestSessionScripts.current = props.sessionScripts;
@@ -122,11 +129,14 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
         setDetailsScriptId(sessionScripts.scriptRefs[targetFileName]?.scriptId);
         setDetailsInitialTab(initialTab);
         setShowDetails(true);
+        setOverviewConnectionId(null);
     }, []);
     const workbench = (closeAfterSelection: boolean) => (
         <dependencies.SessionWorkbenchSidebar
             sessionScripts={props.sessionScripts}
             closeAfterSelection={closeAfterSelection ? () => setNavigationDrawerOpen(false) : undefined}
+            openOverviewId={overviewConnectionId}
+            onOpenOverview={setOverviewConnectionId}
         />
     );
 
@@ -140,9 +150,12 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                 {dashboardsEnabled && <dependencies.SegmentedControl
                     aria-label="Session view"
                     size={SegmentedControlSize.Small}
-                    onChange={(selectedIndex) => setMode(selectedIndex === 0
-                        ? SessionViewMode.Session
-                        : SessionViewMode.Dashboard)}
+                    onChange={(selectedIndex) => {
+                        setOverviewConnectionId(null);
+                        setMode(selectedIndex === 0
+                            ? SessionViewMode.Session
+                            : SessionViewMode.Dashboard);
+                    }}
                 >
                     <dependencies.SegmentedControl.Button selected={!dashboardActive}>Session</dependencies.SegmentedControl.Button>
                     <dependencies.SegmentedControl.Button selected={dashboardActive}>Dashboard</dependencies.SegmentedControl.Button>
@@ -251,7 +264,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                             scriptConnections={props.scriptConnections}
                         />
                     </div>
-                    {!dashboardActive && showDetails
+                    {!dashboardActive && !overviewActive && showDetails
                                 ? <dependencies.ScriptDetails
                                     sessionScripts={props.sessionScripts}
                                     modifySessionScripts={props.modifySessionScripts}
@@ -276,7 +289,13 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                                     }}
                                 />
                                 : null}
-                    {dashboardActive && (
+                    {overviewConnectionId != null && (
+                        <dependencies.ConnectionOverviewPage
+                            connectionId={overviewConnectionId}
+                            onClose={closeOverview}
+                        />
+                    )}
+                    {dashboardActive && !overviewActive && (
                         <dependencies.Dashboard
                             sessionScripts={props.sessionScripts}
                             modifySessionScripts={props.modifySessionScripts}
@@ -284,7 +303,7 @@ export const SessionFeedPage: React.FC<Props> = (props) => {
                     )}
                     <div
                         ref={setFeedShadowContainer}
-                        className={dashboardActive ? styles.feed_shadow_layer_hidden : styles.feed_shadow_layer}
+                        className={dashboardActive || overviewActive ? styles.feed_shadow_layer_hidden : styles.feed_shadow_layer}
                         aria-hidden="true"
                     />
                 </div>

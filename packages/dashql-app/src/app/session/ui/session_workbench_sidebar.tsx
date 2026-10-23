@@ -114,6 +114,10 @@ interface InvalidSessionItem {
 interface Props {
     sessionScripts: SessionScripts;
     closeAfterSelection?: () => void;
+    /// The connection whose overview is open
+    openOverviewId?: string | null;
+    /// Open the overview of a connection, or close it with null
+    onOpenOverview?: (connectionId: string | null) => void;
     dependencies?: SessionWorkbenchSidebarDependencies;
 }
 
@@ -662,8 +666,15 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
 
     const openSession = React.useCallback((item: SessionItem) => {
         navigate({ type: SELECT_SESSION, value: item.sessionId });
+        props.onOpenOverview?.(null);
         props.closeAfterSelection?.();
-    }, [navigate, props.closeAfterSelection]);
+    }, [navigate, props.closeAfterSelection, props.onOpenOverview]);
+    const onOpenOverview = props.onOpenOverview;
+    const closeAfterSelection = props.closeAfterSelection;
+    const openOverview = React.useMemo(() => onOpenOverview == null ? undefined : (connectionId: string) => {
+        onOpenOverview(connectionId);
+        closeAfterSelection?.();
+    }, [onOpenOverview, closeAfterSelection]);
     const sessionListRef = React.useRef<HTMLUListElement>(null);
     const getSessionScrollElement = React.useCallback(() => sessionListRef.current, []);
 
@@ -848,6 +859,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                         sessionConnectionIds={sessionConnectionIds}
                         labelOf={labelOf}
                         attention={connectionAttention?.active === true}
+                        onOpenOverview={openOverview}
+                        openOverviewId={props.openOverviewId ?? null}
                         onOpenSettings={(connectionId, anchor, focusName) => {
                             connectionSettingsAnchorRef.current = anchor;
                             setConnectionOverlayFocusName(focusName ?? false);

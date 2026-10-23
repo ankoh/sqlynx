@@ -13,8 +13,10 @@ import { VerticalScrollShadows } from '../../../ui/foundations/vertical_scroll_s
 import {
     ChevronDownIcon,
     ChevronRightIcon,
+    DashboardIcon,
     DatabaseIcon,
     FileDirectoryIcon,
+    LibraryIcon,
     SymbolIcon,
     SyncIcon,
     TableIcon,
@@ -27,7 +29,13 @@ import { useCatalogLoaderQueue } from '../catalog_loader.js';
 import { isCatalogRefreshRunning } from '../catalog_update_state.js';
 import { canRefreshConnection } from './connection_refresh.js';
 import { CONNECTION_HEALTH_COLORS, CONNECTION_HEALTH_NAMES } from './connection_status.js';
-import { connectionLabelParts, connectionLabelText, isHyperWasmConnection, type ConnectionLabelParts } from './connection_label.js';
+import {
+    connectionLabelParts,
+    connectionLabelText,
+    isHyperWasmConnection,
+    supportsConnectionOverview,
+    type ConnectionLabelParts,
+} from './connection_label.js';
 import { ConnectionLabelView } from './connection_label_view.js';
 import * as styles from './connection_tree.module.css';
 import * as actionMenuStyles from '../../ui/action_menu.module.css';
@@ -57,6 +65,26 @@ interface ConnectionListRow {
     database: ConnectionState;
 }
 
+/// The overview of a connection, below the connection
+interface ConnectionOverviewRow {
+    /// The row type
+    type: 'connection-overview';
+    /// The row key
+    key: string;
+    /// The connection
+    database: ConnectionState;
+}
+
+/// The catalog of a connection, below the connection
+interface ConnectionCatalogRow {
+    /// The row type
+    type: 'connection-catalog';
+    /// The row key
+    key: string;
+    /// The connection
+    database: ConnectionState;
+}
+
 /// The heading of a group of connections
 interface ConnectionGroupRow {
     /// The row type
@@ -67,10 +95,12 @@ interface ConnectionGroupRow {
     label: string;
 }
 
-type ConnectionTreeRow = ConnectionGroupRow | ConnectionListRow | CatalogRow;
+type ConnectionTreeRow = ConnectionGroupRow | ConnectionListRow | ConnectionOverviewRow | ConnectionCatalogRow | CatalogRow;
 
 const CONNECTION_ROW_HEIGHT = 38;
 const CATALOG_ROW_HEIGHT = 34;
+/// The overview and catalog rows below a connection are as tall as the connection row
+const SECTION_ROW_HEIGHT = 38;
 const CONNECTION_GROUP_ROW_HEIGHT = 26;
 
 export function isVisibleCatalogNode(kind: CatalogNode['kind'], name: string): boolean {
@@ -172,6 +202,10 @@ interface ConnectionTreeEntryProps {
     depth: number;
     expanded?: boolean;
     onToggle?: () => void;
+    /// Select the entry, only for entries that do not collapse
+    onSelect?: () => void;
+    /// Is the entry selected?
+    selected?: boolean;
     children?: React.ReactNode;
     className?: string;
 }
@@ -183,14 +217,22 @@ const ConnectionTreeEntry: React.FC<ConnectionTreeEntryProps> = ({
     depth,
     expanded,
     onToggle,
+    onSelect,
+    selected,
     children,
     className,
 }) => {
     const collapsible = onToggle != null;
     return (
         <div
-            className={classNames(styles.entry_surface, collapsible && styles.entry_interactive, styles.tree_entry, className)}
-            style={{ paddingLeft: `${8 + depth * 16}px` }}
+            className={classNames(
+                styles.entry_surface,
+                (collapsible || onSelect != null) && styles.entry_interactive,
+                selected && styles.entry_selected,
+                styles.tree_entry,
+                className,
+            )}
+            style={{ paddingLeft: `${depth === 0 ? 8 : depth * 12}px` }}
         >
             {collapsible ? (
                 <button
@@ -201,6 +243,18 @@ const ConnectionTreeEntry: React.FC<ConnectionTreeEntryProps> = ({
                     onClick={onToggle}
                 >
                     {expanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
+                    <span className={styles.tree_entry_icon} aria-hidden="true">{icon}</span>
+                    <span className={styles.tree_entry_name}>{label ?? name}</span>
+                </button>
+            ) : onSelect != null ? (
+                <button
+                    type="button"
+                    className={classNames(styles.tree_entry_main, styles.tree_entry_toggle)}
+                    aria-label={name}
+                    aria-current={selected ? 'page' : undefined}
+                    onClick={onSelect}
+                >
+                    <span className={styles.tree_entry_spacer} />
                     <span className={styles.tree_entry_icon} aria-hidden="true">{icon}</span>
                     <span className={styles.tree_entry_name}>{label ?? name}</span>
                 </button>
@@ -225,6 +279,10 @@ interface ConnectionTreeRowProps {
     onDelete?: (connectionId: string) => void;
     labelOf: (database: ConnectionState) => ConnectionLabelParts;
     attention: boolean;
+    /// Open the overview of a connection
+    onOpenOverview?: (connectionId: string) => void;
+    /// The connection whose overview is open
+    openOverviewId: string | null;
 }
 
 /// How sessions use a connection
@@ -241,6 +299,9 @@ export function connectionTreeRowHeight(index: number, props: Pick<ConnectionTre
             return CONNECTION_GROUP_ROW_HEIGHT + (index === 0 ? 4 : 0);
         case 'connection':
             return CONNECTION_ROW_HEIGHT + (index === 0 ? 8 : 0);
+        case 'connection-overview':
+        case 'connection-catalog':
+            return SECTION_ROW_HEIGHT;
         default:
             return CATALOG_ROW_HEIGHT;
     }
@@ -298,7 +359,6 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                         attention={props.attention}
                         onOpenSettings={anchor => props.onOpenSettings(row.database.connectionId, anchor)}
                     />
-                    <ConnectionRefreshButton database={row.database} label={label} />
                     <ConnectionRowMenu
                         database={row.database}
                         label={label}
@@ -307,6 +367,40 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                         onDelete={props.onDelete == null || usage == null ? undefined : () => props.onDelete!(row.database.connectionId)}
                         sessionCount={usage?.sessionCount}
                     />
+                </ConnectionTreeEntry>
+            </div>
+        );
+    }
+    if (row.type === 'connection-overview') {
+        const label = connectionLabelText(props.labelOf(row.database));
+        return (
+            <div style={props.style} className={styles.tree_row_container}>
+                <ConnectionTreeEntry
+                    className={styles.section_row}
+                    name={`Overview of ${label}`}
+                    label="Overview"
+                    icon={<DashboardIcon size={14} />}
+                    depth={1}
+                    selected={props.openOverviewId === row.database.connectionId}
+                    onSelect={() => props.onOpenOverview?.(row.database.connectionId)}
+                />
+            </div>
+        );
+    }
+    if (row.type === 'connection-catalog') {
+        const label = connectionLabelText(props.labelOf(row.database));
+        return (
+            <div style={props.style} className={styles.tree_row_container}>
+                <ConnectionTreeEntry
+                    className={styles.section_row}
+                    name={`Catalog of ${label}`}
+                    label="Catalog"
+                    icon={<LibraryIcon size={14} />}
+                    depth={1}
+                    expanded={props.expanded.has(row.key)}
+                    onToggle={() => props.onToggle(row.key)}
+                >
+                    <ConnectionRefreshButton database={row.database} label={label} />
                 </ConnectionTreeEntry>
             </div>
         );
@@ -320,7 +414,7 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                 className={styles.catalog_row}
                 name={node.name || 'Unnamed'}
                 icon={catalogIcon(node.kind)}
-                depth={node.depth + 1}
+                depth={node.depth + 2}
                 expanded={expanded}
                 onToggle={expandable ? () => props.onToggle(node.key) : undefined}
             >
@@ -346,9 +440,15 @@ interface ConnectionTreeProps {
     labelOf?: (database: ConnectionState) => ConnectionLabelParts;
     /// Does the current session ask for its connections to execute?
     attention?: boolean;
+    /// Open the overview of a connection, connections offer no overview without it
+    onOpenOverview?: (connectionId: string) => void;
+    /// The connection whose overview is open
+    openOverviewId?: string | null;
 }
 
 const connectionKey = (connectionId: string) => `connection:${connectionId}`;
+const catalogKey = (connectionId: string) => `${connectionKey(connectionId)}/catalog`;
+const overviewKey = (connectionId: string) => `${connectionKey(connectionId)}/overview`;
 
 /// The groups of the connection tree
 type ConnectionGroupKind = 'session' | 'other';
@@ -379,6 +479,8 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
     sessionConnectionIds,
     labelOf = defaultConnectionLabelOf,
     attention = false,
+    onOpenOverview,
+    openOverviewId = null,
 }) => {
     // The database states change with every query event while the catalogs rarely change.
     // A catalog caches its snapshot until it is modified (which destroys the snapshot), so the snapshot identity
@@ -390,7 +492,7 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
         return {
             connectionId,
             reader,
-            roots: createCatalogTree(reader, `${connectionKey(connectionId)}/catalog`),
+            roots: createCatalogTree(reader, catalogKey(connectionId)),
         };
     }), [connectionIds, snapshots]);
     const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(() => {
@@ -398,6 +500,7 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
         catalogTrees.forEach((tree, i) => {
             if (!initiallyExpanded(databases[i], databases.length)) return;
             initial.add(connectionKey(tree.connectionId));
+            initial.add(catalogKey(tree.connectionId));
             for (const root of tree.roots) initial.add(root.key);
         });
         return initial;
@@ -414,6 +517,7 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
                 if (knownConnectionIds.current.has(tree.connectionId)) return;
                 if (initiallyExpanded(databases[i], databases.length)) {
                     next.add(connectionKey(tree.connectionId));
+                    next.add(catalogKey(tree.connectionId));
                     for (const root of tree.roots) next.add(root.key);
                 }
             });
@@ -422,7 +526,7 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
         knownConnectionIds.current = nextConnectionIds;
     }, [connectionIds]);
     const catalogRows = React.useMemo(() => catalogTrees.map(tree => (
-        expanded.has(connectionKey(tree.connectionId))
+        expanded.has(connectionKey(tree.connectionId)) && expanded.has(catalogKey(tree.connectionId))
             ? flattenCatalogRows(tree.reader, tree.roots, expanded)
             : []
     )), [catalogTrees, expanded]);
@@ -438,10 +542,15 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
                 }
             }
             next.push({ type: 'connection', key: connectionKey(database.connectionId), database });
+            if (!expanded.has(connectionKey(database.connectionId))) return;
+            if (onOpenOverview != null && supportsConnectionOverview(database)) {
+                next.push({ type: 'connection-overview', key: overviewKey(database.connectionId), database });
+            }
+            next.push({ type: 'connection-catalog', key: catalogKey(database.connectionId), database });
             next.push(...catalogRows[i]);
         });
         return next;
-    }, [databases, catalogRows, sessionConnectionIds]);
+    }, [databases, catalogRows, expanded, onOpenOverview, sessionConnectionIds]);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const size = observeSize(containerRef);
     const listRef = useListRef(null);
@@ -463,7 +572,9 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
         onDelete,
         labelOf,
         attention,
-    }), [attention, describeUsage, expanded, labelOf, onDelete, onOpenSettings, rows, toggle]);
+        onOpenOverview,
+        openOverviewId,
+    }), [attention, describeUsage, expanded, labelOf, onDelete, onOpenOverview, onOpenSettings, openOverviewId, rows, toggle]);
     return (
         <div ref={containerRef} className={styles.database_list} aria-label="Connections and catalogs">
             <List

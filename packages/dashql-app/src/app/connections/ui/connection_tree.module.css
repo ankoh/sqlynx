@@ -6,9 +6,10 @@
     text-align: left;
 }
 
+/* Only keyboard focus highlights an entry, a clicked toggle must not look selected */
 .entry_interactive:hover,
 .entry_interactive:focus-visible,
-.entry_interactive:focus-within {
+.entry_interactive:has(:focus-visible) {
     border-color: var(--border_color_primary);
     background: var(--base_color_neutral_0);
 }
@@ -167,4 +168,19 @@
     font-size: 9px;
     text-transform: uppercase;
     margin-right: 4px;
+}
+
+.entry_selected,
+.entry_selected:hover {
+    border-color: var(--border_color_primary);
+    background: var(--base_color_neutral_0);
+}
+
+.section_row {
+    height: 36px;
+    margin: 1px 0;
+}
+
+.section_row .tree_entry_name {
+    font-size: 12px;
 }

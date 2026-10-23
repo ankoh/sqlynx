@@ -33,6 +33,7 @@ const dependencies = {
     },
     ScriptDetails: () => null,
     SessionWorkbenchSidebar: () => null,
+    ConnectionOverviewPage: () => null,
     SessionNavigationDrawer: () => null,
     ThreeBarsIcon: () => null,
     IconButton: React.forwardRef((props: any, ref: React.ForwardedRef<HTMLButtonElement>) => <button {...props} ref={ref} />),

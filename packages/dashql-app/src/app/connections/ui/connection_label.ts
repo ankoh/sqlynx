@@ -8,6 +8,11 @@ export function isHyperWasmConnection(database: ConnectionState): boolean {
         (database.details.value.proto.setupParams?.protocol ?? 'WASM') === 'WASM';
 }
 
+/// Does a connection offer an operational overview?
+export function supportsConnectionOverview(database: ConnectionState): boolean {
+    return database.details.type === HYPER_CONNECTOR;
+}
+
 /// The label of a connection, its name and the protocol it speaks
 export interface ConnectionLabelParts {
     /// The name of the connection, e.g. "Production" or "Hyper #2"
