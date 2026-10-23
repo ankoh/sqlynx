@@ -695,6 +695,6 @@ class HyperDBSession implements EmbeddedTableImportConnection {
     }
 }
 
-function quoteIdentifier(value: string): string {
+export function quoteIdentifier(value: string): string {
     return `"${value.replace(/"/g, '""')}"`;
 }

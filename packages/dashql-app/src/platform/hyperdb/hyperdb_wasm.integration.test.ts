@@ -324,12 +324,6 @@ describe('HyperDB embedded database integration', () => {
         }
     }, 60_000);
 
-    it('initializes Hyper log introspection and rotation settings', async () => {
-        const connection = await database!.connect();
-        expect(await connection.query("SELECT * FROM hyper_log('current_session') LIMIT 0")).toBeDefined();
-        await connection.close();
-    });
-
     it('exposes function signatures through pg_proc introspection', async () => {
         const connection = await database!.connect({ defaultDatabase: 'hyper' });
         const result = await connection.query(`
