@@ -207,9 +207,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
         return await this.runDatabaseOperation(async () => {
             path ??= externalMountPath(handle.name);
             validateExternalMountPath(path);
-            // The DOM typings lack the permission methods of directory handles.
-            const directory = handle as unknown as Parameters<HyperDBEngine['mount']>[0] & FileSystemDirectoryHandle;
-            const resource = await this.engine.mount(directory, { path, mode });
+            const resource = await this.engine.mount(handle, { path, mode });
             this.externalDirectories.set(path, resource);
             return path;
         });

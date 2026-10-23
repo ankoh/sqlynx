@@ -314,6 +314,17 @@ describe('HyperDB embedded database adapter', () => {
         await database.terminate();
     });
 
+    it('registers directory handles without permission methods like the OPFS handles of Firefox', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const database = await createDatabase(client);
+        const handle = { kind: 'directory', name: 'exports' } as FileSystemDirectoryHandle;
+
+        const path = await database.registerExternalDirectory(handle, '/mnt/external/exports', 'readwrite');
+
+        expect(client.externalDirectories.get(path)).toEqual({ handle, mode: 'readwrite' });
+        await database.terminate();
+    });
+
     it('registers browser directories at a path derived from the directory name', async () => {
         const client = new FakeHyperDBEngineClient();
         const database = await createDatabase(client);
