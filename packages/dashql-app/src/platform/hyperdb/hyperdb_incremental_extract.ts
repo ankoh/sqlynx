@@ -173,9 +173,10 @@ export class HyperDBIncrementalExtract {
             const backfill = await transfer(sink, stager, stagingTable, options, schemas, rows);
             return new HyperDBIncrementalExtract(sourceConnection, sink, stager, stagingTable, options, schemas, backfill);
         } catch (error) {
-            await sourceConnection?.close();
-            await stager?.close();
-            await sink.close();
+            // Close every connection and keep the error that failed the open.
+            for (const connection of [sourceConnection, stager, sink]) {
+                await connection?.close().catch(() => {});
+            }
             throw error;
         }
     }
