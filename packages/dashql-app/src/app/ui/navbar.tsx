@@ -64,7 +64,7 @@ const SessionShellButton = () => {
             >
                 <>
                     <svg width="16px" height="16px" aria-hidden="true">
-                        <use xlinkHref={`${symbols}#shell_24`} />
+                        <use xlinkHref={`${symbols}#command_palette_24`} />
                     </svg>
                     <span className={styles.tab_button_text}>Shell</span>
                 </>
