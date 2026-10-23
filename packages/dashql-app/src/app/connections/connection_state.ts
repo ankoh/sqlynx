@@ -90,6 +90,8 @@ export interface ConnectionState {
     connectorInfo: ConnectorInfo;
     /// The connection signature
     connectionSignature: ConnectionSignatureState;
+    /// The user-assigned display name, absent when the connection is unnamed
+    name?: string;
 
     /// The connection details
     details: ConnectionStateDetailsVariant;
@@ -237,6 +239,7 @@ export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
 export const SET_CONNECTION_DRAFT = Symbol('SET_CONNECTION_DRAFT');
 export const DISCARD_CONNECTION_DRAFT = Symbol('DISCARD_CONNECTION_DRAFT');
 export const COMMIT_CONNECTION_PARAMS = Symbol('COMMIT_CONNECTION_PARAMS');
+export const SET_CONNECTION_NAME = Symbol('SET_CONNECTION_NAME');
 
 export type CatalogAction =
     | VariantKind<typeof SET_CATALOG_SCRIPT, dashql.DashQLScript>
@@ -258,6 +261,7 @@ export type ConnectionAction =
     | VariantKind<typeof RESET_CONNECTION, null>
     | VariantKind<typeof SWITCH_CONNECTOR_TYPE, ConnectorType>
     | VariantKind<typeof SET_CONNECTION_ACTIVE, null>
+    | VariantKind<typeof SET_CONNECTION_NAME, string | null>
     | CatalogAction
     | QueryExecutionAction
     | HyperConnectorAction
@@ -408,6 +412,13 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                 setupAttemptParams: undefined,
                 setupAttemptDraft: undefined,
             };
+        }
+
+        // SET_CONNECTION_NAME names the connection, a blank name removes the name
+        case SET_CONNECTION_NAME: {
+            const name = normalizeConnectionName(action.value);
+            if (name === state.name) return state;
+            return { ...state, name };
         }
 
         // SET_CONNECTION_ACTIVE marks the connection as active.
@@ -577,6 +588,12 @@ function applyCatalogChanges(state: ConnectionState, changes: dashql.buffers.cat
         }, LOG_CTX);
         return state;
     }
+}
+
+/// The display name of a connection without surrounding whitespace, undefined if it is blank
+export function normalizeConnectionName(name: string | null | undefined): string | undefined {
+    const trimmed = name?.trim() ?? '';
+    return trimmed.length === 0 ? undefined : trimmed;
 }
 
 export function createConnectionMetrics(): connection.ConnectionMetrics {

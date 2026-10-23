@@ -20,7 +20,7 @@ import { flattenKeyValueList, KeyValueListBuilder, KeyValueListElement, UpdateKe
 import { Dispatch } from '../../../utils/variant.js';
 import { useConnectionById, useConnectionDraftForm } from '../connection_registry.js';
 import { useConnectionSave, useSaveBeforeConnect } from '../connection_persistence.js';
-import { ConnectionHealth } from '../connection_state.js';
+import { ConnectionHealth, SET_CONNECTION_NAME } from '../connection_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useHyperSetup } from '../hyper/hyper_connection_setup.js';
 import { useQueryExecutor } from '../query_executor.js';
@@ -238,6 +238,7 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
             <ConnectionInlineHeader
                 connector={connectorInfo}
                 connection={connectionState}
+                onRename={name => dispatchConnectionState({ type: SET_CONNECTION_NAME, value: name })}
                 wrongPlatform={wrongPlatform}
                 setupConnection={setupConnection}
                 cancelSetup={cancelSetup}

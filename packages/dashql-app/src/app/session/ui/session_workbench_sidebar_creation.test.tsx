@@ -32,6 +32,13 @@ const state = {
     sessionAttachedDatabases: null as { main: ConnectionState; attached: ConnectionState[] } | null,
 };
 
+/// The connection ids of the fake registry by connector type
+function connectionsByType(): string[][] {
+    const byType: string[][] = [[], [], []];
+    for (const database of state.connections.values()) (byType[database.connectorInfo?.connectorType ?? 0] ??= []).push(database.connectionId);
+    return byType;
+}
+
 const dependencies = {
     useRouterNavigate: () => state.navigate,
     useRouteContext: () => ({ sessionId: 'current-session', sessionSetupStatus: SessionSetupStatus.NONE }),
@@ -44,6 +51,7 @@ const dependencies = {
         connections: state.connections,
         attachedDatabasesBySession: state.attachedDatabasesBySession,
         connectionsBySignature: new Map(),
+        connectionsByType: connectionsByType(),
     }, state.dispatchDatabase],
     useAttachedDatabaseStateAllocator: () => state.allocateDatabase,
     useConnectionAllocator: () => state.allocateConnection,
@@ -376,5 +384,32 @@ describe('SessionWorkbenchSidebar session creation', () => {
         expect(state.attachConnection).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'trino-database');
         expect(state.setupSessionScripts).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', other);
         expect(state.navigate).toHaveBeenCalledWith({ type: SELECT_SESSION, value: '00000000-0000-4000-8000-000000000001' });
+    });
+
+    it('groups the connections of the session and numbers connections of the same connector', () => {
+        const trino = { ...state.local!, connectionId: 'trino-database', connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
+            details: { type: TRINO_CONNECTOR, value: { proto: { setupParams: {} } } } } as unknown as ConnectionState;
+        const secondHyper = { ...state.local!, connectionId: 'second-hyper' } as ConnectionState;
+        for (const database of [state.local!, trino, secondHyper]) state.connections.set(database.connectionId, database);
+        state.attachedDatabasesBySession.set('current-session', { mainDatabaseId: state.local!.connectionId, attachedDatabaseIds: [] });
+        state.attachedDatabasesBySession.set('trino-session', { mainDatabaseId: trino.connectionId, attachedDatabaseIds: [secondHyper.connectionId] });
+        for (const sessionId of ['current-session', 'trino-session']) {
+            state.sessionScriptsMap.set(sessionId, { sessionId, name: sessionId, sessionMetadata: {} });
+        }
+        state.sessionAttachedDatabases = { main: state.local!, attached: [] };
+        act(() => root.render(<SessionWorkbenchSidebar sessionScripts={{
+            sessionId: 'current-session', instance: {},
+        } as any} dependencies={dependencies} />));
+
+        const headings = Array.from(container.querySelectorAll('[role="heading"]')).map(heading => heading.textContent);
+        expect(headings).toEqual(['This session', 'Other connections']);
+        const text = container.textContent ?? '';
+        expect(text).toContain('Hyper #1');
+        expect(text).toContain('Hyper #2');
+        // Every session row shows the connections of its session, the default one first
+        const sessionConnections = Array.from(container.querySelectorAll('[aria-label^="Connections: "]'))
+            .map(element => element.getAttribute('aria-label'));
+        expect(sessionConnections).toHaveLength(2);
+        expect(sessionConnections.find(label => label!.includes('Trino'))).toMatch(/^Connections: Trino \S+ \(default\), Hyper #2 /);
     });
 });

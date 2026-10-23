@@ -16,6 +16,7 @@ import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { relocateSessionToNative } from '../storage_migration_flow.js';
 import { useSessionScripts } from '../../scripts/session_scripts_registry.js';
 import { RENAME_SESSION } from '../../scripts/session_scripts.js';
+import { NameInput } from '../../../../ui/foundations/name_input.js';
 
 /// The shared header for the storage view: title on the left, actions + close button on the right.
 function StorageViewHeader(props: {
@@ -62,53 +63,16 @@ function ParamRow(props: { label: string; value: string }) {
     );
 }
 
-/// An editable session-name row. The input owns its draft so typing does not rerender the storage
-/// view; blur or Enter dispatches RENAME_SESSION, which normalises blank input to "no name".
+/// An editable session-name row; blur or Enter dispatches RENAME_SESSION, which normalises blank
+/// input to "no name".
 export function NameRow(props: { name: string | null; onCommit: (name: string) => void }) {
-    const inputRef = React.useRef<HTMLInputElement>(null);
-    const cancelBlurRef = React.useRef(false);
-    // Re-sync the draft when the persisted name changes (e.g. a rename from elsewhere, or switching
-    // sessions while the overlay stays mounted).
-    React.useEffect(() => {
-        if (inputRef.current != null) inputRef.current.value = props.name ?? '';
-    }, [props.name]);
-
-    const commit = React.useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-        if (cancelBlurRef.current) {
-            cancelBlurRef.current = false;
-            return;
-        }
-        props.onCommit(e.currentTarget.value);
-    }, [props.onCommit]);
-    const onKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.currentTarget.blur();
-        } else if (e.key === 'Escape') {
-            // Abandon the edit: restore the persisted value and drop focus.
-            cancelBlurRef.current = true;
-            e.currentTarget.value = props.name ?? '';
-            e.currentTarget.blur();
-        }
-        e.stopPropagation();
-    }, [props.name]);
-    const onPointerDown = React.useCallback((e: React.PointerEvent<HTMLInputElement>) => {
-        // The overlay is portaled from a sortable session row. Keep selection gestures from
-        // bubbling through the React tree and activating that row's drag sensor.
-        e.stopPropagation();
-    }, []);
-
     return (
-        <input
-            ref={inputRef}
+        <NameInput
             className={styles.name_input}
-            type="text"
-            aria-label="Session name"
-            defaultValue={props.name ?? ''}
+            name={props.name}
+            onCommit={props.onCommit}
+            ariaLabel="Session name"
             placeholder="Name this session"
-            spellCheck={false}
-            onBlur={commit}
-            onKeyDown={onKeyDown}
-            onPointerDown={onPointerDown}
         />
     );
 }

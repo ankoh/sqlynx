@@ -52,7 +52,7 @@ import {
     connectionRefCount,
     detachSession,
     findSessionQueries,
-    findSessionsForConnection,
+    isListedConnection,
     resolveSessionAttachedDatabases,
     useAttachConnection,
     useConnectionRegistry,
@@ -104,7 +104,7 @@ import {
 } from '../scripts/session_scripts_registry.js';
 import { useSessionScriptsSetup } from '../scripts/session_scripts_setup.js';
 import { BundledSessionsOverlay } from '../../ui/bundled_sessions_overlay.js';
-import { connectionLabel, connectionLabelParts, isHyperWasmConnection } from '../../connections/ui/connection_label.js';
+import { connectionLabelParts, connectionLabelText, connectionOrdinals, isHyperWasmConnection, type ConnectionLabelParts } from '../../connections/ui/connection_label.js';
 import { ConnectionLabelView, ConnectionProtocolTag } from '../../connections/ui/connection_label_view.js';
 import { useAppFlavor } from '../../flavor/flavor_provider.js';
 import { canRefreshConnection } from '../../connections/ui/connection_refresh.js';
@@ -137,10 +137,21 @@ interface ConnectionListRow {
     database: ConnectionState;
 }
 
-type ConnectionTreeRow = ConnectionListRow | CatalogRow;
+/// The heading of a group of connections
+interface ConnectionGroupRow {
+    /// The row type
+    type: 'connection-group';
+    /// The row key
+    key: string;
+    /// The heading
+    label: string;
+}
+
+type ConnectionTreeRow = ConnectionGroupRow | ConnectionListRow | CatalogRow;
 
 const CONNECTION_ROW_HEIGHT = 38;
 const CATALOG_ROW_HEIGHT = 34;
+const CONNECTION_GROUP_ROW_HEIGHT = 26;
 
 export function isVisibleCatalogNode(kind: CatalogNode['kind'], name: string): boolean {
     return (kind !== 'database' && kind !== 'schema') || name.trim().length > 0;
@@ -149,6 +160,8 @@ export function isVisibleCatalogNode(kind: CatalogNode['kind'], name: string): b
 interface SessionItem {
     sessionId: string;
     database: ConnectionState;
+    /// The connections of the session, the default connection first
+    connections: ConnectionState[];
     scripts: SessionScripts;
     label: string;
     path: string;
@@ -230,6 +243,7 @@ const DEFAULT_SESSION_WORKBENCH_SIDEBAR_DEPENDENCIES: SessionWorkbenchSidebarDep
 const MoreIcon = SymbolIcon('kebab_horizontal');
 const ColumnsIcon = SymbolIcon('columns_16');
 const SettingsIcon = SymbolIcon('settings_16');
+const PencilIcon = SymbolIcon('pencil_16');
 const FileZipIcon = SymbolIcon('file_zip_16');
 
 function readCatalogNode(
@@ -375,9 +389,10 @@ interface ConnectionTreeRowProps {
     rows: ConnectionTreeRow[];
     expanded: ReadonlySet<string>;
     onToggle: (key: string) => void;
-    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement) => void;
+    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement, focusName?: boolean) => void;
     describeUsage?: (connectionId: string) => ConnectionUsage;
     onDelete?: (connectionId: string) => void;
+    labelOf: (database: ConnectionState) => ConnectionLabelParts;
 }
 
 /// How sessions use a connection
@@ -388,18 +403,36 @@ export interface ConnectionUsage {
     usedHere: boolean;
 }
 
-export function connectionTreeRowHeight(index: number, props: ConnectionTreeRowProps): number {
-    return props.rows[index]?.type === 'attached-database'
-        ? CONNECTION_ROW_HEIGHT + (index === 0 ? 8 : 0)
-        : CATALOG_ROW_HEIGHT;
+export function connectionTreeRowHeight(index: number, props: Pick<ConnectionTreeRowProps, 'rows'>): number {
+    switch (props.rows[index]?.type) {
+        case 'connection-group':
+            return CONNECTION_GROUP_ROW_HEIGHT + (index === 0 ? 4 : 0);
+        case 'attached-database':
+            return CONNECTION_ROW_HEIGHT + (index === 0 ? 8 : 0);
+        default:
+            return CATALOG_ROW_HEIGHT;
+    }
 }
 
 const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => {
     const row = props.rows[props.index];
     if (row == null) return <div style={props.style} />;
+    if (row.type === 'connection-group') {
+        return (
+            <div
+                style={props.style}
+                className={classNames(styles.connection_group_row, props.index === 0 && styles.connection_group_row_first)}
+                role="heading"
+                aria-level={3}
+            >
+                {row.label}
+            </div>
+        );
+    }
     if (row.type === 'attached-database') {
         const expanded = props.expanded.has(row.key);
-        const label = connectionLabel(row.database);
+        const labelParts = props.labelOf(row.database);
+        const label = connectionLabelText(labelParts);
         const usage = props.describeUsage?.(row.database.connectionId) ?? null;
         return (
             <div
@@ -413,7 +446,7 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                 <ConnectionTreeEntry
                     className={styles.database_row}
                     name={label}
-                    label={<ConnectionLabelView parts={connectionLabelParts(row.database)} />}
+                    label={<ConnectionLabelView parts={labelParts} />}
                     depth={0}
                     expanded={expanded}
                     onToggle={() => props.onToggle(row.key)}
@@ -423,13 +456,8 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                         </svg>
                     )}
                 >
-                    {usage != null && !usage.usedHere && (
-                        <span
-                            className={styles.catalog_node_kind}
-                            title={`Used by ${usage.sessionCount} ${usage.sessionCount === 1 ? 'session' : 'sessions'}`}
-                        >
-                            {usage.sessionCount === 0 ? 'unused' : usage.sessionCount}
-                        </span>
+                    {usage != null && usage.sessionCount === 0 && (
+                        <span className={styles.catalog_node_kind} title="No session uses this connection">unused</span>
                     )}
                     <ConnectionStatusButton
                         database={row.database}
@@ -442,6 +470,7 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
                         database={row.database}
                         label={label}
                         onOpenSettings={anchor => props.onOpenSettings(row.database.connectionId, anchor)}
+                        onRename={anchor => props.onOpenSettings(row.database.connectionId, anchor, true)}
                         onDelete={props.onDelete == null || usage == null ? undefined : () => props.onDelete!(row.database.connectionId)}
                         sessionCount={usage?.sessionCount}
                     />
@@ -470,16 +499,32 @@ const ConnectionTreeRow = (props: RowComponentProps<ConnectionTreeRowProps>) => 
 
 interface ConnectionTreeProps {
     databases: ConnectionState[];
-    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement) => void;
+    /// Open the settings of a connection, focusing its name to rename it
+    onOpenSettings: (connectionId: string, anchor: HTMLButtonElement, focusName?: boolean) => void;
     /// Describe how sessions use a connection
     describeUsage?: (connectionId: string) => ConnectionUsage;
     /// Delete a connection that no session uses
     onDelete?: (connectionId: string) => void;
     /// Is a connection expanded initially?
     initiallyExpanded?: (database: ConnectionState, databaseCount: number) => boolean;
+    /// The connections of the current session, they are grouped apart from the other connections
+    sessionConnectionIds?: ReadonlySet<string>;
+    /// Label a connection
+    labelOf?: (database: ConnectionState) => ConnectionLabelParts;
 }
 
 const connectionKey = (connectionId: string) => `attached-database:${connectionId}`;
+
+/// The groups of the connection tree
+type ConnectionGroupKind = 'session' | 'other';
+
+/// The headings of the groups of the connection tree
+const CONNECTION_GROUP_LABELS: Record<ConnectionGroupKind, string> = {
+    session: 'This session',
+    other: 'Other connections',
+};
+
+const defaultConnectionLabelOf = (database: ConnectionState) => connectionLabelParts(database);
 
 /// Keep the identity of an array as long as its elements are identical
 function useShallowStableArray<T>(values: T[]): T[] {
@@ -490,7 +535,15 @@ function useShallowStableArray<T>(values: T[]): T[] {
     return ref.current;
 }
 
-export const ConnectionTree: React.FC<ConnectionTreeProps> = ({ databases, onOpenSettings, describeUsage, onDelete, initiallyExpanded = isConnectionInitiallyExpanded }) => {
+export const ConnectionTree: React.FC<ConnectionTreeProps> = ({
+    databases,
+    onOpenSettings,
+    describeUsage,
+    onDelete,
+    initiallyExpanded = isConnectionInitiallyExpanded,
+    sessionConnectionIds,
+    labelOf = defaultConnectionLabelOf,
+}) => {
     // The database states change with every query event while the catalogs rarely change.
     // A catalog caches its snapshot until it is modified (which destroys the snapshot), so the snapshot identity
     // tells us when the trees must be rebuilt. Never keep a reader of a snapshot that is no longer current.
@@ -539,12 +592,20 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({ databases, onOpe
     )), [catalogTrees, expanded]);
     const rows = React.useMemo(() => {
         const next: ConnectionTreeRow[] = [];
+        let group: ConnectionGroupKind | null = null;
         databases.forEach((database, i) => {
+            if (sessionConnectionIds != null) {
+                const databaseGroup: ConnectionGroupKind = sessionConnectionIds.has(database.connectionId) ? 'session' : 'other';
+                if (databaseGroup !== group) {
+                    group = databaseGroup;
+                    next.push({ type: 'connection-group', key: `connection-group:${group}`, label: CONNECTION_GROUP_LABELS[group] });
+                }
+            }
             next.push({ type: 'attached-database', key: connectionKey(database.connectionId), database });
             next.push(...catalogRows[i]);
         });
         return next;
-    }, [databases, catalogRows]);
+    }, [databases, catalogRows, sessionConnectionIds]);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const size = observeSize(containerRef);
     const listRef = useListRef(null);
@@ -564,7 +625,8 @@ export const ConnectionTree: React.FC<ConnectionTreeProps> = ({ databases, onOpe
         onOpenSettings,
         describeUsage,
         onDelete,
-    }), [describeUsage, expanded, onDelete, onOpenSettings, rows, toggle]);
+        labelOf,
+    }), [describeUsage, expanded, labelOf, onDelete, onOpenSettings, rows, toggle]);
     return (
         <div ref={containerRef} className={styles.database_list} aria-label="Connections and catalogs">
             <List
@@ -596,9 +658,7 @@ export function listedConnections(
     const listed = [...currentSessionConnections];
     const seen = new Set(listed.map(database => database.connectionId));
     for (const [connectionId, database] of registry.connections) {
-        if (seen.has(connectionId)) continue;
-        const sessions = findSessionsForConnection(registry as ConnectionRegistry, connectionId);
-        if (sessions.length === 0 ? database.active : sessions.some(sessionId => sessionIds.has(sessionId))) {
+        if (!seen.has(connectionId) && isListedConnection(registry, sessionIds, connectionId)) {
             listed.push(database);
         }
     }
@@ -723,6 +783,8 @@ interface ConnectionRowMenuProps {
     database: ConnectionState;
     label: string;
     onOpenSettings: (anchor: HTMLButtonElement) => void;
+    /// Open the settings of the connection to rename it
+    onRename?: (anchor: HTMLButtonElement) => void;
     /// Delete the connection, only possible if no session uses it
     onDelete?: () => void;
     /// The number of sessions that use the connection
@@ -738,7 +800,7 @@ const DEFAULT_CONNECTION_REFRESH_DEPENDENCIES: ConnectionRefreshDependencies = {
     useCatalogLoaderQueue,
 };
 
-export const ConnectionRowMenu: React.FC<ConnectionRowMenuProps> = ({ database, label, onOpenSettings, onDelete, sessionCount = 0, dependencies = DEFAULT_CONNECTION_REFRESH_DEPENDENCIES }) => {
+export const ConnectionRowMenu: React.FC<ConnectionRowMenuProps> = ({ database, label, onOpenSettings, onRename, onDelete, sessionCount = 0, dependencies = DEFAULT_CONNECTION_REFRESH_DEPENDENCIES }) => {
     const [open, setOpen] = React.useState(false);
     const triggerRef = React.useRef<HTMLButtonElement>(null);
     const refreshCatalog = dependencies.useCatalogLoaderQueue();
@@ -782,6 +844,17 @@ export const ConnectionRowMenu: React.FC<ConnectionRowMenuProps> = ({ database, 
                         <ActionList.Leading><SettingsIcon size={16} /></ActionList.Leading>
                         <ActionList.ItemText>Settings</ActionList.ItemText>
                     </ActionList.ListItem>
+                    {/* The list takes elements only, the fragment wraps the optional item */}
+                    <>{onRename && (
+                        <ActionList.ListItem onClick={() => {
+                            const anchor = triggerRef.current;
+                            setOpen(false);
+                            if (anchor != null) onRename(anchor);
+                        }}>
+                            <ActionList.Leading><PencilIcon size={16} /></ActionList.Leading>
+                            <ActionList.ItemText>Rename…</ActionList.ItemText>
+                        </ActionList.ListItem>
+                    )}</>
                     <ActionList.ListItem
                         disabled={!canRefresh}
                         aria-busy={isRefreshing}
@@ -809,7 +882,12 @@ export const ConnectionRowMenu: React.FC<ConnectionRowMenuProps> = ({ database, 
                             }}
                         >
                             <ActionList.Leading><TrashIcon size={16} /></ActionList.Leading>
-                            <ActionList.ItemText>Delete</ActionList.ItemText>
+                            <ActionList.ItemText>
+                                <ActionList.ItemTextTitle>Delete</ActionList.ItemTextTitle>
+                                {sessionCount > 0
+                                    ? <ActionList.ItemTextDescription>{`Used by ${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}`}</ActionList.ItemTextDescription>
+                                    : <></>}
+                            </ActionList.ItemText>
                         </ActionList.ListItem>
                     )}</>
                 </ActionList.List>
@@ -886,13 +964,36 @@ export const ConnectionStatusButton: React.FC<ConnectionStatusButtonProps> = ({ 
 interface SessionRowProps {
     item: SessionItem;
     selected: boolean;
+    labelOf: (database: ConnectionState) => ConnectionLabelParts;
     onOpen: (anchor: HTMLButtonElement) => void;
     onDuplicate: () => void;
     onDelete: () => void;
     dependencies: SessionWorkbenchSidebarDependencies;
 }
 
-const SessionRow: React.FC<SessionRowProps> = ({ item, selected, onOpen, onDuplicate, onDelete, dependencies }) => {
+/// The most connector icons that a session row shows
+const MAX_SESSION_CONNECTION_ICONS = 3;
+
+/// The connector icons of the connections of a session
+const SessionConnections: React.FC<{ connections: ConnectionState[]; labelOf: (database: ConnectionState) => ConnectionLabelParts }> = ({ connections, labelOf }) => {
+    const description = connections
+        .map((database, i) => `${connectionLabelText(labelOf(database))}${i === 0 ? ' (default)' : ''}`)
+        .join(', ');
+    const shown = connections.slice(0, MAX_SESSION_CONNECTION_ICONS);
+    const more = connections.length - shown.length;
+    return (
+        <span className={styles.session_connections} title={description} aria-label={`Connections: ${description}`} role="img">
+            {shown.map(database => (
+                <svg key={database.connectionId} className={styles.session_connection_icon} width="12" height="12" aria-hidden="true">
+                    <use xlinkHref={`${symbols}#${database.connectorInfo.icons.uncolored}`} />
+                </svg>
+            ))}
+            {more > 0 && <span className={styles.session_connections_more} aria-hidden="true">+{more}</span>}
+        </span>
+    );
+};
+
+const SessionRow: React.FC<SessionRowProps> = ({ item, selected, labelOf, onOpen, onDuplicate, onDelete, dependencies }) => {
     const title = item.scripts.name?.trim() || null;
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.sessionId });
     return (
@@ -913,13 +1014,14 @@ const SessionRow: React.FC<SessionRowProps> = ({ item, selected, onOpen, onDupli
         >
             <button
                 type="button"
-                className={styles.session_button}
+                className={classNames(styles.session_button, styles.session_button_with_connections)}
                 aria-current={selected ? 'page' : undefined}
                 title={item.path}
                 onClick={event => onOpen(event.currentTarget)}
             >
                 <BookIcon size={14} aria-hidden="true" />
                 <span className={title ? styles.session_name : styles.session_path}>{title ?? item.path}</span>
+                <SessionConnections connections={item.connections} labelOf={labelOf} />
             </button>
             <SessionRowMenu item={item} onDuplicate={onDuplicate} onDelete={onDelete} dependencies={dependencies} />
         </li>
@@ -976,6 +1078,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         [attached?.main, attached?.attached],
     );
     const [connectionOverlayDatabaseId, setConnectionOverlayDatabaseId] = React.useState<string | null>(null);
+    const [connectionOverlayFocusName, setConnectionOverlayFocusName] = React.useState(false);
     const [createOpen, setCreateOpen] = React.useState(false);
     const [createConnectionOpen, setCreateConnectionOpen] = React.useState(false);
     const createConnectionButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -1011,9 +1114,13 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
             if (database == null) continue;
             const location = storageReader.getSessionLocation(sessionId);
             const path = displayPath(sessionId, location);
+            const attachedDatabases = mapping!.attachedDatabaseIds
+                .map(id => databaseRegistry.connections.get(id))
+                .filter((attachedDatabase): attachedDatabase is ConnectionState => attachedDatabase != null);
             items.push({
                 sessionId,
                 database,
+                connections: [database, ...attachedDatabases],
                 scripts,
                 path,
                 label: scripts.name?.trim() || path,
@@ -1047,9 +1154,22 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
         };
     }), [invalidSessions, storageReader]);
     const sessionCount = sessions.length + invalidItems.length;
+    const listedSessionIds = React.useMemo(() => new Set(scriptsRegistry.sessionScriptsMap.keys()), [scriptsRegistry]);
     const connectionRows = React.useMemo(
-        () => listedConnections(databaseRegistry, new Set(scriptsRegistry.sessionScriptsMap.keys()), sessionConnectionRows),
-        [databaseRegistry, scriptsRegistry, sessionConnectionRows],
+        () => listedConnections(databaseRegistry, listedSessionIds, sessionConnectionRows),
+        [databaseRegistry, listedSessionIds, sessionConnectionRows],
+    );
+    const sessionConnectionIds = React.useMemo(
+        () => new Set(sessionConnectionRows.map(database => database.connectionId)),
+        [sessionConnectionRows],
+    );
+    const ordinals = React.useMemo(
+        () => connectionOrdinals(databaseRegistry, listedSessionIds),
+        [databaseRegistry, listedSessionIds],
+    );
+    const labelOf = React.useCallback(
+        (database: ConnectionState) => connectionLabelParts(database, ordinals.get(database.connectionId) ?? null),
+        [ordinals],
     );
     const connectionCount = connectionRows.length;
     const describeUsage = React.useCallback((connectionId: string): ConnectionUsage => ({
@@ -1112,9 +1232,9 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
     const deleteConnection = React.useCallback((connectionId: string) => {
         const database = databaseRegistry.connections.get(connectionId);
         if (database == null || connectionRefCount(databaseRegistry, connectionId) > 0) return;
-        if (!window.confirm(`Delete the connection "${connectionLabel(database)}"?`)) return;
+        if (!window.confirm(`Delete the connection "${connectionLabelText(labelOf(database))}"?`)) return;
         databaseDispatch(connectionId, { type: DELETE_CONNECTION, value: null });
-    }, [databaseDispatch, databaseRegistry]);
+    }, [databaseDispatch, databaseRegistry, labelOf]);
 
     const createSession = React.useCallback((connector: ConnectorType) => {
         setCreateOpen(false);
@@ -1136,6 +1256,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
 
     const closeConnectionOverlay = React.useCallback(() => {
         setConnectionOverlayDatabaseId(null);
+        setConnectionOverlayFocusName(false);
         if (route.sessionSetupStatus === SessionSetupStatus.CONFIGURING && route.sessionId != null) {
             navigate({ type: SELECT_SESSION, value: route.sessionId });
         }
@@ -1314,8 +1435,8 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                                                             <use xlinkHref={`${symbols}#${database.connectorInfo.icons.colored}`} />
                                                         </svg>
                                                     </ActionList.Leading>
-                                                    <ActionList.ItemText>{connectionLabelParts(database).name}</ActionList.ItemText>
-                                                    <ActionList.Trailing><ConnectionProtocolTag detail={connectionLabelParts(database).detail} /></ActionList.Trailing>
+                                                    <ActionList.ItemText>{labelOf(database).name}</ActionList.ItemText>
+                                                    <ActionList.Trailing><ConnectionProtocolTag detail={labelOf(database).detail} /></ActionList.Trailing>
                                                 </ActionList.ListItem>
                                             ))}
                                             <ActionList.GroupHeading>New connection</ActionList.GroupHeading>
@@ -1345,6 +1466,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                                         key={item.sessionId}
                                         item={item}
                                         selected={item.sessionId === props.sessionScripts.sessionId}
+                                        labelOf={labelOf}
                                         onOpen={() => openSession(item)}
                                         onDuplicate={() => { void duplicateSession(item); }}
                                         onDelete={() => { void deleteSession(item); }}
@@ -1417,8 +1539,11 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                         describeUsage={describeUsage}
                         onDelete={deleteConnection}
                         initiallyExpanded={initiallyExpanded}
-                        onOpenSettings={(connectionId, anchor) => {
+                        sessionConnectionIds={sessionConnectionIds}
+                        labelOf={labelOf}
+                        onOpenSettings={(connectionId, anchor, focusName) => {
                             connectionSettingsAnchorRef.current = anchor;
+                            setConnectionOverlayFocusName(focusName ?? false);
                             setConnectionOverlayDatabaseId(connectionId);
                         }}
                     />}
@@ -1430,6 +1555,7 @@ export const SessionWorkbenchSidebar: React.FC<Props> = (props) => {
                 onClose={closeConnectionOverlay}
                 anchorRef={connectionSettingsAnchorRef}
                 renderSessionName={renderSessionName}
+                focusName={connectionOverlayFocusName}
             />
         </nav>
     );

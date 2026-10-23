@@ -182,6 +182,42 @@
     margin-right: 4px;
 }
 
+.session_button_with_connections {
+    grid-template-columns: 14px minmax(0, 1fr) max-content;
+}
+
+.session_connections {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--base_color_neutral_6);
+}
+
+.session_connection_icon {
+    display: block;
+    flex: none;
+}
+
+.session_connections_more {
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+}
+
+.connection_group_row {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 12px 4px;
+    color: var(--base_color_neutral_6);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.connection_group_row_first {
+    padding-top: 4px;
+}
+
 .database_body {
     display: flex;
     flex: 1;

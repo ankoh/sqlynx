@@ -43,8 +43,9 @@
 }
 .item_container.disabled {
     cursor: not-allowed;
+    opacity: 0.5;
 }
-.item_container:hover {
+.item_container:not(.disabled):hover {
     background-color: hsla(var(--neutral_hue), calc(17.5% * var(--neutral_tint)), 84.3%, 0.32);
     border: 1px solid var(--border_color_primary);
 }

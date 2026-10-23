@@ -13,6 +13,7 @@ import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status
 import { SegmentedControl } from '../../../ui/foundations/segmented_control.js';
 import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connection_settings.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
+import { ConnectionNameField } from './connection_name_field.js';
 
 const LOG_CTX = "conn_inline_header";
 
@@ -31,6 +32,8 @@ interface Props {
     onClose?: () => void;
     headerActions?: React.ReactNode;
     connectorNameAction?: React.ReactNode;
+    /// Rename the connection, the name is not editable without
+    onRename?: (name: string) => void;
     statusText?: string;
     indicatorStatus?: IndicatorStatus;
     statusError?: string | null;
@@ -120,6 +123,9 @@ export function ConnectionInlineHeader(props: Props): React.ReactElement {
                         {props.connector.names.displayLong}
                     </div>
                     {props.connectorNameAction}
+                    {props.connection != null && props.onRename != null && (
+                        <ConnectionNameField name={props.connection.name ?? null} onCommit={props.onRename} />
+                    )}
                 </div>
                 <div className={style.actions}>
                     {props.protocol !== undefined && props.onProtocolChange && props.protocols && props.protocols.length > 1 && (

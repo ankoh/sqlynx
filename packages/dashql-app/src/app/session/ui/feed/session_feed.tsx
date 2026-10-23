@@ -42,6 +42,7 @@ import type { DataFile } from '../../../storage/storage_backend.js';
 import { stringifyError } from '../../../../platform/logger/logger.js';
 import { SessionDataCard } from './session_data_card.js';
 import { scriptConnectionView, usePickScriptConnection, type ScriptConnectionView } from '../script_connection_picker.js';
+import { useConnectionLabeler } from '../connection_labels.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundations/button.js';
 import { ChevronDownIcon, ChevronUpIcon, PlusIcon } from '../../../../ui/foundations/symbol_icon.js';
 import { HYPER_CONNECTOR } from '../../../connections/connector_info.js';
@@ -106,9 +107,10 @@ const restrictToVerticalAxis: Modifier = ({ transform }) => ({ ...transform, x: 
 /// The views of the connections that the scripts run on.
 /// The map keeps its identity while the shown fields are unchanged, the memoized feed rows depend on it.
 function useScriptConnectionViews(connections: ReadonlyMap<string, ConnectionState>): ReadonlyMap<string, ScriptConnectionView> {
+    const labeler = useConnectionLabeler();
     const views = React.useRef<Map<string, ScriptConnectionView>>(new Map());
     const next = new Map<string, ScriptConnectionView>();
-    for (const connection of connections.values()) next.set(connection.connectionId, scriptConnectionView(connection));
+    for (const connection of connections.values()) next.set(connection.connectionId, scriptConnectionView(connection, labeler(connection)));
     const prev = views.current;
     const unchanged = prev.size === next.size && [...next].every(([id, view]) => {
         const old = prev.get(id);

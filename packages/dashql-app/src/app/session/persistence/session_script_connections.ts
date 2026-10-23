@@ -58,7 +58,11 @@ export function resolveSessionScripts(
     const scripts = listed.map(entry => scriptOf(entry.name, entry.connectionId));
     const list: SessionScript[] = scripts.map(script => ({ name: script.name, connectionId: script.unresolvedConnectionId ?? script.connection.connectionId }));
     const used = [defaultConnection, ...scripts.map(script => script.connection)]
-        .map(connection => ({ connectionId: connection.connectionId, params: connection.params }));
+        .map(connection => ({
+            connectionId: connection.connectionId,
+            ...(connection.name == null ? {} : { name: connection.name }),
+            params: connection.params,
+        }));
     return {
         scripts,
         session: withSessionScripts({ ...session, defaultConnectionId: defaultConnection.connectionId }, list, used),

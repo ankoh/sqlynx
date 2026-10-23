@@ -8,13 +8,21 @@ import {
     WRITE_CONNECTION_ENTRY,
     type StorageWriteResult,
 } from '../storage/storage_writer.js';
-import { COMMIT_CONNECTION_PARAMS } from './connection_state.js';
+import { COMMIT_CONNECTION_PARAMS, type ConnectionState } from './connection_state.js';
 import {
+    connectionEntryFromState,
     findSessionsForConnection,
+    sessionConnectionFromState,
     useConnectionDispatch,
     useConnectionRegistryStore,
 } from './connection_registry.js';
 import { connectionParamsWithoutDraftRows, type ConnectionParams } from './connection_params.js';
+import type { SessionConnection } from '../storage/storage_backend.js';
+
+/// The copy of a connection with saved params that the sessions store
+function sessionCopy(connection: ConnectionState, params: ConnectionParams): SessionConnection {
+    return { ...sessionConnectionFromState(connection), params };
+}
 
 /// The outcome of writing a session's copy of the connection params
 export interface SessionCopySaveResult {
@@ -81,12 +89,12 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
         setStates(prev => new Map(prev).set(connectionId, state));
     }, []);
 
-    const writeSessionCopies = React.useCallback(async (connectionId: string, sessionIds: string[], params: ConnectionParams) => {
+    const writeSessionCopies = React.useCallback(async (copy: SessionConnection, sessionIds: string[]) => {
         return await Promise.all(sessionIds.map(async sessionId => ({
             sessionId,
             result: await storageWriter.writeDurable(
-                groupSessionConnectionCopyWrites(sessionId, connectionId),
-                { type: PATCH_SESSION_CONNECTION, value: [sessionId, connectionId, params] },
+                groupSessionConnectionCopyWrites(sessionId, copy.connectionId),
+                { type: PATCH_SESSION_CONNECTION, value: [sessionId, copy] },
             ),
         })));
     }, [storageWriter]);
@@ -102,7 +110,7 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
             // Write the source of truth first, the same key replaces pending draft writes
             const manifest = await storageWriter.writeDurable(
                 groupConnectionEntryWrites(connectionId),
-                { type: WRITE_CONNECTION_ENTRY, value: { id: connectionId, params } },
+                { type: WRITE_CONNECTION_ENTRY, value: { ...connectionEntryFromState({ ...connection, paramsDraft: undefined }), params } },
             );
             if (manifest.status !== 'written') {
                 const result: ConnectionSaveResult = { params, manifest, sessions: [] };
@@ -111,7 +119,7 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
             }
             dispatch(connectionId, { type: COMMIT_CONNECTION_PARAMS, value: params });
             const sessionIds = findSessionsForConnection(registryStore.current, connectionId);
-            const result: ConnectionSaveResult = { params, manifest, sessions: await writeSessionCopies(connectionId, sessionIds, params) };
+            const result: ConnectionSaveResult = { params, manifest, sessions: await writeSessionCopies(sessionCopy(connection, params), sessionIds) };
             setState(connectionId, { saving: false, result });
             return result;
         } catch (error) {
@@ -125,7 +133,9 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
         const last = states.get(connectionId)?.result;
         if (last == null || last.manifest.status !== 'written') return null;
         setState(connectionId, { saving: true, result: last });
-        const retried = await writeSessionCopies(connectionId, sessionIds, last.params);
+        const connection = registryStore.current.connections.get(connectionId);
+        if (connection == null) return null;
+        const retried = await writeSessionCopies(sessionCopy(connection, last.params), sessionIds);
         const bySession = new Map(retried.map(r => [r.sessionId, r]));
         const result: ConnectionSaveResult = {
             ...last,
@@ -133,7 +143,7 @@ export const ConnectionPersistenceProvider: React.FC<{ children: React.ReactElem
         };
         setState(connectionId, { saving: false, result });
         return result;
-    }, [setState, states, writeSessionCopies]);
+    }, [registryStore, setState, states, writeSessionCopies]);
 
     const value = React.useMemo(() => ({ states, save, retry }), [states, save, retry]);
     return (

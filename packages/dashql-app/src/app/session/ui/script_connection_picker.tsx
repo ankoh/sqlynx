@@ -17,7 +17,7 @@ import {
 import { scriptConnectionOf, SET_SCRIPT_CONNECTION } from '../scripts/session_scripts.js';
 import type { ModifySessionScripts } from '../scripts/session_scripts_registry.js';
 import { CONNECTION_HEALTH_COLORS } from '../../connections/ui/connection_status.js';
-import { connectionLabel, connectionLabelParts, type ConnectionLabelParts } from '../../connections/ui/connection_label.js';
+import { connectionLabelParts, connectionLabelText, connectionOrdinals, type ConnectionLabelParts } from '../../connections/ui/connection_label.js';
 import { ConnectionLabelView, ConnectionProtocolTag } from '../../connections/ui/connection_label_view.js';
 import { useSessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { listedConnections } from './session_workbench_sidebar.js';
@@ -39,14 +39,14 @@ export interface ScriptConnectionView {
 }
 
 /// The view of a connection
-export function scriptConnectionView(connection: ConnectionState): ScriptConnectionView {
+export function scriptConnectionView(connection: ConnectionState, labelParts: ConnectionLabelParts = connectionLabelParts(connection)): ScriptConnectionView {
     return {
         connectionId: connection.connectionId,
         connectionHealth: connection.connectionHealth,
         details: connection.details,
         connectorInfo: connection.connectorInfo,
-        label: connectionLabel(connection),
-        labelParts: connectionLabelParts(connection),
+        label: connectionLabelText(labelParts),
+        labelParts,
     };
 }
 
@@ -145,31 +145,52 @@ interface MenuProps {
 function ScriptConnectionMenu(props: MenuProps) {
     const [connections] = useConnectionRegistry();
     const [scripts] = useSessionScriptsRegistry();
-    const listed = React.useMemo(() => {
+    const { sessionConnections, otherConnections, ordinals } = React.useMemo(() => {
         const session = resolveSessionAttachedDatabases(connections, props.sessionId);
         const sessionConnections = session == null ? [] : [session.main, ...session.attached];
-        return listedConnections(connections, new Set(scripts.sessionScriptsMap.keys()), sessionConnections);
+        const sessionIds = new Set(scripts.sessionScriptsMap.keys());
+        const listed = listedConnections(connections, sessionIds, sessionConnections);
+        return {
+            sessionConnections,
+            otherConnections: listed.slice(sessionConnections.length),
+            ordinals: connectionOrdinals(connections, sessionIds),
+        };
     }, [connections, scripts, props.sessionId]);
+    const renderItem = (connection: ConnectionState) => (
+        <ActionList.ListItem
+            key={connection.connectionId}
+            aria-current={connection.connectionId === props.connectionId ? 'true' : undefined}
+            onClick={() => props.onPick(connection.connectionId)}
+        >
+            <ActionList.Leading>
+                <svg className={styles.connector_icon} width="16px" height="16px" aria-hidden="true">
+                    <use xlinkHref={`${symbols}#${connection.connectorInfo.icons.colored}`} />
+                </svg>
+            </ActionList.Leading>
+            <ActionList.ItemText>
+                <ActionList.ItemTextTitle>
+                    <ConnectionLabelView parts={connectionLabelParts(connection, ordinals.get(connection.connectionId) ?? null)} />
+                </ActionList.ItemTextTitle>
+            </ActionList.ItemText>
+            <ActionList.Trailing><HealthDot health={connection.connectionHealth} /></ActionList.Trailing>
+        </ActionList.ListItem>
+    );
     return (
         <div className={styles.menu} role="dialog" aria-label={`Connection of ${props.scriptName} script`}>
             <ActionList.List aria-label={`Connections for ${props.scriptName} script`}>
-                {listed.map(connection => (
-                    <ActionList.ListItem
-                        key={connection.connectionId}
-                        aria-current={connection.connectionId === props.connectionId ? 'true' : undefined}
-                        onClick={() => props.onPick(connection.connectionId)}
-                    >
-                        <ActionList.Leading>
-                            <svg className={styles.connector_icon} width="16px" height="16px" aria-hidden="true">
-                                <use xlinkHref={`${symbols}#${connection.connectorInfo.icons.colored}`} />
-                            </svg>
-                        </ActionList.Leading>
-                        <ActionList.ItemText>
-                            <ActionList.ItemTextTitle><ConnectionLabelView parts={connectionLabelParts(connection)} /></ActionList.ItemTextTitle>
-                        </ActionList.ItemText>
-                        <ActionList.Trailing><HealthDot health={connection.connectionHealth} /></ActionList.Trailing>
-                    </ActionList.ListItem>
-                ))}
+                {/* The list takes elements only, the fragments wrap the optional groups */}
+                <>{sessionConnections.length > 0 && (
+                    <>
+                        <ActionList.GroupHeading>This session</ActionList.GroupHeading>
+                        {sessionConnections.map(renderItem)}
+                    </>
+                )}</>
+                <>{otherConnections.length > 0 && (
+                    <>
+                        <ActionList.GroupHeading>Other connections</ActionList.GroupHeading>
+                        {otherConnections.map(renderItem)}
+                    </>
+                )}</>
             </ActionList.List>
         </div>
     );

@@ -8,7 +8,7 @@ import * as style from './connection_settings.module.css';
 import { BookIcon, KeyIcon, PlugIcon, XIcon } from '../../../ui/foundations/symbol_icon.js';
 
 import { Button, ButtonVariant } from '../../../ui/foundations/button.js';
-import { ConnectionHealth } from '../connection_state.js';
+import { ConnectionHealth, SET_CONNECTION_NAME } from '../connection_state.js';
 import { Dispatch } from '../../../utils/variant.js';
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../../ui/foundations/keyvalue_list.js';
 import { TextField, VALIDATION_WARNING } from '../../../ui/foundations/text_field.js';
@@ -335,6 +335,7 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
             <ConnectionInlineHeader
                 connector={connectorInfo}
                 connection={connectionState}
+                onRename={name => dispatchConnectionState({ type: SET_CONNECTION_NAME, value: name })}
                 wrongPlatform={wrongPlatform}
                 setupConnection={setupConnection}
                 cancelSetup={cancelSetup}

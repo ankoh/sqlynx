@@ -121,6 +121,21 @@ export function findSessionsWithMainDatabase(registry: ConnectionRegistry, conne
     return sessions;
 }
 
+/// Is a connection listed next to the sessions?
+/// Connections that sessions of the scripts registry reference are listed, as are active
+/// connections that no session references. Connections of internal hosts (e.g. the shell), which
+/// only sessions outside of the scripts registry reference, are not.
+export function isListedConnection(
+    registry: Pick<ConnectionRegistry, 'connections' | 'attachedDatabasesBySession'>,
+    sessionIds: ReadonlySet<string>,
+    connectionId: string,
+): boolean {
+    const database = registry.connections.get(connectionId);
+    if (database == null) return false;
+    const sessions = findSessionsForConnection(registry as ConnectionRegistry, connectionId);
+    return sessions.length === 0 ? database.active : sessions.some(sessionId => sessionIds.has(sessionId));
+}
+
 /// The number of sessions that reference a connection
 export function connectionRefCount(registry: ConnectionRegistry, connectionId: string): number {
     return findSessionsForConnection(registry, connectionId).length;
@@ -176,6 +191,7 @@ export function findSessionQueries(database: ConnectionState, sessionId: string,
 export function connectionEntryFromState(database: ConnectionState): ConnectionEntry {
     return {
         id: database.connectionId,
+        ...(database.name == null ? {} : { name: database.name }),
         params: database.params,
         ...(database.paramsDraft == null ? {} : { paramsDraft: database.paramsDraft }),
     };
@@ -183,7 +199,11 @@ export function connectionEntryFromState(database: ConnectionState): ConnectionE
 
 /// Build the copy of a connection that a session file stores
 export function sessionConnectionFromState(database: ConnectionState): SessionConnection {
-    return { connectionId: database.connectionId, params: database.params };
+    return {
+        connectionId: database.connectionId,
+        ...(database.name == null ? {} : { name: database.name }),
+        params: database.params,
+    };
 }
 
 /// Did the saved params change?
@@ -191,14 +211,19 @@ export function didConnectionParamsChange(prev: ConnectionState, next: Connectio
     return !connectionParamsEqual(prev.params, next.params);
 }
 
+/// Did the copy of the connection that sessions store change?
+export function didSessionConnectionCopyChange(prev: ConnectionState, next: ConnectionState): boolean {
+    return didConnectionParamsChange(prev, next) || prev.name !== next.name;
+}
+
 /// Did the persisted connection entry change?
 export function didPersistedConnectionChange(prev: ConnectionState, next: ConnectionState): boolean {
     if (!prev.active && next.active) return true;
-    return didConnectionParamsChange(prev, next) || !connectionParamsEqual(prev.paramsDraft, next.paramsDraft);
+    return didSessionConnectionCopyChange(prev, next) || !connectionParamsEqual(prev.paramsDraft, next.paramsDraft);
 }
 
-/// Write the saved params of a connection into the app manifest and into every session that
-/// references it. The writes are debounced and not awaited, Save awaits them explicitly.
+/// Write the saved params and the name of a connection into the app manifest and into every session
+/// that references it. The writes are debounced and not awaited, Save awaits them explicitly.
 export function scheduleConnectionParamsWrites(registry: ConnectionRegistry, database: ConnectionState, storageWriter: StorageWriter): void {
     void storageWriter.write(
         groupConnectionEntryWrites(database.connectionId),
@@ -208,7 +233,7 @@ export function scheduleConnectionParamsWrites(registry: ConnectionRegistry, dat
     for (const sessionId of findSessionsForConnection(registry, database.connectionId)) {
         void storageWriter.write(
             groupSessionConnectionCopyWrites(sessionId, database.connectionId),
-            { type: PATCH_SESSION_CONNECTION, value: [sessionId, database.connectionId, database.params] },
+            { type: PATCH_SESSION_CONNECTION, value: [sessionId, sessionConnectionFromState(database)] },
             DEBOUNCE_DURATION_SESSION_WRITE,
         );
     }
@@ -439,8 +464,8 @@ export function useConnectionDispatch(): DynamicConnectionDispatch {
                     continue;
                 }
                 if (action.type !== COMMIT_CONNECTION_PARAMS) {
-                    if (didConnectionParamsChange(prev, next) || (!prev.active && next.active)) {
-                        // Saved params are replicated into every session that references the connection
+                    if (didSessionConnectionCopyChange(prev, next) || (!prev.active && next.active)) {
+                        // Saved params and the name are replicated into every session that references the connection
                         scheduleConnectionParamsWrites(reg, next, storageWriter);
                     } else if (didPersistedConnectionChange(prev, next)) {
                         // Drafts only live in the app manifest

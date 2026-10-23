@@ -14,6 +14,7 @@ import { ConnectionHealth, type ConnectionState } from '../connection_state.js';
 import { HyperConnectorSettings } from './hyper_connection_settings.js';
 import { TrinoConnectorSettings } from './trino_connection_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connection_settings.js';
+import { CONNECTION_NAME_FOCUS_CTX } from './connection_name_field.js';
 
 const UndoIcon = SymbolIcon('undo_16');
 
@@ -28,6 +29,8 @@ interface Props {
     side?: AnchorSide;
     /// Renders the name of a session, the session id if absent
     renderSessionName?: (sessionId: string) => React.ReactNode;
+    /// Focus the name of the connection when the overlay opens
+    focusName?: boolean;
 }
 
 export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
@@ -88,11 +91,13 @@ export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
             maxHeight={OverlaySize.XL}
         >
             <div className={styles.overlay_container}>
+                <CONNECTION_NAME_FOCUS_CTX.Provider value={props.focusName ?? false}>
                 <div className={styles.content}>
                     {currentConnectorType === ConnectorType.HYPER && <HyperConnectorSettings connectionId={props.connectionId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
                     {currentConnectorType === ConnectorType.TRINO && <TrinoConnectorSettings connectionId={props.connectionId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
                     {currentConnectorType === ConnectorType.SALESFORCE_DATA_CLOUD && <SalesforceConnectorSettings connectionId={props.connectionId} headerActions={headerActions} onClose={saving ? undefined : props.onClose} />}
                 </div>
+                </CONNECTION_NAME_FOCUS_CTX.Provider>
                 <ConnectionSaveFooter
                     connectionId={props.connectionId}
                     dirty={paramsDraft != null}

@@ -48,7 +48,7 @@ describe('V2 storage writer flat mutations', () => {
                 type: WRITE_SESSION_PROPERTIES, value: [TEST_SESSION_ID, { name, settings: { cacheQueryResults: true } }],
             }, 10_000);
             const connection = () => writer.write(groupSessionConnectionCopyWrites(TEST_SESSION_ID, TEST_CONNECTION_ID), {
-                type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, TEST_CONNECTION_ID, saved],
+                type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, { connectionId: TEST_CONNECTION_ID, params: saved }],
             }, 10_000);
             const tasks = order === 'name-first' ? [rename(), connection()] : [connection(), rename()];
             expect(writer.getPendingKeysForSession(TEST_SESSION_ID)).toHaveLength(2);
@@ -295,7 +295,7 @@ describe('storage writer outcomes', () => {
         const backend = new SessionTestBackend();
         const writer = new StorageWriter(new NullLogger(), backend);
         const result = await writer.writeDurable(groupSessionConnectionCopyWrites(TEST_SESSION_ID, TEST_CONNECTION_ID), {
-            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, TEST_CONNECTION_ID, { trino: { endpoint: 'x' } } as any],
+            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, { connectionId: TEST_CONNECTION_ID, params: { trino: { endpoint: 'x' } } as any }],
         });
         expect(result.status).toBe('failed');
         expect(result.status === 'failed' && result.error).toBeInstanceOf(SessionUnavailableError);
@@ -313,7 +313,7 @@ describe('storage writer outcomes', () => {
         }));
         backend.calls.length = 0;
         const result = await writer.writeDurable(groupSessionConnectionCopyWrites(TEST_SESSION_ID, TEST_CONNECTION_ID), {
-            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, TEST_CONNECTION_ID, next, [alias]],
+            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, { connectionId: TEST_CONNECTION_ID, params: next }, [alias]],
         });
         expect(result).toEqual({ status: 'written' });
         const session = await backend.loadSession(TEST_SESSION_ID);
@@ -321,9 +321,27 @@ describe('storage writer outcomes', () => {
         expect(session.defaultConnectionId).toBe(TEST_CONNECTION_ID);
         // An up-to-date copy is not written again
         await writer.writeDurable(groupSessionConnectionCopyWrites(TEST_SESSION_ID, TEST_CONNECTION_ID), {
-            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, TEST_CONNECTION_ID, next],
+            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, { connectionId: TEST_CONNECTION_ID, params: next }],
         });
         expect(backend.calls).toEqual([`manifest:${TEST_SESSION_ID}`]);
+    });
+
+    it('patches the name of a connection into its copies', async () => {
+        const backend = new SessionTestBackend();
+        const writer = new StorageWriter(new NullLogger(), backend);
+        const params = { trino: { endpoint: 'x' } } as any;
+        await backend.saveSessionManifest(TEST_SESSION_ID, testSession({
+            ...testConnections({ connectionId: TEST_CONNECTION_ID, params }),
+        }));
+        await writer.writeDurable(groupSessionConnectionCopyWrites(TEST_SESSION_ID, TEST_CONNECTION_ID), {
+            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, { connectionId: TEST_CONNECTION_ID, name: 'Production', params }],
+        });
+        expect((await backend.loadSession(TEST_SESSION_ID)).connections).toEqual([{ connectionId: TEST_CONNECTION_ID, name: 'Production', params }]);
+        // Removing the name removes it from the copy
+        await writer.writeDurable(groupSessionConnectionCopyWrites(TEST_SESSION_ID, TEST_CONNECTION_ID), {
+            type: PATCH_SESSION_CONNECTION, value: [TEST_SESSION_ID, { connectionId: TEST_CONNECTION_ID, params }],
+        });
+        expect((await backend.loadSession(TEST_SESSION_ID)).connections).toEqual([{ connectionId: TEST_CONNECTION_ID, params }]);
     });
 
     it('keeps the creation time and aliases of connection entries', async () => {

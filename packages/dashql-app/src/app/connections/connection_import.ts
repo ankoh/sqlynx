@@ -4,7 +4,7 @@ import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 import { computeConnectionSignatureFromDetails, ConnectionStateDetailsVariant } from './connection_state_details.js';
 import { LoggableException } from '../../platform/logger/logger.js';
 import { CONNECTOR_INFOS, ConnectorInfo, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
-import { ConnectionHealth, ConnectionState, ConnectionStatus, createConnectionMetrics } from './connection_state.js';
+import { ConnectionHealth, ConnectionState, ConnectionStatus, createConnectionMetrics, normalizeConnectionName } from './connection_state.js';
 import { generateCatalogScriptHeader, CatalogSource } from './catalog_sql_generator.js';
 import { generateFunctionScriptHeader } from './catalog_function_sql_generator.js';
 import { DefaultHasher } from '../../utils/hash_default.js';
@@ -63,7 +63,7 @@ export function decodeConnectionFromProto(conn: connection.Connection, sessionId
     }
 }
 
-export function restoreConnectionState(instance: dashql.DashQL, connectionId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap, paramsDraft?: ConnectionParams): ConnectionState {
+export function restoreConnectionState(instance: dashql.DashQL, connectionId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap, paramsDraft?: ConnectionParams, name?: string): ConnectionState {
     const hasher = new DefaultHasher();
     computeConnectionSignatureFromDetails(details, hasher);
     const sig = newConnectionSignature(hasher, connSigs, null);
@@ -99,6 +99,7 @@ export function restoreConnectionState(instance: dashql.DashQL, connectionId: st
         details: details,
         params: getConnectionParamsFromStateDetails(details)!,
         paramsDraft: paramsDraft == null ? undefined : structuredClone(paramsDraft),
+        name: normalizeConnectionName(name),
         metrics: createConnectionMetrics(),
         catalog: restoredCatalog,
         catalogUpdates: {

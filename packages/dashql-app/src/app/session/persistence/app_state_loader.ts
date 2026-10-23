@@ -3,7 +3,7 @@ import type { Logger } from '../../../platform/logger/logger.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
 import { ProgressCounter } from '../../../utils/progress.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
-import { registerConnection, type ConnectionRegistry, type SessionAttachedDatabases } from '../../connections/connection_registry.js';
+import { registerConnection, sessionConnectionFromState, type ConnectionRegistry, type SessionAttachedDatabases } from '../../connections/connection_registry.js';
 import type { SessionScripts, ScriptData } from '../scripts/session_scripts.js';
 import { addSessionScriptsForConnection, type SessionScriptsRegistry } from '../scripts/session_scripts_registry.js';
 import { createEmptyScriptData, destroySessionScripts, replaceScriptSessionText, scriptConnectionOf, sessionConnectionIds } from '../scripts/session_scripts.js';
@@ -243,7 +243,7 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
     let state: ConnectionState;
     try {
         const [connectorInfo, details] = decodeConnectionFromProto(entry.params as any, entry.id);
-        state = restoreConnectionState(ctx.core, entry.id, connectorInfo, details, ctx.connectionSignatures, entry.paramsDraft);
+        state = restoreConnectionState(ctx.core, entry.id, connectorInfo, details, ctx.connectionSignatures, entry.paramsDraft, entry.name);
     } catch (error) {
         // Sessions referencing the connection register it again from their copies
         ctx.logger.warn("Failed to restore connection", { connectionId: entry.id, error: stringifyError(error) }, LOG_CTX);
@@ -295,7 +295,7 @@ async function restoreConnectionEntry(ctx: RestoreContext, entry: ConnectionEntr
 /// The connection is neither registered nor written, see `destroyUnregisteredConnection`.
 export function connectionStateFromCopy(core: DashQL, connectionId: string, copy: SessionConnection, signatures: Map<string, string | null>): ConnectionState {
     const [connectorInfo, details] = decodeConnectionFromProto(copy.params as any, connectionId);
-    return restoreConnectionState(core, connectionId, connectorInfo, details, signatures, copy.paramsDraft);
+    return restoreConnectionState(core, connectionId, connectorInfo, details, signatures, copy.paramsDraft, copy.name);
 }
 
 /// Resolve a session's reference to a connection.
@@ -304,7 +304,7 @@ function resolveSessionConnection(ctx: RestoreContext, sessionId: string, databa
     const connectionId = ctx.aliases.get(database.connectionId) ?? database.connectionId;
     const known = ctx.connectionStates.get(connectionId);
     if (known != null) {
-        if (connectionId !== database.connectionId || database.paramsDraft != null || !connectionParamsEqual(database.params, known.params)) {
+        if (connectionId !== database.connectionId || database.paramsDraft != null || database.name !== known.name || !connectionParamsEqual(database.params, known.params)) {
             ctx.pendingWrites.sessionCopies.push({ sessionId, connectionId });
         }
         return known;
@@ -315,6 +315,7 @@ function resolveSessionConnection(ctx: RestoreContext, sessionId: string, databa
     ctx.newConnections.set(state.connectionId, state);
     ctx.pendingWrites.connectionEntries.push({
         id: state.connectionId,
+        ...(state.name == null ? {} : { name: state.name }),
         params: state.params,
         ...(database.paramsDraft == null ? {} : { paramsDraft: database.paramsDraft }),
         createdAt: new Date().toISOString(),
@@ -600,7 +601,7 @@ async function flushRestoredConnectionWrites(ctx: RestoreContext, registry: Sess
         if (connection == null) continue;
         try {
             const existing = await ctx.backend.loadSession(sessionId);
-            const next = patchSessionConnection(existing, connectionId, connection.params, ctx.aliasesOf.get(connectionId) ?? []);
+            const next = patchSessionConnection(existing, sessionConnectionFromState(connection), ctx.aliasesOf.get(connectionId) ?? []);
             if (next != null) {
                 await ctx.backend.saveSessionManifest(sessionId, next);
             }

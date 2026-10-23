@@ -16,7 +16,7 @@ import { displayPath } from '../../storage/session_locator.js';
 import { useStorage } from '../../storage/storage_provider.js';
 import { restoreSingleSession } from './app_state_loader.js';
 import { mergeRestoredSessionIntoConnections, mergeRestoredSessionIntoScripts } from './app_state_loader.js';
-import { connectionRefCount, findSessionQueries, useConnectionRegistrySetter, useConnectionRegistryStore } from '../../connections/connection_registry.js';
+import { connectionEntryFromState, connectionRefCount, findSessionQueries, useConnectionRegistrySetter, useConnectionRegistryStore } from '../../connections/connection_registry.js';
 import type { ConnectionState } from '../../connections/connection_state.js';
 import { useSessionScriptsRegistrySetter } from '../scripts/session_scripts_registry.js';
 import { useDashQLCoreSetup } from '../../providers/core_provider.js';
@@ -118,10 +118,13 @@ export function SessionImportProvider(props: React.PropsWithChildren) {
         // The live connections may be ahead of the manifest while writes are debounced
         const live = connectionStore.current;
         const entries: ConnectionEntry[] = ((await backend.loadManifest()).connections ?? [])
-            .map(entry => ({ ...entry, params: live.connections.get(entry.id)?.params ?? entry.params }));
+            .map(entry => {
+                const connection = live.connections.get(entry.id);
+                return connection == null ? entry : { ...entry, name: connection.name, params: connection.params };
+            });
         for (const [connectionId, connection] of live.connections) {
             if (!entries.some(entry => entry.id === connectionId) && connectionRefCount(live, connectionId) > 0) {
-                entries.push({ id: connectionId, params: connection.params });
+                entries.push(connectionEntryFromState({ ...connection, paramsDraft: undefined }));
             }
         }
         const plan = planConnectionImport(bundle.session, entries);
