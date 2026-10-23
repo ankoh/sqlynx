@@ -171,6 +171,26 @@ describe('storage migration', () => {
         expect(json(`sessions/${SESSION_A}/dashql-session.json`).formatVersion).toBe(SESSION_FORMAT_VERSION);
     });
 
+    it('moves the files of the shell to the shell folder', async () => {
+        files.set('dashql-manifest.json', JSON.stringify({ sessions: [], connections: [], storageVersion: 4 }));
+        dirs.add('dashql-shell');
+        dirs.add('dashql-shell/nested');
+        files.set('dashql-shell/salesforce-login-history.json', '{"version":1,"entries":[]}');
+        files.set('dashql-shell/nested/notes.txt', 'nested');
+        // A file that the shell folder has already is kept
+        dirs.add('shell');
+        files.set('shell/kept.txt', 'kept');
+
+        await migrateStorage(new NullLogger(), root);
+
+        expect(json('dashql-manifest.json').storageVersion).toBe(STORAGE_VERSION);
+        expect(text('shell/salesforce-login-history.json')).toBe('{"version":1,"entries":[]}');
+        expect(text('shell/nested/notes.txt')).toBe('nested');
+        expect(text('shell/kept.txt')).toBe('kept');
+        expect([...files.keys()].filter(file => file.startsWith('dashql-shell'))).toEqual([]);
+        expect([...dirs].filter(dir => dir.startsWith('dashql-shell'))).toEqual([]);
+    });
+
     it('refuses a storage of a newer version', async () => {
         const manifest = JSON.stringify({ sessions: [], storageVersion: STORAGE_VERSION + 1 });
         files.set('dashql-manifest.json', manifest);

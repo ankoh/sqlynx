@@ -3,6 +3,7 @@ import type * as app_session from '@ankoh/dashql-jsonschema/app_session.js';
 
 import type { CacheFileStat } from './query_result_cache_eviction.js';
 import type { CachedQueryResult } from '../../query/query_result_cache.js';
+import { HYPER_OPFS_ROOT } from '../../platform/hyperdb/hyperdb_opfs.js';
 export type { CachedQueryResult } from '../../query/query_result_cache.js';
 
 // Storage file and folder naming conventions
@@ -19,9 +20,17 @@ export const STORAGE_CACHE_EXTENSION = '.arrow';
 /// into an LRU without rewriting the (potentially large) payload. The marker is advisory: the
 /// `.arrow` files are authoritative, so a missing marker just falls back to the payload's own mtime.
 export const STORAGE_CACHE_ACCESS_SUFFIX = '.last_access';
-export const STORAGE_SHELL_FOLDER = 'dashql-shell';
+export const STORAGE_SHELL_FOLDER = 'shell';
 /// The folder that holds the files of the connections, e.g. `connections/<uuid>/…`
 export const STORAGE_CONNECTIONS_FOLDER = 'connections';
+/// The extract of the Hyper log of a connection, e.g. `connections/<uuid>/logs.hyper`.
+/// It is deleted with the files of the connection, and it is not part of session bundles.
+export const STORAGE_CONNECTION_LOGS_FILE = 'logs.hyper';
+
+/// The Hyper path of the log extract of a connection
+export function connectionLogsDatabasePath(connectionId: string): string {
+    return `${HYPER_OPFS_ROOT}/${STORAGE_CONNECTIONS_FOLDER}/${connectionId}/${STORAGE_CONNECTION_LOGS_FILE}`;
+}
 
 /// The relations of the catalog, as the last catalog refresh described them
 export const STORAGE_CATALOG_RELATIONS = 'dashql-catalog-relations.sql';

@@ -415,7 +415,7 @@ describe('HyperDB embedded database adapter', () => {
         const client = new FakeHyperDBEngineClient();
         const database = await HyperDB.create(client, undefined, {
             computeDatabasePath: '/mnt/fs/compute.hyper',
-            defaultDatabasePath: '/mnt/fs/session.hyper',
+            defaultDatabasePath: '/mnt/fs/user.hyper',
         });
         const setupConnects = client.connectCount;
 
@@ -428,7 +428,7 @@ describe('HyperDB embedded database adapter', () => {
 
         expect(client.connectCount - setupConnects).toBe(2);
         expect(client.calls.filter(call => /query:\d+:ATTACH DATABASE "\/mnt\/fs\/compute.hyper" AS "__dashql_compute"/.test(call))).toHaveLength(1);
-        expect(client.calls.filter(call => /query:\d+:ATTACH DATABASE "\/mnt\/fs\/session.hyper" AS "hyper"/.test(call))).toHaveLength(1);
+        expect(client.calls.filter(call => /query:\d+:ATTACH DATABASE "\/mnt\/fs\/user.hyper" AS "hyper"/.test(call))).toHaveLength(1);
 
         await computeAgain.close();
         await hyperAgain.close();

@@ -6,6 +6,7 @@ import { DataFrame, generateTableName } from '../../compute/data_frame.js';
 import { WebFile } from '../file/web_file.js';
 import { ShellFileRegistry } from '../../shell/shell_files.js';
 import { createWebHyperDBClient, setupWebHyperDB } from './hyperdb_provider_web.js';
+import { HYPER_INSTANCE_LOGS_DIRECTORY, HYPER_INSTANCES_DIRECTORY } from './hyperdb_opfs_instance.js';
 import { TestLogger } from '../logger/test_logger.js';
 import { HyperDB, type HyperDBEngineClient, type HyperDBResult } from './hyperdb_wasm.js';
 import { exportArrowTableAsParquet, PARQUET_EXPORT_DIRECTORY } from './hyperdb_parquet_export.js';
@@ -185,16 +186,37 @@ describe('HyperDB embedded database integration', () => {
         await connection.close();
     });
 
-    it('creates and disposes a production OPFS session', async () => {
+    it('creates and disposes a production OPFS instance', async () => {
         const factory = globalThis.__DASHQL_TEST_HYPERDB_FACTORY__;
         globalThis.__DASHQL_TEST_HYPERDB_FACTORY__ = undefined;
+        const listInstances = async () => {
+            const instances = await (await navigator.storage.getDirectory())
+                .getDirectoryHandle(HYPER_INSTANCES_DIRECTORY, { create: true });
+            const names: string[] = [];
+            for await (const name of instances.keys()) names.push(name);
+            return names;
+        };
         try {
-            const sessionDatabase = await setupWebHyperDB('opfs_session_test', new TestLogger());
-            const connection = await sessionDatabase.connect();
+            const before = new Set(await listInstances());
+            const instanceDatabase = await setupWebHyperDB('opfs_instance_test', new TestLogger());
+            const created = (await listInstances()).filter(name => !before.has(name));
+            expect(created).toHaveLength(1);
+            const connection = await instanceDatabase.connect();
             expect(toPlainObjects(await connection.query('SELECT 42::INTEGER AS answer')))
                 .toEqual([{ answer: 42 }]);
+            // The instance writes its Hyper log into its own folder, and hyper_log() reads it from there.
+            const logs = await (await (await (await navigator.storage.getDirectory())
+                .getDirectoryHandle(HYPER_INSTANCES_DIRECTORY)).getDirectoryHandle(created[0]))
+                .getDirectoryHandle(HYPER_INSTANCE_LOGS_DIRECTORY);
+            const logFiles: string[] = [];
+            for await (const name of logs.keys()) logFiles.push(name);
+            expect(logFiles.some(name => /^hyperd_.*\.log$/.test(name))).toBe(true);
+            expect(toPlainObjects(await connection.query(`
+                SELECT count(*)::INTEGER AS n FROM hyper_log(current_session := true) WHERE k = 'query-end'
+            `))[0].n).toBeGreaterThan(0);
             await connection.close();
-            await sessionDatabase.terminate();
+            await instanceDatabase.terminate();
+            expect(await listInstances()).not.toContain(created[0]);
         } finally {
             globalThis.__DASHQL_TEST_HYPERDB_FACTORY__ = factory;
         }

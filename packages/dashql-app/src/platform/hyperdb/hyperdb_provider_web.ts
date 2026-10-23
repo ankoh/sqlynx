@@ -4,7 +4,7 @@ import type { SetupProgress } from '../database/embedded_database_provider.js';
 
 import { HyperDB, type HyperDBEngineClient } from './hyperdb_wasm.js';
 import { HYPERDB_WASM_ENGINE_SETTINGS } from './hyperdb_settings.js';
-import { cleanupStaleHyperDBOPFSSessions, createHyperDBOPFSSession } from './hyperdb_opfs_session.js';
+import { cleanupStaleHyperDBOPFSInstances, createHyperDBOPFSInstance } from './hyperdb_opfs_instance.js';
 import { getHyperDBWebSupportError } from './hyperdb_web_support.js';
 
 declare global {
@@ -82,22 +82,22 @@ export async function setupWebHyperDB(
     const initStart = performance.now();
     try {
         logger.info('Creating HyperDB WASM client', { context }, 'hyperdb');
-        await cleanupStaleHyperDBOPFSSessions();
+        await cleanupStaleHyperDBOPFSInstances();
         const client = await createWebHyperDBClient(onSetupProgress);
-        const session = await createHyperDBOPFSSession();
+        const instance = await createHyperDBOPFSInstance();
         try {
             const database = await HyperDB.create(
                 client,
-                HYPERDB_WASM_ENGINE_SETTINGS,
+                { ...HYPERDB_WASM_ENGINE_SETTINGS, log_file_path: instance.logDirectoryPath },
                 {
-                    computeDatabasePath: session.computeDatabasePath,
-                    defaultDatabasePath: session.defaultDatabasePath,
+                    computeDatabasePath: instance.computeDatabasePath,
+                    defaultDatabasePath: instance.userDatabasePath,
                 },
             );
             const terminate = database.terminate.bind(database);
             database.terminate = async () => {
                 await terminate();
-                await session.dispose();
+                await instance.dispose();
             };
 
             logger.info('Instantiated HyperDB WASM', {
@@ -108,7 +108,7 @@ export async function setupWebHyperDB(
         } catch (error) {
             try {
                 await client.terminate();
-                await session.dispose();
+                await instance.dispose();
             } catch (cleanupError) {
                 logger.warn('Cleaning up failed HyperDB setup failed', {
                     context,

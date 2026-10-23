@@ -180,7 +180,7 @@ describe('SalesforceLoginHistoryStore', () => {
 
     it('drops previously saved manual Data Cloud routing values when loading and rewriting history', async () => {
         const root = new MockDirectoryHandle();
-        const directory = await root.getDirectoryHandle('dashql-shell', { create: true }) as unknown as MockDirectoryHandle;
+        const directory = await root.getDirectoryHandle('shell', { create: true }) as unknown as MockDirectoryHandle;
         const file = await directory.getFileHandle('salesforce-login-history.json', { create: true }) as unknown as MockFileHandle;
         const entry = {
             organizationId: '00D-old',
@@ -205,7 +205,7 @@ describe('SalesforceLoginHistoryStore', () => {
 
     it('rejects malformed history instead of overwriting it', async () => {
         const root = new MockDirectoryHandle();
-        const directory = await root.getDirectoryHandle('dashql-shell', { create: true }) as unknown as MockDirectoryHandle;
+        const directory = await root.getDirectoryHandle('shell', { create: true }) as unknown as MockDirectoryHandle;
         const file = await directory.getFileHandle('salesforce-login-history.json', { create: true }) as unknown as MockFileHandle;
         file.text = '{"version":1,"entries":[{"organizationId":1}]}';
         const store = new SalesforceLoginHistoryStore(async () => root as unknown as FileSystemDirectoryHandle);
