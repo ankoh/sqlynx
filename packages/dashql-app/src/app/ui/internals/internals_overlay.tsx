@@ -29,9 +29,15 @@ enum TabKey {
     StorageBrowser = 6,
 }
 
+/// The groups of the tabs, separated by bars in the tab bar
+const TAB_GROUP_DIAGNOSTICS = 'Diagnostics';
+const TAB_GROUP_CONNECTIONS = 'Connections';
+const TAB_GROUP_STORAGE = 'Storage';
+const TAB_GROUP_SETTINGS = 'Settings';
+
 export const InternalsViewer: React.FC<InternalsViewerProps> = (props: InternalsViewerProps) => {
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.LogViewer);
-    const tabKeys = [TabKey.LogViewer, TabKey.QueryViewer, TabKey.QueryCache, TabKey.StorageWriter, TabKey.StorageBrowser, TabKey.AISettings, TabKey.AppSettings];
+    const tabKeys = [TabKey.LogViewer, TabKey.QueryViewer, TabKey.QueryCache, TabKey.StorageBrowser, TabKey.StorageWriter, TabKey.AISettings, TabKey.AppSettings];
 
     return (
         <VerticalTabs
@@ -41,22 +47,25 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
             tabProps={{
                 [TabKey.LogViewer]: {
                     tabId: TabKey.LogViewer,
+                    group: TAB_GROUP_DIAGNOSTICS,
                     icon: `${icons}#log_24`,
                     labelShort: 'Logs',
                     ariaLabel: 'Application logs',
                     description: 'View application logs',
-                    disabled: false
+                    disabled: false,
                 },
                 [TabKey.QueryViewer]: {
                     tabId: TabKey.QueryViewer,
+                    group: TAB_GROUP_CONNECTIONS,
                     icon: `${icons}#database`,
                     labelShort: 'Queries',
-                    ariaLabel: 'Query history',
+                    ariaLabel: 'Query execution history',
                     description: 'View query execution history',
                     disabled: false,
                 },
                 [TabKey.StorageWriter]: {
                     tabId: TabKey.StorageWriter,
+                    group: TAB_GROUP_STORAGE,
                     icon: `${icons}#versions_24`,
                     labelShort: 'Storage Writer',
                     ariaLabel: 'Storage writer',
@@ -65,6 +74,7 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                 },
                 [TabKey.StorageBrowser]: {
                     tabId: TabKey.StorageBrowser,
+                    group: TAB_GROUP_STORAGE,
                     icon: `${icons}#folder`,
                     labelShort: 'Storage',
                     ariaLabel: 'Storage browser',
@@ -73,6 +83,7 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                 },
                 [TabKey.QueryCache]: {
                     tabId: TabKey.QueryCache,
+                    group: TAB_GROUP_CONNECTIONS,
                     icon: `${icons}#cache_24`,
                     labelShort: 'Query Cache',
                     ariaLabel: 'Query result cache',
@@ -81,6 +92,7 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                 },
                 [TabKey.AISettings]: {
                     tabId: TabKey.AISettings,
+                    group: TAB_GROUP_SETTINGS,
                     icon: `${icons}#sparkles_fill_24`,
                     labelShort: 'AI',
                     ariaLabel: 'AI provider settings',
@@ -89,6 +101,7 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                 },
                 [TabKey.AppSettings]: {
                     tabId: TabKey.AppSettings,
+                    group: TAB_GROUP_SETTINGS,
                     icon: `${icons}#settings_24`,
                     labelShort: 'Settings',
                     ariaLabel: 'Application settings',

@@ -23,6 +23,8 @@ export interface VerticalTabProps {
     disabled?: boolean;
     ariaLabel?: string;
     description?: string;
+    /// The group of the tab, consecutive tabs of the same group are separated from other groups by a bar
+    group?: string;
 }
 
 export enum VerticalTabVariant {
@@ -43,6 +45,21 @@ interface Props<TabProps extends VerticalTabProps> {
     primaryTabKey?: Key;
     onToggleSplitMode?: () => void;
     onSelectSplitTab?: (tab: Key) => void;
+}
+
+/// Split the tabs into runs of consecutive tabs of the same group
+export function groupVerticalTabs<TabProps extends VerticalTabProps>(tabKeys: Key[], tabProps: Record<Key, TabProps>): TabProps[][] {
+    const groups: TabProps[][] = [];
+    for (const key of tabKeys) {
+        const tab = tabProps[key];
+        const last = groups[groups.length - 1];
+        if (last != null && last[0].group === tab.group) {
+            last.push(tab);
+        } else {
+            groups.push([tab]);
+        }
+    }
+    return groups;
 }
 
 export function VerticalTabs<TabProps extends VerticalTabProps>(props: Props<TabProps>): React.ReactElement {
@@ -182,7 +199,14 @@ export function VerticalTabs<TabProps extends VerticalTabProps>(props: Props<Tab
         >
             <div className={styles.tabs}>
                 <div className={styles.tabs_list}>
-                    {props.tabKeys.map(t => renderStackedTab(props.tabProps[t]))}
+                    {groupVerticalTabs(props.tabKeys, props.tabProps).map((group, i) => (
+                        <React.Fragment key={group[0].tabId}>
+                            {i > 0 && <div className={styles.tabs_separator} role="separator" aria-orientation="horizontal" />}
+                            <div className={styles.tabs_group} role="group" aria-label={group[0].group}>
+                                {group.map(renderStackedTab)}
+                            </div>
+                        </React.Fragment>
+                    ))}
                 </div>
                 {props.onToggleSplitMode && (
                     <div className={styles.tabs_footer}>

@@ -118,6 +118,19 @@
     width: auto;
 }
 
+.tabs_group {
+    display: flex;
+    flex-direction: column;
+    row-gap: 4px;
+}
+
+.tabs_separator {
+    flex: 0 0 auto;
+    height: 1px;
+    margin: 0 6px;
+    background-color: var(--border_color_primary);
+}
+
 .tabs_footer {
     display: flex;
     flex-direction: column;
