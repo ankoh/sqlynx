@@ -1,11 +1,33 @@
 import * as arrow from 'apache-arrow';
 
 import type { DashQLShellCommand } from './api.js';
+import { QueryType, type QueryMetadata } from '../query/query_execution_state.js';
 
 export const SHELL_AUTO_OVERLAY_ROW_LIMIT = 100;
 const TABLE_FRAME_WIDTH_PER_COLUMN = 3;
 
 export type ShellOutputMode = 'auto' | 'ui' | 'term' | 'off';
+
+/// The result of a query whose output the shell doesn't print
+export const EMPTY_RESULT_IPC = arrow.tableToIPC(arrow.tableFromArrays({}), 'file');
+
+/// The metadata of the queries that users enter in the shell
+export const SHELL_QUERY_METADATA: QueryMetadata = {
+    queryType: QueryType.USER_PROVIDED,
+    title: 'Shell Query',
+    description: null,
+    issuer: 'DashQL Shell',
+    userProvided: true,
+};
+
+/// Report a timing to an optional observer, observers must not interrupt the query execution
+export function reportShellTiming(onTiming: ((label: string, elapsedMs: number) => void) | undefined, label: string, elapsedMs: number): void {
+    try {
+        onTiming?.(label, elapsedMs);
+    } catch {
+        // Timing observers must not interrupt query execution.
+    }
+}
 
 export function getPlanResultText(table: arrow.Table | null): string | null {
     if (table == null || table.numRows !== 1 || table.numCols !== 1) return null;

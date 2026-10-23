@@ -5,15 +5,12 @@ import {
     QUERY_PROCESSING_RESULTS,
     QUERY_RECEIVED_ALL_BATCHES,
     createQueryResponseStreamMetrics,
-    QueryType,
     type QueryExecutionTracker,
 } from '../query/query_execution_state.js';
 import type { EmbeddedConnection } from '../platform/database/embedded_database.js';
 import { DashQLShellEnvironment } from './api.js';
 import { executeTrackedQuery } from '../query/tracked_query_execution.js';
-import { shouldShowResultUI, type ShellOutputMode } from './shell_result.js';
-
-const EMPTY_RESULT_IPC = arrow.tableToIPC(arrow.tableFromArrays({}), 'file');
+import { EMPTY_RESULT_IPC, reportShellTiming, SHELL_QUERY_METADATA, shouldShowResultUI, type ShellOutputMode } from './shell_result.js';
 
 interface EmbeddedDatabaseShellEnvironmentOptions {
     getOutputMode?: () => ShellOutputMode;
@@ -28,13 +25,7 @@ export function createEmbeddedDatabaseShellEnvironment(
 ): DashQLShellEnvironment {
     return {
         executeQuery: async (query, signal, onProgress, onResult, onTiming) => {
-            const reportTiming = (label: string, elapsedMs: number) => {
-                try {
-                    onTiming?.(label, elapsedMs);
-                } catch {
-                    // Timing observers must not interrupt query execution.
-                }
-            };
+            const reportTiming = (label: string, elapsedMs: number) => reportShellTiming(onTiming, label, elapsedMs);
             const cancellation = new AbortController();
             const abort = () => cancellation.abort();
             if (signal?.aborted) abort();
@@ -46,13 +37,7 @@ export function createEmbeddedDatabaseShellEnvironment(
                     tracker,
                     cancellation,
                     errorTarget: 'standalone_shell',
-                    metadata: {
-                        queryType: QueryType.USER_PROVIDED,
-                        title: 'Shell Query',
-                        description: null,
-                        issuer: 'DashQL Shell',
-                        userProvided: true,
-                    },
+                    metadata: { ...SHELL_QUERY_METADATA },
                     execute: async tracked => {
                         onProgress?.('Executing query');
                         const queryStartedAt = performance.now();

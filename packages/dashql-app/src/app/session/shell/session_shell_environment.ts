@@ -1,14 +1,14 @@
 import * as arrow from 'apache-arrow';
 
 import { CancelQuery, QueryExecutor } from '../../connections/query_executor.js';
-import { QueryType } from '../../../query/query_execution_state.js';
 import type { DashQLShellEnvironment } from '../../../shell/api.js';
 import {
+    EMPTY_RESULT_IPC,
+    reportShellTiming,
+    SHELL_QUERY_METADATA,
     shouldShowResultUI,
     type ShellOutputMode,
 } from '../../../shell/shell_result.js';
-
-const EMPTY_RESULT_IPC = arrow.tableToIPC(arrow.tableFromArrays({}), 'file');
 
 export function createSessionShellEnvironment(
     sessionId: string,
@@ -20,13 +20,7 @@ export function createSessionShellEnvironment(
 ): DashQLShellEnvironment {
     return {
         async executeQuery(query, signal, onProgress, onResult, onTiming) {
-            const reportTiming = (label: string, elapsedMs: number) => {
-                try {
-                    onTiming?.(label, elapsedMs);
-                } catch {
-                    // Timing observers must not interrupt query execution.
-                }
-            };
+            const reportTiming = (label: string, elapsedMs: number) => reportShellTiming(onTiming, label, elapsedMs);
             const [queryId, execution] = executeQuery(connectionId, {
                 query,
                 analyzeResults: true,
@@ -34,14 +28,7 @@ export function createSessionShellEnvironment(
                 throwOnError: true,
                 onLog: onProgress,
                 onTiming: reportTiming,
-                metadata: {
-                    queryType: QueryType.USER_PROVIDED,
-                    title: 'Shell Query',
-                    description: null,
-                    issuer: 'DashQL Shell',
-                    userProvided: true,
-                    sessionId,
-                },
+                metadata: { ...SHELL_QUERY_METADATA, sessionId },
             });
             const abort = () => cancelQuery(connectionId, queryId);
             if (signal?.aborted) {
