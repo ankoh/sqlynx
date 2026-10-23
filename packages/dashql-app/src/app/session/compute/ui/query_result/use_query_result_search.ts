@@ -17,7 +17,8 @@ import type { Dispatch } from '../../../../../utils/variant.js';
 import { useLogger } from '../../../../../platform/logger/logger_provider.js';
 import { stringifyError } from '../../../../../platform/logger/logger.js';
 import { useDataFrameRegistry } from '../../../../../compute/computation_registry.js';
-import { searchDataDispatched } from '../../../../../compute/computation_logic.js';
+import { scheduleTask } from '../../../../../compute/computation_logic.js';
+import { DATA_SEARCH_TASK } from '../../../../../compute/computation_types.js';
 
 const LOG_CTX = 'query_result_search';
 
@@ -133,7 +134,7 @@ export function useQueryResultSearch(
         table.dataTableLifetime.signal.addEventListener('abort', abortForTableLifetime, { once: true });
         void (async () => {
             try {
-                await searchDataDispatched({
+                await scheduleTask(DATA_SEARCH_TASK, {
                     tableId: table.tableId,
                     tableVersion: table.version,
                     inputDataFrame: table.dataFrame!,

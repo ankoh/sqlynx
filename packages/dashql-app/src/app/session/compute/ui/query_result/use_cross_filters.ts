@@ -3,12 +3,12 @@ import * as React from 'react';
 import { ComputationAction, SET_CROSS_FILTERS, TableComputationState } from '../../../../../compute/computation_state.js';
 import { CrossFilters } from '../../../../../compute/cross_filters.js';
 import { Dispatch } from '../../../../../utils/variant.js';
-import { ORDINAL_COLUMN, STRING_COLUMN, OrdinalColumnAggregation, StringColumnAggregation, TableAggregation, TableFilteringTask, TaskStatus, WithFilter, ColumnAggregationTask, DataSearchTable, FilterTable } from '../../../../../compute/computation_types.js';
+import { FILTERED_COLUMN_AGGREGATION_TASK, TABLE_FILTERING_TASK, ORDINAL_COLUMN, STRING_COLUMN, OrdinalColumnAggregation, StringColumnAggregation, TableAggregation, TableFilteringTask, TaskStatus, WithFilter, ColumnAggregationTask, DataSearchTable, FilterTable } from '../../../../../compute/computation_types.js';
 import { ScalarFilter } from '../../../../../compute/sql/sqlframe_builder.js';
 import { HistogramFilterCallback } from './histogram_cell.js';
 import { MostFrequentValueFilterCallback } from './mostfrequent_cell.js';
 import { DataTableLayout } from './data_table_layout.js';
-import { computeFilteredColumnAggregatesDispatched, filterTableDispatched } from '../../../../../compute/computation_logic.js';
+import { scheduleTask } from '../../../../../compute/computation_logic.js';
 import { forEachIntegerValue } from './visible_rows.js';
 
 /// Compare two scalar filter lists for equality.
@@ -93,7 +93,7 @@ function scheduleLatestFilter(
 
     const launch = (request: PendingFilterTask) => {
         queue!.activeKey = request.key;
-        void filterTableDispatched(request.task, dispatch).finally(() => {
+        void scheduleTask(TABLE_FILTERING_TASK, request.task, dispatch).finally(() => {
             queue!.activeKey = null;
             const pending = queue!.pending;
             queue!.pending = null;
@@ -285,7 +285,7 @@ export function useCrossFilters(
             selectionRowCount: countSelectionRows(filterTable, dataSearchTable),
             unfilteredAggregate,
         };
-        void computeFilteredColumnAggregatesDispatched(task, dispatchComputation).finally(releaseSchedule);
+        void scheduleTask(FILTERED_COLUMN_AGGREGATION_TASK, task, dispatchComputation).finally(releaseSchedule);
     }, [dispatchComputation]);
 
     return {

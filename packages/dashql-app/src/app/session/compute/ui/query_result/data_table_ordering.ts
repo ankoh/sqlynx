@@ -1,9 +1,9 @@
 import * as React from 'react';
 
 import { CLEAR_TABLE_ORDERING, type ComputationAction, type TableComputationState } from '../../../../../compute/computation_state.js';
-import { sortTableDispatched } from '../../../../../compute/computation_logic.js';
+import { scheduleTask } from '../../../../../compute/computation_logic.js';
 import type { TableOrderingTask } from '../../../../../compute/computation_types.js';
-import { TaskStatus } from '../../../../../compute/computation_types.js';
+import { TABLE_ORDERING_TASK, TaskStatus } from '../../../../../compute/computation_types.js';
 import type { OrderByConstraint } from '../../../../../compute/sql/sqlframe_builder.js';
 import type { Dispatch } from '../../../../../utils/variant.js';
 
@@ -83,7 +83,7 @@ export function useDataTableOrdering(
             && taskMatchesInput
             && areOrderingConstraintsEqual(currentTask.orderingConstraints, activeOrderingConstraints);
         if (hasUpToDateOrdering || hasUpToDateRunningTask) return;
-        void sortTableDispatched(orderingTask, dispatchComputation);
+        void scheduleTask(TABLE_ORDERING_TASK, orderingTask, dispatchComputation);
     }, [activeOrderingConstraints, table, dispatchComputation]);
 
     const orderByColumn = React.useCallback((fieldId: number) => {
@@ -98,7 +98,7 @@ export function useDataTableOrdering(
             ascending: nextSortDirection,
             nullsFirst: false,
         }]);
-        if (orderingTask != null) void sortTableDispatched(orderingTask, dispatchComputation);
+        if (orderingTask != null) void scheduleTask(TABLE_ORDERING_TASK, orderingTask, dispatchComputation);
     }, [activeOrderingConstraints, table, dispatchComputation]);
 
     const getSortDirection = React.useCallback((fieldId: number) => {

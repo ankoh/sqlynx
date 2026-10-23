@@ -3,7 +3,7 @@ import * as arrow from 'apache-arrow';
 import { ArrowTableFormatter } from './arrow_formatter.js';
 import { DataFrame, generateTableName } from './data_frame.js';
 import { AsyncValue } from '../utils/async_value.js';
-import { COLUMN_AGGREGATION_TASK, DATA_SEARCH_TASK, FILTERED_COLUMN_AGGREGATION_TASK, SYSTEM_COLUMN_COMPUTATION_TASK, TABLE_AGGREGATION_TASK, TABLE_FILTERING_TASK, TABLE_ORDERING_TASK, TaskVariant } from './computation_types.js';
+import { COLUMN_AGGREGATION_TASK, SYSTEM_COLUMN_COMPUTATION_TASK, TABLE_AGGREGATION_TASK, TaskVariant } from './computation_types.js';
 import { COMPUTATION_FROM_QUERY_RESULT, ComputationAction, createArrowFieldIndex, CREATED_DATA_FRAME, SCHEDULE_TASK, UMAP_COMPUTATION_SUCCEEDED } from './computation_state.js';
 import { ColumnAggregationVariant, ColumnAggregationTask, TableAggregationTask, TableOrderingTask, TableAggregation, OrderingTable, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, ColumnGroup, SKIPPED_COLUMN, OrdinalColumnAnalysis, StringColumnAnalysis, ListGridColumnGroup, StringGridColumnGroup, OrdinalGridColumnGroup, BinnedValuesTable, FrequentValuesTable, SystemColumnComputationTask, ROWNUMBER_COLUMN, getGridColumnTypeName, TableFilteringTask, FilterTable, WithFilter, WithFilterEpoch, ComputationStateVersion, DataSearchTask, DataSearchTable } from './computation_types.js';
 import { Dispatch, VariantKind } from '../utils/variant.js';
@@ -115,6 +115,20 @@ function getSmallIntegerDomainSize(minValue: unknown, maxValue: unknown, maxSize
 ///     Whenever a user updates a cross-filter (by brushing or selecting a distinct value), we just recompute the column summaries
 ///     with the new set of cross-filters and update the UI.
 ///
+/// The task variant of a task type
+type TaskOf<T extends TaskVariant['type']> = Extract<TaskVariant, { type: T }>;
+/// The result of a task type
+type TaskResultOf<T extends TaskVariant['type']> = TaskOf<T>['result'] extends AsyncValue<infer R, LoggableException> ? R : never;
+
+/// Schedule a task with the scheduler and wait for its result
+export function scheduleTask<T extends TaskVariant['type']>(type: T, task: TaskOf<T>['value'], dispatch: Dispatch<ComputationAction>): Promise<TaskResultOf<T>> {
+    const result = new AsyncValue<TaskResultOf<T>, LoggableException>();
+    // TypeScript doesn't narrow the variant from the generic task type
+    const variant = { type, value: task, result } as unknown as TaskOf<T>;
+    dispatch({ type: SCHEDULE_TASK, value: variant });
+    return result.getValue();
+}
+
 export async function analyzeTable(tableId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, database: EmbeddedComputeDatabase, logger: LoggerLike, projection?: UmapRequest, connectionId: string | null = null): Promise<void> {
     // Statements such as DDL can legitimately produce an Arrow table without columns. There is
     // nothing to summarize, and embedded databases reject importing a zero-column table.
@@ -143,7 +157,7 @@ export async function analyzeTable(tableId: number, table: arrow.Table, dispatch
         columnEntries: gridColumnGroups,
         inputDataFrame: dataFrame
     };
-    const [tableAggregate, initialColumnGroups] = await computeTableAggregatesDispatched(tableAggregationTask, dispatch);
+    const [tableAggregate, initialColumnGroups] = await scheduleTask(TABLE_AGGREGATION_TASK, tableAggregationTask, dispatch);
     gridColumnGroups = initialColumnGroups;
 
     // Precompute the system columns
@@ -155,7 +169,7 @@ export async function analyzeTable(tableId: number, table: arrow.Table, dispatch
         inputDataFrame: dataFrame,
         tableAggregate
     };
-    let [newTable, newDataFrame, updatedColumnGroups] = await computeSystemColumnsDispatched(precomputationTask, dispatch);
+    let [newTable, newDataFrame, updatedColumnGroups] = await scheduleTask(SYSTEM_COLUMN_COMPUTATION_TASK, precomputationTask, dispatch);
     gridColumnGroups = updatedColumnGroups;
 
     // Compute the column aggregates
@@ -190,7 +204,7 @@ export async function analyzeTable(tableId: number, table: arrow.Table, dispatch
         };
         // Measured around the dispatch, so this includes the scheduler round trip.
         const columnBegin = performance.now();
-        await computeColumnAggregatesDispatched(columnAggregationTask, dispatch);
+        await scheduleTask(COLUMN_AGGREGATION_TASK, columnAggregationTask, dispatch);
         const columnDuration = performance.now() - columnBegin;
         if (columnDuration > colAggregateSlowestDuration) {
             colAggregateSlowestDuration = columnDuration;
@@ -363,20 +377,6 @@ async function computeUmapProjection(
     }, LOG_CTX);
 
     return [outputTable, outputDataFrame, updatedColumnGroups];
-}
-
-export async function computeSystemColumnsDispatched(task: SystemColumnComputationTask, dispatch: Dispatch<ComputationAction>): Promise<[arrow.Table, DataFrame, ColumnGroup[]]> {
-    const result = new AsyncValue<[arrow.Table, DataFrame, ColumnGroup[]], LoggableException>();
-    const variant: TaskVariant = {
-        type: SYSTEM_COLUMN_COMPUTATION_TASK,
-        value: task,
-        result
-    };
-    dispatch({
-        type: SCHEDULE_TASK,
-        value: variant
-    });
-    return result.getValue();
 }
 
 export async function computeSystemColumns(task: SystemColumnComputationTask, logger: LoggerLike, executeQuery: ComputeQueryExecution = executeDirectly): Promise<[arrow.Table, DataFrame, ColumnGroup[]]> {
@@ -598,20 +598,6 @@ function buildGridColumnGroups(table: arrow.Table): ColumnGroup[] {
     return columnGroups;
 }
 
-export async function sortTableDispatched(task: TableOrderingTask, dispatch: Dispatch<ComputationAction>): Promise<OrderingTable> {
-    const result = new AsyncValue<OrderingTable, LoggableException>();
-    const variant: TaskVariant = {
-        type: TABLE_ORDERING_TASK,
-        value: task,
-        result
-    };
-    dispatch({
-        type: SCHEDULE_TASK,
-        value: variant
-    });
-    return result.getValue();
-}
-
 export async function sortTable(task: TableOrderingTask, logger: LoggerLike, executeQuery: ComputeQueryExecution = executeDirectly): Promise<OrderingTable> {
     if (task.orderingConstraints.length == 1) {
         logger.info("Sorting table by field", {
@@ -673,17 +659,6 @@ export async function sortTable(task: TableOrderingTask, logger: LoggerLike, exe
     }
 }
 
-export async function searchDataDispatched(task: DataSearchTask, dispatch: Dispatch<ComputationAction>): Promise<DataSearchTable> {
-    const result = new AsyncValue<DataSearchTable, LoggableException>();
-    const variant: TaskVariant = {
-        type: DATA_SEARCH_TASK,
-        value: task,
-        result,
-    };
-    dispatch({ type: SCHEDULE_TASK, value: variant });
-    return result.getValue();
-}
-
 export async function searchData(
     task: DataSearchTask,
     logger: LoggerLike,
@@ -724,20 +699,6 @@ export async function searchData(
         if (error instanceof LoggableException) throw error;
         throw new LoggableException('Failed to search table data', { error: stringifyError(error) }, LOG_CTX);
     }
-}
-
-export async function filterTableDispatched(task: TableFilteringTask, dispatch: Dispatch<ComputationAction>): Promise<FilterTable | null> {
-    const result = new AsyncValue<FilterTable | null, LoggableException>();
-    const variant: TaskVariant = {
-        type: TABLE_FILTERING_TASK,
-        value: task,
-        result
-    };
-    dispatch({
-        type: SCHEDULE_TASK,
-        value: variant
-    });
-    return result.getValue();
 }
 
 export async function filterTable(task: TableFilteringTask, logger: LoggerLike, executeQuery: ComputeQueryExecution = executeDirectly): Promise<FilterTable | null> {
@@ -786,20 +747,6 @@ export async function filterTable(task: TableFilteringTask, logger: LoggerLike, 
             throw new LoggableException(`Failed to filter table`, { "error": stringifyError(error) }, LOG_CTX);
         }
     }
-}
-
-export async function computeTableAggregatesDispatched(task: TableAggregationTask, dispatch: Dispatch<ComputationAction>): Promise<[TableAggregation, ColumnGroup[]]> {
-    const result = new AsyncValue<[TableAggregation, ColumnGroup[]], LoggableException>();
-    const variant: TaskVariant = {
-        type: TABLE_AGGREGATION_TASK,
-        value: task,
-        result
-    };
-    dispatch({
-        type: SCHEDULE_TASK,
-        value: variant
-    });
-    return result.getValue();
 }
 
 export async function computeTableAggregates(task: TableAggregationTask, logger: LoggerLike, executeQuery: ComputeQueryExecution = executeDirectly): Promise<[TableAggregation, ColumnGroup[]]> {
@@ -1035,34 +982,6 @@ function analyzeStringColumn(tableSummary: TableAggregation, columnEntry: String
         frequentValueCounts: frequentValueCounts,
         frequentValuePercentages: frequentValuePercentages,
     };
-}
-
-export async function computeColumnAggregatesDispatched(task: ColumnAggregationTask, dispatch: Dispatch<ComputationAction>): Promise<ColumnAggregationVariant> {
-    const result = new AsyncValue<ColumnAggregationVariant, LoggableException>();
-    const variant: TaskVariant = {
-        type: COLUMN_AGGREGATION_TASK,
-        value: task,
-        result
-    };
-    dispatch({
-        type: SCHEDULE_TASK,
-        value: variant
-    });
-    return result.getValue();
-}
-
-export async function computeFilteredColumnAggregatesDispatched(task: WithFilter<ColumnAggregationTask>, dispatch: Dispatch<ComputationAction>): Promise<WithFilterEpoch<ColumnAggregationVariant> | null> {
-    const result = new AsyncValue<WithFilterEpoch<ColumnAggregationVariant> | null, LoggableException>();
-    const variant: TaskVariant = {
-        type: FILTERED_COLUMN_AGGREGATION_TASK,
-        value: task,
-        result
-    };
-    dispatch({
-        type: SCHEDULE_TASK,
-        value: variant
-    });
-    return result.getValue();
 }
 
 export async function computeColumnAggregates(task: ColumnAggregationTask, logger: LoggerLike, executeQuery: ComputeQueryExecution = executeDirectly): Promise<ColumnAggregationVariant> {
