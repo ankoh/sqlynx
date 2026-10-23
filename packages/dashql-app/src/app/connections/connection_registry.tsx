@@ -21,7 +21,7 @@ import { useStorageWriter } from '../storage/storage_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import type { Logger } from '../../platform/logger/logger.js';
 
-const LOG_CTX = 'attached_database_registry';
+const LOG_CTX = 'connection_registry';
 import {
     DEBOUNCE_DURATION_SESSION_WRITE,
     groupSessionFunctionWrites,
@@ -47,8 +47,8 @@ export const DEBOUNCE_DURATION_CONNECTION_DRAFT_WRITE = 250;
 
 /// The connection registry
 ///
-/// Connections (attached database states) are entities of their own, keyed by the global connection
-/// id. Sessions reference them as their main database or as attached databases, several sessions
+/// Connections are entities of their own, keyed by the global connection
+/// id. The scripts of sessions run on them, several sessions
 /// may reference the same connection and then share its channel, catalog and queries.
 ///
 /// Note that we're deliberately not using immutable maps for the connections here.
@@ -212,7 +212,6 @@ export function scheduleConnectionParamsWrites(references: ConnectionReferences,
 }
 
 export type SetConnectionRegistryAction = React.SetStateAction<ConnectionRegistry>;
-export type AttachedDatabaseRole = 'main' | 'attached';
 export type ConnectionDispatch = (action: ConnectionAction) => void;
 export type DynamicConnectionDispatch = (connectionId: string | null, action: ConnectionAction) => void;
 
@@ -315,7 +314,7 @@ export function useDynamicConnectionDispatch(): [ConnectionRegistry, DynamicConn
 function applyConnectionAction(reg: ConnectionRegistry, references: ConnectionReferences, connectionId: string, action: ConnectionAction, storageWriter: StorageWriter, logger: Logger): ConnectionRegistry {
     const prev = reg.connections.get(connectionId);
     if (!prev) {
-        console.warn(`no attached database registered with id ${connectionId}`);
+        console.warn(`no connection registered with id ${connectionId}`);
         return reg;
     }
     const connectorType = prev.connectorInfo.connectorType;

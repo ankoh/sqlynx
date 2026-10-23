@@ -516,7 +516,7 @@ async function loadValidSession(backend: StorageBackend, logger: Logger, session
     }
 
     // Fail-fast metadata validation: refuse to load a session whose metadata is structurally
-    // unusable (unsupported format, no id, or invalid attached database). This runs
+    // unusable (unsupported format, no id, or invalid connection). This runs
     // before any heavy restore work and surfaces the session as invalid in the selector rather than
     // letting it blow up mid-restore. Runtime hiccups (catalog/session) remain non-fatal below.
     const validation = validateSessionData(sessionData);

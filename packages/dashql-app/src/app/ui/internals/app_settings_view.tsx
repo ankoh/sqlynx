@@ -124,7 +124,7 @@ export function AppSettings(props: { onClose: () => void; }) {
         }
 
         const confirmed = confirm(
-            "This will delete ALL stored data including all attached databases, sessions, and scripts. This action cannot be undone.\n\nAre you sure you want to clear all storage?"
+            "This will delete ALL stored data including all connections, sessions, and scripts. This action cannot be undone.\n\nAre you sure you want to clear all storage?"
         );
 
         if (!confirmed) {

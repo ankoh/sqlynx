@@ -1,12 +1,14 @@
 import { stringifyError } from '../../platform/logger/logger.js';
 import { connectionParamsEqual, connectionParamsKey, connectionParamsWithoutDraftRows } from '../../app/connections/connection_params.js';
-import type { AttachedDatabaseRole } from '../../app/connections/connection_registry.js';
 import type { ConnectionEntry, ConnectionParams } from '../../app/storage/storage_backend.js';
 import { isValidUuid } from '../../app/storage/session_validation.js';
 import type { MigrationFolder } from '../migration_folder.js';
 import { migrateSessionFolder } from '../session_migration.js';
 import type { StorageMigrationStep } from '../storage_migration.js';
 import { listSessionFolders, readManifestJson, writeManifestJson } from '../storage_root.js';
+
+/// How a session referenced a database before connections were global
+type DatabaseRole = 'main' | 'attached';
 
 /// A database that session metadata of format version 4 references
 interface SessionDatabase {
@@ -66,7 +68,7 @@ interface DatabaseRef {
     /// The referencing session
     sessionId: string;
     /// Is the database the main database of the session?
-    role: AttachedDatabaseRole;
+    role: DatabaseRole;
     /// The stored database id
     databaseId: string;
     /// The stored params

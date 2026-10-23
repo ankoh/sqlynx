@@ -1,7 +1,9 @@
 import { connectionParamsShareEqual, type ConnectionParams } from '../../connections/connection_params.js';
-import type { AttachedDatabaseRole } from '../../connections/connection_registry.js';
 import type { ConnectionEntry, SessionConnection, SessionData } from '../../storage/storage_backend.js';
 import { dedupeConnections } from '../../storage/storage_writer.js';
+
+/// How a session uses a connection, as its default connection or for some of its scripts
+export type SessionConnectionRole = 'main' | 'attached';
 
 /// A connection that a session brings along
 export interface ImportedConnectionRef {
@@ -12,7 +14,7 @@ export interface ImportedConnectionRef {
     /// The params of the connection in the session, shared sessions carry them without secrets
     params: ConnectionParams;
     /// How the session uses the connection
-    role: AttachedDatabaseRole;
+    role: SessionConnectionRole;
 }
 
 /// How an imported connection relates to the connections of the app

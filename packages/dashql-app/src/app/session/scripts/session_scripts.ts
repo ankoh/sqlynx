@@ -48,7 +48,7 @@ export interface SessionScripts {
     instance: core.DashQL;
     /// The session identifier.
     sessionId: string;
-    /// The user-supplied session name, independent from attached database identity.
+    /// The user-supplied session name, independent from the identity of its connections.
     name: string | null;
     /// The session settings.
     settings: SessionSettings;

@@ -49,7 +49,7 @@ import { SETUP_STARTED } from './salesforce/salesforce_connection_state.js';
 import { cancelConnectionSetup } from './connection_setup_cancellation.js';
 import { catalogNameDefaults } from './catalog_name_defaults.js';
 
-const LOG_CTX = 'attached_database_state';
+const LOG_CTX = 'connection_state';
 
 export interface CatalogUpdates {
     /// The running tasks
@@ -69,7 +69,7 @@ export interface CatalogUpdates {
 }
 
 export interface ConnectionState {
-    /// Runtime identity of the attached database.
+    /// Runtime identity of the connection.
     connectionId: string;
 
     /// The connection state contains many references into the Wasm heap.
